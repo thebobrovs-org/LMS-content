@@ -13,6 +13,7 @@ step "validate published and staged content"
 node pipeline/validate.mjs --staging
 
 step "dependency audit"
+node --test scripts/audit-gate.test.mjs
 node scripts/audit-gate.mjs
 
 printf '\n✔ gate passed\n'
