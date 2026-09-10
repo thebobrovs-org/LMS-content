@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# The LMS-content quality gate. CI (.github/workflows/ci.yml) and the local
+# pre-PR check (hyperstack/bin/pre-pr) both run exactly this; see hyperstack
+# AGREEMENT §4. The local pre-PR check also builds LMS against this checkout.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+step() { printf '\n▶ %s\n' "$1"; }
+
+step "validate published content"
+node pipeline/validate.mjs
+
+step "validate published and staged content"
+node pipeline/validate.mjs --staging
+
+step "dependency audit"
+node scripts/audit-gate.mjs
+
+printf '\n✔ gate passed\n'
