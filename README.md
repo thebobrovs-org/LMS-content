@@ -48,9 +48,12 @@ to production:
 3. **Audit** — `node pipeline/validate.mjs --staging` (CI gate) + the
    `pipeline/AUDIT.md` critics + a human PR review (preview with a
    `CONTENT_STAGING=1` app build).
-4. **Promote** — `node pipeline/promote.mjs staging/topics/<…>.mdx` → moves to
-   `topics/`, sets `status: published`; `npm run validate`; merge → the app
-   rebuilds and the topic goes live.
+4. **Promote** — `node pipeline/promote.mjs staging/topics/<…>.mdx` first checks
+   that production content, as it will be after the promotion, passes validation.
+   Then it moves the file to `topics/` and sets `status: published`. It accepts
+   only files in `staging/topics/`, replaces a published topic only with `--force`,
+   and changes nothing if any step fails. Merge → the app rebuilds and the topic
+   goes live.
 
 ```bash
 npm install              # gray-matter for the validators
