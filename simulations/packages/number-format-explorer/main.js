@@ -52,7 +52,43 @@ function strip(f) {
   return cells;
 }
 
+// The slider and presets are built and wired once (mount), never rebuilt: rebuilding them
+// on every input event took keyboard focus off the slider after one step and cut drags
+// short. render() refreshes only the label and the outputs (#59).
+let mounted = false;
+function mount() {
+  app.innerHTML = `
+    <div class="hint">Drag the value. <b>bf16</b> keeps fp32's full <b>8-bit exponent</b> (same range) but only 7 mantissa bits — <b>half the bytes</b>. <b>fp16</b> trades range for precision; <b>fp4</b> (E2M1) packs it into <b>4 bits</b> — great throughput, tiny range.</div>
+
+    <div class="slider">
+      <label for="L">value = 10<sup id="L-exp"></sup> = <b id="L-val"></b></label>
+      <input id="L" type="range" min="-10" max="10" step="0.1" value="${L}">
+      <div class="presets">
+        <button data-l="-7">tiny gradient (1e-7)</button>
+        <button data-l="0">≈1</button>
+        <button data-l="5">big activation (1e5)</button>
+      </div>
+    </div>
+
+    <div class="cards" id="cards"></div>
+
+    <div class="range" id="range"></div>
+
+    <div class="readout" id="readout" role="status"></div>`;
+
+  app.querySelector("#L").addEventListener("input", (e) => setL(+e.target.value));
+  app.querySelectorAll(".presets button").forEach((b) => b.addEventListener("click", () => setL(+b.getAttribute("data-l"))));
+  mounted = true;
+}
+
+/** Set the value (from the slider or a preset) and redraw. */
+function setL(next) {
+  L = next;
+  render();
+}
+
 function render() {
+  if (!mounted) mount();
   const v = Math.pow(10, L);
   const reps = FORMATS.map((f) => ({ f, r: repr(v, f) }));
   const fp16fail = !reps[2].r.ok;
@@ -75,41 +111,30 @@ function render() {
       <div class="err">${r.ok ? (r.errPct < 0.001 ? "exact" : `±${r.errPct}% rounding`) : "can't represent"}</div>
     </div>`).join("");
 
-  app.innerHTML = `
-    <div class="hint">Drag the value. <b>bf16</b> keeps fp32's full <b>8-bit exponent</b> (same range) but only 7 mantissa bits — <b>half the bytes</b>. <b>fp16</b> trades range for precision; <b>fp4</b> (E2M1) packs it into <b>4 bits</b> — great throughput, tiny range.</div>
+  // A preset moves the slider too; the slider itself already shows its own value.
+  const input = app.querySelector("#L");
+  if (+input.value !== L) input.value = String(L);
+  app.querySelector("#L-exp").textContent = L.toFixed(1);
+  app.querySelector("#L-val").textContent = fmtNum(v);
 
-    <div class="slider">
-      <label>value = 10<sup>${L.toFixed(1)}</sup> = <b>${fmtNum(v)}</b></label>
-      <input id="L" type="range" min="-10" max="10" step="0.1" value="${L}">
-      <div class="presets">
-        <button data-l="-7">tiny gradient (1e-7)</button>
-        <button data-l="0">≈1</button>
-        <button data-l="5">big activation (1e5)</button>
-      </div>
-    </div>
+  app.querySelector("#cards").innerHTML = cards;
 
-    <div class="cards">${cards}</div>
-
-    <div class="range">
+  app.querySelector("#range").innerHTML = `
       <div class="rlabel">dynamic range (log scale)</div>
       <div class="raxis">
         <div class="rbar wide" style="left:${wideL}%;width:${wideR - wideL}%"><span>fp32 / bf16</span></div>
         <div class="rbar narrow" style="left:${f16L}%;width:${f16R - f16L}%"><span>fp16</span></div>
         <div class="rbar tiny" style="left:${f4L}%;width:${Math.max(f4R - f4L, 1.5)}%"><span>fp4</span></div>
         <div class="rmark ${fp16fail ? "out" : ""}" style="left:${mark}%"></div>
-      </div>
-    </div>
+      </div>`;
 
-    <div class="readout" role="status">
+  app.querySelector("#readout").innerHTML = `
       ${
         fp16fail
           ? `<span class="bad">fp16 can't hold this value</span> — its 5-bit exponent is too narrow. <b>bf16 still works</b>, because it kept fp32's 8-bit exponent. That range is why ML picked bf16.`
           : `bf16 represents this within <b>±0.39%</b> — coarser than fp16, but ML training averages that out. What it can't lose is <b>range</b>: gradients span ~1e-7 to activations ~1e5, and only an 8-bit exponent covers both.`
-      } <b>fp4 (E2M1)</b> has just 1 mantissa bit and a ~0.5–6 range, so it overflows or rounds almost everything raw — in practice values are <b>scaled into range</b> first. At ¼ the bytes of bf16, that's the throughput bet. The matrix unit multiplies in low precision but <b>accumulates in fp32</b>, so rounding doesn't pile up.
-    </div>`;
+      } <b>fp4 (E2M1)</b> has just 1 mantissa bit and a ~0.5–6 range, so it overflows or rounds almost everything raw — in practice values are <b>scaled into range</b> first. At ¼ the bytes of bf16, that's the throughput bet. The matrix unit multiplies in low precision but <b>accumulates in fp32</b>, so rounding doesn't pile up.`;
 
-  app.querySelector("#L").addEventListener("input", (e) => { L = +e.target.value; render(); });
-  app.querySelectorAll(".presets button").forEach((b) => b.addEventListener("click", () => { L = +b.getAttribute("data-l"); render(); }));
   reportSize();
 }
 

@@ -20,11 +20,35 @@ function applyTheme(t) {
 function reportSize() { requestAnimationFrame(() => sim.resize(document.body.scrollHeight + 16)); }
 
 function sliderHTML(name, val) {
-  const p = pad(val), wasted = p > val;
   return `<div class="sl">
-    <label>${name} <b>${val}</b> <span class="pad ${wasted ? "waste" : ""}">→ ${p}${wasted ? "" : " (aligned)"}</span></label>
+    <label for="s-${name}">${name} <b id="${name}-val"></b> <span class="pad" id="${name}-pad"></span></label>
     <input type="range" id="s-${name}" min="64" max="1024" step="1" value="${val}">
   </div>`;
+}
+
+// The sliders are built and wired once, never rebuilt: rebuilding them on every input
+// event took keyboard focus off a slider after one step and cut drags short. render()
+// refreshes only their labels and the outputs (#59).
+let mounted = false;
+function mountSliders() {
+  $("sliders").innerHTML = sliderHTML("M", M) + sliderHTML("K", K) + sliderHTML("N", N);
+  for (const name of ["M", "K", "N"]) {
+    $(`s-${name}`).addEventListener("input", (e) => {
+      const v = +e.target.value;
+      if (name === "M") M = v; else if (name === "K") K = v; else N = v;
+      render();
+    });
+  }
+  mounted = true;
+}
+
+/** A slider's value and its padded size ("→ 512", or "→ 512 (aligned)"), updated in place. */
+function updateSliderLabel(name, val) {
+  const p = pad(val), wasted = p > val;
+  $(`${name}-val`).textContent = String(val);
+  const padEl = $(`${name}-pad`);
+  padEl.textContent = `→ ${p}${wasted ? "" : " (aligned)"}`;
+  padEl.className = `pad ${wasted ? "waste" : ""}`;
 }
 
 function vizSVG() {
@@ -43,9 +67,11 @@ function vizSVG() {
 }
 
 function render() {
+  if (!mounted) mountSliders();
   document.querySelectorAll(".seg-btn").forEach((b) => b.classList.toggle("on", +b.dataset.tile === T));
-
-  $("sliders").innerHTML = sliderHTML("M", M) + sliderHTML("K", K) + sliderHTML("N", N);
+  updateSliderLabel("M", M);
+  updateSliderLabel("K", K);
+  updateSliderLabel("N", N);
 
   const Mp = pad(M), Kp = pad(K), Np = pad(N);
   const realFLOP = 2 * M * K * N, padFLOP = 2 * Mp * Kp * Np;
@@ -67,11 +93,6 @@ function render() {
     ? `Your <code>${M}×${K}×${N}</code> matmul pads to <code>${Mp}×${Kp}×${Np}</code> — <b>${flopWaste}% of the compute</b> and <b>${memWaste}% of the memory</b> go to padded zeros. That extra memory is the <b>surprise OOM</b>: a job that "should fit" doesn't. Round the dims to multiples of <b>${T}</b> to recover it.`
     : `Every dimension is a multiple of <b>${T}</b> — <b>no padding, no waste</b>. This is the shape you want: the matmul fills whole tiles, so you pay only for the math you asked for.`;
 
-  document.querySelectorAll(".sl input").forEach((el) => el.addEventListener("input", (e) => {
-    const name = e.target.id.slice(2), v = +e.target.value;
-    if (name === "M") M = v; else if (name === "K") K = v; else N = v;
-    render();
-  }));
   reportSize();
 }
 

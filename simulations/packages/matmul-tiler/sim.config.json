@@ -1,7 +1,7 @@
 {
   "id": "matmul-tiler",
   "title": "Matmul tiler — the padding trap",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "props": {},
   "checkpoints": [
     { "id": "observe-padding", "hint": "Nudge a matmul dimension just past a multiple of 128 — it rounds up to the next tile, and the overhang is wasted compute and memory. A 129-wide dim pads to 256: that's the surprise-OOM mechanism." }

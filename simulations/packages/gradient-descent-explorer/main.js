@@ -79,12 +79,31 @@ function curveSVG(losses, regime) {
 }
 
 function sl(name, id, val, min, max, step) {
-  return `<div class="sl"><label>${name} <b>${val}</b></label><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}"></div>`;
+  return `<div class="sl"><label for="${id}">${name} <b id="${id}-val">${val}</b></label><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}"></div>`;
+}
+
+// The sliders are built and wired once, never rebuilt: rebuilding them on every input
+// event took keyboard focus off a slider after one step and cut drags short. render()
+// refreshes only their value labels and the outputs (#59).
+let mounted = false;
+function mountControls() {
+  $("controls").innerHTML = sl("Learning rate", "lr", lr.toFixed(3), 0.01, 0.35, 0.005)
+    + sl("Momentum", "mu", mu.toFixed(2), 0, 0.9, 0.05);
+  for (const id of ["lr", "mu"]) {
+    $(id).addEventListener("input", (e) => {
+      if (id === "lr") lr = +e.target.value; else mu = +e.target.value;
+      if (!observed) { observed = true; sim.checkpoint("observe-divergence"); }
+      sim.event("descent", { lr, mu });
+      render();
+    });
+  }
+  mounted = true;
 }
 
 function render() {
-  $("controls").innerHTML = sl("Learning rate", "lr", lr.toFixed(3), 0.01, 0.35, 0.005)
-    + sl("Momentum", "mu", mu.toFixed(2), 0, 0.9, 0.05);
+  if (!mounted) mountControls();
+  $("lr-val").textContent = lr.toFixed(3);
+  $("mu-val").textContent = mu.toFixed(2);
 
   const { pts, losses, diverged, oscillated } = descend();
   const l0 = losses[0], lEnd = losses[losses.length - 1];
@@ -104,12 +123,6 @@ function render() {
   else
     note.innerHTML = `Learning rate <b>${lr.toFixed(3)}</b> is <span class="reg warn">stable but slow</span> — it's still creeping toward the minimum after ${STEPS} steps. Bigger steps go faster (until they overshoot); <b>momentum</b> can speed it up without raising the rate.`;
 
-  document.querySelectorAll(".sl input").forEach((el) => el.addEventListener("input", (e) => {
-    if (e.target.id === "lr") lr = +e.target.value; else mu = +e.target.value;
-    if (!observed) { observed = true; sim.checkpoint("observe-divergence"); }
-    sim.event("descent", { lr, mu });
-    render();
-  }));
   reportSize();
 }
 

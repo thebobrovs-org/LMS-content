@@ -1,7 +1,7 @@
 {
   "id": "gradient-descent-explorer",
   "title": "Gradient descent explorer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "props": {},
   "checkpoints": [
     { "id": "observe-divergence", "hint": "Raise the learning rate until the path overshoots the valley and the loss curve turns upward — too big a step diverges, too small crawls, and momentum smooths the zig-zag. That stability band is what 'tuning the learning rate' means." }
