@@ -64,3 +64,10 @@ npm run promote -- staging/topics/<subject>/<slug>.mdx
 
 Content-only changes never require an app code change. The app repo's CI also
 re-validates after fetch (and checks simulation refs against its registry).
+
+## Licence
+
+- **Content** — the lessons, paths, glossaries, resources, media, personas, planning documents and skills — is licensed under [Creative Commons Attribution-ShareAlike 4.0 International](LICENSE) (CC BY-SA 4.0): reuse, adapt and translate it with attribution to this repository, and share derivatives under the same licence.
+- **Code** — the schema, scripts, pipeline and simulation packages — is licensed under the [MIT License](LICENSE-CODE).
+
+Third-party material referenced by resources and videos keeps its own licence.
