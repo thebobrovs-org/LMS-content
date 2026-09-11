@@ -180,51 +180,77 @@ function validateProjection(root, prepared) {
 
 /**
  * Put every prepared file in place, then remove the staged originals.
- * - Each file is first written to a temporary name beside its destination.
+ * - Each file is first written to a temporary name beside its destination. The name is
+ *   opened exclusively, and its cleanup is registered before anything is written to it.
  * - A new topic is then hard-linked into place, which fails if something appeared at
  *   that name meanwhile. Without --force, an existing name is refused.
- * - A --force replacement keeps a backup of the published file until the end.
+ * - A --force replacement keeps a hard-link backup of the published file. The backup is
+ *   deleted only once the whole promotion has succeeded, or once the original is back.
  * If any step fails, every completed step is undone, newest first, and the error is
- * rethrown. Returns the staged files that couldn't be removed after a successful move.
+ * rethrown. If an undo step fails too, the error lists it in `error.unrecovered`, and a
+ * backup that couldn't be put back is kept and named there. `io` is the fs module (tests
+ * pass one with a failing step). Returns the staged files that couldn't be removed after
+ * a successful promotion.
  */
-export function commit(prepared, force) {
-  const undo = [];
+export function commit(prepared, force, io = fs) {
+  const undo = []; // { what, run }, oldest first
   const tag = `.promote-${process.pid}`;
   try {
     for (const m of prepared) {
-      fs.mkdirSync(path.dirname(m.dest), { recursive: true });
+      io.mkdirSync(path.dirname(m.dest), { recursive: true });
       const tmp = `${m.dest}${tag}.tmp`;
-      fs.writeFileSync(tmp, m.text, { flag: "wx" });
-      undo.push(() => fs.rmSync(tmp, { force: true }));
-      if (fs.existsSync(m.dest)) {
+      const fd = io.openSync(tmp, "wx");
+      undo.push({ what: `remove ${path.basename(tmp)}`, run: () => io.rmSync(tmp, { force: true }) });
+      try {
+        io.writeSync(fd, m.text);
+      } finally {
+        io.closeSync(fd);
+      }
+      if (io.existsSync(m.dest)) {
         if (!force) throw new Error(`${m.shown}: appeared while promoting; pass --force to replace it`);
-        const backup = `${m.dest}${tag}.bak`;
-        fs.linkSync(m.dest, backup);
-        undo.push(() => fs.rmSync(backup, { force: true }));
-        fs.renameSync(tmp, m.dest);
-        undo.push(() => fs.renameSync(backup, m.dest));
-        m.backup = backup;
+        m.backup = `${m.dest}${tag}.bak`;
+        io.linkSync(m.dest, m.backup); // the original, until the promotion succeeds
+        io.renameSync(tmp, m.dest);
+        m.replaced = true; // from here on, only the backup holds the original
+        undo.push({
+          what: `restore ${m.shown}`,
+          run: () => {
+            io.renameSync(m.backup, m.dest);
+            m.backup = null;
+          },
+        });
       } else {
-        fs.linkSync(tmp, m.dest); // fails with EEXIST if the name was taken meanwhile
-        undo.push(() => fs.rmSync(m.dest, { force: true }));
-        fs.rmSync(tmp);
+        io.linkSync(tmp, m.dest); // fails with EEXIST if the name was taken meanwhile
+        undo.push({ what: `remove ${m.shown}`, run: () => io.rmSync(m.dest, { force: true }) });
+        io.rmSync(tmp);
       }
     }
   } catch (e) {
+    const unrecovered = [];
     for (const step of undo.reverse()) {
       try {
-        step();
-      } catch {
-        // keep undoing the rest
+        step.run();
+      } catch (err) {
+        unrecovered.push(`${step.what}: ${err.message}`);
       }
+    }
+    for (const m of prepared) {
+      if (!m.backup) continue;
+      // Replaced and not restored: the backup is the only copy of the original, so keep it.
+      if (m.replaced) unrecovered.push(`${m.shown}: the original published file is kept at ${m.backup}`);
+      else io.rmSync(m.backup, { force: true }); // never replaced, so the original is still in place
+    }
+    if (unrecovered.length) {
+      e.unrecovered = unrecovered;
+      e.message += `\nCouldn't undo everything:\n${unrecovered.map((u) => `  - ${u}`).join("\n")}`;
     }
     throw e;
   }
   const stale = [];
   for (const m of prepared) {
-    if (m.backup) fs.rmSync(m.backup, { force: true });
+    if (m.backup) io.rmSync(m.backup, { force: true });
     try {
-      fs.rmSync(m.src);
+      io.rmSync(m.src);
     } catch {
       stale.push(m.src);
     }
@@ -261,7 +287,8 @@ function main() {
   try {
     stale = commit(prepared, args.includes("--force"));
   } catch (e) {
-    console.error(`✗ ${e.message}\nNothing was promoted: the files already moved were put back.`);
+    console.error(`✗ ${e.message}`);
+    console.error(e.unrecovered ? "Recover the files listed above by hand." : "Nothing was promoted: the files already moved were put back.");
     return 1;
   }
   for (const { rel } of prepared) console.log(`promoted ${rel}  (staging → topics, status: published)`);

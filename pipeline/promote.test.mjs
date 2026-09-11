@@ -225,3 +225,46 @@ test("if a later write fails, the files already moved are put back", () => {
   for (const s of ["a", "b", "c"]) assert.ok(exists(root, `staging/topics/sub/${s}.mdx`), `staged ${s}.mdx is kept`);
   assert.deepEqual(leftovers(root), []);
 });
+
+test("if putting a replaced topic back fails, its original is kept and reported, never deleted", () => {
+  const root = fixture({
+    "staging/topics/sub/c.mdx": topic(),
+    "staging/topics/sub/b.mdx": topic(),
+    "topics/sub/c.mdx": "old c\n",
+    "topics/blocked": "a file where a directory is needed\n",
+  });
+  const moves = prepared(root, [
+    ["staging/topics/sub/c.mdx", "topics/sub/c.mdx", "new c\n"], // a --force replacement
+    ["staging/topics/sub/b.mdx", "topics/blocked/b.mdx", "new b\n"], // fails, which starts the rollback
+  ]);
+  // Restoring from the backup fails; every other rename works.
+  const io = { ...fs };
+  io.renameSync = (from, to) => {
+    if (from.endsWith(".bak")) throw new Error("simulated failure");
+    return fs.renameSync(from, to);
+  };
+  let error;
+  assert.throws(() => commit(moves, true, io), (e) => ((error = e), true));
+  assert.match(error.message, /Couldn't undo everything/);
+  const kept = error.unrecovered.find((u) => u.includes("is kept at"))?.split("is kept at ")[1];
+  assert.ok(kept, `the backup is named in the error:\n${error.message}`);
+  assert.equal(fs.readFileSync(kept, "utf8"), "old c\n", "the original's bytes are still recoverable");
+});
+
+test("a temp file that fails partway through writing is removed on rollback", () => {
+  const root = fixture({ "staging/topics/sub/a.mdx": topic(), "staging/topics/sub/b.mdx": topic() });
+  const moves = prepared(root, [
+    ["staging/topics/sub/a.mdx", "topics/sub/a.mdx", "new a\n"],
+    ["staging/topics/sub/b.mdx", "topics/sub/b.mdx", "new b\n"],
+  ]);
+  let writes = 0;
+  const io = { ...fs };
+  io.writeSync = (fd, text) => {
+    if (++writes === 2) throw new Error("simulated disk full"); // b's temp file exists, but its write fails
+    return fs.writeSync(fd, text);
+  };
+  assert.throws(() => commit(moves, false, io), /simulated disk full/);
+  assert.equal(exists(root, "topics/sub/a.mdx"), false, "the first topic is removed again");
+  assert.deepEqual(leftovers(root), [], "the half-written temp file is gone");
+  assert.ok(exists(root, "staging/topics/sub/a.mdx") && exists(root, "staging/topics/sub/b.mdx"));
+});
