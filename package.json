@@ -7,7 +7,8 @@
   "scripts": {
     "validate": "node pipeline/validate.mjs",
     "validate:staging": "node pipeline/validate.mjs --staging",
-    "promote": "node pipeline/promote.mjs"
+    "promote": "node pipeline/promote.mjs",
+    "gate": "bash scripts/gate.sh"
   },
   "dependencies": {
     "gray-matter": "^4.0.3"

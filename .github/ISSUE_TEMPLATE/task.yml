@@ -1,0 +1,27 @@
+name: Task
+description: A feature, chore, docs or content change
+labels: ["status:triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / goal
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: The approach, and any alternatives considered.
+  - type: textarea
+    id: ac
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: out
+    attributes:
+      label: Out of scope
