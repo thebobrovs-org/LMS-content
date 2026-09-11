@@ -17,25 +17,15 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parseFrontmatter } from "./frontmatter.mjs";
+import { effectiveGlossary, loadGlossaries, pathsByTopic as indexPathsByTopic, termKeys } from "./glossary.mjs";
 
 const ROOT = process.cwd();
 const includeStaging = process.argv.includes("--staging");
 const errors = [];
 const warnings = [];
 
-// Per-path glossaries: glossary/<name>.json → { name: { term: entry } }.
-const GLOSS_DIR = path.join(ROOT, "glossary");
-const glossaries = {};
-if (fs.existsSync(GLOSS_DIR)) {
-  for (const f of fs.readdirSync(GLOSS_DIR)) {
-    if (f.endsWith(".json")) {
-      glossaries[f.replace(/\.json$/, "")] = JSON.parse(
-        fs.readFileSync(path.join(GLOSS_DIR, f), "utf8"),
-      );
-    }
-  }
-}
-const unionGloss = Object.assign({}, ...Object.values(glossaries));
+// Per-path glossaries: glossary/<name>.json → { name: { term: entry } } (see ./glossary.mjs).
+const glossaries = loadGlossaries(path.join(ROOT, "glossary"));
 
 function walk(dir) {
   if (!fs.existsSync(dir)) return [];
@@ -88,21 +78,8 @@ const parsedPaths = pathFiles.flatMap((file) => {
   const fm = parsed(file);
   return fm ? [{ pid: path.basename(file, ".mdx"), data: fm.data }] : [];
 });
-const pathsByTopic = new Map();
-for (const { pid, data } of parsedPaths) {
-  for (const lvl of data.levels ?? [])
-    for (const tid of lvl.topics ?? []) {
-      if (!pathsByTopic.has(tid)) pathsByTopic.set(tid, new Set());
-      pathsByTopic.get(tid).add(pid);
-    }
-}
-
-// A topic's effective glossary: union of its paths' glossaries, else union of all.
-function effectiveGlossary(topicId) {
-  const pids = pathsByTopic.get(topicId);
-  if (!pids || pids.size === 0) return unionGloss;
-  return Object.assign({}, ...[...pids].map((p) => glossaries[p] ?? {}));
-}
+// A topic's <Term>s resolve in its paths' glossaries, or in all of them if it's in no path.
+const pathsByTopic = indexPathsByTopic(parsedPaths);
 
 for (const t of topics) {
   const { id, data, content } = t;
@@ -131,10 +108,8 @@ for (const t of topics) {
       errors.push(`${id}: quiz[${i}] answer ${q.answer} out of range`);
   });
 
-  const gloss = effectiveGlossary(id);
-  for (const m of content.matchAll(/<Term\b([^>]*)>([\s\S]*?)<\/Term>/g)) {
-    const idAttr = m[1].match(/\bid=["']([^"']+)["']/);
-    const key = (idAttr ? idAttr[1] : m[2]).toLowerCase().trim();
+  const gloss = effectiveGlossary(id, glossaries, pathsByTopic);
+  for (const key of termKeys(content)) {
     if (!gloss[key]) {
       const pids = pathsByTopic.get(id);
       const where = pids ? `the glossary of its path(s): ${[...pids].join(", ")}` : "any path glossary";
