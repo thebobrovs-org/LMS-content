@@ -1,31 +1,20 @@
 #!/usr/bin/env node
 /**
  * Fast per-file validator for one topic or path .mdx. Layout-aware: works in the
- * LMS-content repo (root `topics/`, `paths/`, `glossary.json`) and in the app
- * repo (`content/topics`, …). For a repo-wide check use `pipeline/validate.mjs`
- * (content repo) or `npm run validate-content` (app repo).
+ * LMS-content repo (root `topics/`, `paths/`, `glossary/<pathId>.json`) and in the app
+ * repo (`content/topics`, `content/paths`, `content/glossary`). For a repo-wide check use
+ * `pipeline/validate.mjs` (content repo) or `npm run validate-content` (app repo).
  *
  *   node skills/lms-authoring-topics/scripts/validate.mjs topics/x/y.mdx
+ *
+ * <Term>s resolve in the topic's per-path glossary: the same rule as the repo-wide
+ * validator, from pipeline/glossary.mjs (LMS-content#63).
  */
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseFrontmatter } from "../../../pipeline/frontmatter.mjs";
-
-const ROOT = process.cwd();
-const has = (p) => fs.existsSync(path.join(ROOT, p));
-
-// Detect layout: content repo (root) vs app repo (content/).
-const TOPICS_DIR = has("topics") ? path.join(ROOT, "topics") : path.join(ROOT, "content", "topics");
-const GLOSSARY = has("glossary.json")
-  ? path.join(ROOT, "glossary.json")
-  : path.join(ROOT, "content", "glossary.json");
-const REGISTRY = path.join(ROOT, "content", "simulations", "registry.json"); // app repo only
-
-const target = process.argv[2];
-if (!target || !fs.existsSync(target)) {
-  console.error("Usage: node …/validate.mjs <path-to-.mdx>");
-  process.exit(2);
-}
+import { effectiveGlossary, loadGlossaries, pathsByTopic, termKeys } from "../../../pipeline/glossary.mjs";
 
 function walk(dir) {
   if (!fs.existsSync(dir)) return [];
@@ -35,31 +24,61 @@ function walk(dir) {
     return e.name.endsWith(".mdx") ? [full] : [];
   });
 }
-const topicId = (file) =>
-  path.relative(TOPICS_DIR, file).replace(/\.mdx$/, "").split(path.sep).join("/");
 
-const topicIds = new Set(walk(TOPICS_DIR).map(topicId));
-const glossary = fs.existsSync(GLOSSARY) ? JSON.parse(fs.readFileSync(GLOSSARY, "utf8")) : {};
-const registry = fs.existsSync(REGISTRY) ? JSON.parse(fs.readFileSync(REGISTRY, "utf8")) : null;
-
-let data, content;
-try {
-  ({ data, content } = parseFrontmatter(fs.readFileSync(target, "utf8"), target));
-} catch (e) {
-  console.error(`✗ ${e.message}`);
-  process.exit(1);
+/** Where content lives: at the root in the content repo, under content/ in the app repo. */
+function layout(root) {
+  const base = fs.existsSync(path.join(root, "topics")) ? root : path.join(root, "content");
+  return {
+    topics: path.join(base, "topics"),
+    staging: path.join(root, "staging", "topics"),
+    paths: path.join(base, "paths"),
+    glossary: path.join(base, "glossary"),
+    legacyGlossary: path.join(base, "glossary.json"), // before per-path glossaries
+    registry: path.join(root, "content", "simulations", "registry.json"), // app repo only
+  };
 }
-const errors = [];
-const isPath = path.resolve(target).replace(/\\/g, "/").match(/\/(content\/)?paths\//);
 
-if (isPath) {
-  for (const f of ["title", "summary", "levels"]) if (data[f] === undefined) errors.push(`missing "${f}"`);
-  for (const [i, lvl] of (data.levels ?? []).entries()) {
-    if (!Array.isArray(lvl.topics) || !lvl.topics.length) errors.push(`levels[${i}] needs ≥1 topic`);
-    for (const tid of lvl.topics ?? []) if (!topicIds.has(tid)) errors.push(`levels[${i}]: topic "${tid}" does not exist`);
+const idIn = (dir, file) => path.relative(dir, file).replace(/\.mdx$/, "").split(path.sep).join("/");
+
+/** The problems with one topic or path file, as messages (empty when it's valid). `root` is the repo root. */
+export function validateFile(target, root = process.cwd()) {
+  const dirs = layout(root);
+  const file = path.resolve(root, target);
+  const topicIds = new Set(walk(dirs.topics).map((f) => idIn(dirs.topics, f)));
+  let glossaries = loadGlossaries(dirs.glossary);
+  if (Object.keys(glossaries).length === 0 && fs.existsSync(dirs.legacyGlossary)) {
+    glossaries = { legacy: JSON.parse(fs.readFileSync(dirs.legacyGlossary, "utf8")) };
   }
-} else {
-  const id = topicId(target);
+  // A path file that doesn't parse is the repo-wide validator's to report; here it's skipped.
+  const paths = walk(dirs.paths).flatMap((f) => {
+    try {
+      return [{ pid: path.basename(f, ".mdx"), data: parseFrontmatter(fs.readFileSync(f, "utf8"), f).data }];
+    } catch {
+      return [];
+    }
+  });
+  const byTopic = pathsByTopic(paths);
+  const registry = fs.existsSync(dirs.registry) ? JSON.parse(fs.readFileSync(dirs.registry, "utf8")) : null;
+
+  let data, content;
+  try {
+    ({ data, content } = parseFrontmatter(fs.readFileSync(file, "utf8"), target));
+  } catch (e) {
+    return [e.message];
+  }
+  const errors = [];
+  const isPath = file.replace(/\\/g, "/").match(/\/(content\/)?paths\//);
+
+  if (isPath) {
+    for (const f of ["title", "summary", "levels"]) if (data[f] === undefined) errors.push(`missing "${f}"`);
+    for (const [i, lvl] of (data.levels ?? []).entries()) {
+      if (!Array.isArray(lvl.topics) || !lvl.topics.length) errors.push(`levels[${i}] needs ≥1 topic`);
+      for (const tid of lvl.topics ?? []) if (!topicIds.has(tid)) errors.push(`levels[${i}]: topic "${tid}" does not exist`);
+    }
+    return errors;
+  }
+
+  const id = file.startsWith(dirs.staging + path.sep) ? idIn(dirs.staging, file) : idIn(dirs.topics, file);
   topicIds.add(id);
   for (const f of ["title", "summary", "tags", "difficulty", "estimatedMinutes"])
     if (data[f] === undefined) errors.push(`missing required field "${f}"`);
@@ -76,19 +95,35 @@ if (isPath) {
     else if (!Number.isInteger(q.answer) || q.answer < 0 || q.answer >= q.choices.length)
       errors.push(`quiz[${i}] answer ${q.answer} out of range`);
   });
-  for (const m of content.matchAll(/<Term\b([^>]*)>([\s\S]*?)<\/Term>/g)) {
-    const a = m[1].match(/\bid=["']([^"']+)["']/);
-    const key = (a ? a[1] : m[2]).toLowerCase().trim();
-    if (!glossary[key]) errors.push(`glossary term "${key}" is not defined`);
+  const gloss = effectiveGlossary(id, glossaries, byTopic);
+  for (const key of termKeys(content)) {
+    if (!gloss[key]) {
+      const pids = byTopic.get(id);
+      const where = pids ? `the glossary of its path(s): ${[...pids].join(", ")}` : "any path glossary";
+      errors.push(`glossary term "${key}" is not defined in ${where}`);
+    }
   }
   if (registry)
     for (const m of content.matchAll(/<Simulation[^>]*\bid=(["'])(.*?)\1/g))
       if (!registry[m[2]]) errors.push(`simulation "${m[2]}" is not in the registry`);
+  return errors;
 }
 
-if (errors.length) {
-  console.error(`✗ ${target} — ${errors.length} problem(s):`);
-  for (const e of errors) console.error(`  - ${e}`);
-  process.exit(1);
+function main() {
+  const target = process.argv[2];
+  if (!target || !fs.existsSync(target)) {
+    console.error("Usage: node …/validate.mjs <path-to-.mdx>");
+    return 2;
+  }
+  const errors = validateFile(target);
+  if (errors.length) {
+    console.error(`✗ ${target} — ${errors.length} problem(s):`);
+    for (const e of errors) console.error(`  - ${e}`);
+    return 1;
+  }
+  console.log(`✓ ${target} looks valid.`);
+  return 0;
 }
-console.log(`✓ ${target} looks valid.`);
+
+// Run as a command, not when imported by the tests.
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) process.exit(main());
