@@ -163,6 +163,9 @@ function setMode(mode) {
   if (mode === "random" && currentMode === "random") shuffleIdx = (shuffleIdx + 1) % SHUFFLES.length;
   currentMode = mode;
   clearFailTimers();
+  // A failure run cancelled midway mustn't keep its hold: render() could then never end
+  // the reconfiguration event, and the loop would never rest.
+  T.hold = false;
   document.querySelectorAll(".chip[data-mode]").forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
   $("runFail").hidden = mode !== "fail";
   $("explanation").innerHTML = explanations[mode];

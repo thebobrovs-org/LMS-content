@@ -123,14 +123,6 @@ function renderUI() {
   canvas = document.getElementById("c");
   ctx = canvas.getContext("2d");
   canvas.addEventListener("pointerdown", (e) => { isDragging = true; lastX = e.clientX; lastY = e.clientY; nudge(); });
-  window.addEventListener("pointermove", (e) => {
-    if (!isDragging) return;
-    yaw += (e.clientX - lastX) * 0.008;
-    pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch + (e.clientY - lastY) * 0.008));
-    lastX = e.clientX; lastY = e.clientY;
-    nudge();
-  });
-  window.addEventListener("pointerup", () => { isDragging = false; });
   resizeCanvas();
   reportSize();
   nudge(); // a new view: draw it, and restart the idle timer
@@ -144,6 +136,19 @@ function resizeCanvas() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 window.addEventListener("resize", () => { resizeCanvas(); nudge(); }); // resizing clears the canvas
+
+// Window-level drag listeners are registered once, here: renderUI() runs on every level
+// change, and listeners added there stacked up, so every pointer move ran every copy.
+window.addEventListener("pointermove", (e) => {
+  if (!isDragging) return;
+  yaw += (e.clientX - lastX) * 0.008;
+  pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch + (e.clientY - lastY) * 0.008));
+  lastX = e.clientX; lastY = e.clientY;
+  nudge();
+});
+// A drag also ends when the gesture is cancelled (a touch turning into a scroll) or the
+// window loses focus mid-drag. Otherwise isDragging would keep the loop drawing forever.
+for (const type of ["pointerup", "pointercancel", "blur"]) window.addEventListener(type, () => { isDragging = false; });
 
 function project(x, y, z, w, h, camZ) {
   const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);

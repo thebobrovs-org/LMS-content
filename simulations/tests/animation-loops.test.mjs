@@ -2,7 +2,7 @@
 // screen) and something is moving. Auto-motion rests 10 s after the last interaction,
 // and under reduced motion there's none, so an idle page costs no CPU. Each real
 // main.js runs in a Node vm with a stub DOM, a fake requestAnimationFrame queue, a fake
-// clock and a controllable IntersectionObserver. Run by `npm run gate`.
+// clock with timers, and a controllable IntersectionObserver. Run by `npm run gate`.
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
@@ -26,9 +26,10 @@ function stub() {
 /** Load a sim's main.js with fakes the test controls. */
 function loadSim(id, { reducedMotion = false } = {}) {
   const frames = []; // queued requestAnimationFrame callbacks
+  const timers = new Map(); // setTimeout id → { at, fn }
   const observers = []; // IntersectionObserver callbacks
   const listeners = {}; // document and window listeners, by event type
-  const state = { visibility: "visible", now: 0 };
+  const state = { visibility: "visible", now: 0, nextTimer: 1 };
   const on = (type, fn) => (listeners[type] ??= []).push(fn);
   const document = new Proxy({}, {
     get: (_, key) => (key === "visibilityState" ? state.visibility : key === "addEventListener" ? on : stub()),
@@ -39,8 +40,8 @@ function loadSim(id, { reducedMotion = false } = {}) {
     performance: { now: () => state.now },
     requestAnimationFrame: (cb) => frames.push(cb),
     cancelAnimationFrame: () => {},
-    setTimeout: () => 0,
-    clearTimeout: () => {},
+    setTimeout: (fn, ms = 0) => { const t = state.nextTimer++; timers.set(t, { at: state.now + ms, fn }); return t; },
+    clearTimeout: (t) => timers.delete(t),
     matchMedia: () => ({ matches: reducedMotion }),
     devicePixelRatio: 1,
     addEventListener: on,
@@ -57,16 +58,22 @@ function loadSim(id, { reducedMotion = false } = {}) {
   vm.runInContext(fs.readFileSync(file, "utf8"), context, { filename: file });
   return {
     run: (code) => vm.runInContext(code, context),
-    /** Run up to `n` rounds of queued frames, FRAME_MS apart; returns how many callbacks ran. */
+    /**
+     * Let `n` frame intervals of FRAME_MS pass, like a browser would: the clock advances,
+     * due timers fire, then queued frames run. Returns how many frame callbacks ran.
+     */
     pump(n = 1) {
       let ran = 0;
-      for (let k = 0; k < n && frames.length; k++) {
+      for (let k = 0; k < n; k++) {
         state.now += FRAME_MS;
+        for (const [t, { at, fn }] of [...timers]) if (at <= state.now) { timers.delete(t); fn(); }
         for (const cb of frames.splice(0)) { cb(state.now); ran++; }
       }
       return ran;
     },
     pending: () => frames.length,
+    /** How many document/window listeners are registered for an event type. */
+    listenerCount: (type) => (listeners[type] ?? []).length,
     setVisible(visible) {
       state.visibility = visible ? "visible" : "hidden";
       for (const fn of listeners.visibilitychange ?? []) fn();
@@ -78,7 +85,7 @@ function loadSim(id, { reducedMotion = false } = {}) {
 
 const SIMS = ["tpu-topology-explorer", "scale-hierarchy", "tpu-ocs-explorer"];
 const MESHES = ["tpu-topology-explorer", "scale-hierarchy"]; // 3D meshes with easing and auto-rotation
-const SECONDS = (s) => Math.ceil((s * 1000) / FRAME_MS); // frame rounds in `s` seconds
+const SECONDS = (s) => Math.ceil((s * 1000) / FRAME_MS); // frame intervals in `s` seconds
 
 for (const id of SIMS) {
   test(`${id}: no frames while the tab is hidden; it resumes when shown`, () => {
@@ -137,6 +144,30 @@ for (const id of MESHES) {
     sim.pump(SECONDS(5));
     assert.equal(sim.pending(), 0);
   });
+
+  for (const cancel of ["pointercancel", "blur"]) {
+    test(`${id}: a drag ended by ${cancel} (not pointerup) returns to idle`, () => {
+      const sim = loadSim(id);
+      sim.run("start()");
+      sim.pump(SECONDS(12));
+      assert.equal(sim.pending(), 0);
+      sim.run("isDragging = true");
+      sim.fire("pointermove", { clientX: 40, clientY: 10 });
+      sim.fire(cancel);
+      assert.equal(sim.run("isDragging"), false);
+      sim.pump(SECONDS(12));
+      assert.equal(sim.pending(), 0, "no endless drawing after a cancelled gesture");
+    });
+  }
+
+  test(`${id}: re-rendering (a tab or level change) doesn't stack window drag listeners`, () => {
+    const sim = loadSim(id);
+    sim.run("start()");
+    sim.run("renderUI(); renderUI(); renderUI()");
+    for (const type of ["pointermove", "pointerup", "pointercancel", "blur"]) {
+      assert.equal(sim.listenerCount(type), 1, `one ${type} listener, however often the view re-renders`);
+    }
+  });
 }
 
 test("tpu-ocs-explorer: the photon flow runs for 10 s after the last operation, then rests; a new operation restarts it", () => {
@@ -150,4 +181,50 @@ test("tpu-ocs-explorer: the photon flow runs for 10 s after the last operation, 
   assert.ok(sim.pending() > 0, "choosing an operation draws again");
   sim.pump(SECONDS(12));
   assert.equal(sim.pending(), 0, "and rests again once the mirrors settle and 10 s pass");
+});
+
+test("tpu-ocs-explorer: a failure run completes, splices in the spare, and then rests", () => {
+  const sim = loadSim("tpu-ocs-explorer");
+  sim.run("start()");
+  sim.run("triggerFailure()");
+  sim.pump(SECONDS(1.5));
+  assert.equal(sim.run("T.hold"), true, "cube 2 is down, holding the event open");
+  sim.pump(SECONDS(1.5));
+  assert.equal(sim.run("JSON.stringify(routes)"), "[1,7,null,4,5,6,0,3]", "the spare is spliced in");
+  sim.pump(SECONDS(12));
+  assert.equal(sim.run("T.hold"), false);
+  assert.equal(sim.run("T.eventActive"), false);
+  assert.equal(sim.pending(), 0);
+});
+
+test("tpu-ocs-explorer: switching operations between the failure's two steps clears its hold, so the sim settles and rests", () => {
+  const sim = loadSim("tpu-ocs-explorer");
+  sim.run("start()");
+  sim.run("triggerFailure()");
+  sim.pump(SECONDS(1.6)); // after the 1.4 s step (cube 2 down), before the 2.5 s repair
+  assert.equal(sim.run("T.hold"), true);
+  sim.run('setMode("ring")'); // cancels the repair step
+  sim.pump(SECONDS(12));
+  assert.equal(sim.run("T.hold"), false, "the cancelled run's hold is cleared");
+  assert.equal(sim.run("T.eventActive"), false, "the reconfiguration event ends");
+  assert.equal(sim.pending(), 0, "and the loop rests");
+  const down = sim.run("T.downTotal");
+  sim.pump(SECONDS(5));
+  assert.equal(sim.run("T.downTotal"), down, "downtime stops accumulating");
+});
+
+test("tpu-ocs-explorer: hidden during a failure run, its steps still apply; shown again, it draws, then rests", () => {
+  const sim = loadSim("tpu-ocs-explorer");
+  sim.run("start()");
+  sim.run("triggerFailure()");
+  sim.pump(SECONDS(0.5));
+  sim.setVisible(false);
+  sim.pump(SECONDS(3)); // both timed steps fire while hidden
+  assert.equal(sim.pending(), 0, "no frames while hidden");
+  assert.equal(sim.run("JSON.stringify(routes)"), "[1,7,null,4,5,6,0,3]");
+  sim.setVisible(true);
+  assert.ok(sim.pending() > 0, "draws the new state when shown");
+  sim.pump(SECONDS(12));
+  assert.equal(sim.run("T.eventActive"), false);
+  assert.equal(sim.pending(), 0);
 });
