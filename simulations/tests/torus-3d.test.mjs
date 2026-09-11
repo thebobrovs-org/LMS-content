@@ -83,6 +83,8 @@ function loadSim() {
     observed,
     draws,
     checkpoints: () => events.filter((e) => e.startsWith("checkpoint:")),
+    /** Drop an element, so the next markup write creates a fresh one, as the browser would. */
+    forget: (id) => els.delete(id),
     key: (key, event = {}) => fire(element("c"), "keydown", { key, ...event }),
     pick(value) {
       element("chip").value = value;
@@ -148,6 +150,14 @@ test("torus-3d: a render syncs the list with the selection, whichever input made
   const sim = loadSim();
   sim.run("selected = 3; render()");
   assert.equal(sim.el("chip").value, "3");
+});
+
+test("torus-3d: mounting again (the host initializes after the fallback) fills the new readout", () => {
+  const sim = loadSim();
+  assert.match(sim.el("readout").innerHTML, /Drag or use the arrow keys/);
+  sim.forget("readout");
+  sim.run("mount()");
+  assert.match(sim.el("readout").innerHTML, /Drag or use the arrow keys/, "the fresh readout element is written, though the text is the same");
 });
 
 test("torus-3d: the canvas redraws at its new size when it is resized", () => {

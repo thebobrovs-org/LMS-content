@@ -250,6 +250,7 @@ function mount() {
   canvas = app.querySelector("#c");
   ctx = canvas.getContext("2d");
   readout = app.querySelector("#readout");
+  readoutHtml = null; // a new element: whatever was announced before isn't in it
   picker = app.querySelector("#chip");
 
   picker.addEventListener("change", (e) => select(e.target.value === "" ? null : Number(e.target.value)));
