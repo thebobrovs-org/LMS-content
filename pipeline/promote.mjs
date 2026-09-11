@@ -180,8 +180,9 @@ function validateProjection(root, prepared) {
 
 /**
  * Put every prepared file in place, then remove the staged originals.
- * - Each file is first written to a temporary name beside its destination. The name is
- *   opened exclusively, and its cleanup is registered before anything is written to it.
+ * - Each file is first written, every byte of it, to a temporary name beside its
+ *   destination. The name is opened exclusively, and its cleanup is registered before
+ *   anything is written to it.
  * - A new topic is then hard-linked into place, which fails if something appeared at
  *   that name meanwhile. Without --force, an existing name is refused.
  * - A --force replacement keeps a hard-link backup of the published file. The backup is
@@ -195,6 +196,11 @@ function validateProjection(root, prepared) {
 export function commit(prepared, force, io = fs) {
   const undo = []; // { what, run }, oldest first
   const tag = `.promote-${process.pid}`;
+  // Only what this attempt creates is ever cleaned up, even if `prepared` is reused for a retry.
+  for (const m of prepared) {
+    m.backup = null;
+    m.replaced = false;
+  }
   try {
     for (const m of prepared) {
       io.mkdirSync(path.dirname(m.dest), { recursive: true });
@@ -202,14 +208,21 @@ export function commit(prepared, force, io = fs) {
       const fd = io.openSync(tmp, "wx");
       undo.push({ what: `remove ${path.basename(tmp)}`, run: () => io.rmSync(tmp, { force: true }) });
       try {
-        io.writeSync(fd, m.text);
+        // writeSync may write fewer bytes than asked for: keep going until every byte is written.
+        const bytes = Buffer.from(m.text, "utf8");
+        for (let written = 0; written < bytes.length; ) {
+          const n = io.writeSync(fd, bytes, written, bytes.length - written);
+          if (!(n > 0)) throw new Error(`${m.shown}: writing the temporary file made no progress`);
+          written += n;
+        }
       } finally {
         io.closeSync(fd);
       }
       if (io.existsSync(m.dest)) {
         if (!force) throw new Error(`${m.shown}: appeared while promoting; pass --force to replace it`);
-        m.backup = `${m.dest}${tag}.bak`;
-        io.linkSync(m.dest, m.backup); // the original, until the promotion succeeds
+        const backup = `${m.dest}${tag}.bak`;
+        io.linkSync(m.dest, backup); // EEXIST if that name is taken: never touch a backup this attempt didn't make
+        m.backup = backup; // ours from here on: the original, until the promotion succeeds
         io.renameSync(tmp, m.dest);
         m.replaced = true; // from here on, only the backup holds the original
         undo.push({

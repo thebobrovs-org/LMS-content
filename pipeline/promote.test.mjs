@@ -251,6 +251,34 @@ test("if putting a replaced topic back fails, its original is kept and reported,
   assert.equal(fs.readFileSync(kept, "utf8"), "old c\n", "the original's bytes are still recoverable");
 });
 
+test("a short write is finished: every byte of the topic is written before it's published", () => {
+  const root = fixture({ "staging/topics/sub/a.mdx": topic() });
+  const text = `${"x".repeat(10_000)}\nthe end, with a multibyte character: é\n`;
+  const moves = prepared(root, [["staging/topics/sub/a.mdx", "topics/sub/a.mdx", text]]);
+  // Writes at most 7 bytes per call, whatever it's asked for (a whole string, or a slice of a buffer).
+  const io = { ...fs };
+  io.writeSync = (fd, data, offset = 0, length) => {
+    const bytes = typeof data === "string" ? Buffer.from(data, "utf8") : data;
+    const start = typeof data === "string" ? 0 : offset;
+    const want = typeof data === "string" ? bytes.length : length;
+    return fs.writeSync(fd, bytes, start, Math.min(want, 7));
+  };
+  commit(moves, false, io);
+  assert.equal(read(root, "topics/sub/a.mdx"), text);
+});
+
+test("a backup this attempt didn't create is never deleted, even when the promotion fails", () => {
+  const root = fixture({ "staging/topics/sub/c.mdx": topic(), "topics/sub/c.mdx": "published c\n" });
+  // A backup kept by an earlier failed restore, under the name this process would use.
+  const earlier = path.join(root, `topics/sub/c.mdx.promote-${process.pid}.bak`);
+  fs.writeFileSync(earlier, "the original, kept by an earlier failed restore\n");
+  const moves = prepared(root, [["staging/topics/sub/c.mdx", "topics/sub/c.mdx", "new c\n"]]);
+  assert.throws(() => commit(moves, true), /EEXIST/);
+  assert.equal(fs.readFileSync(earlier, "utf8"), "the original, kept by an earlier failed restore\n");
+  assert.equal(read(root, "topics/sub/c.mdx"), "published c\n", "the published topic is untouched");
+  assert.ok(exists(root, "staging/topics/sub/c.mdx"));
+});
+
 test("a temp file that fails partway through writing is removed on rollback", () => {
   const root = fixture({ "staging/topics/sub/a.mdx": topic(), "staging/topics/sub/b.mdx": topic() });
   const moves = prepared(root, [
@@ -259,9 +287,9 @@ test("a temp file that fails partway through writing is removed on rollback", ()
   ]);
   let writes = 0;
   const io = { ...fs };
-  io.writeSync = (fd, text) => {
+  io.writeSync = (...args) => {
     if (++writes === 2) throw new Error("simulated disk full"); // b's temp file exists, but its write fails
-    return fs.writeSync(fd, text);
+    return fs.writeSync(...args);
   };
   assert.throws(() => commit(moves, false, io), /simulated disk full/);
   assert.equal(exists(root, "topics/sub/a.mdx"), false, "the first topic is removed again");
