@@ -132,20 +132,6 @@ const pathsByTopic = indexPathsByTopic(parsedPaths);
 const MEDIA_DIR = path.join(ROOT, "media");
 const MEDIA_REAL = fs.existsSync(MEDIA_DIR) ? fs.realpathSync(MEDIA_DIR) : null;
 
-/** Markdown with fenced and inline code removed: an example in a code block isn't a reference. */
-const withoutCode = (md) => md.replace(/```[\s\S]*?```/g, "").replace(/~~~[\s\S]*?~~~/g, "").replace(/`[^`\n]*`/g, "");
-
-/** The /media/... URLs a document references: inline images, HTML/JSX src, and reference-style definitions. */
-export function mediaRefs(content) {
-  const text = withoutCode(content);
-  const refs = new Set();
-  for (const m of text.matchAll(/!\[[^\]]*\]\(\s*(\/media\/[^)\s]+)/g)) refs.add(m[1]);
-  for (const m of text.matchAll(/\bsrc=["'](\/media\/[^"']+)["']/g)) refs.add(m[1]);
-  for (const m of text.matchAll(/^\s*\[[^\]]+\]:\s*(\/media\/\S+)/gm)) refs.add(m[1]);
-  // The file name is the pathname: a fragment or query string isn't part of it.
-  return [...refs].map((u) => u.replace(/[#?].*$/, ""));
-}
-
 /** Why `/media/<ref>` isn't a regular file inside media/, or null if it is. */
 function mediaProblem(ref) {
   const name = ref.replace(/^\/media\//, "");
@@ -161,8 +147,21 @@ function mediaProblem(ref) {
   return null;
 }
 
-// ── MDX: compiles as the app would, and holds no JavaScript ──
+// ── MDX: compiles as the app would, holds no JavaScript, and its media exist ──
 const ALLOWED = new Set(MDX_COMPONENTS);
+// The HTML a lesson may write directly: prose elements only. Nothing that scripts,
+// embeds, loads or styles (script, iframe, object, embed, video, svg, style, form, …).
+const HTML_ELEMENTS = new Set([
+  "a", "abbr", "b", "blockquote", "br", "code", "dd", "del", "details", "div", "dl", "dt", "em", "figcaption", "figure",
+  "h1", "h2", "h3", "h4", "h5", "h6", "hr", "i", "img", "ins", "kbd", "li", "mark", "ol", "p", "pre", "s", "small", "span",
+  "strong", "sub", "summary", "sup", "table", "tbody", "td", "tfoot", "th", "thead", "tr", "u", "var", "wbr",
+]);
+// The attributes those elements may carry, plus aria-* and data-*. Not dangerouslySetInnerHTML,
+// srcDoc, style or an on* handler: an HTML string or a handler is code, whatever carries it.
+const HTML_ATTRIBUTES = new Set(["alt", "className", "colSpan", "height", "href", "id", "lang", "open", "rel", "rowSpan", "src", "start", "target", "title", "width"]);
+// A URL a lesson may point at: a same-site path or fragment, http(s), or mailto. Never javascript:, data: or another scheme.
+const SAFE_SCHEMES = new Set(["http", "https", "mailto"]);
+const urlScheme = (url) => /^([a-z][a-z0-9+.-]*):/i.exec(url)?.[1].toLowerCase();
 
 /**
  * Whether an ESTree node is literal data: a string, number, boolean or null, a
@@ -189,26 +188,54 @@ export function isLiteralData(node) {
   }
 }
 
-/** Whether an MDX expression's program is exactly one literal-data expression. */
-const literalProgram = (estree) => estree?.body?.length === 1 && estree.body[0].type === "ExpressionStatement" && isLiteralData(estree.body[0].expression);
+/** The single expression of an MDX expression's program, if it is literal data; else undefined. */
+const literalOf = (estree) => (estree?.body?.length === 1 && estree.body[0].type === "ExpressionStatement" && isLiteralData(estree.body[0].expression) ? estree.body[0].expression : undefined);
+
+/** A JSX attribute's value when it is a string (`src="…"` or `src={"…"}`); undefined for a boolean attribute or other literal data. */
+function stringValue(attribute) {
+  if (typeof attribute.value === "string") return attribute.value;
+  const literal = attribute.value && typeof attribute.value === "object" ? literalOf(attribute.value.data?.estree) : undefined;
+  return literal?.type === "Literal" && typeof literal.value === "string" ? literal.value : undefined;
+}
 
 /**
- * A remark plugin that rejects JavaScript and unknown components (AGENTS.md: a lesson
- * is prose plus the documented components). An expression may carry literal data only.
+ * A remark plugin that enforces what a lesson may hold (AGENTS.md: prose plus the
+ * documented components, no JavaScript) and collects every URL it references:
+ * - no import or export; an expression may carry literal data only;
+ * - a JSX tag is a documented component or one of HTML_ELEMENTS, whose attributes
+ *   come from HTML_ATTRIBUTES (so no dangerouslySetInnerHTML, srcDoc or on*);
+ * - a link or image URL, Markdown or JSX, has no scheme other than http(s) or mailto.
+ * `urls` receives the URLs of every image, link, definition and `src`/`href`.
  */
-function noJavaScript() {
+function lessonRules(urls) {
   return (tree, vfile) => {
+    const url = (value, node, what) => {
+      const scheme = urlScheme(value);
+      if (scheme && !SAFE_SCHEMES.has(scheme)) vfile.fail(`${what} may point at a same-site path, http(s) or mailto, not "${scheme}:"`, node);
+      urls.push(value);
+    };
     const visit = (node) => {
       if (node.type === "mdxjsEsm") vfile.fail("an import or export isn't allowed in a lesson", node);
       if (node.type === "mdxFlowExpression" || node.type === "mdxTextExpression") {
-        if (!literalProgram(node.data?.estree)) vfile.fail(`a JavaScript expression isn't allowed in a lesson (only literal data such as {" "} or {42})`, node);
+        if (!literalOf(node.data?.estree)) vfile.fail(`a JavaScript expression isn't allowed in a lesson (only literal data such as {" "} or {42})`, node);
       }
+      if ((node.type === "image" || node.type === "link" || node.type === "definition") && typeof node.url === "string") url(node.url, node, node.type === "link" ? "a link" : "an image");
       if (node.type === "mdxJsxFlowElement" || node.type === "mdxJsxTextElement") {
-        if (node.name && !ALLOWED.has(node.name) && !/^[a-z]/.test(node.name)) vfile.fail(`<${node.name}> isn't a documented component (${[...ALLOWED].join(", ")})`, node);
+        const html = node.name != null && !ALLOWED.has(node.name);
+        if (html && !HTML_ELEMENTS.has(node.name)) {
+          vfile.fail(/^[a-z]/.test(node.name) ? `<${node.name}> isn't HTML a lesson may write (${[...HTML_ELEMENTS].join(", ")})` : `<${node.name}> isn't a documented component (${[...ALLOWED].join(", ")})`, node);
+        }
         for (const a of node.attributes ?? []) {
           if (a.type !== "mdxJsxAttribute") vfile.fail(`a spread attribute isn't allowed on <${node.name}>`, node);
-          else if (a.value && typeof a.value === "object" && !literalProgram(a.value.data?.estree)) {
-            vfile.fail(`<${node.name} ${a.name}={…}>: an attribute may carry only literal data (a string, number, boolean, array or object of those)`, node);
+          else {
+            if (html && !HTML_ATTRIBUTES.has(a.name) && !/^(aria|data)-[a-z][a-z0-9-]*$/.test(a.name)) {
+              vfile.fail(`<${node.name} ${a.name}>: a lesson's HTML may carry only ${[...HTML_ATTRIBUTES].join(", ")}, aria-* and data-*`, node);
+            }
+            if (a.value && typeof a.value === "object" && !literalOf(a.value.data?.estree)) {
+              vfile.fail(`<${node.name} ${a.name}={…}>: an attribute may carry only literal data (a string, number, boolean, array or object of those)`, node);
+            }
+            const value = stringValue(a);
+            if ((a.name === "src" || a.name === "href") && value !== undefined) url(value, node, `<${node.name} ${a.name}>`);
           }
         }
       }
@@ -218,11 +245,12 @@ function noJavaScript() {
   };
 }
 
-/** Compile one MDX body as the app would; a failure names the file and its line in the file. */
+/** Compile one MDX body as the app would; a failure names the file and its line in the file. Returns the URLs it references, or null. */
 async function compiles(file, content, bodyLine) {
+  const urls = [];
   try {
-    await compile(content, { development: false, remarkPlugins: [noJavaScript] });
-    return true;
+    await compile(content, { development: false, remarkPlugins: [() => lessonRules(urls)] });
+    return urls;
   } catch (e) {
     // The position is in the message's body coordinates, as fields or as a "(line:col-line:col)" suffix.
     const reason = String(e.reason ?? e.message);
@@ -231,17 +259,20 @@ async function compiles(file, content, bodyLine) {
     const column = e.column ?? e.place?.start?.column ?? (suffix ? Number(suffix[2]) : undefined);
     const where = line ? `:${line + bodyLine - 1}${column ? `:${column}` : ""}` : "";
     errors.push(`${rel(file)}${where}: MDX rejected: ${suffix ? reason.slice(0, suffix.index) : reason}`);
-    return false;
+    return null;
   }
 }
 
-/** The checks a topic or path body needs beyond its frontmatter. */
+/** The /media/... files a document references, from the URLs its compiled tree holds; the file name is the pathname, not a fragment or query string. */
+export const mediaRefs = (urls) => [...new Set(urls.filter((u) => u.startsWith("/media/")).map((u) => u.replace(/[#?].*$/, "")))];
+
+/** The checks a topic or path body needs beyond its frontmatter: it compiles under the lesson rules, and its media exist. */
 async function checkBody(id, file, content, bodyLine) {
-  for (const ref of mediaRefs(content)) {
+  const urls = await compiles(file, content, bodyLine);
+  for (const ref of mediaRefs(urls ?? [])) {
     const problem = mediaProblem(ref);
     if (problem) errors.push(`${id}: ${problem}`);
   }
-  await compiles(file, content, bodyLine);
 }
 
 for (const t of topics) {

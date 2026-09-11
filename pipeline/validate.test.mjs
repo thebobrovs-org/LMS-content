@@ -1,6 +1,6 @@
 // Tests for pipeline/validate.mjs (LMS-content#73): the gate rejects every fixture from
 // the baseline review, MDX that doesn't compile or holds JavaScript, media outside
-// media/, and a published path that lists a draft or staged topic; and it accepts a
+// media/, HTML that isn't prose, and a published path that lists a draft or staged topic; and it accepts a
 // well-formed tree. Each case runs the real validator on a scratch content tree. Run
 // by `npm run gate`.
 import assert from "node:assert/strict";
@@ -118,6 +118,10 @@ test("media must be a regular file inside media/, referenced from a topic or a p
   assert.match(fails("traversal", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n![x](/media/../resources/foundations.json)\n` }), /points outside media\//);
   assert.match(fails("a directory", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n![x](/media/dir)\n`, "media/dir/inner.svg": "<svg/>" }), /is not a file/);
   assert.match(fails("a reference-style image", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n![x][img]\n\n[img]: /media/missing.svg\n` }), /has no media\/missing\.svg/);
+  // References come from the compiled tree, so every spelling Markdown and JSX allow is seen.
+  assert.match(fails("an angle-bracket destination", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n![x](</media/missing.svg>)\n` }), /has no media\/missing\.svg/);
+  assert.match(fails("a JSX src", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<img src="/media/missing.svg" alt="x" />\n` }), /has no media\/missing\.svg/);
+  assert.match(fails("a JSX src as a literal expression", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<img src={"/media/missing.svg"} alt="x" />\n` }), /has no media\/missing\.svg/);
   // A symlink that escapes media/.
   const root = tree();
   fs.symlinkSync(path.join(root, "resources", "foundations.json"), path.join(root, "media", "escape.svg"));
@@ -144,11 +148,31 @@ test("a lesson is prose plus the documented components: no JavaScript, no other 
     const out = fails(name, { "topics/fundamentals/arrays.mdx": body });
     assert.match(out, /MDX rejected/, name);
   }
-  // Documented components, lower-case HTML, and expressions that carry only literal data are fine.
+  // Documented components, prose HTML, and expressions that carry only literal data are fine.
   const ok = run(tree({
-    "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Callout type="tip">Hi <em>there</em>{" "}now</Callout>\n\n<Steps>\n  <Step title="One">Do it.</Step>\n</Steps>\n\n<Simulation id="demo-sim" height={520} props={{ keys: 24, replicas: -1, names: ["a", "b"], on: true, none: null }} />\n`,
+    "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Callout type="tip">Hi <em>there</em>{" "}now</Callout>\n\n<Steps>\n  <Step title="One">Do it.</Step>\n</Steps>\n\n<Simulation id="demo-sim" height={520} props={{ keys: 24, replicas: -1, names: ["a", "b"], on: true, none: null }} />\n\n<details>\n  <summary>More</summary>\n  <img src="/media/array.svg" alt="memory" width={300} data-kind="diagram" />\n  <a href="https://example.org/spec#part" target="_blank" rel="noreferrer">the spec</a>, [a topic](/topics/fundamentals/arrays), <a href="mailto:hi@example.org">mail</a>.\n</details>\n`,
   }));
   assert.equal(ok.code, 0, ok.out);
+});
+
+test("a lesson's HTML is prose: no active elements, attributes or URL schemes", () => {
+  const cases = {
+    "an HTML string as a prop": [`${TOPIC}\n<div dangerouslySetInnerHTML={{ __html: "<img src=x onerror=alert(1)>" }} />\n`, /<div dangerouslySetInnerHTML>: a lesson's HTML may carry only/],
+    "a script element": [`${TOPIC}\n<script>alert(1)</script>\n`, /<script> isn't HTML a lesson may write/],
+    "an iframe with srcDoc": [`${TOPIC}\n<iframe srcDoc="<script>alert(1)</script>" />\n`, /<iframe> isn't HTML a lesson may write/],
+    "an inline handler": [`${TOPIC}\n<a href="/x" onclick="alert(1)">x</a>\n`, /<a onclick>: a lesson's HTML may carry only/],
+    "a style attribute": [`${TOPIC}\n<span style={{ color: "red" }}>x</span>\n`, /<span style>: a lesson's HTML may carry only/],
+    "a javascript: href": [`${TOPIC}\n<a href="javascript:alert(1)">x</a>\n`, /<a href> may point at a same-site path, http\(s\) or mailto, not "javascript:"/],
+    "a data: src": [`${TOPIC}\n<img src="data:text/html,<script>alert(1)</script>" alt="x" />\n`, /<img src> may point at .*, not "data:"/],
+    "a javascript: Markdown link": [`${TOPIC}\n[x](javascript:alert(1))\n`, /a link may point at .*, not "javascript:"/],
+    "a data: Markdown image": [`${TOPIC}\n![x](data:image/svg+xml,<svg/>)\n`, /an image may point at .*, not "data:"/],
+    "a javascript: reference definition": [`${TOPIC}\n[x][j]\n\n[j]: javascript:alert(1)\n`, /an image may point at .*, not "javascript:"/],
+  };
+  for (const [name, [body, message]] of Object.entries(cases)) {
+    const out = fails(name, { "topics/fundamentals/arrays.mdx": body });
+    assert.match(out, /MDX rejected/, name);
+    assert.match(out, message, name);
+  }
 });
 
 test("an MDX error names the line in the file, not in the body", () => {
