@@ -78,7 +78,7 @@
     "definition": "XLA zero-pads tensor dimensions up to the MXU tile (128, or 256 on v6e/v7) and the memory lanes (multiples of 8/128). Misaligned shapes carry wasted padded zeros — burning compute and on-chip memory, a common cause of surprise OOMs."
   },
   "fp4": {
-    "definition": "Native 4-bit floating point on TPU 8t — a quarter of bf16's bytes per parameter (half of FP8's), raising peak MXU throughput by cutting memory traffic per FLOP."
+    "definition": "Native 4-bit floating point on TPU 8t — a quarter of bf16's bytes per parameter (half of FP8's), so each FLOP moves less memory — higher arithmetic intensity, which speeds up memory-bound work."
   },
   "xpk": {
     "definition": "Accelerated Processing Kit — Google's CLI for orchestrating TPU workloads on GKE. The real entry point: XPK → Kueue → GKE provisions DWS Flex-start nodes. You don't hand-submit raw pods for multi-host slices."

@@ -14,7 +14,7 @@ flashcards:
   - front: What does XLA fusion actually save?
     back: It merges a chain of ops (matmul + bias + activation + scale) into one kernel, so the intermediate results never leave the chip for HBM. Same FLOPs, far fewer HBM round-trips → higher arithmetic intensity.
   - front: JIT vs AOT in JAX
-    back: Same XLA compiler, different timing. JIT compiles on the first call (and caches). AOT — jax.jit(f).lower(args).compile() — compiles without running, so you can inspect the HLO and the memory analysis and catch an OOM before you ever touch a slice.
+    back: Same XLA compiler, different timing. JIT compiles on the first call (and caches). AOT — jax.jit(f).lower(args).compile() — compiles without running, so you can inspect the HLO and the memory analysis and catch an OOM at compile time, before a single training step runs.
   - front: The JAX AI stack pieces
     back: JAX (numerics + transforms) sits on XLA/StableHLO and the TPU. On top of JAX are two sibling libraries — not rungs under each other — Flax NNX (the model/module system; the recommended API, with Linen the older one you'll meet in MaxText) and Optax (optimizers). Orbax and Grain handle checkpointing and data.
 quiz:
