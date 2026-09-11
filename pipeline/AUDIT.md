@@ -20,8 +20,10 @@ Each returns pass/fail with specifics; promotion needs a majority pass:
   `CONTENT_STAGING=1`) and signs off, or requests changes.
 
 ## 4. Promote
-- `node pipeline/promote.mjs staging/topics/<…>.mdx` runs `validate.mjs --staging`
-  first, then moves the file to `topics/` and sets `status: published`.
-- It changes nothing if validation fails, if a path is outside `staging/topics/`,
+- `node pipeline/promote.mjs staging/topics/<…>.mdx` first validates production
+  content as it will be after the promotion, in a scratch copy. Then it moves the
+  file to `topics/` and sets `status: published`.
+- It changes nothing if that validation fails, if a path is outside `staging/topics/`,
   or if it would replace a published topic. Pass `--force` to replace one on purpose.
+- If a write fails midway, the files already moved are put back.
 - Commit; merge. The app rebuilds and the topic goes live.

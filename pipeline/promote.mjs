@@ -8,15 +8,21 @@
  *   node pipeline/promote.mjs --all       # promote every staged topic
  *   add --force to replace a topic that is already published
  *
- * It refuses, and changes nothing, unless every step can succeed (LMS-content#62):
- * - only .mdx files inside staging/topics/ are accepted (symlinks are resolved
- *   first, so nothing outside the repo is read, written or deleted);
- * - an existing topics/<…>.mdx is never overwritten without --force;
- * - `node pipeline/validate.mjs --staging` must pass before anything moves;
- * - status is rewritten only inside the frontmatter, never in the body.
+ * It changes nothing unless every step can succeed (LMS-content#62):
+ * - Only .mdx files inside staging/topics/ are accepted. staging/ and staging/topics/
+ *   must be real directories in the repo, and every destination must stay inside the
+ *   real topics/ directory: a symlink anywhere on the way is refused. Nothing outside
+ *   the repo is read, written or deleted.
+ * - An existing topic is never overwritten without --force, even one that appears
+ *   while this runs: a new topic is linked into place, which fails if the name exists.
+ * - Production content, as it will be after the promotion, must pass validate.mjs.
+ *   That's checked in a scratch copy before anything in the repo changes.
+ * - status is rewritten only inside the frontmatter.
+ * - If a write fails midway, every file already moved is put back.
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseFrontmatter } from "./frontmatter.mjs";
@@ -37,8 +43,58 @@ export function publish(text, file = "(input)") {
   return out;
 }
 
+const isLink = (p) => {
+  try {
+    return fs.lstatSync(p).isSymbolicLink();
+  } catch {
+    return false;
+  }
+};
+
+/** Whether `child` is strictly inside `parent`. A name like "..notes" is fine; a ".." segment isn't. */
+const inside = (parent, child) => {
+  const rel = path.relative(parent, child);
+  return rel !== "" && rel !== ".." && !rel.startsWith(`..${path.sep}`) && !path.isAbsolute(rel);
+};
+
 /**
- * Work out every move before making any. Returns { moves: [{ src, dest, rel }], problems }.
+ * Why staging/topics/ can't serve as the boundary for sources, or null. It and staging/
+ * must be real directories inside the repo: if either were a symlink, files outside the
+ * repo would pass the containment check and be read and deleted.
+ */
+function stagingProblem(root) {
+  for (const rel of ["staging", "staging/topics"]) {
+    if (isLink(path.join(root, rel))) return `${rel}/ must be a real directory inside the repo, not a symlink`;
+  }
+  const stage = path.join(root, "staging", "topics");
+  if (fs.existsSync(stage) && fs.realpathSync(stage) !== path.join(fs.realpathSync(root), "staging", "topics")) {
+    return "staging/topics/ must be a real directory inside the repo";
+  }
+  return null;
+}
+
+/**
+ * Why writing `dest` could reach outside the repo's topics/ directory, or null.
+ * topics/ must be a real directory in the repo, and neither any directory between it
+ * and the file nor the file itself may be a symlink (even a dangling one).
+ */
+function destinationProblem(root, dest) {
+  const topics = path.join(root, "topics");
+  const shown = (p) => path.relative(root, p);
+  if (isLink(topics) || (fs.existsSync(topics) && fs.realpathSync(topics) !== path.join(fs.realpathSync(root), "topics"))) {
+    return "topics/ must be a real directory inside the repo";
+  }
+  for (let dir = path.dirname(dest); dir !== topics; dir = path.dirname(dir)) {
+    if (isLink(dir)) return `${shown(dir)} is a symlink`;
+    if (fs.existsSync(dir) && !fs.statSync(dir).isDirectory()) return `${shown(dir)} is not a directory`;
+  }
+  if (isLink(dest)) return `${shown(dest)} is a symlink`;
+  if (fs.existsSync(dest) && !fs.statSync(dest).isFile()) return `${shown(dest)} is not a file`;
+  return null;
+}
+
+/**
+ * Work out every move before making any. Returns { moves: [{ src, dest, rel, shown }], problems }.
  * `root` is the repo root; `args` are the command-line arguments.
  */
 export function plan(root, args) {
@@ -48,6 +104,8 @@ export function plan(root, args) {
   const stage = path.join(root, "staging", "topics");
   const problems = [];
   if (!all && names.length === 0) problems.push("Usage: node pipeline/promote.mjs <staging/topics/…mdx>… | --all  [--force]");
+  const badStaging = stagingProblem(root);
+  if (badStaging) return { moves: [], problems: [...problems, badStaging] };
 
   const stageReal = fs.existsSync(stage) ? fs.realpathSync(stage) : null;
   const walk = (dir) =>
@@ -64,33 +122,120 @@ export function plan(root, args) {
     const shown = path.relative(root, src) || src;
     if (!fs.existsSync(src)) { problems.push(`${shown}: not found`); continue; }
     const real = fs.realpathSync(src);
-    const rel = stageReal ? path.relative(stageReal, real) : "";
-    if (!stageReal || !rel || rel.startsWith("..") || path.isAbsolute(rel)) {
+    if (!stageReal || !inside(stageReal, real)) {
       problems.push(`${shown}: only files inside staging/topics/ can be promoted`);
       continue;
     }
+    const rel = path.relative(stageReal, real);
     if (!rel.endsWith(".mdx") || !fs.statSync(real).isFile()) { problems.push(`${shown}: not an .mdx file`); continue; }
     const dest = path.join(root, "topics", rel);
+    const unsafe = destinationProblem(root, dest);
+    if (unsafe) { problems.push(`${shown}: ${unsafe}`); continue; }
     if (fs.existsSync(dest) && !force) {
       problems.push(`${path.relative(root, dest)} already exists: pass --force to replace the published topic`);
       continue;
     }
-    moves.push({ src: real, dest, rel });
+    moves.push({ src: real, dest, rel, shown: path.relative(root, dest) });
   }
   const dests = moves.map((m) => m.dest);
   if (new Set(dests).size !== dests.length) problems.push("two files would be promoted to the same topic");
   return { moves, problems };
 }
 
-/** Run the content validator on published + staged content, from `root`. */
-function validate(root) {
-  const validator = fileURLToPath(new URL("./validate.mjs", import.meta.url));
-  return spawnSync(process.execPath, [validator, "--staging"], { cwd: root, stdio: "inherit" }).status === 0;
+/** Copy the files under `from` into `to`. Directories are created fresh, so the copy is always writable. */
+function copyTree(from, to) {
+  fs.mkdirSync(to, { recursive: true });
+  for (const e of fs.readdirSync(from, { withFileTypes: true })) {
+    const a = path.join(from, e.name);
+    const b = path.join(to, e.name);
+    if (e.isDirectory()) copyTree(a, b);
+    else if (e.isFile()) fs.copyFileSync(a, b);
+  }
+}
+
+/**
+ * Whether production content, as it will be after these moves, passes validate.mjs.
+ * Checked in a scratch copy, so a prerequisite left behind in staging, or a broken
+ * promoted topic, is caught before the repo changes. Other drafts don't count.
+ */
+function validateProjection(root, prepared) {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "promote-check-"));
+  try {
+    for (const dir of ["topics", "paths", "glossary", "resources"]) {
+      if (fs.existsSync(path.join(root, dir))) copyTree(path.join(root, dir), path.join(scratch, dir));
+    }
+    const sims = path.join(root, "simulations");
+    if (fs.existsSync(sims)) fs.symlinkSync(fs.realpathSync(sims), path.join(scratch, "simulations"), "dir");
+    for (const { rel, text } of prepared) {
+      const target = path.join(scratch, "topics", rel);
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.writeFileSync(target, text);
+    }
+    const validator = fileURLToPath(new URL("./validate.mjs", import.meta.url));
+    return spawnSync(process.execPath, [validator], { cwd: scratch, stdio: "inherit" }).status === 0;
+  } finally {
+    fs.rmSync(scratch, { recursive: true, force: true });
+  }
+}
+
+/**
+ * Put every prepared file in place, then remove the staged originals.
+ * - Each file is first written to a temporary name beside its destination.
+ * - A new topic is then hard-linked into place, which fails if something appeared at
+ *   that name meanwhile. Without --force, an existing name is refused.
+ * - A --force replacement keeps a backup of the published file until the end.
+ * If any step fails, every completed step is undone, newest first, and the error is
+ * rethrown. Returns the staged files that couldn't be removed after a successful move.
+ */
+export function commit(prepared, force) {
+  const undo = [];
+  const tag = `.promote-${process.pid}`;
+  try {
+    for (const m of prepared) {
+      fs.mkdirSync(path.dirname(m.dest), { recursive: true });
+      const tmp = `${m.dest}${tag}.tmp`;
+      fs.writeFileSync(tmp, m.text, { flag: "wx" });
+      undo.push(() => fs.rmSync(tmp, { force: true }));
+      if (fs.existsSync(m.dest)) {
+        if (!force) throw new Error(`${m.shown}: appeared while promoting; pass --force to replace it`);
+        const backup = `${m.dest}${tag}.bak`;
+        fs.linkSync(m.dest, backup);
+        undo.push(() => fs.rmSync(backup, { force: true }));
+        fs.renameSync(tmp, m.dest);
+        undo.push(() => fs.renameSync(backup, m.dest));
+        m.backup = backup;
+      } else {
+        fs.linkSync(tmp, m.dest); // fails with EEXIST if the name was taken meanwhile
+        undo.push(() => fs.rmSync(m.dest, { force: true }));
+        fs.rmSync(tmp);
+      }
+    }
+  } catch (e) {
+    for (const step of undo.reverse()) {
+      try {
+        step();
+      } catch {
+        // keep undoing the rest
+      }
+    }
+    throw e;
+  }
+  const stale = [];
+  for (const m of prepared) {
+    if (m.backup) fs.rmSync(m.backup, { force: true });
+    try {
+      fs.rmSync(m.src);
+    } catch {
+      stale.push(m.src);
+    }
+  }
+  return stale;
 }
 
 function main() {
   const root = process.cwd();
-  const { moves, problems } = plan(root, process.argv.slice(2));
+  const args = process.argv.slice(2);
+  const { moves, problems } = plan(root, args);
   if (problems.length) {
     for (const p of problems) console.error(`✗ ${p}`);
     console.error("Nothing was promoted.");
@@ -108,15 +253,21 @@ function main() {
     console.error(`✗ ${e.message}\nNothing was promoted.`);
     return 1;
   }
-  if (!validate(root)) {
-    console.error("✗ Validation failed, so nothing was promoted. Fix the problems above and try again.");
+  if (!validateProjection(root, prepared)) {
+    console.error("✗ Production content wouldn't pass validation after this promotion, so nothing was promoted. Fix the problems above and try again.");
     return 1;
   }
-  for (const { src, dest, rel, text } of prepared) {
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
-    fs.writeFileSync(dest, text);
-    fs.rmSync(src);
-    console.log(`promoted ${rel}  (staging → topics, status: published)`);
+  let stale;
+  try {
+    stale = commit(prepared, args.includes("--force"));
+  } catch (e) {
+    console.error(`✗ ${e.message}\nNothing was promoted: the files already moved were put back.`);
+    return 1;
+  }
+  for (const { rel } of prepared) console.log(`promoted ${rel}  (staging → topics, status: published)`);
+  if (stale.length) {
+    console.error(`✗ Promoted, but couldn't remove the staged copies: ${stale.map((s) => path.relative(root, s)).join(", ")}. Delete them by hand.`);
+    return 1;
   }
   console.log("Done. Commit the change and open a PR.");
   return 0;

@@ -1,6 +1,7 @@
 // Tests for pipeline/promote.mjs (LMS-content#62), run by `npm run gate`. The CLI cases
-// run the real promote.mjs (and the real validate.mjs it calls) against a small
-// throwaway repo, so nothing here touches this checkout's content.
+// run the real promote.mjs (and the real validate.mjs it calls) against throwaway repos,
+// so nothing here touches this checkout's content. commit() is tested directly, so races
+// and failures can be arranged exactly.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -8,7 +9,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { publish } from "./promote.mjs";
+import { commit, publish } from "./promote.mjs";
 
 const PROMOTE = fileURLToPath(new URL("./promote.mjs", import.meta.url));
 
@@ -31,6 +32,11 @@ function fixture(files) {
 const promote = (root, ...args) => spawnSync(process.execPath, [PROMOTE, ...args], { cwd: root, encoding: "utf8" });
 const read = (root, rel) => fs.readFileSync(path.join(root, rel), "utf8");
 const exists = (root, rel) => fs.existsSync(path.join(root, rel));
+/** Temporary or backup files commit() left behind under topics/. */
+function leftovers(root) {
+  const walk = (dir) => (fs.existsSync(dir) ? fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(dir, e.name)) : [e.name])) : []);
+  return walk(path.join(root, "topics")).filter((name) => /\.promote-\d+\.(tmp|bak)$/.test(name));
+}
 
 test("publish sets the status inside the frontmatter only", () => {
   const out = publish(topic("status: draft\n", "Some prose.\nstatus: draft\nmore\n"));
@@ -56,6 +62,7 @@ test("a staged topic is promoted: moved to topics/, published, and removed from 
   assert.equal(r.status, 0, r.stderr);
   assert.match(read(root, "topics/sub/a.mdx"), /^status: published$/m);
   assert.equal(exists(root, "staging/topics/sub/a.mdx"), false);
+  assert.deepEqual(leftovers(root), []);
 });
 
 test("a path outside staging/topics is refused and nothing is written or deleted", () => {
@@ -73,6 +80,57 @@ test("a path outside staging/topics is refused and nothing is written or deleted
   assert.deepEqual(fs.readdirSync(path.dirname(root)), ["repo"], "nothing is written next to the repo");
 });
 
+test("a staging/ or staging/topics/ that is a symlink is refused, and the files behind it stay put", () => {
+  const cases = { staging: "topics/sub/a.mdx", "staging/topics": "sub/a.mdx" }; // the link, and where a.mdx sits behind it
+  for (const [link, inner] of Object.entries(cases)) {
+    const outside = fs.mkdtempSync(path.join(os.tmpdir(), "outside-"));
+    fs.mkdirSync(path.dirname(path.join(outside, inner)), { recursive: true });
+    fs.writeFileSync(path.join(outside, inner), topic());
+    const root = fixture({});
+    fs.mkdirSync(path.dirname(path.join(root, link)), { recursive: true });
+    fs.symlinkSync(outside, path.join(root, link));
+    for (const args of [["--all"], ["staging/topics/sub/a.mdx"]]) {
+      const r = promote(root, ...args);
+      assert.equal(r.status, 1, `${link}: ${args}`);
+      assert.match(r.stderr, new RegExp(`${link}/ must be a real directory inside the repo`), `${link}: ${args}`);
+      assert.ok(fs.existsSync(path.join(outside, inner)), `${link}: the file behind the link stays`);
+      assert.equal(exists(root, "topics/sub/a.mdx"), false);
+    }
+  }
+});
+
+test("a name that merely starts with two dots is an ordinary name", () => {
+  const root = fixture({ "staging/topics/..notes/a.mdx": topic() });
+  const r = promote(root, "staging/topics/..notes/a.mdx");
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(exists(root, "topics/..notes/a.mdx"));
+});
+
+test("a destination reached through a symlink is refused, even with --force", () => {
+  const outside = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "outside-")), "target");
+  fs.mkdirSync(outside);
+  const arrangements = {
+    "topics/ itself is a symlink": (root) => fs.symlinkSync(outside, path.join(root, "topics")),
+    "a directory under topics/ is a symlink": (root) => {
+      fs.mkdirSync(path.join(root, "topics"));
+      fs.symlinkSync(outside, path.join(root, "topics/sub"));
+    },
+    "the destination file is a dangling symlink": (root) => {
+      fs.mkdirSync(path.join(root, "topics/sub"), { recursive: true });
+      fs.symlinkSync(path.join(outside, "a.mdx"), path.join(root, "topics/sub/a.mdx"));
+    },
+  };
+  for (const [name, arrange] of Object.entries(arrangements)) {
+    const root = fixture({ "staging/topics/sub/a.mdx": topic() });
+    arrange(root);
+    const r = promote(root, "staging/topics/sub/a.mdx", "--force");
+    assert.equal(r.status, 1, name);
+    assert.match(r.stderr, /is a symlink|must be a real directory/, name);
+    assert.deepEqual(fs.readdirSync(outside), [], `${name}: nothing is written outside the repo`);
+    assert.ok(exists(root, "staging/topics/sub/a.mdx"), `${name}: the staged file stays`);
+  }
+});
+
 test("an existing published topic is not overwritten without --force", () => {
   const root = fixture({ "topics/sub/a.mdx": topic("status: published\n", "old\n"), "staging/topics/sub/a.mdx": topic("status: draft\n", "new\n") });
   const refused = promote(root, "staging/topics/sub/a.mdx");
@@ -84,6 +142,7 @@ test("an existing published topic is not overwritten without --force", () => {
   const forced = promote(root, "staging/topics/sub/a.mdx", "--force");
   assert.equal(forced.status, 0, forced.stderr);
   assert.ok(read(root, "topics/sub/a.mdx").endsWith("new\n"));
+  assert.deepEqual(leftovers(root), []);
 });
 
 test("with --all, one blocked file stops the whole batch", () => {
@@ -98,15 +157,71 @@ test("with --all, one blocked file stops the whole batch", () => {
   assert.ok(exists(root, "staging/topics/sub/a.mdx"));
 });
 
-test("validation runs first: an invalid staged topic means nothing moves", () => {
+test("an invalid topic isn't promoted: production is validated as it would be", () => {
   const root = fixture({
-    "staging/topics/sub/a.mdx": topic(),
-    "staging/topics/sub/bad.mdx": "---\ntitle: No summary\ndifficulty: beginner\nestimatedMinutes: 5\ntags: [x]\n---\nbody\n",
+    "staging/topics/sub/a.mdx": "---\ntitle: No summary\ndifficulty: beginner\nestimatedMinutes: 5\ntags: [x]\n---\nbody\n",
   });
   const r = promote(root, "staging/topics/sub/a.mdx");
   assert.equal(r.status, 1);
-  assert.match(r.stderr, /Validation failed, so nothing was promoted/);
-  assert.match(r.stderr, /sub\/bad: missing required field "summary"/);
+  assert.match(r.stderr, /sub\/a: missing required field "summary"/);
+  assert.match(r.stderr, /wouldn't pass validation after this promotion, so nothing was promoted/);
   assert.equal(exists(root, "topics/sub/a.mdx"), false);
   assert.ok(exists(root, "staging/topics/sub/a.mdx"));
+});
+
+test("a prerequisite still in staging blocks the promotion; promoting both works", () => {
+  const root = fixture({
+    "staging/topics/sub/a.mdx": topic("prerequisites: [sub/b]\n"),
+    "staging/topics/sub/b.mdx": topic(),
+  });
+  const alone = promote(root, "staging/topics/sub/a.mdx");
+  assert.equal(alone.status, 1);
+  assert.match(alone.stderr, /prerequisite "sub\/b" does not exist/);
+  assert.equal(exists(root, "topics/sub/a.mdx"), false);
+
+  const both = promote(root, "--all");
+  assert.equal(both.status, 0, both.stderr);
+  assert.ok(exists(root, "topics/sub/a.mdx") && exists(root, "topics/sub/b.mdx"));
+});
+
+test("an unrelated broken draft doesn't block promoting a finished topic", () => {
+  const root = fixture({ "staging/topics/sub/a.mdx": topic(), "staging/topics/sub/wip.mdx": "---\ntitle: Work in progress\n---\n" });
+  const r = promote(root, "staging/topics/sub/a.mdx");
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(exists(root, "topics/sub/a.mdx"));
+});
+
+/** commit() input for `[staged file, destination, text]` entries in `root`. */
+const prepared = (root, entries) =>
+  entries.map(([src, dest, text]) => ({ src: path.join(root, src), dest: path.join(root, dest), rel: dest, shown: dest, text }));
+
+test("commit refuses a destination that appeared after planning, and keeps the staged file", () => {
+  const root = fixture({ "staging/topics/sub/a.mdx": topic() });
+  const moves = prepared(root, [["staging/topics/sub/a.mdx", "topics/sub/a.mdx", "new\n"]]);
+  fs.mkdirSync(path.join(root, "topics/sub"), { recursive: true });
+  fs.writeFileSync(path.join(root, "topics/sub/a.mdx"), "someone else's\n"); // created after planning
+  assert.throws(() => commit(moves, false), /appeared while promoting/);
+  assert.equal(read(root, "topics/sub/a.mdx"), "someone else's\n");
+  assert.ok(exists(root, "staging/topics/sub/a.mdx"));
+  assert.deepEqual(leftovers(root), []);
+});
+
+test("if a later write fails, the files already moved are put back", () => {
+  const root = fixture({
+    "staging/topics/sub/a.mdx": topic(),
+    "staging/topics/sub/c.mdx": topic(),
+    "staging/topics/sub/b.mdx": topic(),
+    "topics/sub/c.mdx": "old c\n",
+    "topics/blocked": "a file where a directory is needed\n",
+  });
+  const moves = prepared(root, [
+    ["staging/topics/sub/a.mdx", "topics/sub/a.mdx", "new a\n"], // a new topic
+    ["staging/topics/sub/c.mdx", "topics/sub/c.mdx", "new c\n"], // a --force replacement
+    ["staging/topics/sub/b.mdx", "topics/blocked/b.mdx", "new b\n"], // fails: its directory is a file
+  ]);
+  assert.throws(() => commit(moves, true));
+  assert.equal(exists(root, "topics/sub/a.mdx"), false, "the new topic is removed again");
+  assert.equal(read(root, "topics/sub/c.mdx"), "old c\n", "the replaced topic is restored");
+  for (const s of ["a", "b", "c"]) assert.ok(exists(root, `staging/topics/sub/${s}.mdx`), `staged ${s}.mdx is kept`);
+  assert.deepEqual(leftovers(root), []);
 });
