@@ -122,16 +122,10 @@ function renderUI() {
 
   canvas = document.getElementById("c");
   ctx = canvas.getContext("2d");
-  canvas.addEventListener("pointerdown", (e) => { isDragging = true; lastX = e.clientX; lastY = e.clientY; });
-  window.addEventListener("pointermove", (e) => {
-    if (!isDragging) return;
-    yaw += (e.clientX - lastX) * 0.008;
-    pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch + (e.clientY - lastY) * 0.008));
-    lastX = e.clientX; lastY = e.clientY;
-  });
-  window.addEventListener("pointerup", () => { isDragging = false; });
+  canvas.addEventListener("pointerdown", (e) => { isDragging = true; lastX = e.clientX; lastY = e.clientY; nudge(); });
   resizeCanvas();
   reportSize();
+  nudge(); // a new view: draw it, and restart the idle timer
 }
 
 function resizeCanvas() {
@@ -141,7 +135,20 @@ function resizeCanvas() {
   canvas.height = canvas.clientHeight * dpr;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
-window.addEventListener("resize", resizeCanvas);
+window.addEventListener("resize", () => { resizeCanvas(); nudge(); }); // resizing clears the canvas
+
+// Window-level drag listeners are registered once, here: renderUI() runs on every level
+// change, and listeners added there stacked up, so every pointer move ran every copy.
+window.addEventListener("pointermove", (e) => {
+  if (!isDragging) return;
+  yaw += (e.clientX - lastX) * 0.008;
+  pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch + (e.clientY - lastY) * 0.008));
+  lastX = e.clientX; lastY = e.clientY;
+  nudge();
+});
+// A drag also ends when the gesture is cancelled (a touch turning into a scroll) or the
+// window loses focus mid-drag. Otherwise isDragging would keep the loop drawing forever.
+for (const type of ["pointerup", "pointercancel", "blur"]) window.addEventListener(type, () => { isDragging = false; });
 
 function project(x, y, z, w, h, camZ) {
   const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
@@ -150,12 +157,20 @@ function project(x, y, z, w, h, camZ) {
   return { sx: w / 2 + x1 * scale, sy: h / 2 + y1 * scale, depth: z2, scale };
 }
 
+/** Draw one frame. Returns whether anything is still moving, so the loop knows whether to continue. */
 function animate() {
-  if (!canvas || !ctx) { requestAnimationFrame(animate); return; }
+  if (!canvas || !ctx) return false;
   const w = canvas.clientWidth, h = canvas.clientHeight;
   ctx.clearRect(0, 0, w, h);
-  currentCamDist += (targetCamDist - currentCamDist) * 0.05;
-  if (!REDUCE && !isDragging) yaw += 0.0009;
+  // Auto-rotation runs unless the learner prefers reduced motion, and it rests IDLE_MS
+  // after the last interaction. A drag, or a transition that hasn't settled, also needs
+  // more frames.
+  const auto = !REDUCE && performance.now() < activeUntil;
+  let moving = auto || isDragging;
+  const camStep = (targetCamDist - currentCamDist) * 0.05;
+  currentCamDist += camStep;
+  if (Math.abs(camStep) > 0.001) moving = true;
+  if (auto && !isDragging) yaw += 0.0009;
 
   const nodesP = [];
   const isDCN = LEVELS[i].id === "multislice";
@@ -164,7 +179,11 @@ function animate() {
     if (k < targetParticles.length) {
       const t = targetParticles[k];
       p.x += (t.x - p.x) * 0.1; p.y += (t.y - p.y) * 0.1; p.z += (t.z - p.z) * 0.1; p.s += (1 - p.s) * 0.1;
-    } else p.s += (0 - p.s) * 0.2;
+      if (Math.abs(t.x - p.x) + Math.abs(t.y - p.y) + Math.abs(t.z - p.z) + (1 - p.s) > 0.01) moving = true;
+    } else {
+      p.s += (0 - p.s) * 0.2;
+      if (p.s > 0.01) moving = true;
+    }
     if (p.s > 0.01) nodesP.push({ k, proj: project(p.x, p.y, p.z, w, h, currentCamDist), s: p.s });
   }
   const projOf = {}; nodesP.forEach((n) => (projOf[n.k] = n.proj));
@@ -193,9 +212,34 @@ function animate() {
     ctx.fill(); ctx.shadowBlur = 0;
   }
   particles = particles.filter((p) => p.s > 0.01 || targetParticles.includes(p));
-  requestAnimationFrame(animate);
+  return moving;
 }
-function start() { if (animating) return; animating = true; updateDataState(); requestAnimationFrame(animate); }
+
+/**
+ * Runs `frame` on requestAnimationFrame only while the sim is visible (its tab shown and
+ * `el` on screen) and `frame` returns true, meaning something is still moving. `wake()`
+ * restarts it after an interaction or a state change, so an idle sim costs no CPU (#58).
+ */
+function createLoop(frame, el) {
+  let raf = 0, onScreen = true;
+  const visible = () => onScreen && document.visibilityState !== "hidden";
+  const tick = () => { raf = 0; if (visible() && frame()) raf = requestAnimationFrame(tick); };
+  const wake = () => { if (!raf && visible()) raf = requestAnimationFrame(tick); };
+  document.addEventListener("visibilitychange", wake);
+  if (el && typeof IntersectionObserver === "function") {
+    new IntersectionObserver((entries) => { onScreen = entries[entries.length - 1].isIntersecting; wake(); }).observe(el);
+  }
+  return { wake };
+}
+const loop = createLoop(animate, app);
+
+// Auto-motion rests IDLE_MS after the last interaction, so a page left open costs no
+// CPU even while the sim is on screen. Every interaction calls nudge().
+const IDLE_MS = 10000;
+let activeUntil = 0;
+function nudge() { activeUntil = performance.now() + IDLE_MS; loop.wake(); }
+
+function start() { if (animating) return; animating = true; updateDataState(); }
 
 window.sim = typeof createSim !== "undefined" ? createSim({ onInit({ theme }) { applyTheme(theme); start(); } }) : null;
 setTimeout(() => { if ((!window.sim || !sim.isInitialized()) && !document.getElementById("c")) start(); }, 300);

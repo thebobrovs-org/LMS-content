@@ -1,7 +1,7 @@
 {
   "id": "scale-hierarchy",
   "title": "TPU scale hierarchy",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "props": {},
   "checkpoints": [
     { "id": "observe-multislice", "hint": "Scale up through every rung — chip → host → cube → slice → pod → Multislice — and watch the network change from copper to optical ICI to the cross-pod DCN." }
