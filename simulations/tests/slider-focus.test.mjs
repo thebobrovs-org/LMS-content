@@ -222,6 +222,20 @@ test("gradient-descent-explorer: a too-big learning rate still shows the blow-up
   assert.deepEqual(sim.checkpoints(), ["checkpoint:observe-divergence"]);
 });
 
+test("gradient-descent-explorer: the stability hint follows the momentum (#60)", () => {
+  // Heavy-ball descent on the steep axis (curvature K = 8) is stable while lr < 2(1+μ)/K.
+  const sim = loadSim("gradient-descent-explorer");
+  sim.run("render()");
+  sim.input("lr", 0.3);
+  assert.match(sim.el("note").innerHTML, /needs lr below 0\.250\./, "2/K without momentum");
+  sim.input("mu", 0.2);
+  sim.input("lr", 0.35);
+  assert.match(sim.el("note").innerHTML, /too big/, "0.35 is over 2(1.2)/8 = 0.3, so it still diverges");
+  assert.match(sim.el("note").innerHTML, /needs lr below 0\.300 with momentum 0\.20\./);
+  sim.input("lr", 0.28);
+  assert.doesNotMatch(sim.el("note").innerHTML, /too big/, "0.28 is under 0.3 with momentum, though over 0.25 without it");
+});
+
 test("consistent-hash-ring: changing vnodes redraws the ring and the readout", () => {
   const sim = loadSim("consistent-hash-ring");
   sim.run("reset(); render()");

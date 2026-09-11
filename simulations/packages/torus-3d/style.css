@@ -84,7 +84,8 @@ body {
   gap: 6px;
   cursor: pointer;
 }
-button {
+button,
+select {
   font: inherit;
   padding: 6px 12px;
   border: 1px solid var(--border);
