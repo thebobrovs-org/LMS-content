@@ -132,8 +132,8 @@ test("problems name the file, the path and the message, and check never throws",
 });
 
 test("a date must be a real calendar day, not only shaped like one", () => {
-  for (const good of ["2026-09-11", "2024-02-29", "2000-02-29", "1999-12-31"]) assert.equal(isCalendarDate(good), true, good);
-  for (const bad of ["2026-99-99", "2026-02-30", "2023-02-29", "1900-02-29", "2026-13-01", "2026-00-10", "2026-04-31", "26-09-11", "2026-9-11"]) {
+  for (const good of ["2026-09-11", "2024-02-29", "2000-02-29", "1999-12-31", "0099-01-01", "0004-02-29"]) assert.equal(isCalendarDate(good), true, good);
+  for (const bad of ["2026-99-99", "2026-02-30", "2023-02-29", "1900-02-29", "2026-13-01", "2026-00-10", "2026-04-31", "0099-02-29", "26-09-11", "2026-9-11"]) {
     assert.equal(isCalendarDate(bad), false, bad);
     assert.equal(check(TopicFrontmatterSchema, { ...topic, updated: bad }).ok, false, bad);
   }

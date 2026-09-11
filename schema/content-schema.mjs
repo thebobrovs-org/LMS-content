@@ -23,7 +23,9 @@ export function isCalendarDate(s) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
   if (!m) return false;
   const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
-  const t = new Date(Date.UTC(y, mo - 1, d));
+  // setUTCFullYear keeps a literal year: Date.UTC would read 0099 as 1999.
+  const t = new Date(0);
+  t.setUTCFullYear(y, mo - 1, d);
   return t.getUTCFullYear() === y && t.getUTCMonth() === mo - 1 && t.getUTCDate() === d;
 }
 
