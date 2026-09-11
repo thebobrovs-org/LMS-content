@@ -163,7 +163,7 @@ test("an invalid topic isn't promoted: production is validated as it would be", 
   });
   const r = promote(root, "staging/topics/sub/a.mdx");
   assert.equal(r.status, 1);
-  assert.match(r.stderr, /sub\/a: missing required field "summary"/);
+  assert.match(r.stderr, /topics\/sub\/a\.mdx: summary: Required/); // the schema names the file, the field and the problem
   assert.match(r.stderr, /wouldn't pass validation after this promotion, so nothing was promoted/);
   assert.equal(exists(root, "topics/sub/a.mdx"), false);
   assert.ok(exists(root, "staging/topics/sub/a.mdx"));
