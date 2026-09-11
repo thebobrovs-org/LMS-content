@@ -103,7 +103,7 @@ chips per pod, larger and faster HBM, wider interconnect, and steadily
 <Callout type="note">
 "Peak compute" is each chip's **headline precision**, and that precision keeps
 falling — **bf16 → FP8 → FP4** — which is itself a way of chasing the bottleneck.
-For reference, v5p also reaches **918 FP8** and Trillium **1,836 Int8**. **†** TPU 8i
+For reference, v5p also reaches **918 Int8** and Trillium **1,836 Int8**. **†** TPU 8i
 runs the **Boardfly** topology, so its per-pod chip count isn't quoted like the
 torus pods (≈1,150 chips by HBM-per-pod math). Sources: Google Cloud TPU docs and
 the Ironwood and 8th-generation announcements.

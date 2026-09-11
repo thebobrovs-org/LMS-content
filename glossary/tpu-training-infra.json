@@ -37,7 +37,7 @@
     "linkLabel": "TPU system architecture"
   },
   "ici": {
-    "definition": "Inter-Chip Interconnect — the high-bandwidth links wiring TPU chips into a slice and Pod (a 3D torus), bypassing the host network. Collective operations ride ICI."
+    "definition": "Inter-Chip Interconnect — the high-bandwidth links wiring TPU chips into a slice and Pod (a 2D torus on v5e/v6e, a 3D torus on v4/v5p), bypassing the host network. Collective operations ride ICI."
   },
   "dcn": {
     "definition": "Data-Center Network — the (slower than ICI) host-to-host network (the VPC) carrying cross-slice/Multislice traffic, host rendezvous, and checkpointing to GCS. MTU 8896 + firewall rules apply here, not to ICI."
@@ -78,7 +78,7 @@
     "definition": "XLA zero-pads tensor dimensions up to the MXU tile (128, or 256 on v6e/v7) and the memory lanes (multiples of 8/128). Misaligned shapes carry wasted padded zeros — burning compute and on-chip memory, a common cause of surprise OOMs."
   },
   "fp4": {
-    "definition": "Native 4-bit floating point on TPU 8t — halves the bytes per parameter versus bf16, roughly doubling MXU throughput by cutting memory traffic per FLOP."
+    "definition": "Native 4-bit floating point on TPU 8t — a quarter of bf16's bytes per parameter (half of FP8's), raising peak MXU throughput by cutting memory traffic per FLOP."
   },
   "xpk": {
     "definition": "Accelerated Processing Kit — Google's CLI for orchestrating TPU workloads on GKE. The real entry point: XPK → Kueue → GKE provisions DWS Flex-start nodes. You don't hand-submit raw pods for multi-host slices."

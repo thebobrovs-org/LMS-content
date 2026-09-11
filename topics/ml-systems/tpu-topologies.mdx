@@ -152,14 +152,15 @@ idle waiting on the network.
 
 ## Inspect it in code
 
-On a real `v5p-64` slice, JAX reports all 64 chips and their coordinates in the
-ICI mesh — the same 4×4×4 torus the simulation draws:
+On a real `v5p-128` slice, JAX reports all 64 chips and their coordinates in the
+ICI mesh — the same 4×4×4 torus the simulation draws. (v5p slice names count
+TensorCores, two per chip, so `v5p-128` is 64 chips.)
 
 ```python title="inspect_topology.py"
 import jax
 
 devices = jax.devices()
-print(len(devices), "TPU chips")          # 64 on a v5p-64 slice
+print(len(devices), "TPU chips")          # 64 on a v5p-128 slice
 
 # Each device knows its (x, y, z) coordinate in the 3D-torus mesh.
 for d in sorted(devices, key=lambda d: d.coords)[:4]:

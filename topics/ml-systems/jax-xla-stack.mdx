@@ -31,7 +31,7 @@ quiz:
       - AOT lowering — jax.jit(f).lower(args).compile() — then read its memory analysis
       - Add more HBM
     answer: 1
-    explanation: AOT compilation produces the executable (and its memory footprint) without devices in the loop, so you can read the compiled memory analysis and catch the OOM at compile time — before a single training step.
+    explanation: AOT compilation produces the executable (and its memory footprint) without running a single step, so you can read the compiled memory analysis and catch the OOM at compile time — before a single training step.
   - question: Which is the recommended Flax API for new TPU code today?
     choices:
       - Linen (flax.linen)
@@ -122,7 +122,8 @@ trips to HBM.** Fusion is XLA doing it for you.
 Same compiler, two timings:
 
 - **JIT** (`jax.jit`) compiles on the **first call** and caches the result. Convenient,
-  but the compile happens with devices in the loop.
+  but you only find out what it compiled to (and whether it fits in HBM) when that
+  first call runs. Both modes compile on the host.
 - **AOT** (`jax.jit(f).lower(args).compile()`) compiles **ahead of time**, *without
   running*. The payoff: the compiled object carries a **memory analysis** you can read —
   so you can discover that a batch size or sharding choice will **OOM a v5p slice at
