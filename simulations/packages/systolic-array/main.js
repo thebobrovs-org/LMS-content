@@ -47,7 +47,7 @@ function renderWhy() {
         <div class="statbox-h">To compute a 3×3 matrix (27 ops):</div>
         <div class="statrow"><span>Clock cycles</span><span class="pill good mono">exactly 7 cycles</span></div>
         <div class="statrow"><span>RAM accesses</span><span class="pill good mono">18 reads</span></div>
-        <div class="statnote">The array runs 9 ops concurrently — it reads each value from RAM once and reuses it down the line.</div>
+        <div class="statnote">Up to 7 of the 9 cells compute in the same beat, and each value is read from RAM once and reused down the line.</div>
       </div>
     </div>
   </div>
@@ -55,7 +55,9 @@ function renderWhy() {
 }
 
 /* ----------------------------- HOW (simulator) ----------------------------- */
-const SIZE = 3, TOTAL = 9;
+// Input vector k's element in row r reaches column c at heartbeat k + r + c + 1, so the
+// last multiply-accumulate (k, r and c all SIZE − 1) happens at heartbeat 3·SIZE − 2 = 7.
+const SIZE = 3, TOTAL = 3 * SIZE - 2;
 const WEIGHTS = [[2, 1, 3], [1, 4, 1], [3, 1, 2]];
 const INPUT = [
   [1, 2, 3, 0, 0, 0, 0, 0],
@@ -63,6 +65,25 @@ const INPUT = [
   [0, 0, 2, 3, 1, 0, 0, 0],
 ];
 let cycle = 0, peGrid = [], observed = false, arrTimer = null;
+
+/** One heartbeat: partial sums move down, activations move right, and every busy cell adds act × weight. */
+function advance(grid, t) {
+  const next = blank();
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) next[r][c].psum = r === 0 ? 0 : grid[r - 1][c].psum;
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) next[r][c].act = c === 0 ? INPUT[r][t] || 0 : grid[r][c - 1].act;
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) if (next[r][c].act > 0) next[r][c].psum += next[r][c].act * WEIGHTS[r][c];
+  return next;
+}
+const busyCells = (grid) => grid.flat().filter((cell) => cell.act > 0).length;
+// Busy cells at each heartbeat, from a dry run of the same dataflow: 1, 3, 6, 7, 6, 3, 1.
+// The narration reads these numbers, so it can't drift from what the array does.
+const PROFILE = (() => {
+  let grid = blank();
+  const busy = [];
+  for (let t = 0; t < TOTAL; t++) { grid = advance(grid, t); busy.push(busyCells(grid)); }
+  return busy;
+})();
+const PEAK = PROFILE.indexOf(Math.max(...PROFILE)) + 1;
 
 function blank() { return Array.from({ length: SIZE }, () => Array.from({ length: SIZE }, () => ({ act: 0, psum: 0 }))); }
 function resetArray() { if (arrTimer) { clearInterval(arrTimer); arrTimer = null; } cycle = 0; peGrid = blank(); observed = false; }
@@ -112,13 +133,13 @@ function logMsg(text, cls) {
   el.scrollTop = el.scrollHeight;
 }
 function narrate(c) {
-  if (c === 1) return "Heartbeat 1 — first activation enters cell (0,0); multiply begins.";
-  if (c === 2) return "Heartbeat 2 — data shifts right, new data enters, partial sums shift down.";
-  if (c === 3) return "Heartbeat 3 — all rows streaming; each value is reused as it flows.";
-  if (c === 5) return "Heartbeat 5 — peak utilization! Most cells compute at once, no re-fetch.";
-  if (c >= 7 && c < TOTAL) return `Heartbeat ${c} — queues draining; results trickle out the bottom.`;
-  if (c >= TOTAL) return "Operation complete — final outputs have exited the bottom of the array.";
-  return `Heartbeat ${c} — array processing…`;
+  const busy = `${PROFILE[c - 1]} of ${SIZE * SIZE} cells compute`;
+  if (c === 1) return `Heartbeat 1 — the first activation enters cell (0,0); ${busy}.`;
+  if (c < PEAK) return `Heartbeat ${c} — the diagonal wavefront spreads; ${busy}, each on a value already inside the array.`;
+  if (c === PEAK) return `Heartbeat ${c} — peak utilization: ${busy} at once, with no re-fetch from memory.`;
+  if (c < TOTAL) return `Heartbeat ${c} — the queues are empty and the wavefront drains; ${busy}.`;
+  const macs = PROFILE.reduce((sum, n) => sum + n, 0);
+  return `Heartbeat ${c} — the last multiply-accumulate: all ${macs} are done, and the results leave the bottom of the array.`;
 }
 function renderQueues() {
   for (let r = 0; r < SIZE; r++) {
@@ -164,14 +185,10 @@ function updateHow() {
 }
 function step() {
   if (cycle >= TOTAL) return;
-  const next = blank();
-  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) next[r][c].psum = r === 0 ? 0 : peGrid[r - 1][c].psum;
-  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) next[r][c].act = c === 0 ? INPUT[r][cycle] || 0 : peGrid[r][c - 1].act;
-  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) if (next[r][c].act > 0) next[r][c].psum += next[r][c].act * WEIGHTS[r][c];
-  peGrid = next;
+  peGrid = advance(peGrid, cycle);
   cycle += 1;
   updateHow();
-  logMsg(narrate(cycle), cycle >= TOTAL ? "peak" : "");
+  logMsg(narrate(cycle), cycle === PEAK || cycle >= TOTAL ? "peak" : "");
   if (cycle >= TOTAL && !observed) { observed = true; sim.checkpoint("observe-matmul"); }
   sim.event("cycle", { cycle });
 }

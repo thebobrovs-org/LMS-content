@@ -123,7 +123,8 @@ core:
 - **CPU (von Neumann):** ~27+ cycles, **~54 memory reads** (two operands × 27 MACs)
   — sequential, re-fetching operands per op.
 - **Systolic array:** ~7 cycles, **~18 reads** (9 activations + 9 weights, each read
-  once) — up to **9 MACs per beat**.
+  once) — up to **7 MACs in one beat** here; a longer stream of inputs would keep
+  all 9 cells busy.
 
 The array doesn't have a faster multiplier — it has **more of them running at once**
 on **less memory traffic**.
