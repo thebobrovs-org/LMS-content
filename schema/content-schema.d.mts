@@ -1,16 +1,20 @@
 // Generated from schema/content-schema.mjs by scripts/schema-declarations.mjs. Do not edit.
+/** Whether `YYYY-MM-DD` names a real calendar day (leap years included). */
+export function isCalendarDate(s: any): boolean;
 /**
- * Validate `value` against `schema`, naming `file`: the parsed value, or a list of
- * problems as "file: path: message" lines. Never throws.
- * @template T
- * @param {z.ZodType<T>} schema
+ * Validate `value` against `schema`, naming `file`: the parsed value (the schema's
+ * output type, with defaults filled in), or a list of problems as
+ * "file: path: message" lines. Never throws: a refinement or transform that
+ * throws is reported as a problem too.
+ * @template {z.ZodTypeAny} S
+ * @param {S} schema
  * @param {unknown} value
  * @param {string} [file]
- * @returns {{ ok: true, value: T, problems: string[] } | { ok: false, value: null, problems: string[] }}
+ * @returns {{ ok: true, value: z.output<S>, problems: string[] } | { ok: false, value: null, problems: string[] }}
  */
-export function check<T>(schema: z.ZodType<T>, value: unknown, file?: string): {
+export function check<S extends z.ZodTypeAny>(schema: S, value: unknown, file?: string): {
     ok: true;
-    value: T;
+    value: z.output<S>;
     problems: string[];
 } | {
     ok: false;
@@ -70,14 +74,20 @@ export const QuizItemSchema: z.ZodEffects<z.ZodObject<{
     answer: number;
     explanation?: string | undefined;
 }>;
-export const STATUSES: string[];
-export const DIFFICULTIES: string[];
+export const STATUSES: readonly ["draft", "published"];
+export const DIFFICULTIES: readonly ["beginner", "intermediate", "advanced"];
+/**
+ * The components an MDX lesson may use, and nothing else: the app's `mdxComponents`
+ * (LMS components/mdx/mdx-components.tsx). Content CI rejects any other JSX tag,
+ * and any JavaScript (expressions, imports, exports): lessons are prose plus these.
+ */
+export const MDX_COMPONENTS: readonly ["YouTube", "Callout", "Simulation", "Flashcard", "Quiz", "Steps", "Step", "Figure", "Tip", "Term"];
 /** A topic file's frontmatter (`topics/<dir>/<name>.mdx`). The app adds `id` from the path. */
 export const TopicFrontmatterSchema: z.ZodObject<{
     title: z.ZodString;
     summary: z.ZodString;
     tags: z.ZodArray<z.ZodString, "many">;
-    difficulty: z.ZodEnum<[string, ...string[]]>;
+    difficulty: z.ZodEnum<["beginner", "intermediate", "advanced"]>;
     estimatedMinutes: z.ZodNumber;
     /** Optional curriculum tier (100/200/300) for path grouping and badges. */
     level: z.ZodOptional<z.ZodNumber>;
@@ -132,15 +142,15 @@ export const TopicFrontmatterSchema: z.ZodObject<{
         answer: number;
         explanation?: string | undefined;
     }>, "many">>;
-    status: z.ZodDefault<z.ZodEnum<[string, ...string[]]>>;
-    updated: z.ZodOptional<z.ZodString>;
+    status: z.ZodDefault<z.ZodEnum<["draft", "published"]>>;
+    updated: z.ZodOptional<z.ZodEffects<z.ZodString, string, string>>;
     authors: z.ZodDefault<z.ZodArray<z.ZodString, "many">>;
 }, "strict", z.ZodTypeAny, {
     title: string;
-    status: string;
+    status: "draft" | "published";
     summary: string;
     tags: string[];
-    difficulty: string;
+    difficulty: "beginner" | "intermediate" | "advanced";
     estimatedMinutes: number;
     prerequisites: string[];
     relatedTo: string[];
@@ -166,9 +176,9 @@ export const TopicFrontmatterSchema: z.ZodObject<{
     title: string;
     summary: string;
     tags: string[];
-    difficulty: string;
+    difficulty: "beginner" | "intermediate" | "advanced";
     estimatedMinutes: number;
-    status?: string | undefined;
+    status?: "draft" | "published" | undefined;
     level?: number | undefined;
     prerequisites?: string[] | undefined;
     relatedTo?: string[] | undefined;
@@ -220,10 +230,10 @@ export const PathFrontmatterSchema: z.ZodObject<{
         level: number;
         topics: string[];
     }>, "many">;
-    status: z.ZodDefault<z.ZodEnum<[string, ...string[]]>>;
+    status: z.ZodDefault<z.ZodEnum<["draft", "published"]>>;
 }, "strict", z.ZodTypeAny, {
     title: string;
-    status: string;
+    status: "draft" | "published";
     summary: string;
     levels: {
         title: string;
@@ -238,7 +248,7 @@ export const PathFrontmatterSchema: z.ZodObject<{
         level: number;
         topics: string[];
     }[];
-    status?: string | undefined;
+    status?: "draft" | "published" | undefined;
 }>;
 /** `glossary/<pathId>.json`: term → entry. */
 export const GlossaryEntrySchema: z.ZodObject<{

@@ -4,7 +4,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -19,33 +18,39 @@ test("the committed declarations are the ones the implementation generates", () 
   assert.match(r.stdout, /up to date/);
   const dts = fs.readFileSync(path.join(ROOT, "schema", "content-schema.d.mts"), "utf8");
   assert.match(dts, /^\/\/ Generated from schema\/content-schema\.mjs/);
-  for (const name of ["SCHEMA_VERSION", "TopicFrontmatterSchema", "PathFrontmatterSchema", "GlossarySchema", "ResourcesSchema", "SimConfigSchema", "check"]) {
+  for (const name of ["SCHEMA_VERSION", "STATUSES", "MDX_COMPONENTS", "TopicFrontmatterSchema", "PathFrontmatterSchema", "GlossarySchema", "ResourcesSchema", "SimConfigSchema", "check"]) {
     assert.match(dts, new RegExp(`export (const|function) ${name}\\b`), name);
   }
+  assert.match(dts, /STATUSES: readonly \["draft", "published"\]/, "enum members survive in the declarations");
 });
 
 test("changing an export without regenerating fails the check; regenerating fixes it", () => {
-  // A copy of the schema with one extra export, and the committed declarations as its "committed" file.
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "schema-drift-"));
+  // Its own copy of the schema, in its own directory under schema/ (so `import "zod"` resolves), so
+  // parallel runs can't touch each other's fixture. First the unchanged copy must pass, so that the
+  // only cause of the later failure is the added export.
+  const dir = fs.mkdtempSync(path.join(ROOT, "schema", ".drift-"));
   try {
-    const module = path.join(ROOT, "schema", "drift-fixture.mjs"); // beside the real one, so `import "zod"` resolves
-    const out = path.join(dir, "drift-fixture.d.mts");
-    fs.writeFileSync(module, `${fs.readFileSync(path.join(ROOT, "schema", "content-schema.mjs"), "utf8")}\nexport const DRIFT = z.string();\n`);
-    fs.copyFileSync(path.join(ROOT, "schema", "content-schema.d.mts"), out);
-    const stale = run("--check", "--module", "schema/drift-fixture.mjs", "--out", out);
+    const module = path.join(dir, "fixture.mjs");
+    const rel = path.relative(ROOT, module).split(path.sep).join("/");
+    const out = path.join(dir, "fixture.d.mts");
+    const source = fs.readFileSync(path.join(ROOT, "schema", "content-schema.mjs"), "utf8");
+    fs.writeFileSync(module, source);
+    assert.equal(run("--module", rel, "--out", out).status, 0, "generate for the unchanged copy");
+    assert.equal(run("--check", "--module", rel, "--out", out).status, 0, "the unchanged copy is up to date");
+
+    fs.writeFileSync(module, `${source}\nexport const DRIFT = z.string();\n`);
+    const stale = run("--check", "--module", rel, "--out", out);
     assert.equal(stale.status, 1, stale.stdout + stale.stderr);
     assert.match(stale.stderr, /out of date/);
-    const regen = run("--module", "schema/drift-fixture.mjs", "--out", out);
+    const regen = run("--module", rel, "--out", out);
     assert.equal(regen.status, 0, regen.stdout + regen.stderr);
     assert.match(fs.readFileSync(out, "utf8"), /export const DRIFT: z\.ZodString;/);
-    const fresh = run("--check", "--module", "schema/drift-fixture.mjs", "--out", out);
-    assert.equal(fresh.status, 0, fresh.stdout + fresh.stderr);
-    fs.rmSync(module);
-    const missing = run("--check", "--module", "schema/content-schema.mjs", "--out", path.join(dir, "none.d.mts"));
+    assert.equal(run("--check", "--module", rel, "--out", out).status, 0, "regenerated: up to date again");
+
+    const missing = run("--check", "--module", rel, "--out", path.join(dir, "none.d.mts"));
     assert.equal(missing.status, 1);
     assert.match(missing.stderr, /missing/);
   } finally {
-    fs.rmSync(path.join(ROOT, "schema", "drift-fixture.mjs"), { force: true });
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });

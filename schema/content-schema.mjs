@@ -17,10 +17,21 @@ export const SCHEMA_VERSION = 1;
 const nonEmpty = z.string().min(1, "must not be empty");
 /** An id in the content tree: kebab-case segments, `dir/name` for a topic. */
 export const ContentIdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*$/, "must be kebab-case segments separated by /");
+
+/** Whether `YYYY-MM-DD` names a real calendar day (leap years included). */
+export function isCalendarDate(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (!m) return false;
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const t = new Date(Date.UTC(y, mo - 1, d));
+  return t.getUTCFullYear() === y && t.getUTCMonth() === mo - 1 && t.getUTCDate() === d;
+}
+
 /** A YAML date must be quoted: an unquoted `2026-09-11` parses as a Date, which the app can't render. */
 const IsoDate = z
   .string({ invalid_type_error: "must be a quoted YYYY-MM-DD string (an unquoted date parses as a Date)" })
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "must be a quoted YYYY-MM-DD string");
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "must be a quoted YYYY-MM-DD string")
+  .refine(isCalendarDate, "must be a real calendar date");
 
 export const VideoSchema = z
   .object({
@@ -42,8 +53,16 @@ export const QuizItemSchema = z
   .strict()
   .refine((q) => q.answer < q.choices.length, { message: "answer is out of range", path: ["answer"] });
 
-export const STATUSES = ["draft", "published"];
-export const DIFFICULTIES = ["beginner", "intermediate", "advanced"];
+// Literal tuples (JSDoc const assertions), so the declarations keep the enum members.
+export const STATUSES = /** @type {const} */ (["draft", "published"]);
+export const DIFFICULTIES = /** @type {const} */ (["beginner", "intermediate", "advanced"]);
+
+/**
+ * The components an MDX lesson may use, and nothing else: the app's `mdxComponents`
+ * (LMS components/mdx/mdx-components.tsx). Content CI rejects any other JSX tag,
+ * and any JavaScript (expressions, imports, exports): lessons are prose plus these.
+ */
+export const MDX_COMPONENTS = /** @type {const} */ (["YouTube", "Callout", "Simulation", "Flashcard", "Quiz", "Steps", "Step", "Figure", "Tip", "Term"]);
 
 /** A topic file's frontmatter (`topics/<dir>/<name>.mdx`). The app adds `id` from the path. */
 export const TopicFrontmatterSchema = z
@@ -117,16 +136,23 @@ export const SimConfigSchema = z
   .strict();
 
 /**
- * Validate `value` against `schema`, naming `file`: the parsed value, or a list of
- * problems as "file: path: message" lines. Never throws.
- * @template T
- * @param {z.ZodType<T>} schema
+ * Validate `value` against `schema`, naming `file`: the parsed value (the schema's
+ * output type, with defaults filled in), or a list of problems as
+ * "file: path: message" lines. Never throws: a refinement or transform that
+ * throws is reported as a problem too.
+ * @template {z.ZodTypeAny} S
+ * @param {S} schema
  * @param {unknown} value
  * @param {string} [file]
- * @returns {{ ok: true, value: T, problems: string[] } | { ok: false, value: null, problems: string[] }}
+ * @returns {{ ok: true, value: z.output<S>, problems: string[] } | { ok: false, value: null, problems: string[] }}
  */
 export function check(schema, value, file = "(input)") {
-  const r = schema.safeParse(value);
+  let r;
+  try {
+    r = schema.safeParse(value);
+  } catch (e) {
+    return { ok: false, value: null, problems: [`${file}: validation threw: ${e instanceof Error ? e.message : String(e)}`] };
+  }
   if (r.success) return { ok: true, value: r.data, problems: [] };
   const problems = r.error.issues.map((i) => `${file}: ${i.path.length ? i.path.join(".") + ": " : ""}${i.message}`);
   return { ok: false, value: null, problems };

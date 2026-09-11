@@ -3,8 +3,10 @@
 // `npm run gate`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { z } from "zod";
 import {
-  GlossarySchema, PathFrontmatterSchema, ResourcesSchema, SCHEMA_VERSION, SimConfigSchema, TopicFrontmatterSchema, check,
+  DIFFICULTIES, GlossarySchema, MDX_COMPONENTS, PathFrontmatterSchema, ResourcesSchema, SCHEMA_VERSION, STATUSES, SimConfigSchema,
+  TopicFrontmatterSchema, check, isCalendarDate,
 } from "./content-schema.mjs";
 
 const topic = {
@@ -118,4 +120,28 @@ test("problems name the file, the path and the message, and check never throws",
   for (const p of r.problems) assert.match(p, /^topics\/x\/y\.mdx: [a-zA-Z.0-9]+: /);
   assert.equal(check(TopicFrontmatterSchema, null, "n.mdx").ok, false);
   assert.equal(check(TopicFrontmatterSchema, undefined, "n.mdx").ok, false);
+  // A refinement or transform that throws is a problem, not an exception.
+  const throwing = TopicFrontmatterSchema.refine(() => {
+    throw new Error("refinement failure");
+  });
+  assert.deepEqual(check(throwing, topic, "t.mdx"), { ok: false, value: null, problems: ["t.mdx: validation threw: refinement failure"] });
+  const transforming = z.string().transform(() => {
+    throw new Error("transform failure");
+  });
+  assert.equal(check(transforming, "x").ok, false);
+});
+
+test("a date must be a real calendar day, not only shaped like one", () => {
+  for (const good of ["2026-09-11", "2024-02-29", "2000-02-29", "1999-12-31"]) assert.equal(isCalendarDate(good), true, good);
+  for (const bad of ["2026-99-99", "2026-02-30", "2023-02-29", "1900-02-29", "2026-13-01", "2026-00-10", "2026-04-31", "26-09-11", "2026-9-11"]) {
+    assert.equal(isCalendarDate(bad), false, bad);
+    assert.equal(check(TopicFrontmatterSchema, { ...topic, updated: bad }).ok, false, bad);
+  }
+  assert.equal(check(TopicFrontmatterSchema, { ...topic, updated: "2024-02-29" }).ok, true);
+});
+
+test("the enum tuples and the MDX component list are the contract's literals", () => {
+  assert.deepEqual(STATUSES, ["draft", "published"]);
+  assert.deepEqual(DIFFICULTIES, ["beginner", "intermediate", "advanced"]);
+  assert.deepEqual(MDX_COMPONENTS, ["YouTube", "Callout", "Simulation", "Flashcard", "Quiz", "Steps", "Step", "Figure", "Tip", "Term"]);
 });
