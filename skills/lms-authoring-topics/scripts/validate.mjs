@@ -42,18 +42,24 @@ const idIn = (dir, file) => path.relative(dir, file).replace(/\.mdx$/, "").split
 
 /** The problems with one topic or path file, as messages (empty when it's valid). `root` is the repo root. */
 export function validateFile(target, root = process.cwd()) {
+  root = path.resolve(root); // a relative root must still recognise staging/topics/
   const dirs = layout(root);
   const file = path.resolve(root, target);
   const topicIds = new Set(walk(dirs.topics).map((f) => idIn(dirs.topics, f)));
-  let glossaries = loadGlossaries(dirs.glossary);
-  if (Object.keys(glossaries).length === 0 && fs.existsSync(dirs.legacyGlossary)) {
-    glossaries = { legacy: JSON.parse(fs.readFileSync(dirs.legacyGlossary, "utf8")) };
-  }
-  // A path file that doesn't parse is the repo-wide validator's to report; here it's skipped.
+  const glossaries = loadGlossaries(dirs.glossary);
+  // Before per-path glossaries there was one glossary.json. If that's all there is, every
+  // topic uses it, whichever paths list the topic.
+  const legacy =
+    Object.keys(glossaries).length === 0 && fs.existsSync(dirs.legacyGlossary)
+      ? JSON.parse(fs.readFileSync(dirs.legacyGlossary, "utf8"))
+      : null;
+  // A path that doesn't parse leaves it unknown which glossaries apply; see the term check below.
+  const pathProblems = [];
   const paths = walk(dirs.paths).flatMap((f) => {
     try {
-      return [{ pid: path.basename(f, ".mdx"), data: parseFrontmatter(fs.readFileSync(f, "utf8"), f).data }];
-    } catch {
+      return [{ pid: path.basename(f, ".mdx"), data: parseFrontmatter(fs.readFileSync(f, "utf8"), path.relative(root, f)).data }];
+    } catch (e) {
+      pathProblems.push(e.message);
       return [];
     }
   });
@@ -95,12 +101,20 @@ export function validateFile(target, root = process.cwd()) {
     else if (!Number.isInteger(q.answer) || q.answer < 0 || q.answer >= q.choices.length)
       errors.push(`quiz[${i}] answer ${q.answer} out of range`);
   });
-  const gloss = effectiveGlossary(id, glossaries, byTopic);
-  for (const key of termKeys(content)) {
-    if (!gloss[key]) {
-      const pids = byTopic.get(id);
-      const where = pids ? `the glossary of its path(s): ${[...pids].join(", ")}` : "any path glossary";
-      errors.push(`glossary term "${key}" is not defined in ${where}`);
+  const keys = termKeys(content);
+  if (legacy) {
+    for (const key of keys) if (!legacy[key]) errors.push(`glossary term "${key}" is not defined in glossary.json`);
+  } else if (keys.length && pathProblems.length) {
+    // Skipping the broken path could widen the search to every glossary and pass a term that shouldn't.
+    errors.push(`can't check glossary terms: a path file couldn't be parsed, so it's unknown which glossaries apply (${pathProblems.join("; ")})`);
+  } else {
+    const gloss = effectiveGlossary(id, glossaries, byTopic);
+    for (const key of keys) {
+      if (!gloss[key]) {
+        const pids = byTopic.get(id);
+        const where = pids ? `the glossary of its path(s): ${[...pids].join(", ")}` : "any path glossary";
+        errors.push(`glossary term "${key}" is not defined in ${where}`);
+      }
     }
   }
   if (registry)

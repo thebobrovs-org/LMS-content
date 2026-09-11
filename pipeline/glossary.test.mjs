@@ -80,6 +80,41 @@ test("it also works in the app repo layout (content/…)", () => {
   assert.deepEqual(validateFile("content/topics/s/t.mdx", root), []);
 });
 
+test("with only a legacy glossary.json, every topic resolves against it, in both layouts", () => {
+  for (const base of ["", "content/"]) {
+    const root = fixture({
+      [`${base}topics/s/t.mdx`]: topicWith("<Term>alpha</Term> and <Term>gamma</Term>"),
+      [`${base}paths/p1.mdx`]: pathListing("P1", "s/t"), // listed in a path, which has no glossary of its own
+      [`${base}glossary.json`]: JSON.stringify({ alpha: { definition: "a" } }),
+    });
+    assert.deepEqual(validateFile(`${base}topics/s/t.mdx`, root), ['glossary term "gamma" is not defined in glossary.json'], base || "(content repo)");
+  }
+});
+
+test("a path that can't be parsed stops the glossary check with a diagnostic, instead of widening it", () => {
+  const root = fixture({
+    "topics/s/t.mdx": topicWith("<Term>beta</Term>"),
+    "paths/p1.mdx": "---js\n{ levels: [] }\n---\n", // it may list s/t; nobody can tell
+    "glossary/p1.json": "{}",
+    "glossary/p2.json": JSON.stringify({ beta: { definition: "b" } }),
+  });
+  const errors = validateFile("topics/s/t.mdx", root);
+  assert.equal(errors.length, 1, errors.join("\n"));
+  assert.match(errors[0], /can't check glossary terms: .*paths\/p1\.mdx/);
+});
+
+test("a staged topic is found in its path when the root is given as a relative path", () => {
+  const root = fixture({
+    "staging/topics/s/t.mdx": topicWith("<Term>beta</Term>"),
+    "topics/s/other.mdx": topicWith("plain prose"),
+    "paths/p1.mdx": pathListing("P1", "s/t"),
+    "glossary/p1.json": JSON.stringify({ alpha: { definition: "a" } }),
+    "glossary/p2.json": JSON.stringify({ beta: { definition: "b" } }),
+  });
+  const relativeRoot = path.relative(process.cwd(), root);
+  assert.deepEqual(validateFile("staging/topics/s/t.mdx", relativeRoot), ['glossary term "beta" is not defined in the glossary of its path(s): p1']);
+});
+
 test("as a command it prints the problems and exits 1, or confirms and exits 0", () => {
   const root = fixture({
     "topics/s/ok.mdx": topicWith("plain prose"),
