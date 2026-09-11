@@ -9,7 +9,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import matter from "gray-matter";
+import { parseFrontmatter } from "../../../pipeline/frontmatter.mjs";
 
 const ROOT = process.cwd();
 const has = (p) => fs.existsSync(path.join(ROOT, p));
@@ -42,7 +42,13 @@ const topicIds = new Set(walk(TOPICS_DIR).map(topicId));
 const glossary = fs.existsSync(GLOSSARY) ? JSON.parse(fs.readFileSync(GLOSSARY, "utf8")) : {};
 const registry = fs.existsSync(REGISTRY) ? JSON.parse(fs.readFileSync(REGISTRY, "utf8")) : null;
 
-const { data, content } = matter(fs.readFileSync(target, "utf8"));
+let data, content;
+try {
+  ({ data, content } = parseFrontmatter(fs.readFileSync(target, "utf8"), target));
+} catch (e) {
+  console.error(`✗ ${e.message}`);
+  process.exit(1);
+}
 const errors = [];
 const isPath = path.resolve(target).replace(/\\/g, "/").match(/\/(content\/)?paths\//);
 
