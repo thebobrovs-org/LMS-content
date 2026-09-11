@@ -1,7 +1,7 @@
 {
   "id": "tpu-topology-explorer",
   "title": "TPU topology explorer",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "props": {},
   "checkpoints": [
     { "id": "observe-topology", "hint": "Switch to Boardfly and watch the glowing worst-case path collapse from 16 hops on a 3D torus to ~7 — the diameter cut that makes inference collectives fast." }

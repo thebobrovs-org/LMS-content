@@ -188,6 +188,7 @@ function setMode(mode) {
   updateMirrors();
   if (window.sim) sim.event("mode", { mode });
   reportSize();
+  nudge();
 }
 
 function triggerFailure() {
@@ -206,6 +207,7 @@ function triggerFailure() {
     updateMirrors();
     if (!observed && window.sim) { observed = true; sim.checkpoint("observe-ocs"); }
   }, 2500));
+  nudge();
 }
 
 let frameCount = 0;
@@ -328,8 +330,34 @@ function render() {
   for (let i = pulses.length - 1; i >= 0; i--) { if (pulses[i].update()) pulses.splice(i, 1); else pulses[i].draw(ctx); }
 
   frameCount++;
-  requestAnimationFrame(render);
+  // Keep drawing while mirrors settle, while a reconfiguration is in progress, or while
+  // the photon flow is within IDLE_MS of the last interaction. Then rest.
+  return moving || T.eventActive || now < activeUntil;
 }
+
+/**
+ * Runs `frame` on requestAnimationFrame only while the sim is visible (its tab shown and
+ * `el` on screen) and `frame` returns true, meaning something is still moving. `wake()`
+ * restarts it after an interaction or a state change, so an idle sim costs no CPU (#58).
+ */
+function createLoop(frame, el) {
+  let raf = 0, onScreen = true;
+  const visible = () => onScreen && document.visibilityState !== "hidden";
+  const tick = () => { raf = 0; if (visible() && frame()) raf = requestAnimationFrame(tick); };
+  const wake = () => { if (!raf && visible()) raf = requestAnimationFrame(tick); };
+  document.addEventListener("visibilitychange", wake);
+  if (el && typeof IntersectionObserver === "function") {
+    new IntersectionObserver((entries) => { onScreen = entries[entries.length - 1].isIntersecting; wake(); }).observe(el);
+  }
+  return { wake };
+}
+const loop = createLoop(render, canvas);
+
+// The photon flow rests IDLE_MS after the last interaction, so a page left open costs no
+// CPU even while the sim is on screen. Choosing an operation calls nudge().
+const IDLE_MS = 10000;
+let activeUntil = 0;
+function nudge() { activeUntil = performance.now() + IDLE_MS; loop.wake(); }
 
 function reportSize() { requestAnimationFrame(() => { if (window.sim) sim.resize(document.body.scrollHeight + 8); }); }
 function applyTheme(t) {
@@ -347,7 +375,7 @@ function start() {
   for (let t = 0; t < N; t++) for (let x = 0; x < N; x++) mirrors[t][x].angle = mirrors[t][x].targetAngle;
   changedMirrors = {}; T.eventActive = false; T.moved = 0; T.events = 0; T.downTotal = 0;
   $("tMirrors").textContent = 0; $("tEvents").textContent = 0; setBadge("", "STABLE");
-  render();
+  nudge();
   reportSize();
 }
 
