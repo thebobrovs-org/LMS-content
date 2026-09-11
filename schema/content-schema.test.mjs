@@ -102,6 +102,11 @@ test("glossary entries, resources and sim configs are checked too", () => {
   const sim = { id: "backprop-explorer", title: "Backprop", version: "1.2.0", props: {}, checkpoints: [{ id: "run", hint: "Press run" }] };
   assert.equal(check(SimConfigSchema, sim).ok, true);
   assert.deepEqual(check(SimConfigSchema, { id: "x", title: "X", version: "0.1.0" }).value.checkpoints, []);
+  // A checkpoint may carry the ids it had before (LMS#62); they must be former ids, and distinct.
+  const renamed = (renamedFrom) => ({ ...sim, checkpoints: [{ id: "observe-x", hint: "h", renamedFrom }] });
+  assert.equal(check(SimConfigSchema, renamed(["quest-1", "quest-2"])).ok, true);
+  assert.equal(check(SimConfigSchema, renamed([])).ok, true);
+  for (const bad of [["observe-x"], ["quest-1", "quest-1"], [""], "quest-1"]) assert.equal(check(SimConfigSchema, renamed(bad)).ok, false, JSON.stringify(bad));
   for (const bad of [
     { ...sim, version: "1.2" },
     { ...sim, id: "Backprop Explorer" },

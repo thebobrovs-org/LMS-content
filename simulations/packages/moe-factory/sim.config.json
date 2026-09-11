@@ -8,6 +8,7 @@
   "checkpoints": [
     {
       "id": "observe-sparsity",
+      "renamedFrom": ["quest-1", "quest-2", "quest-3"],
       "hint": "Route a token in Top-1 or Top-2 mode and watch only a few of the experts light up — far less compute than Dense."
     }
   ]

@@ -128,7 +128,18 @@ export const ResourceSchema = z.discriminatedUnion("type", [
 export const ResourcesSchema = z.array(ResourceSchema);
 
 /** `simulations/packages/<id>/sim.config.json`. `id` must equal the directory name (content CI checks). */
-export const SimCheckpointSchema = z.object({ id: nonEmpty, hint: z.string().optional() }).strict();
+export const SimCheckpointSchema = z
+  .object({
+    id: nonEmpty,
+    hint: z.string().optional(),
+    /** Ids this checkpoint had before (LMS#62): a learner who completed one of them keeps that progress. Distinct from `id` and from each other. */
+    renamedFrom: z.array(nonEmpty).optional(),
+  })
+  .strict()
+  .refine((c) => !c.renamedFrom || (!c.renamedFrom.includes(c.id) && new Set(c.renamedFrom).size === c.renamedFrom.length), {
+    message: "renamedFrom lists former ids: not the current id, and no duplicates",
+    path: ["renamedFrom"],
+  });
 export const SimConfigSchema = z
   .object({
     id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "must be kebab-case"),
