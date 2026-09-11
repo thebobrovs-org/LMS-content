@@ -24,6 +24,7 @@ function loadSim() {
       els.set(id, {
         id,
         attrs,
+        writes: 0, // innerHTML assignments
         listeners: {},
         value: "",
         clientWidth: 600,
@@ -37,6 +38,7 @@ function loadSim() {
         get innerHTML() { return html; },
         set innerHTML(v) {
           html = String(v);
+          this.writes += 1;
           // The elements in this markup, with their attributes.
           for (const m of html.matchAll(/<(\w+)\b[^>]*\bid="([^"]+)"[^>]*>/g)) element(m[2], attrsOf(m[0]));
         },
@@ -126,6 +128,15 @@ test("torus-3d: on the canvas, Enter steps through the chips, Escape clears, arr
   sim.key("ArrowRight");
   sim.key("ArrowDown");
   assert.ok(sim.run("yaw") > yaw && sim.run("pitch") > pitch, "the view rotates");
+  // The readout is a live region: rotating with a chip selected redraws the canvas but doesn't re-announce it.
+  sim.key("Enter");
+  const announced = sim.el("readout").writes;
+  assert.match(sim.el("readout").innerHTML, /<b>Chip \(0,0,0\)<\/b>/);
+  sim.key("ArrowLeft");
+  sim.key("ArrowUp");
+  assert.equal(sim.el("readout").writes, announced, "a rotation leaves the readout untouched");
+  sim.key("Enter");
+  assert.equal(sim.el("readout").writes, announced + 1, "a new selection is announced once");
   sim.key("Home");
   assert.equal(sim.run("yaw"), yaw);
   assert.equal(sim.run("pitch"), pitch);

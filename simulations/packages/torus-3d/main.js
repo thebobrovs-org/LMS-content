@@ -157,18 +157,25 @@ function render() {
   renderReadout(sel, nbr);
 }
 
+// The readout is a live region, so it is written only when its text changes: a
+// rotation or a resize redraws the canvas without re-announcing the same neighbors.
+let readoutHtml = null;
 function renderReadout(sel, nbr) {
   if (picker.value !== (selected == null ? "" : String(selected))) picker.value = selected == null ? "" : String(selected);
-  if (!sel) {
-    readout.innerHTML = `<span class="muted">Drag or use the arrow keys to rotate · click a chip, pick one from the list, or press Enter on the view to step through chips and inspect their ICI neighbors.</span>`;
-    return;
-  }
+  const html = readoutFor(sel, nbr);
+  if (html === readoutHtml) return;
+  readoutHtml = html;
+  readout.innerHTML = html;
+}
+
+function readoutFor(sel, nbr) {
+  if (!sel) return `<span class="muted">Drag or use the arrow keys to rotate · click a chip, pick one from the list, or press Enter on the view to step through chips and inspect their ICI neighbors.</span>`;
   const wraps = nbr.filter((n) => n.isWrap).length;
   const coords = (i) => {
     const c = chips[i];
     return `(${c.x},${c.y},${c.z})`;
   };
-  readout.innerHTML =
+  return (
     `<b>Chip ${coords(selected)}</b> — ${nbr.length} ICI neighbor${nbr.length === 1 ? "" : "s"}` +
     (wraps ? ` <span class="wrap">(${wraps} via wrap-around)</span>` : "") +
     `<div class="nbrs">${nbr
@@ -176,7 +183,8 @@ function renderReadout(sel, nbr) {
         (n) =>
           `<span class="chip-tag ${n.isWrap ? "is-wrap" : ""}">${n.axis.toUpperCase()} → ${coords(n.index)}</span>`,
       )
-      .join("")}</div>`;
+      .join("")}</div>`
+  );
 }
 
 function hitTest(mx, my) {
