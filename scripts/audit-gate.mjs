@@ -3,16 +3,19 @@
 // critical advisory in production dependencies unless .audit-allowlist.json
 // lists it with a reason, a tracking issue and an expiry date no more than
 // MAX_DAYS away. The allowlist itself is validated first and the gate fails
-// closed on any malformed entry. An expired entry fails the gate again, so an
-// accepted risk can't be forgotten.
+// closed on any malformed or expired entry, whatever the audit reports, so an
+// accepted risk can't be forgotten. A report that isn't the shape `npm audit
+// --json` documents fails closed too: an incompatible npm is not a clean audit.
 // Synced from hyperstack/templates/repo; edit it there. Tests: audit-gate.test.mjs.
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import { pathToFileURL } from "node:url";
 
 export const BLOCKING = new Set(["high", "critical"]);
+export const SEVERITIES = new Set(["info", "low", "moderate", "high", "critical"]);
 export const MAX_DAYS = 90;
 const GHSA_RE = /^GHSA-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}$/;
+const ADVISORY_URL_RE = /^https:\/\/github\.com\/advisories\/GHSA-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}$/;
 const ISSUE_RE = /^[\w.-]+\/[\w.-]+#\d+$/;
 
 function isIsoDate(s) {
@@ -37,20 +40,62 @@ export function validateAllowlist(allowlist, today) {
     if (typeof e.issue !== "string" || !ISSUE_RE.test(e.issue)) problems.push(`${at}: "issue" must be owner/repo#number`);
     if (!isIsoDate(e.expires)) problems.push(`${at}: "expires" must be a real YYYY-MM-DD date`);
     else if (daysFrom(today, e.expires) > MAX_DAYS) problems.push(`${at}: "expires" is more than ${MAX_DAYS} days away`);
+    else if (e.expires < today) problems.push(`${at}: expired on ${e.expires} (${e.issue ?? "no issue"}); fix the advisory, or extend the entry in a risk:high PR`);
   });
   return problems;
 }
 
+/** Why `report` isn't an `npm audit --json` report this gate understands, or null. Anything else fails closed. */
+export function reportProblem(report) {
+  const plain = (x) => x !== null && typeof x === "object" && !Array.isArray(x);
+  if (!plain(report)) return "npm audit produced no JSON report (registry unreachable?)";
+  if (report.error) return `npm audit failed: ${report.error.summary ?? JSON.stringify(report.error)}`;
+  if (!plain(report.vulnerabilities)) return "npm audit report has no \"vulnerabilities\" object (an npm this gate doesn't understand?)";
+  const vulns = report.vulnerabilities;
+  for (const [pkg, v] of Object.entries(vulns)) {
+    if (!plain(v) || !Array.isArray(v.via) || v.via.length === 0) return `npm audit report: "${pkg}" has no "via" list`;
+    if (!SEVERITIES.has(v.severity)) return `npm audit report: "${pkg}" has severity ${JSON.stringify(v.severity ?? null)}, not one this gate knows`;
+    for (const a of v.via) {
+      if (typeof a === "string") {
+        // A package affected through a dependency names it; the name must be in the report.
+        if (!plain(vulns[a])) return `npm audit report: "${pkg}" is affected via "${a}", which the report doesn't describe`;
+        continue;
+      }
+      if (!plain(a)) return `npm audit report: "${pkg}" has a malformed "via" entry`;
+      if (!SEVERITIES.has(a.severity)) return `npm audit report: "${pkg}" has an advisory with severity ${JSON.stringify(a.severity ?? null)}, not one this gate knows`;
+      if (typeof a.url !== "string" || !ADVISORY_URL_RE.test(a.url)) return `npm audit report: "${pkg}" has an advisory without a GHSA advisory url`;
+    }
+  }
+  // Every package must reach an advisory object through its dependency references; a chain that
+  // only points at other packages (or at itself) explains nothing, whatever severity it claims.
+  for (const [pkg, v] of Object.entries(vulns)) {
+    const seen = new Set();
+    const stack = [pkg];
+    let found = false;
+    while (stack.length && !found) {
+      const name = stack.pop();
+      if (seen.has(name)) continue;
+      seen.add(name);
+      for (const a of vulns[name].via) {
+        if (typeof a === "object") found = true;
+        else stack.push(a);
+      }
+    }
+    if (!found) return `npm audit report: "${pkg}" is ${v.severity} but no advisory explains it`;
+  }
+  return null;
+}
+
 /**
- * High and critical advisories in an `npm audit --json` report, keyed by GHSA
- * id. An advisory is listed in `via` of the package that contains it; packages
- * that are only affected through a dependency list plain strings, which are
- * skipped so nothing is counted twice.
+ * High and critical advisories in a checked (reportProblem) `npm audit --json`
+ * report, keyed by GHSA id. An advisory is listed in `via` of the package that
+ * contains it; packages that are only affected through a dependency list plain
+ * strings, which are skipped so nothing is counted twice.
  */
 export function blockingAdvisories(report) {
   const found = new Map();
-  for (const [pkg, v] of Object.entries(report.vulnerabilities ?? {})) {
-    for (const a of v.via ?? []) {
+  for (const [pkg, v] of Object.entries(report.vulnerabilities)) {
+    for (const a of v.via) {
       if (typeof a !== "object" || !BLOCKING.has(a.severity)) continue;
       const id = String(a.url ?? "").split("/").pop();
       if (!found.has(id)) found.set(id, { id, pkg, severity: a.severity, title: a.title });
@@ -61,8 +106,8 @@ export function blockingAdvisories(report) {
 
 /** The gate decision: { ok, errors, notes }. Pure, so it can be tested offline. */
 export function evaluate(report, allowlist, today) {
-  if (!report || typeof report !== "object") return { ok: false, errors: ["npm audit produced no JSON report (registry unreachable?)"], notes: [] };
-  if (report.error) return { ok: false, errors: [`npm audit failed: ${report.error.summary ?? JSON.stringify(report.error)}`], notes: [] };
+  const bad = reportProblem(report);
+  if (bad) return { ok: false, errors: [bad], notes: [] };
   const problems = validateAllowlist(allowlist, today);
   if (problems.length) return { ok: false, errors: problems.map((p) => `.audit-allowlist.json ${p}`), notes: [] };
 
@@ -72,8 +117,7 @@ export function evaluate(report, allowlist, today) {
   for (const a of advisories.values()) {
     const entry = allowlist.find((e) => e.id === a.id);
     if (!entry) errors.push(`${a.severity} ${a.id} ${a.pkg}: ${a.title}`);
-    else if (entry.expires < today) errors.push(`expired ${a.id} ${a.pkg}: allow-listed until ${entry.expires} (${entry.issue})`);
-    else notes.push(`allowed ${a.id} ${a.pkg} until ${entry.expires} (${entry.issue})`);
+    else notes.push(`allowed ${a.id} ${a.pkg} until ${entry.expires} (${entry.issue})`); // an expired entry never gets here: validateAllowlist rejects it
   }
   for (const e of allowlist) {
     if (!advisories.has(e.id)) notes.push(`note ${e.id} is no longer reported; remove it from .audit-allowlist.json`);
