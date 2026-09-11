@@ -18,7 +18,7 @@ flashcards:
   - front: TPU VM
     back: The Linux host VM physically attached to the TPU chips. You SSH in (root), run your JAX / PyTorch-XLA code there, and it dispatches the heavy compute to the TPU — no network hop to the accelerator.
   - front: The scale ladder
-    back: chip (1+ TensorCores) → host (the VM) → slice → Pod (chips wired by ICI into a 3D torus) → Multislice (slices joined over the slower DCN).
+    back: chip (1+ TensorCores) → host (the VM) → slice → Pod (chips wired by ICI into a torus — 2D on v5e/v6e, 3D on v4/v5p) → Multislice (slices joined over the slower DCN).
   - front: SparseCore
     back: A dedicated unit (introduced on v4; on v5p, v6e, v7, and the training-focused TPU 8t) that accelerates very large embedding lookups — the heavy part of recommendation/ranking and MoE routing. On the inference-focused TPU 8i it is replaced by a CAE.
   - front: CAE (Collectives Acceleration Engine)
@@ -46,7 +46,7 @@ quiz:
       - PCIe
       - The Inter-Chip Interconnect (ICI)
     answer: 2
-    explanation: ICI links chips into a slice and Pod (a 3D torus). Only crossing between slices (Multislice) falls back to the slower DCN.
+    explanation: ICI links chips into a slice and Pod (a 2D or 3D torus, depending on the generation). Only crossing between slices (Multislice) falls back to the slower DCN.
   - question: On the 8th-generation inference chip (TPU 8i), what replaces the SparseCores found on the training chip (TPU 8t)?
     choices:
       - A Collectives Acceleration Engine (CAE) — plus 3× the on-chip SRAM for the KV cache
@@ -111,7 +111,7 @@ A TPU's power comes from ganging chips together. The ladder:
 - **Chip** — one or more TensorCores plus HBM.
 - **Host** — the VM you SSH into; it drives the chips attached to it.
 - **Slice** — a block of chips wired by <Term id="ici">ICI</Term>.
-- **Pod** — a contiguous set of chips on one ICI network (a 3D torus for training, or a Boardfly topology for inference).
+- **Pod** — a contiguous set of chips on one ICI network (a torus — 3D on training chips such as v4/v5p, 2D on v5e/v6e — or a Boardfly topology for inference).
 - **<Term id="multislice">Multislice</Term>** — multiple slices joined over the
   slower Data-Center Network (DCN) for jobs bigger than one Pod.
 
@@ -153,7 +153,7 @@ workload** into two parts you choose between.
 
 The same training-vs-inference logic runs back through the lineage: **v5e / v6e
 (Trillium)** for cost-efficient **inference**, **v5p / v7 (Ironwood)** for
-**training** (Ironwood widened the MXU to 256×256). <Term id="sparsecore">SparseCore</Term>
+**training** (the MXU grew to 256×256 with Trillium, v6e). <Term id="sparsecore">SparseCore</Term>
 accelerates the giant embedding lookups — table reads that map each token ID to its dense
 vector, a gather pattern — in recommendation/ranking and MoE routing.
 The takeaway isn't the part numbers — it's that *the box is tailored to the

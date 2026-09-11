@@ -125,8 +125,9 @@ starves the ones that don't. That's "what the weights mean," made visible.
 the error backward, the chip must *keep the forward activations* it computed on the way in — every
 layer's intermediate tensors stay resident until the backward pass uses them. Add the optimizer's
 per-parameter state — **Adam, the standard optimizer, keeps two extra numbers per weight (a running
-average of past gradients and their square), so the optimizer alone can cost ~16 bytes per
-parameter** — and a training step needs *several times* the HBM of just running the model. Inference
+average of past gradients and their square), about 8 bytes per parameter in fp32; with an fp32
+master copy of the weights plus bf16 weights and gradients, mixed-precision training holds ~16 bytes
+per parameter** — and a training step needs *several times* the HBM of just running the model. Inference
 keeps none of it — one forward pass, then discard. That gap is why an OOM-free serving config can
 still OOM the moment you try to train on it — and why a training job that **OOMs mid-run rather than
 at startup** points at activations first: their footprint grows with batch size and sequence length,

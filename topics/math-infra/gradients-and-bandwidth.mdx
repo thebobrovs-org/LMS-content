@@ -25,20 +25,20 @@ quiz:
       - Nothing; each device trains independently
     answer: 1
     explanation: An all-reduce sums the gradients across all devices and returns the total to each, so every device steps with the same combined gradient. It's the dominant network cost of a training step and rides the interconnect.
-  - question: A team doubles the device count and the run gets *slower* per useful step. Most likely cause?
+  - question: A team doubles the device count, but each training step barely gets faster. Most likely cause?
     choices:
       - The model got bigger
       - It went communication-bound — per-device compute shrank while the all-reduce stayed flat, so sync now dominates
       - The learning rate is too high
     answer: 1
-    explanation: With a fixed global batch, adding devices cuts per-device compute but the all-reduce time barely changes — so its share rises until it dominates. Past that point more devices buy little or nothing; you've hit the communication wall.
+    explanation: With a fixed global batch, adding devices cuts per-device compute but the all-reduce time barely changes — so its share rises until it dominates, and the speed-up shrinks toward nothing. That's the communication wall. (If the sync *grows* with device count — more hops, or crossing a slower network — the run can even get slower.)
   - question: Your training is communication-bound. Which fix actually helps?
     choices:
       - Add more devices
       - Overlap the gradient sync with compute, or move to a faster interconnect
       - Lower the precision of the gradients only on device 0
     answer: 1
-    explanation: Communication-bound means the sync, not the math, is the bottleneck — so you hide the sync behind compute, widen the interconnect, or do more compute per sync. Adding devices makes it worse by shrinking compute while the sync stays flat.
+    explanation: Communication-bound means the sync, not the math, is the bottleneck — so you hide the sync behind compute, widen the interconnect, or do more compute per sync. Adding devices doesn't help — it shrinks the compute per device while the sync stays flat, so the sync's share only grows.
 status: published
 ---
 

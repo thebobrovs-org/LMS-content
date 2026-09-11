@@ -1,6 +1,6 @@
 {
   "ici": {
-    "definition": "Inter-Chip Interconnect — the high-bandwidth links wiring TPU chips into the 3D torus (six per v5p chip, ~4,800 Gbps).",
+    "definition": "Inter-Chip Interconnect — the high-bandwidth links wiring TPU chips into a slice's torus — 3D on v4/v5p (six links per v5p chip, ~4,800 Gbps), 2D on v5e/v6e.",
     "href": "https://docs.cloud.google.com/tpu/docs/v5p",
     "linkLabel": "TPU v5p docs"
   },
@@ -11,7 +11,7 @@
     "definition": "A 3D grid of chips whose edges wrap around, so there are no ends and any two chips stay a short hop apart."
   },
   "slice": {
-    "definition": "A contiguous sub-volume of a TPU pod, wired into its own 3D torus; you pick its shape to match your parallelism."
+    "definition": "A contiguous sub-volume of a TPU pod, wired into its own torus (3D on v4/v5p); you pick its shape to match your parallelism."
   },
   "multislice": {
     "definition": "Joining multiple slices/pods over the DCN for jobs bigger than one pod — cross-slice traffic is far slower than ICI."

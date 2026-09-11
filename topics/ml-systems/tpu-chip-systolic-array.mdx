@@ -24,7 +24,7 @@ flashcards:
   - front: The Padding Trap
     back: A dimension that doesn't align to the MXU tile (128, or 256 on v6e/v7) or the memory lanes (multiples of 8/128) gets silently zero-padded by XLA. Padded zeros waste compute and on-chip memory — a leading cause of "mysterious" OOMs on a supposedly compute-bound job. Align your shapes.
   - front: FP4 (native 4-bit)
-    back: Native on TPU 8t — halving the bytes per parameter versus bf16 roughly doubles MXU throughput. It's the extreme of the arithmetic-intensity lever — less memory traffic per FLOP.
+    back: Native on TPU 8t — a quarter of bf16's bytes per parameter (half of FP8's). It's the extreme of the arithmetic-intensity lever — less memory traffic per FLOP, so memory-bound work runs faster.
 quiz:
   - question: Why is a general-purpose CPU slow at large matrix multiplies compared with a systolic array?
     choices:
@@ -154,9 +154,9 @@ array's reuse is what pushes you past the ridge. Two levers help:
   bandwidth, and the MXU runs at its bf16 rate.
 - **Batching** reuses the same stationary weights across many activations, so each
   weight read pays off over more MACs.
-- **Lower precision** goes further still — TPU 8t's native **FP4** halves the bytes
-  per parameter again versus bf16, roughly **doubling MXU throughput**. It's the
-  extreme of this lever: fewer bytes moved per FLOP.
+- **Lower precision** goes further still — TPU 8t's native **FP4** needs a quarter
+  of bf16's bytes per parameter (half of FP8's). It's the extreme of this lever:
+  fewer bytes moved per FLOP, so memory-bound work speeds up.
 
 This is the mental model behind everything later in the path: **the array is only
 worth its TFLOPs when you keep it busy.** The utilization metric (MFU) you'll chase
