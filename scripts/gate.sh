@@ -6,6 +6,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 step() { printf '\n▶ %s\n' "$1"; }
 
+step "unit tests"
+node --test pipeline/*.test.mjs
+
 step "validate published content"
 node pipeline/validate.mjs
 

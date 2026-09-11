@@ -16,7 +16,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import matter from "gray-matter";
+import { parseFrontmatter } from "./frontmatter.mjs";
 
 const ROOT = process.cwd();
 const includeStaging = process.argv.includes("--staging");
@@ -57,12 +57,23 @@ const simIds = new Set(
     : [],
 );
 
+// Parse a file's frontmatter (YAML only). A file that can't be parsed is reported
+// as a validation error and skipped, rather than crashing the run.
+function parsed(file) {
+  try {
+    return parseFrontmatter(fs.readFileSync(file, "utf8"), path.relative(ROOT, file));
+  } catch (e) {
+    errors.push(e.message);
+    return null;
+  }
+}
+
 // Collect topic ids from a topics dir, rooted for id derivation.
 function topicsFrom(dir) {
-  return walk(dir).map((file) => {
+  return walk(dir).flatMap((file) => {
     const id = path.relative(dir, file).replace(/\.mdx$/, "").split(path.sep).join("/");
-    const { data, content } = matter(fs.readFileSync(file, "utf8"));
-    return { id, file, data, content };
+    const fm = parsed(file);
+    return fm ? [{ id, file, data: fm.data, content: fm.content }] : [];
   });
 }
 
@@ -73,10 +84,10 @@ const ids = new Set(topics.map((t) => t.id));
 
 // Parse paths up front: validate them and build topic → set(pathId).
 const pathFiles = walk(path.join(ROOT, "paths"));
-const parsedPaths = pathFiles.map((file) => ({
-  pid: path.basename(file, ".mdx"),
-  data: matter(fs.readFileSync(file, "utf8")).data,
-}));
+const parsedPaths = pathFiles.flatMap((file) => {
+  const fm = parsed(file);
+  return fm ? [{ pid: path.basename(file, ".mdx"), data: fm.data }] : [];
+});
 const pathsByTopic = new Map();
 for (const { pid, data } of parsedPaths) {
   for (const lvl of data.levels ?? [])
