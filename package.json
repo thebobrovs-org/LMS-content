@@ -8,9 +8,15 @@
     "validate": "node pipeline/validate.mjs",
     "validate:staging": "node pipeline/validate.mjs --staging",
     "promote": "node pipeline/promote.mjs",
-    "gate": "bash scripts/gate.sh"
+    "gate": "bash scripts/gate.sh",
+    "schema:declarations": "node scripts/schema-declarations.mjs"
   },
   "dependencies": {
-    "gray-matter": "^4.0.3"
+    "@mdx-js/mdx": "^3.1.1",
+    "gray-matter": "^4.0.3",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
   }
 }

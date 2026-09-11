@@ -19,7 +19,8 @@ The learning content for Hyperstack:
 | `media/` | Images |
 | `simulations/packages/*` | Interactive simulations: classic JS with `sim.config.json` |
 | `notebooks/` | Companion Colab notebooks |
-| `pipeline/` | Validation and the staging → prod promotion |
+| `schema/` | The content schema (zod) and its generated declarations |
+| `pipeline/` | Validation (against the schema, plus links, glossaries, media, simulations and an MDX compile) and the staging → prod promotion |
 | `skills/` | Authoring guides |
 
 The learner app (LMS) fetches this repo at build time.
@@ -35,7 +36,7 @@ The learner app (LMS) fetches this repo at build time.
 
 ## Invariants (breaking one is a blocking review finding)
 
-- **The app's schema is the contract:** `LMS/lib/content/schema.ts`, until the M3 shared schema. `validate.mjs` checks only part of it. That's why the local gate builds LMS against this checkout.
+- **`schema/content-schema.mjs` is the contract** (hyperstack ADR 0001): every shape the app reads, in one zod module that content CI, the app build and the admin editor all use. Every object is strict, and `id` is never in a file's frontmatter (the app derives it from the path). `schema/content-schema.d.mts` is generated from it by `scripts/schema-declarations.mjs`, never edited by hand; the gate fails if it's out of date. Bump `SCHEMA_VERSION` when a change needs a consumer change. The local gate still builds LMS against this checkout, until LMS#76 makes the app consume this module.
 - **Frontmatter is YAML only** (`---`), never `---js` or other engines. MDX is prose plus the documented components, with no JS expressions.
 - **Simulations:**
   - classic scripts, no CDNs or external loads, and they talk to the host only through the sim SDK;
