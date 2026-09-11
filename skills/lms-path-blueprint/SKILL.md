@@ -1,6 +1,12 @@
 ---
 name: lms-path-blueprint
-description: Plan a learning path BEFORE building it — a one-page path TLDR (why/what/how + topic map), then a per-topic plan for EVERY topic (learning objectives, key terms, must-learn, and exactly what simulation or figures it needs), agreed as a full map before any topic MDX is written. Use when starting or restructuring a path, or before authoring topic content. Enforces the rule: no topic is created before its plan exists and the full map is signed off; then build topic-by-topic with a sign-off gate between each.
+description: >-
+  Plan a learning path BEFORE building it — a one-page path TLDR (why/what/how + topic map), then a
+  per-topic plan for EVERY topic (learning objectives, key terms, must-learn, and exactly what
+  simulation or figures it needs), agreed as a full map before any topic MDX is written. Use when
+  starting or restructuring a path, or before authoring topic content. Enforces the rule: no topic is
+  created before its plan exists and the full map is signed off; then build topic-by-topic with a
+  sign-off gate between each.
 ---
 
 # Planning a learning path (blueprint-first)
