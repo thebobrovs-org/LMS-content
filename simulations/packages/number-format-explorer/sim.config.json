@@ -1,7 +1,7 @@
 {
   "id": "number-format-explorer",
   "title": "Number formats — range vs precision",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "props": {},
   "checkpoints": [
     { "id": "observe-overflow", "hint": "Drag the value large or tiny until fp16 overflows/underflows — bf16 still holds it because it kept fp32's full 8-bit exponent (range), while fp4 (1 mantissa bit, range ~0.5–6) rounds or overflows almost everything unless the values are scaled first." }

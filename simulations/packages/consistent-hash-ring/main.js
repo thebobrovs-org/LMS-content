@@ -180,8 +180,11 @@ function reportSize() {
   requestAnimationFrame(() => sim.resize(document.body.scrollHeight + 8));
 }
 
-function render() {
-  const r = readout;
+// The controls are built and wired once (mount), never rebuilt: rebuilding them on every
+// input event took keyboard focus off the slider after one step and cut drags short.
+// render() refreshes only the outputs and the slider's label (#59).
+let mounted = false;
+function mount() {
   app.innerHTML = `
     <div class="controls">
       <button id="add">+ Add node</button>
@@ -189,20 +192,12 @@ function render() {
       <button id="reset" class="secondary">Reset</button>
       <label class="rep">vnodes/node
         <input id="rep" type="range" min="1" max="8" value="${replicas}" aria-label="Virtual nodes per node" />
-        <span>${replicas}</span>
+        <span id="rep-val">${replicas}</span>
       </label>
     </div>
-    <div class="readout" role="status">
-      ${
-        r
-          ? `<strong>${r.label}</strong> — now ${r.n} node(s).
-             <span class="good">Ring remapped ${r.ring}.</span>
-             <span class="bad">mod-N would remap ${r.mod}.</span>`
-          : `Ring with ${nodes.length} nodes, ${keys.length} keys. Add or remove a node and watch how few keys move.`
-      }
-    </div>
-    <div class="loads">${loadSummary()}</div>
-    <div class="ring">${svg()}</div>
+    <div class="readout" id="readout" role="status"></div>
+    <div class="loads" id="loads"></div>
+    <div class="ring" id="ring"></div>
     <div class="legend">Outer dots are nodes (with their virtual copies); inner dots are keys, colored by the node that owns them. Outlined keys moved on the last change.</div>`;
 
   app.querySelector("#add").addEventListener("click", addNode);
@@ -212,6 +207,22 @@ function render() {
     render();
   });
   app.querySelector("#rep").addEventListener("input", (e) => setReplicas(Number(e.target.value)));
+  mounted = true;
+}
+
+function render() {
+  if (!mounted) mount();
+  const r = readout;
+  const rep = app.querySelector("#rep");
+  if (Number(rep.value) !== replicas) rep.value = String(replicas);
+  app.querySelector("#rep-val").textContent = String(replicas);
+  app.querySelector("#readout").innerHTML = r
+    ? `<strong>${r.label}</strong> — now ${r.n} node(s).
+       <span class="good">Ring remapped ${r.ring}.</span>
+       <span class="bad">mod-N would remap ${r.mod}.</span>`
+    : `Ring with ${nodes.length} nodes, ${keys.length} keys. Add or remove a node and watch how few keys move.`;
+  app.querySelector("#loads").innerHTML = loadSummary();
+  app.querySelector("#ring").innerHTML = svg();
   reportSize();
 }
 
