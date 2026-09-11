@@ -6,7 +6,7 @@
 // aware, no CDNs.
 
 let REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const K = 8;                       // steep axis (y); stability needs lr < 2/K = 0.25
+const K = 8;                       // steep axis (y); stability needs lr < 2(1+μ)/K: 0.25 without momentum
 const START = [-0.9, 0.8];
 const STEPS = 45;
 const D = 1.3;                     // domain half-extent for the landscape
@@ -14,6 +14,8 @@ let lr = 0.12, mu = 0.0, observed = false;
 
 const $ = (id) => document.getElementById(id);
 const loss = (x, y) => 0.5 * (x * x + K * y * y);
+// Heavy-ball descent on the steep axis is stable while lr·K < 2(1+μ); with μ = 0 that is the familiar 2/K.
+const stableBelow = () => (2 * (1 + mu)) / K;
 function applyTheme(t) {
   if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
   else delete document.documentElement.dataset.theme;
@@ -115,7 +117,7 @@ function render() {
   const note = $("note");
   note.className = "note " + (regime === "diverging" ? "bad" : regime === "converging" ? "good" : "");
   if (regime === "diverging")
-    note.innerHTML = `Learning rate <b>${lr.toFixed(3)}</b> is <span class="reg bad">too big</span> — each step overshoots the steep walls of the valley, the path flies off, and the loss <b>explodes</b>. This is the <b>NaN blow-up</b>: the run is dead. (Stability here needs lr below ${(2 / K).toFixed(2)}.)`;
+    note.innerHTML = `Learning rate <b>${lr.toFixed(3)}</b> is <span class="reg bad">too big</span> — each step overshoots the steep walls of the valley, the path flies off, and the loss <b>explodes</b>. This is the <b>NaN blow-up</b>: the run is dead. (Stability here needs lr below ${stableBelow().toFixed(3)}${mu > 0 ? ` with momentum ${mu.toFixed(2)}` : ""}.)`;
   else if (regime === "converging" && oscillated)
     note.innerHTML = `Learning rate <b>${lr.toFixed(3)}</b> is <span class="reg good">in the band</span> but near the edge — it still reaches the minimum, but watch the path <b>zig-zag</b> across the steep walls of the valley. A smaller rate, or <b>momentum</b>, smooths it out.`;
   else if (regime === "converging")

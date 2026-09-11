@@ -2,8 +2,9 @@
 // before this one) so the bundle works in the opaque-origin sandbox.
 //
 // Renders an N×N×N grid of TPU chips as a 3D torus: each chip has six ICI links
-// (±X, ±Y, ±Z); edges wrap around to close the torus. Drag to orbit, click a
-// chip to highlight its six neighbors, toggle the wrap-around links.
+// (±X, ±Y, ±Z); edges wrap around to close the torus. Drag or use the arrow keys to
+// orbit; click a chip, pick it from the list, or step through chips with Enter, to
+// highlight its six neighbors; toggle the wrap-around links. Redraws when resized.
 
 const app = document.getElementById("app");
 
@@ -14,7 +15,7 @@ let inspected = false; // checkpoint latch
 let yaw = -0.7;
 let pitch = -0.5;
 
-let canvas, ctx, readout;
+let canvas, ctx, readout, picker;
 let chips = []; // { x, y, z }
 
 function idx(x, y, z) {
@@ -156,17 +157,25 @@ function render() {
   renderReadout(sel, nbr);
 }
 
+// The readout is a live region, so it is written only when its text changes: a
+// rotation or a resize redraws the canvas without re-announcing the same neighbors.
+let readoutHtml = null;
 function renderReadout(sel, nbr) {
-  if (!sel) {
-    readout.innerHTML = `<span class="muted">Drag to rotate · click a chip to inspect its ICI neighbors.</span>`;
-    return;
-  }
+  if (picker.value !== (selected == null ? "" : String(selected))) picker.value = selected == null ? "" : String(selected);
+  const html = readoutFor(sel, nbr);
+  if (html === readoutHtml) return;
+  readoutHtml = html;
+  readout.innerHTML = html;
+}
+
+function readoutFor(sel, nbr) {
+  if (!sel) return `<span class="muted">Drag or use the arrow keys to rotate · click a chip, pick one from the list, or press Enter on the view to step through chips and inspect their ICI neighbors.</span>`;
   const wraps = nbr.filter((n) => n.isWrap).length;
   const coords = (i) => {
     const c = chips[i];
     return `(${c.x},${c.y},${c.z})`;
   };
-  readout.innerHTML =
+  return (
     `<b>Chip ${coords(selected)}</b> — ${nbr.length} ICI neighbor${nbr.length === 1 ? "" : "s"}` +
     (wraps ? ` <span class="wrap">(${wraps} via wrap-around)</span>` : "") +
     `<div class="nbrs">${nbr
@@ -174,7 +183,8 @@ function renderReadout(sel, nbr) {
         (n) =>
           `<span class="chip-tag ${n.isWrap ? "is-wrap" : ""}">${n.axis.toUpperCase()} → ${coords(n.index)}</span>`,
       )
-      .join("")}</div>`;
+      .join("")}</div>`
+  );
 }
 
 function hitTest(mx, my) {
@@ -193,14 +203,42 @@ function reportSize() {
   requestAnimationFrame(() => sim.resize(document.body.scrollHeight + 8));
 }
 
+/** Select a chip (or none) from any input: pointer, the list, or the keyboard. The first selection completes the checkpoint. */
+function select(index) {
+  selected = index;
+  if (index != null) {
+    if (!inspected) { inspected = true; sim.checkpoint("inspect-neighbors"); }
+    sim.event("select-chip", { chip: chips[index] });
+  }
+  render();
+}
+
+/** The keys the view answers to: arrows rotate, Enter (Shift+Enter) steps through the chips, Escape clears, Home resets. */
+function onKey(e) {
+  const step = 0.15;
+  switch (e.key) {
+    case "ArrowLeft": yaw -= step; break;
+    case "ArrowRight": yaw += step; break;
+    case "ArrowUp": pitch = Math.max(-1.4, pitch - step); break;
+    case "ArrowDown": pitch = Math.min(1.4, pitch + step); break;
+    case "Enter": case " ": select(selected == null ? (e.shiftKey ? chips.length - 1 : 0) : (selected + (e.shiftKey ? -1 : 1) + chips.length) % chips.length); e.preventDefault(); return;
+    case "Escape": select(null); return;
+    case "Home": yaw = -0.7; pitch = -0.5; break;
+    default: return;
+  }
+  e.preventDefault();
+  render();
+}
+
 function mount() {
   app.innerHTML = `
     <div class="controls">
       <label><input type="checkbox" id="wrap" ${wrap ? "checked" : ""}/> Wrap-around links (torus)</label>
       <button id="reset" class="secondary">Reset view</button>
+      <label>Chip <select id="chip" aria-label="chip to inspect"><option value="">none</option>${chips.map((c, i) => `<option value="${i}">(${c.x},${c.y},${c.z})</option>`).join("")}</select></label>
     </div>
-    <canvas id="c" width="600" height="380" aria-label="3D torus of ${N * N * N} chips"></canvas>
-    <div id="readout" class="readout"></div>
+    <canvas id="c" width="600" height="380" tabindex="0" role="img" aria-label="3D torus of ${N * N * N} chips. Arrow keys rotate, Enter steps through the chips, Escape clears, Home resets the view."></canvas>
+    <div id="readout" class="readout" aria-live="polite"></div>
     <div class="legend">
       <span class="key"><i class="dot chip"></i> chip</span>
       <span class="key"><i class="dot sel"></i> selected</span>
@@ -212,6 +250,13 @@ function mount() {
   canvas = app.querySelector("#c");
   ctx = canvas.getContext("2d");
   readout = app.querySelector("#readout");
+  readoutHtml = null; // a new element: whatever was announced before isn't in it
+  picker = app.querySelector("#chip");
+
+  picker.addEventListener("change", (e) => select(e.target.value === "" ? null : Number(e.target.value)));
+  canvas.addEventListener("keydown", onKey);
+  // The canvas draws at its CSS size, so a narrower or wider host means a redraw.
+  new ResizeObserver(() => { render(); reportSize(); }).observe(canvas);
 
   app.querySelector("#wrap").addEventListener("change", (e) => {
     wrap = e.target.checked;
@@ -243,12 +288,7 @@ function mount() {
     if (dragging && !moved) {
       const p = pointer(e);
       const hit = hitTest(p.x, p.y);
-      if (hit != null) {
-        selected = hit;
-        if (!inspected) { inspected = true; sim.checkpoint("inspect-neighbors"); }
-        sim.event("select-chip", { chip: chips[hit] });
-      }
-      render();
+      if (hit != null) select(hit); else render();
     }
     dragging = false;
   };
