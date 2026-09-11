@@ -6,13 +6,6 @@
     "prompt": "Explain the trade-offs between top-1 and top-2 expert routing in a mixture-of-experts layer, and how the auxiliary load-balancing loss prevents expert collapse. Use a concrete example with 8 experts and walk through the routing of a single token."
   },
   {
-    "type": "notebook",
-    "topic": "ml-systems/mixture-of-experts",
-    "title": "MoE deep-dive notebook",
-    "url": "https://notebooklm.google.com/",
-    "note": "Replace with your topic-specific NotebookLM notebook URL."
-  },
-  {
     "type": "prompt",
     "topic": "ml-systems/tpu-topologies",
     "title": "Map a model onto a TPU slice",

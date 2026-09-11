@@ -113,6 +113,9 @@ test("the baseline review's fixtures fail", () => {
     "a simulation that isn't packaged": { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Simulation id="missing-sim" />\n` },
     "a simulation that isn't packaged, as a literal expression": { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Simulation id={"missing-sim"} />\n` },
     "a simulation id that isn't a string": { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Simulation id={42} />\n` },
+    // A Callout type the app doesn't know renders as a plain note (LMS-content#61).
+    "an unknown Callout type": { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Callout type="warn">Careful.</Callout>\n` },
+    "a Callout type that isn't a string": { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Callout type={1}>Careful.</Callout>\n` },
   };
   for (const [name, edits] of Object.entries(cases)) fails(name, edits);
 });

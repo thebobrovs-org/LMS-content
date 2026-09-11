@@ -10,12 +10,5 @@
     "topic": "systems/caching",
     "title": "Design a cache for a real workload",
     "prompt": "I have a read-heavy API with a Zipfian access pattern. Help me choose a cache size and eviction policy, predict the hit rate, and design an experiment to validate it in production."
-  },
-  {
-    "type": "notebook",
-    "topic": "data-structures/hash-tables",
-    "title": "Hashing & collisions notebook",
-    "url": "https://notebooklm.google.com/",
-    "note": "Replace with your topic-specific NotebookLM notebook URL."
   }
 ]
