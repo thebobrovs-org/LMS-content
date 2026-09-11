@@ -217,9 +217,10 @@ function stringValue(attribute) {
  * - a link or image URL, Markdown or JSX, has no scheme other than http(s) or mailto,
  *   and no whitespace or control character a browser would drop before reading it;
  *   `src` and `href` are strings.
- * `urls` receives the URLs of every image, link, definition and `src`/`href`.
+ * `urls` receives the URLs of every image, link, definition and `src`/`href`; `sims` the
+ * `id` of every `<Simulation>`, however it is written.
  */
-function lessonRules(urls) {
+function lessonRules(urls, sims) {
   return (tree, vfile) => {
     const url = (value, node, what) => {
       if (UNSAFE_URL_CHARS.test(value)) vfile.fail(`${what} holds whitespace or a control character, which a browser drops before reading the scheme; encode it`, node);
@@ -252,6 +253,11 @@ function lessonRules(urls) {
               if (value === null) vfile.fail(`<${node.name} ${a.name}={…}> must be a string`, node);
               else if (value !== undefined) url(value, node, `<${node.name} ${a.name}>`);
             }
+            if (node.name === "Simulation" && a.name === "id") {
+              const value = stringValue(a);
+              if (typeof value !== "string") vfile.fail(`<Simulation id={…}> must be a string`, node);
+              else sims.push(value);
+            }
           }
         }
       }
@@ -261,12 +267,13 @@ function lessonRules(urls) {
   };
 }
 
-/** Compile one MDX body as the app would; a failure names the file and its line in the file. Returns the URLs it references, or null. */
+/** Compile one MDX body as the app would; a failure names the file and its line in the file. Returns the URLs and simulation ids it references, or null. */
 async function compiles(file, content, bodyLine) {
   const urls = [];
+  const sims = [];
   try {
-    await compile(content, { development: false, remarkPlugins: [() => lessonRules(urls)] });
-    return urls;
+    await compile(content, { development: false, remarkPlugins: [() => lessonRules(urls, sims)] });
+    return { urls, sims };
   } catch (e) {
     // The position is in the message's body coordinates, as fields or as a "(line:col-line:col)" suffix.
     const reason = String(e.reason ?? e.message);
@@ -282,12 +289,15 @@ async function compiles(file, content, bodyLine) {
 /** The /media/... files a document references, from the URLs its compiled tree holds; the file name is the pathname, not a fragment or query string. */
 export const mediaRefs = (urls) => [...new Set(urls.filter((u) => u.startsWith("/media/")).map((u) => u.replace(/[#?].*$/, "")))];
 
-/** The checks a topic or path body needs beyond its frontmatter: it compiles under the lesson rules, and its media exist. */
+/** The checks a topic or path body needs beyond its frontmatter: it compiles under the lesson rules, its media exist, and its simulations are packaged. */
 async function checkBody(id, file, content, bodyLine) {
-  const urls = await compiles(file, content, bodyLine);
-  for (const ref of mediaRefs(urls ?? [])) {
+  const found = await compiles(file, content, bodyLine);
+  for (const ref of mediaRefs(found?.urls ?? [])) {
     const problem = mediaProblem(ref);
     if (problem) errors.push(`${id}: ${problem}`);
+  }
+  for (const sim of new Set(found?.sims ?? [])) {
+    if (!simIds.has(sim)) errors.push(`${id}: simulation "${sim}" has no simulations/packages/${sim}`);
   }
 }
 
@@ -305,9 +315,6 @@ for (const t of topics) {
       const where = pids ? `the glossary of its path(s): ${[...pids].join(", ")}` : "any path glossary";
       errors.push(`${id}: glossary term "${key}" is not defined in ${where}`);
     }
-  }
-  for (const m of content.matchAll(/<Simulation[^>]*\bid=(["'])(.*?)\1/g)) {
-    if (!simIds.has(m[2])) errors.push(`${id}: simulation "${m[2]}" has no simulations/packages/${m[2]}`);
   }
   await checkBody(id, file, content, bodyLine);
 }

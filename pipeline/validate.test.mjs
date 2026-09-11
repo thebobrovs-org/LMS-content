@@ -109,6 +109,10 @@ test("the baseline review's fixtures fail", () => {
     "a resources file that is JSON null": { "resources/foundations.json": "null" },
     "a glossary file that is JSON null": { "glossary/foundations.json": "null" },
     "an unreferenced sim.config.json that is JSON null": { "simulations/packages/other-sim/sim.config.json": "null" },
+    // A simulation id is read from the compiled tree, so every spelling of the attribute is checked.
+    "a simulation that isn't packaged": { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Simulation id="missing-sim" />\n` },
+    "a simulation that isn't packaged, as a literal expression": { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Simulation id={"missing-sim"} />\n` },
+    "a simulation id that isn't a string": { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Simulation id={42} />\n` },
   };
   for (const [name, edits] of Object.entries(cases)) fails(name, edits);
 });
