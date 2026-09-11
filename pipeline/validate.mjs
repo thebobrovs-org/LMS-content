@@ -160,7 +160,10 @@ const HTML_ELEMENTS = new Set([
 // srcDoc, style or an on* handler: an HTML string or a handler is code, whatever carries it.
 const HTML_ATTRIBUTES = new Set(["alt", "className", "colSpan", "height", "href", "id", "lang", "open", "rel", "rowSpan", "src", "start", "target", "title", "width"]);
 // A URL a lesson may point at: a same-site path or fragment, http(s), or mailto. Never javascript:, data: or another scheme.
+// A browser drops leading and trailing C0 controls and spaces, and any tab or newline, before it reads the scheme
+// (" javascript:", "java\tscript:"), so a URL holding any of them is rejected rather than normalized: encode it.
 const SAFE_SCHEMES = new Set(["http", "https", "mailto"]);
+const UNSAFE_URL_CHARS = /[\u0000-\u0020\u007f]/;
 const urlScheme = (url) => /^([a-z][a-z0-9+.-]*):/i.exec(url)?.[1].toLowerCase();
 
 /**
@@ -191,11 +194,18 @@ export function isLiteralData(node) {
 /** The single expression of an MDX expression's program, if it is literal data; else undefined. */
 const literalOf = (estree) => (estree?.body?.length === 1 && estree.body[0].type === "ExpressionStatement" && isLiteralData(estree.body[0].expression) ? estree.body[0].expression : undefined);
 
-/** A JSX attribute's value when it is a string (`src="…"` or `src={"…"}`); undefined for a boolean attribute or other literal data. */
+/**
+ * A JSX attribute's value when it is a string: `src="…"`, `src={"…"}` or a template with
+ * no substitutions. Undefined for a boolean attribute (`<details open>`); null for
+ * literal data of another shape (a number, an array, an object) or code.
+ */
 function stringValue(attribute) {
+  if (attribute.value == null) return undefined;
   if (typeof attribute.value === "string") return attribute.value;
-  const literal = attribute.value && typeof attribute.value === "object" ? literalOf(attribute.value.data?.estree) : undefined;
-  return literal?.type === "Literal" && typeof literal.value === "string" ? literal.value : undefined;
+  const literal = literalOf(attribute.value.data?.estree);
+  if (literal?.type === "Literal" && typeof literal.value === "string") return literal.value;
+  if (literal?.type === "TemplateLiteral") return literal.quasis[0]?.value.cooked ?? null;
+  return null;
 }
 
 /**
@@ -204,12 +214,15 @@ function stringValue(attribute) {
  * - no import or export; an expression may carry literal data only;
  * - a JSX tag is a documented component or one of HTML_ELEMENTS, whose attributes
  *   come from HTML_ATTRIBUTES (so no dangerouslySetInnerHTML, srcDoc or on*);
- * - a link or image URL, Markdown or JSX, has no scheme other than http(s) or mailto.
+ * - a link or image URL, Markdown or JSX, has no scheme other than http(s) or mailto,
+ *   and no whitespace or control character a browser would drop before reading it;
+ *   `src` and `href` are strings.
  * `urls` receives the URLs of every image, link, definition and `src`/`href`.
  */
 function lessonRules(urls) {
   return (tree, vfile) => {
     const url = (value, node, what) => {
+      if (UNSAFE_URL_CHARS.test(value)) vfile.fail(`${what} holds whitespace or a control character, which a browser drops before reading the scheme; encode it`, node);
       const scheme = urlScheme(value);
       if (scheme && !SAFE_SCHEMES.has(scheme)) vfile.fail(`${what} may point at a same-site path, http(s) or mailto, not "${scheme}:"`, node);
       urls.push(value);
@@ -234,8 +247,11 @@ function lessonRules(urls) {
             if (a.value && typeof a.value === "object" && !literalOf(a.value.data?.estree)) {
               vfile.fail(`<${node.name} ${a.name}={…}>: an attribute may carry only literal data (a string, number, boolean, array or object of those)`, node);
             }
-            const value = stringValue(a);
-            if ((a.name === "src" || a.name === "href") && value !== undefined) url(value, node, `<${node.name} ${a.name}>`);
+            if (a.name === "src" || a.name === "href") {
+              const value = stringValue(a);
+              if (value === null) vfile.fail(`<${node.name} ${a.name}={…}> must be a string`, node);
+              else if (value !== undefined) url(value, node, `<${node.name} ${a.name}>`);
+            }
           }
         }
       }

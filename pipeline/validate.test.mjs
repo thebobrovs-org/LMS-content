@@ -122,6 +122,7 @@ test("media must be a regular file inside media/, referenced from a topic or a p
   assert.match(fails("an angle-bracket destination", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n![x](</media/missing.svg>)\n` }), /has no media\/missing\.svg/);
   assert.match(fails("a JSX src", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<img src="/media/missing.svg" alt="x" />\n` }), /has no media\/missing\.svg/);
   assert.match(fails("a JSX src as a literal expression", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<img src={"/media/missing.svg"} alt="x" />\n` }), /has no media\/missing\.svg/);
+  assert.match(fails("a JSX src as a template", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<img src={\`/media/missing.svg\`} alt="x" />\n` }), /has no media\/missing\.svg/);
   // A symlink that escapes media/.
   const root = tree();
   fs.symlinkSync(path.join(root, "resources", "foundations.json"), path.join(root, "media", "escape.svg"));
@@ -167,6 +168,15 @@ test("a lesson's HTML is prose: no active elements, attributes or URL schemes", 
     "a javascript: Markdown link": [`${TOPIC}\n[x](javascript:alert(1))\n`, /a link may point at .*, not "javascript:"/],
     "a data: Markdown image": [`${TOPIC}\n![x](data:image/svg+xml,<svg/>)\n`, /an image may point at .*, not "data:"/],
     "a javascript: reference definition": [`${TOPIC}\n[x][j]\n\n[j]: javascript:alert(1)\n`, /an image may point at .*, not "javascript:"/],
+    // A URL is a string however it is written, and a browser's normalization can't hide the scheme.
+    "a javascript: href in a template": [`${TOPIC}\n<a href={\`javascript:alert(1)\`}>x</a>\n`, /<a href> may point at .*, not "javascript:"/],
+    "an href that isn't a string": [`${TOPIC}\n<a href={["javascript:alert(1)"]}>x</a>\n`, /<a href=\{…\}> must be a string/],
+    "a src that is a number": [`${TOPIC}\n<img src={1} alt="x" />\n`, /<img src=\{…\}> must be a string/],
+    "a leading space before the scheme": [`${TOPIC}\n<a href=" javascript:alert(1)">x</a>\n`, /<a href> holds whitespace or a control character/],
+    "a tab inside the scheme": [`${TOPIC}\n<a href={"java\\tscript:alert(1)"}>x</a>\n`, /<a href> holds whitespace or a control character/],
+    "a newline inside the scheme": [`${TOPIC}\n<a href={"java\\nscript:alert(1)"}>x</a>\n`, /<a href> holds whitespace or a control character/],
+    "a carriage return inside the scheme": [`${TOPIC}\n<a href={\`java\\rscript:alert(1)\`}>x</a>\n`, /<a href> holds whitespace or a control character/],
+    "a trailing control character": [`${TOPIC}\n<img src={"/media/array.svg\\u0001"} alt="x" />\n`, /<img src> holds whitespace or a control character/],
   };
   for (const [name, [body, message]] of Object.entries(cases)) {
     const out = fails(name, { "topics/fundamentals/arrays.mdx": body });
