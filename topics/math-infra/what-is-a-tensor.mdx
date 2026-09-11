@@ -102,7 +102,7 @@ dimensions it has, i.e. **how many indices you need to reach a single value**.
 - **rank 2** — a **<Term id="matrix">matrix</Term>**, a grid, shape `(rows, cols)`.
 - **rank 3+** — a cube and beyond, like `[batch, seq, hidden]`.
 
-<Callout type="warn">
+<Callout type="warning">
 **One naming trap.** "Rank" here means **number of dimensions** (you'll also see *ndim* or
 *order*). It is **not** the linear-algebra "rank of a matrix" (the count of independent rows). Same
 word, unrelated idea — when an ML tool says a tensor is "rank 3," it means three axes.

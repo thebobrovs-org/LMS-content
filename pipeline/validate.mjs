@@ -24,7 +24,7 @@ import { compile } from "@mdx-js/mdx";
 import { parseFrontmatter } from "./frontmatter.mjs";
 import { effectiveGlossary, pathsByTopic as indexPathsByTopic, termKeys } from "./glossary.mjs";
 import {
-  GlossarySchema, MDX_COMPONENTS, PathFrontmatterSchema, ResourcesSchema, SimConfigSchema, TopicFrontmatterSchema, check,
+  GlossarySchema, CALLOUT_TYPES, MDX_COMPONENTS, PathFrontmatterSchema, ResourcesSchema, SimConfigSchema, TopicFrontmatterSchema, check,
 } from "../schema/content-schema.mjs";
 
 const ROOT = process.cwd();
@@ -252,6 +252,10 @@ function lessonRules(urls, sims) {
               const value = stringValue(a);
               if (value === null) vfile.fail(`<${node.name} ${a.name}={…}> must be a string`, node);
               else if (value !== undefined) url(value, node, `<${node.name} ${a.name}>`);
+            }
+            if (node.name === "Callout" && a.name === "type") {
+              const value = stringValue(a);
+              if (typeof value !== "string" || !CALLOUT_TYPES.includes(value)) vfile.fail(`<Callout type=…> must be one of ${CALLOUT_TYPES.join(", ")}${typeof value === "string" ? `, not "${value}"` : ""}`, node);
             }
             if (node.name === "Simulation" && a.name === "id") {
               const value = stringValue(a);

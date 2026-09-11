@@ -6,10 +6,6 @@ difficulty: intermediate
 estimatedMinutes: 25
 prerequisites: [fundamentals/arrays]
 relatedTo: [systems/caching]
-videos:
-  - youtubeId: dQw4w9WgXcQ
-    title: Hashing explained
-    start: 0
 flashcards:
   - front: What is the average-case lookup time of a hash table?
     back: O(1), assuming a good hash function and a low load factor.
@@ -46,8 +42,6 @@ slot. Real hash tables resolve collisions with strategies like{" "}
 As the **load factor** (entries ÷ buckets) rises past ~0.7, collisions become
 frequent. Tables resize and rehash to keep operations near O(1).
 </Callout>
-
-<YouTube id="dQw4w9WgXcQ" title="Hashing explained" />
 
 <Flashcard
   front="Why can hash-table operations degrade toward O(n)?"

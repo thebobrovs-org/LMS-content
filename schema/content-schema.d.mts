@@ -82,6 +82,8 @@ export const DIFFICULTIES: readonly ["beginner", "intermediate", "advanced"];
  * and any JavaScript (expressions, imports, exports): lessons are prose plus these.
  */
 export const MDX_COMPONENTS: readonly ["YouTube", "Callout", "Simulation", "Flashcard", "Quiz", "Steps", "Step", "Figure", "Tip", "Term"];
+/** The `type` a `<Callout>` may carry (the app's Callout component); anything else renders as a plain note. */
+export const CALLOUT_TYPES: readonly ["tip", "note", "warning"];
 /** A topic file's frontmatter (`topics/<dir>/<name>.mdx`). The app adds `id` from the path. */
 export const TopicFrontmatterSchema: z.ZodObject<{
     title: z.ZodString;
@@ -320,14 +322,14 @@ export const ResourceSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
     title: string;
     type: "notebook";
     url: string;
-    topic?: string | undefined;
     note?: string | undefined;
+    topic?: string | undefined;
 }, {
     title: string;
     type: "notebook";
     url: string;
-    topic?: string | undefined;
     note?: string | undefined;
+    topic?: string | undefined;
 }>, z.ZodObject<{
     url: z.ZodString;
     note: z.ZodOptional<z.ZodString>;
@@ -338,14 +340,14 @@ export const ResourceSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
     title: string;
     type: "link";
     url: string;
-    topic?: string | undefined;
     note?: string | undefined;
+    topic?: string | undefined;
 }, {
     title: string;
     type: "link";
     url: string;
-    topic?: string | undefined;
     note?: string | undefined;
+    topic?: string | undefined;
 }>]>;
 export const ResourcesSchema: z.ZodArray<z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
     youtubeId: z.ZodString;
@@ -390,14 +392,14 @@ export const ResourcesSchema: z.ZodArray<z.ZodDiscriminatedUnion<"type", [z.ZodO
     title: string;
     type: "notebook";
     url: string;
-    topic?: string | undefined;
     note?: string | undefined;
+    topic?: string | undefined;
 }, {
     title: string;
     type: "notebook";
     url: string;
-    topic?: string | undefined;
     note?: string | undefined;
+    topic?: string | undefined;
 }>, z.ZodObject<{
     url: z.ZodString;
     note: z.ZodOptional<z.ZodString>;
@@ -408,14 +410,14 @@ export const ResourcesSchema: z.ZodArray<z.ZodDiscriminatedUnion<"type", [z.ZodO
     title: string;
     type: "link";
     url: string;
-    topic?: string | undefined;
     note?: string | undefined;
+    topic?: string | undefined;
 }, {
     title: string;
     type: "link";
     url: string;
-    topic?: string | undefined;
     note?: string | undefined;
+    topic?: string | undefined;
 }>]>, "many">;
 /** `simulations/packages/<id>/sim.config.json`. `id` must equal the directory name (content CI checks). */
 export const SimCheckpointSchema: z.ZodObject<{

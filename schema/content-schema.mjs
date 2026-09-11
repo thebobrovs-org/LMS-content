@@ -65,6 +65,8 @@ export const DIFFICULTIES = /** @type {const} */ (["beginner", "intermediate", "
  * and any JavaScript (expressions, imports, exports): lessons are prose plus these.
  */
 export const MDX_COMPONENTS = /** @type {const} */ (["YouTube", "Callout", "Simulation", "Flashcard", "Quiz", "Steps", "Step", "Figure", "Tip", "Term"]);
+/** The `type` a `<Callout>` may carry (the app's Callout component); anything else renders as a plain note. */
+export const CALLOUT_TYPES = /** @type {const} */ (["tip", "note", "warning"]);
 
 /** A topic file's frontmatter (`topics/<dir>/<name>.mdx`). The app adds `id` from the path. */
 export const TopicFrontmatterSchema = z

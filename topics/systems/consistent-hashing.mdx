@@ -23,10 +23,10 @@ quiz:
   - question: On a consistent-hashing ring (no virtual nodes), adding one node remaps which keys?
     choices:
       - All keys
-      - Only the keys in the arc between the new node and its clockwise neighbor
+      - Only the keys in the arc from the new node's counter-clockwise predecessor up to the new node
       - A random half of the keys
     answer: 1
-    explanation: Only keys that now fall to the newly inserted position change owner — about 1/N of them on average. With virtual nodes the moved keys are split across several small arcs, but they still total about 1/N.
+    explanation: A key belongs to the first node clockwise from it, so the keys that now reach the new node first are the ones between its predecessor and itself — about 1/N of them on average. With virtual nodes the moved keys are split across several small arcs, but they still total about 1/N.
 status: draft
 ---
 
@@ -52,8 +52,9 @@ You want a scheme where changing N moves only the keys it has to.
 same** <Term>hash ring</Term> — a circular hash space that wraps around. A key
 is owned by the first node you reach going clockwise from the key's position.
 
-Now adding a node only captures the keys in the arc between it and its clockwise
-neighbor; removing a node hands its arc to the next node. Either way you move
+Now adding a node only captures the keys in the arc from its counter-clockwise
+predecessor up to itself (the keys that now reach it first); removing a node hands
+its arc to its clockwise successor. Either way you move
 about `1/N` of the keys instead of `(N-1)/N`. That `1/N` bound is the whole point
 (Karger et al., 1997).
 
