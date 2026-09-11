@@ -144,6 +144,11 @@ setTimeout(() => { if (!sim.isInitialized()) render(); }, 300);
 - `id` must equal the directory name and the embedded `<Simulation id>`.
 - Prefer **one** checkpoint (`observe-*`). It feeds topic **mastery coverage**.
 - Bump `version` when behavior changes (bundles are versioned in the registry).
+- **Renaming a checkpoint erases learners' progress unless you say where it came from.** A checkpoint's id is part of every learner's progress key. When you rename one (or fold several into one), keep the old ids on the new checkpoint:
+  ```json
+  { "id": "observe-sparsity", "renamedFrom": ["quest-1", "quest-2", "quest-3"], "hint": "…" }
+  ```
+  A learner who completed any of the former ids keeps that coverage. The former ids must differ from the current one and from each other (content CI checks). Never reuse a former id for a different checkpoint later.
 
 ## Theming & accessibility
 

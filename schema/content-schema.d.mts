@@ -420,30 +420,54 @@ export const ResourcesSchema: z.ZodArray<z.ZodDiscriminatedUnion<"type", [z.ZodO
     topic?: string | undefined;
 }>]>, "many">;
 /** `simulations/packages/<id>/sim.config.json`. `id` must equal the directory name (content CI checks). */
-export const SimCheckpointSchema: z.ZodObject<{
+export const SimCheckpointSchema: z.ZodEffects<z.ZodObject<{
     id: z.ZodString;
     hint: z.ZodOptional<z.ZodString>;
+    /** Ids this checkpoint had before (LMS#62): a learner who completed one of them keeps that progress. Distinct from `id` and from each other. */
+    renamedFrom: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
 }, "strict", z.ZodTypeAny, {
     id: string;
     hint?: string | undefined;
+    renamedFrom?: string[] | undefined;
 }, {
     id: string;
     hint?: string | undefined;
+    renamedFrom?: string[] | undefined;
+}>, {
+    id: string;
+    hint?: string | undefined;
+    renamedFrom?: string[] | undefined;
+}, {
+    id: string;
+    hint?: string | undefined;
+    renamedFrom?: string[] | undefined;
 }>;
 export const SimConfigSchema: z.ZodObject<{
     id: z.ZodString;
     title: z.ZodString;
     version: z.ZodString;
     props: z.ZodDefault<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
-    checkpoints: z.ZodDefault<z.ZodArray<z.ZodObject<{
+    checkpoints: z.ZodDefault<z.ZodArray<z.ZodEffects<z.ZodObject<{
         id: z.ZodString;
         hint: z.ZodOptional<z.ZodString>;
+        /** Ids this checkpoint had before (LMS#62): a learner who completed one of them keeps that progress. Distinct from `id` and from each other. */
+        renamedFrom: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
     }, "strict", z.ZodTypeAny, {
         id: string;
         hint?: string | undefined;
+        renamedFrom?: string[] | undefined;
     }, {
         id: string;
         hint?: string | undefined;
+        renamedFrom?: string[] | undefined;
+    }>, {
+        id: string;
+        hint?: string | undefined;
+        renamedFrom?: string[] | undefined;
+    }, {
+        id: string;
+        hint?: string | undefined;
+        renamedFrom?: string[] | undefined;
     }>, "many">>;
 }, "strict", z.ZodTypeAny, {
     title: string;
@@ -453,6 +477,7 @@ export const SimConfigSchema: z.ZodObject<{
     checkpoints: {
         id: string;
         hint?: string | undefined;
+        renamedFrom?: string[] | undefined;
     }[];
 }, {
     title: string;
@@ -462,6 +487,7 @@ export const SimConfigSchema: z.ZodObject<{
     checkpoints?: {
         id: string;
         hint?: string | undefined;
+        renamedFrom?: string[] | undefined;
     }[] | undefined;
 }>;
 import { z } from "zod";
