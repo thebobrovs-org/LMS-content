@@ -16,7 +16,7 @@ they govern. Authoring a lesson runs in this repo's root layout (`topics/`,
 | [`sme-content-pipeline`](sme-content-pipeline/SKILL.md) | The **end-to-end workflow**: adopt the topic's SME persona, research → plan → draft to `staging/` → audit → promote to prod. Start here for a new topic. |
 | [`lms-authoring-topics`](lms-authoring-topics/SKILL.md) | Write or edit a **lesson** — one topic = one `.mdx` = one graph node. Frontmatter, MDX components, flashcards/quizzes, steps, images, glossary terms. |
 | [`lms-authoring-paths`](lms-authoring-paths/SKILL.md) | Curate a **learning path** — group topics into ordered levels (100/200/300). |
-| [`lms-authoring-simulations`](lms-authoring-simulations/SKILL.md) | Build an **embedded simulation** (these live in the app repo's `simulations/packages/`). |
+| [`lms-authoring-simulations`](lms-authoring-simulations/SKILL.md) | Build an **embedded simulation** (they live here, in `simulations/packages/`; the app fetches and bundles them at build time). Only where the concept is dynamic or hard to picture; a figure or a worked example is the right choice otherwise. |
 | [`lms-authoring-images`](lms-authoring-images/SKILL.md) | Generate a **topic illustration** (AI image) in the Hyperstack house style — the reusable style block, per-image subject template, and how to wire it into a lesson. |
 
 See also [`../personas/`](../personas) (the SME experts) and

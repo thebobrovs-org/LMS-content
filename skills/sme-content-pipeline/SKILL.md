@@ -33,10 +33,15 @@ Write a short plan (in the PR description or a `staging/<id>.plan.md`):
 
 ## 4. Audit (human + sub-agent critics)
 Run the gate in `pipeline/AUDIT.md`. Spawn **independent critic sub-agents** —
-one each for **technical accuracy**, **pedagogy**, **voice/standard**, and
-**self-containment** — each returning pass/fail with specifics. Default to
-"needs work" when uncertain; revise until a majority pass. Then a human reviewer
-previews the draft (`CONTENT_STAGING=1` build) and signs off on the PR.
+one each for **technical accuracy**, **assessment validity**, **pedagogy &
+clarity**, **voice/standard**, and **self-containment** — each returning
+`pass` / `fail` / `needs-human-review` for its own dimension, with specifics.
+Verdicts are never averaged or voted: **technical accuracy and assessment
+validity must both pass**, whatever the others say; the rest follow AGREEMENT §3
+after round two. Default to `needs-human-review` when uncertain; revise and
+re-run the affected critic until the rule holds. Then a human reviewer previews
+the draft (`CONTENT_STAGING=1` build), confirms the two blocking dimensions
+passed on the current revision, and signs off on the PR.
 
 ## 5. Promote
 - `node pipeline/promote.mjs staging/topics/<…>.mdx` → moves it to `topics/` and
@@ -47,4 +52,4 @@ previews the draft (`CONTENT_STAGING=1` build) and signs off on the PR.
 ## Guardrails
 - Don't promote content that fails `validate.mjs` or the audit.
 - Don't invent figures — cite. Don't re-teach prerequisites — link them.
-- Keep the simulation the centerpiece; prose sets it up and interprets it.
+- A simulation serves a stated objective; when it does, the prose sets it up and interprets it. A concept that a figure or a worked example teaches better gets that instead (LMS-content#86; the blueprint's "Simulation?" decision).
