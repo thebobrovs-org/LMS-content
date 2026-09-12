@@ -33,3 +33,26 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npm run gate
+
+  # After a merge: tell the app, so it builds main with this content and deploys it to
+  # staging (LMS .github/workflows/deploy.yml, LMS#66). Production keeps serving the
+  # content pinned in LMS/content.lock.json until a pin move merges there. The token is
+  # the PO's (hyperstack docs/runbooks/deploy-pipeline-setup.md, step 4); without it,
+  # this job only says so.
+  content-merged:
+    name: tell the app (staging deploy)
+    needs: gate
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ secrets.LMS_DISPATCH_TOKEN }}
+    steps:
+      - name: repository_dispatch content-merged → thebobrovs-org/LMS
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::notice::LMS_DISPATCH_TOKEN is not set, so the app wasn't told. To see this content on staging: gh workflow run deploy.yml -R thebobrovs-org/LMS -f content_ref=$GITHUB_SHA"
+            exit 0
+          fi
+          gh api "repos/thebobrovs-org/LMS/dispatches" -f event_type=content-merged -f "client_payload[content_sha]=$GITHUB_SHA"
+          echo "told LMS: content-merged $GITHUB_SHA"
