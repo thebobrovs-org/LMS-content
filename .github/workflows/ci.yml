@@ -48,11 +48,11 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.LMS_DISPATCH_TOKEN }}
     steps:
-      - name: repository_dispatch content-merged → thebobrovs-org/LMS
-        run: |
-          if [ -z "$GH_TOKEN" ]; then
-            echo "::notice::LMS_DISPATCH_TOKEN is not set, so the app wasn't told. To see this content on staging: gh workflow run deploy.yml -R thebobrovs-org/LMS -f content_ref=$GITHUB_SHA"
-            exit 0
-          fi
-          gh api "repos/thebobrovs-org/LMS/dispatches" -f event_type=content-merged -f "client_payload[content_sha]=$GITHUB_SHA"
-          echo "told LMS: content-merged $GITHUB_SHA"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - name: repository_dispatch content-merged → thebobrovs-org/LMS (scripts/notify-app.mjs, tested in the gate)
+        run: node scripts/notify-app.mjs
