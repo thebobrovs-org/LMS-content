@@ -33,3 +33,26 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npm run gate
+
+  # After a merge: tell the app, so it builds main with this content and deploys it to
+  # staging (LMS .github/workflows/deploy.yml, LMS#66). Production keeps serving the
+  # content pinned in LMS/content.lock.json until a pin move merges there. The token is
+  # the PO's (hyperstack docs/runbooks/deploy-pipeline-setup.md, step 4); without it,
+  # this job only says so.
+  content-merged:
+    name: tell the app (staging deploy)
+    needs: gate
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ secrets.LMS_DISPATCH_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - name: repository_dispatch content-merged → thebobrovs-org/LMS (scripts/notify-app.mjs, tested in the gate)
+        run: node scripts/notify-app.mjs

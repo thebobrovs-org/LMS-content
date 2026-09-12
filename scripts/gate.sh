@@ -7,7 +7,7 @@ cd "$(dirname "$0")/.."
 step() { printf '\n▶ %s\n' "$1"; }
 
 step "unit tests"
-node --test schema/*.test.mjs pipeline/*.test.mjs scripts/schema-declarations.test.mjs simulations/tests/*.test.mjs
+node --test schema/*.test.mjs pipeline/*.test.mjs scripts/schema-declarations.test.mjs scripts/notify-app.test.mjs simulations/tests/*.test.mjs
 
 step "schema declarations are generated from the implementation"
 node scripts/schema-declarations.mjs --check
