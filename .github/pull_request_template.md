@@ -11,6 +11,10 @@ Closes #
 - [ ] `risk:low` · [ ] `risk:medium` · [ ] `risk:high` (PO approves and merges)
 - Cross-repo impact and companion PRs:
 
+## Knowledge delta
+<!-- Records in knowledge/ this PR adds or changes (claims, misconceptions, decisions), or "none" with a word on why. See knowledge/README.md. -->
+- none
+
 ## Acceptance criteria
 <!-- Copy them from the issue, and check each one once there's evidence for it -->
 
