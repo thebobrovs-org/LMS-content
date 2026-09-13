@@ -243,7 +243,7 @@ function createSlider(label, min, max, val, onChange, idSuffix) {
   const div = document.createElement("div");
   div.className = "slider-box";
   div.innerHTML = `
-      <div class="slider-header"><span>${label}</span><span class="val" id="sv-label-${idSuffix}">${val}</span></div>
+      <div class="slider-header"><label for="slider-val-${idSuffix}">${label}</label><span class="val" id="sv-label-${idSuffix}">${val}</span></div>
       <input type="range" id="slider-val-${idSuffix}" min="${min}" max="${max}" value="${val}">
   `;
   div.querySelector("input").addEventListener("input", (e) => {
@@ -278,7 +278,7 @@ function buildControls() {
     const divLetter = document.createElement("div");
     divLetter.className = "slider-box";
     divLetter.innerHTML = `
-        <div class="slider-header"><span>Draw Letter</span></div>
+        <div class="slider-header"><label for="input-letter">Draw Letter</label></div>
         <input type="text" id="input-letter" maxlength="1" placeholder="Type A-Z" style="width:100%; padding:6px; font-family:monospace; font-size:14px; text-align:center; background:var(--inset); color:var(--fg); border:1px solid var(--border); border-radius:6px; text-transform:uppercase; outline:none; transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
     `;
     divLetter.querySelector("input").addEventListener("input", (e) => {

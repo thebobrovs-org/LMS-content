@@ -93,8 +93,8 @@ function graphSVG(g, m) {
 
 function render() {
   $("controls").innerHTML =
-    `<div class="sl"><label>Rows <b>${R}</b></label><input type="range" id="c-r" min="1" max="8" step="1" value="${R}"></div>` +
-    `<div class="sl"><label>Columns <b>${C}</b></label><input type="range" id="c-c" min="2" max="12" step="1" value="${C}"></div>` +
+    `<div class="sl"><label for="c-r">Rows <b>${R}</b></label><input type="range" id="c-r" min="1" max="8" step="1" value="${R}"></div>` +
+    `<div class="sl"><label for="c-c">Columns <b>${C}</b></label><input type="range" id="c-c" min="2" max="12" step="1" value="${C}"></div>` +
     `<label class="toggle"><input type="checkbox" id="c-w" ${wrap ? "checked" : ""}><span>Wrap-around (mesh → torus)</span></label>`;
 
   const g = buildGraph();

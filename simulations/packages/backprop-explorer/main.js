@@ -205,7 +205,7 @@ function buildControls() {
     document.getElementById("b-train").addEventListener("click", toggleTrain);
     document.getElementById("b-reset").addEventListener("click", reset);
   } else if (step === 6) {
-    c.innerHTML = `<div class="inf-grid"><div><label>Price (1–10)</label><input type="number" id="ip" min="1" max="10" value="${infPrice}"></div><div><label>Color (1–10)</label><input type="number" id="ic" min="1" max="10" value="${infColor}"></div></div><button class="btn run" id="b-infer" style="margin-top:10px">Run inference</button>`;
+    c.innerHTML = `<div class="inf-grid"><div><label for="ip">Price (1–10)</label><input type="number" id="ip" min="1" max="10" value="${infPrice}"></div><div><label for="ic">Color (1–10)</label><input type="number" id="ic" min="1" max="10" value="${infColor}"></div></div><button class="btn run" id="b-infer" style="margin-top:10px">Run inference</button>`;
     document.getElementById("ip").addEventListener("input", e => { infPrice = clamp(+e.target.value); });
     document.getElementById("ic").addEventListener("input", e => { infColor = clamp(+e.target.value); });
     document.getElementById("b-infer").addEventListener("click", runInference);
