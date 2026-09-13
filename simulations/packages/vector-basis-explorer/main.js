@@ -102,9 +102,9 @@ function readoutHTML() {
 
 function render() {
   $("controls").innerHTML =
-    `<div class="sl x"><label>X <b>${cx}</b></label><input type="range" id="sx" min="0" max="${AX}" step="1" value="${cx}"></div>` +
-    `<div class="sl y"><label>Y <b>${cy}</b></label><input type="range" id="sy" min="0" max="${AX}" step="1" value="${cy}"></div>` +
-    `<div class="sl z"><label>Z <b>${cz}</b></label><input type="range" id="sz" min="0" max="${AX}" step="1" value="${cz}"></div>`;
+    `<div class="sl x"><label for="sx">X <b>${cx}</b></label><input type="range" id="sx" min="0" max="${AX}" step="1" value="${cx}"></div>` +
+    `<div class="sl y"><label for="sy">Y <b>${cy}</b></label><input type="range" id="sy" min="0" max="${AX}" step="1" value="${cy}"></div>` +
+    `<div class="sl z"><label for="sz">Z <b>${cz}</b></label><input type="range" id="sz" min="0" max="${AX}" step="1" value="${cz}"></div>`;
 
   $("scene").innerHTML = sceneSVG();
   $("readout").innerHTML = readoutHTML();

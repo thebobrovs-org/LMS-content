@@ -146,8 +146,8 @@ function initDOM() {
         <div class="panel">
           <h2>Test a new car (inference)</h2>
           <div class="inf-grid">
-            <div><label>Price (1–10)</label><input type="number" id="inf-price" min="1" max="10" value="${infPrice}"></div>
-            <div><label>Color (1–10)</label><input type="number" id="inf-color" min="1" max="10" value="${infColor}"></div>
+            <div><label for="inf-price">Price (1–10)</label><input type="number" id="inf-price" min="1" max="10" value="${infPrice}"></div>
+            <div><label for="inf-color">Color (1–10)</label><input type="number" id="inf-color" min="1" max="10" value="${infColor}"></div>
           </div>
           <button class="btn run" id="btn-infer">Run inference</button>
           <div id="inf-out"></div>

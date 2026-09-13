@@ -77,8 +77,8 @@ np.linalg.solve(A, b)   <span class="hl"># → [${s ? fmt(s.C) : "?"}, ${s ? fmt
 
 function render() {
   $("controls").innerHTML =
-    `<div class="sl cap"><label>Rack capacity (nodes) <b>${cap}</b></label><input type="range" id="c-cap" min="10" max="40" step="1" value="${cap}"></div>` +
-    `<div class="sl bud"><label>Budget ($k) <b>${budget}</b></label><input type="range" id="c-bud" min="40" max="160" step="2" value="${budget}" ${singular ? "disabled" : ""}></div>` +
+    `<div class="sl cap"><label for="c-cap">Rack capacity (nodes) <b>${cap}</b></label><input type="range" id="c-cap" min="10" max="40" step="1" value="${cap}"></div>` +
+    `<div class="sl bud"><label for="c-bud">Budget ($k) <b>${budget}</b></label><input type="range" id="c-bud" min="40" max="160" step="2" value="${budget}" ${singular ? "disabled" : ""}></div>` +
     `<label class="toggle"><input type="checkbox" id="c-sing" ${singular ? "checked" : ""}><span>Conflicting constraints (singular)</span></label>`;
 
   $("banner").className = "banner" + (singular ? " show" : "");

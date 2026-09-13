@@ -279,11 +279,11 @@ function updateUI() {
   if (currentStep >= 1 && currentStep <= 3) {
     ctrl.innerHTML = `
         <div class="slider-box">
-            <div class="slider-header"><span>Slope (m)</span><span class="val" id="sv-m">${user_m.toFixed(2)}</span></div>
+            <div class="slider-header"><label for="m-slider">Slope (m)</label><span class="val" id="sv-m">${user_m.toFixed(2)}</span></div>
             <input type="range" id="m-slider" min="-2.0" max="4.0" step="0.05" value="${user_m}">
         </div>
         <div class="slider-box" style="margin-top: 10px;">
-            <div class="slider-header"><span>Intercept (b)</span><span class="val" id="sv-b">${user_b}</span></div>
+            <div class="slider-header"><label for="b-slider">Intercept (b)</label><span class="val" id="sv-b">${user_b}</span></div>
             <input type="range" id="b-slider" min="-50" max="250" step="1" value="${user_b}">
         </div>
     `;
@@ -300,7 +300,7 @@ function updateUI() {
   } else if (currentStep === 4) {
     ctrl.innerHTML = `
         <div class="slider-box">
-            <div class="slider-header"><span>Train Model (Epochs)</span><span class="val" id="sv-epoch">${currentEpoch}</span></div>
+            <div class="slider-header"><label for="epoch-slider">Train Model (Epochs)</label><span class="val" id="sv-epoch">${currentEpoch}</span></div>
             <input type="range" id="epoch-slider" min="0" max="${MAX_EPOCHS}" value="${currentEpoch}">
             <button id="auto-run-btn" class="btn-auto-train">▶ Auto Train</button>
         </div>
@@ -315,7 +315,7 @@ function updateUI() {
   } else if (currentStep === 5) {
     ctrl.innerHTML = `
         <div class="slider-box">
-            <div class="slider-header"><span>Select Input (X)</span><span class="val" id="sv-inf">${inferenceX}</span></div>
+            <div class="slider-header"><label for="inf-slider">Select Input (X)</label><span class="val" id="sv-inf">${inferenceX}</span></div>
             <input type="range" id="inf-slider" min="0" max="100" value="${inferenceX}">
         </div>
     `;
