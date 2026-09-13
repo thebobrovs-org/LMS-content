@@ -126,6 +126,51 @@ test("learning objectives: a reference must name a declared objective; an unrefe
   assert.match(r.out, /quiz\[0\] names objective "nowhere", which the topic does not declare/);
 });
 
+test("stable ids (ADR 0004): unique within the topic, aliases never another item's; the body's ids count too", () => {
+  const items = (patch) => fm(`flashcards:\n  - front: F1\n    back: B\n${patch}`);
+  // Ids on items and steps, former ids listed, inline checks and steps with attributes: valid.
+  const ok = run(tree({
+    "topics/fundamentals/arrays.mdx":
+      fm("flashcards:\n  - front: F1\n    back: B\n    id: front-one\n    formerIds: [abc123, old-name]\nquiz:\n  - question: Q1?\n    choices: [a, b]\n    answer: 0\n    id: q-one") +
+      '\n<Quiz id="q-two" former-ids={["zz9"]} question="Q2?" choices={["a", "b"]} answer={0} />\n\n<Flashcard id="front-two" front="F2" back="B2" />\n\n<Steps>\n<Step title="S1" id="s-one" former-ids={["s1hash"]}>x</Step>\n<Step title="S2" id="front-one">y</Step>\n</Steps>\n',
+  }));
+  assert.equal(ok.code, 0, ok.out); // "front-one" is an item id and a step id: separate namespaces
+  const dup = fails("two items with the same id", { "topics/fundamentals/arrays.mdx": items("    id: same\n  - front: F2\n    back: B\n    id: same") });
+  assert.match(dup, /flashcards\[1\]: item id "same" is also flashcards\[0\]'s/);
+  fails("an inline item reusing a frontmatter item's id", { "topics/fundamentals/arrays.mdx": items("    id: same") + '\n<Quiz id="same" question="Q?" choices={["a", "b"]} answer={0} />\n' });
+  const stolen = fails("a former id that is another item's current id", { "topics/fundamentals/arrays.mdx": items("    id: keep\n  - front: F2\n    back: B\n    id: other\n    formerIds: [keep]") });
+  assert.match(stolen, /flashcards\[1\]: former id "keep" is flashcards\[0\]'s current id/);
+  fails("a former id claimed by two items", { "topics/fundamentals/arrays.mdx": items("    formerIds: [h1]\n  - front: F2\n    back: B\n    formerIds: [h1]") });
+  fails("a former id that is the item's own id", { "topics/fundamentals/arrays.mdx": items("    id: me\n    formerIds: [me]") });
+  fails("two steps with the same id", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Steps>\n<Step title="A" id="s">x</Step>\n<Step title="B" id="s">y</Step>\n</Steps>\n` });
+  fails("a body id that isn't a slug", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Quiz id="Not A Slug" question="Q?" choices={["a", "b"]} answer={0} />\n` });
+  fails("former-ids that isn't a string array", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Quiz former-ids="h1" question="Q?" choices={["a", "b"]} answer={0} />\n` });
+  fails("a frontmatter id that isn't a slug", { "topics/fundamentals/arrays.mdx": items("    id: Not-A-Slug") });
+});
+
+test("--base <ref>: an item without an id whose prompt is new to the file gets a warning naming the vanished prompts' hashes", () => {
+  const before = fm("flashcards:\n  - front: Old wording\n    back: B\n  - front: Kept\n    back: B\nquiz:\n  - question: Stable Q?\n    choices: [a, b]\n    answer: 0\n    id: stable");
+  const after = fm("flashcards:\n  - front: New wording\n    back: B\n  - front: Kept\n    back: B\nquiz:\n  - question: Stable Q reworded?\n    choices: [a, b]\n    answer: 0\n    id: stable") + '\n<Steps>\n<Step title="A step">x</Step>\n</Steps>\n';
+  const root = tree({ "topics/fundamentals/arrays.mdx": before });
+  const git = (...args) => spawnSync("git", args, { cwd: root, encoding: "utf8" });
+  git("init", "-q");
+  git("-c", "user.email=t@example.com", "-c", "user.name=t", "add", "-A");
+  git("-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-q", "-m", "base");
+  fs.writeFileSync(path.join(root, "topics/fundamentals/arrays.mdx"), after);
+  const r = run(root, "--base", "HEAD");
+  assert.equal(r.code, 0, r.out);
+  // The reworded flashcard has no id: warned, with the vanished prompt's hash to list as a former id.
+  assert.match(r.out, /item "New wording" has no id and its prompt is new to this file/);
+  assert.match(r.out, /"Old wording" → [0-9a-z]+/);
+  // The reworded quiz has an id: keyed by it, nothing to warn. The kept flashcard: nothing. The new step: warned (no id, new title), with no vanished step to point at.
+  assert.doesNotMatch(r.out, /Stable Q reworded/);
+  assert.doesNotMatch(r.out, /"Kept" has no id/);
+  assert.match(r.out, /step "A step" has no id and its prompt is new to this file/);
+  // Without --base, or when the file has no base version, no warning.
+  const fresh = run(tree({ "topics/fundamentals/arrays.mdx": after }));
+  assert.doesNotMatch(fresh.out, /has no id and its prompt is new/);
+});
+
 test("the baseline review's fixtures fail", () => {
   const cases = {
     "a numeric title": { "topics/fundamentals/arrays.mdx": withTitle("42") },

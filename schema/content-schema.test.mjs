@@ -172,6 +172,27 @@ test("learning objectives: declared on the topic, referenced by items; ids are s
   assert.equal(check(TopicFrontmatterSchema, { ...topic, quiz: [{ question: "Q", choices: ["a", "b"], answer: 0, objective: "nowhere" }] }).ok, true);
 });
 
+test("stable ids (ADR 0004): optional id and formerIds on flashcards and quiz items; ids are slugs", () => {
+  const withIds = {
+    ...topic,
+    flashcards: [{ front: "Index cost", back: "O(1)", id: "index-cost", formerIds: ["1a2b3c", "old-slug"] }],
+    quiz: [{ question: "Cost?", choices: ["O(1)", "O(n)"], answer: 0, id: "cost-q" }],
+  };
+  const r = check(TopicFrontmatterSchema, withIds, "t.mdx");
+  assert.deepEqual(r.problems, []);
+  assert.deepEqual(r.value.flashcards[0].formerIds, ["1a2b3c", "old-slug"]);
+  assert.deepEqual(r.value.quiz[0].formerIds, []); // defaults to none
+  assert.equal(check(TopicFrontmatterSchema, topic).value.flashcards[0].id, undefined); // optional
+  for (const [name, value] of Object.entries({
+    "an id with a capital": { ...topic, quiz: [{ question: "Q", choices: ["a", "b"], answer: 0, id: "Cost" }] },
+    "an id with a space": { ...topic, flashcards: [{ front: "F", back: "B", id: "index cost" }] },
+    "a former id that isn't a slug": { ...topic, flashcards: [{ front: "F", back: "B", formerIds: ["Old Name"] }] },
+    "formerIds that isn't a list": { ...topic, flashcards: [{ front: "F", back: "B", formerIds: "abc" }] },
+  })) assert.equal(check(TopicFrontmatterSchema, value, "t.mdx").ok, false, name);
+  // Uniqueness and alias ownership are the validator's job (pipeline/validate.mjs), across the frontmatter and the body.
+  assert.equal(check(TopicFrontmatterSchema, { ...topic, quiz: [{ question: "Q", choices: ["a", "b"], answer: 0, id: "same" }, { question: "R", choices: ["a", "b"], answer: 0, id: "same" }] }).ok, true);
+});
+
 test("the enum tuples and the MDX component list are the contract's literals", () => {
   assert.deepEqual(STATUSES, ["draft", "published"]);
   assert.deepEqual(DIFFICULTIES, ["beginner", "intermediate", "advanced"]);

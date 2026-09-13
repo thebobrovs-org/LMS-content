@@ -20,7 +20,9 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { compile } from "@mdx-js/mdx";
+import { itemHash, stepHash } from "./ids.mjs";
 import { parseFrontmatter } from "./frontmatter.mjs";
 import { effectiveGlossary, pathsByTopic as indexPathsByTopic, termKeys } from "./glossary.mjs";
 import {
@@ -29,6 +31,25 @@ import {
 
 const ROOT = process.cwd();
 const includeStaging = process.argv.includes("--staging");
+/** `--base <ref>`: the git ref the changed topics are compared with for the prompt-change warning (ADR 0004); content CI passes the PR's base. */
+const baseIdx = process.argv.indexOf("--base");
+const baseRef = baseIdx > 0 ? (process.argv[baseIdx + 1] ?? null) : null;
+
+/** A topic's frontmatter and rendered identities at `ref` (`git show ref:path`), or null when it isn't there. */
+async function topicAt(ref, file) {
+  const r = spawnSync("git", ["show", `${ref}:${rel(file)}`], { cwd: ROOT, encoding: "utf8" });
+  if (r.status !== 0) return null;
+  try {
+    const fm = parseFrontmatter(r.stdout, rel(file));
+    const checked = check(TopicFrontmatterSchema, fm.data, rel(file));
+    if (!checked.ok) return null;
+    const urls = [], sims = [], objectives = [], identities = [];
+    await compile(fm.content, { development: false, remarkPlugins: [() => lessonRules(urls, sims, objectives, identities)] });
+    return { data: checked.value, identities };
+  } catch {
+    return null; // an unparseable base is no base to compare with
+  }
+}
 const errors = [];
 const warnings = [];
 const rel = (f) => path.relative(ROOT, f).split(path.sep).join("/");
@@ -208,6 +229,19 @@ function stringValue(attribute) {
   return null;
 }
 
+/** A JSX attribute's value when it is an array of string literals: `former-ids={["a", "b"]}`; undefined when absent, null for anything else. */
+function stringArrayValue(attribute) {
+  if (!attribute || attribute.value == null || typeof attribute.value === "string") return attribute ? null : undefined;
+  const literal = literalOf(attribute.value.data?.estree);
+  if (literal?.type !== "ArrayExpression") return null;
+  const out = [];
+  for (const e of literal.elements) {
+    if (!e || e.type !== "Literal" || typeof e.value !== "string") return null;
+    out.push(e.value);
+  }
+  return out;
+}
+
 /**
  * A remark plugin that enforces what a lesson may hold (AGENTS.md: prose plus the
  * documented components, no JavaScript) and collects every URL it references:
@@ -220,7 +254,7 @@ function stringValue(attribute) {
  * `urls` receives the URLs of every image, link, definition and `src`/`href`; `sims` the
  * `id` of every `<Simulation>`, however it is written.
  */
-function lessonRules(urls, sims, objectives = []) {
+function lessonRules(urls, sims, objectives = [], identities = []) {
   return (tree, vfile) => {
     const url = (value, node, what) => {
       if (UNSAFE_URL_CHARS.test(value)) vfile.fail(`${what} holds whitespace or a control character, which a browser drops before reading the scheme; encode it`, node);
@@ -270,6 +304,19 @@ function lessonRules(urls, sims, objectives = []) {
             }
           }
         }
+        // A rendered check or step and its identity (ADR 0004): the prompt the app hashes, and the
+        // `id` / `former-ids` it may carry. Checked against the topic's other items afterwards.
+        if (node.name === "Quiz" || node.name === "Flashcard" || node.name === "Step") {
+          const attr = (name) => node.attributes?.find((x) => x.type === "mdxJsxAttribute" && x.name === name);
+          const promptAttr = attr(node.name === "Quiz" ? "question" : node.name === "Flashcard" ? "front" : "title");
+          const prompt = promptAttr ? stringValue(promptAttr) : undefined;
+          const idAttr = attr("id");
+          const id = idAttr ? stringValue(idAttr) : undefined;
+          if (idAttr && typeof id !== "string") vfile.fail(`<${node.name} id={…}> must be a string`, node);
+          const formerIds = stringArrayValue(attr("former-ids"));
+          if (formerIds === null) vfile.fail(`<${node.name} former-ids={…}> must be an array of strings`, node);
+          identities.push({ tag: node.name, prompt: typeof prompt === "string" ? prompt : undefined, id: typeof id === "string" ? id : undefined, formerIds: formerIds ?? [] });
+        }
       }
       for (const child of node.children ?? []) visit(child);
     };
@@ -282,9 +329,10 @@ async function compiles(file, content, bodyLine) {
   const urls = [];
   const sims = [];
   const objectives = [];
+  const identities = [];
   try {
-    await compile(content, { development: false, remarkPlugins: [() => lessonRules(urls, sims, objectives)] });
-    return { urls, sims, objectives };
+    await compile(content, { development: false, remarkPlugins: [() => lessonRules(urls, sims, objectives, identities)] });
+    return { urls, sims, objectives, identities };
   } catch (e) {
     // The position is in the message's body coordinates, as fields or as a "(line:col-line:col)" suffix.
     const reason = String(e.reason ?? e.message);
@@ -310,7 +358,74 @@ async function checkBody(id, file, content, bodyLine) {
   for (const sim of new Set(found?.sims ?? [])) {
     if (!simIds.has(sim)) errors.push(`${id}: simulation "${sim}" has no simulations/packages/${sim}`);
   }
-  return found?.objectives ?? [];
+  return { objectives: found?.objectives ?? [], identities: found?.identities ?? [] };
+}
+
+const ID_RE = /^[a-z0-9][a-z0-9-]*$/;
+
+/**
+ * Stable ids (ADR 0004): every review item (the frontmatter's flashcards and quiz, the
+ * body's <Quiz> and <Flashcard>) shares one namespace within the topic, and the steps
+ * another. An `id` must be unique; a former id must not be another item's id, be
+ * claimed by two items, or be the item's own id. The body's ids are checked for shape
+ * here (the schema checks the frontmatter's).
+ */
+export function identityProblems(data, bodyIdentities) {
+  const items = [
+    ...(data.flashcards ?? []).map((f, i) => ({ where: `flashcards[${i}]`, id: f.id, formerIds: f.formerIds ?? [] })),
+    ...(data.quiz ?? []).map((q, i) => ({ where: `quiz[${i}]`, id: q.id, formerIds: q.formerIds ?? [] })),
+    ...bodyIdentities.filter((b) => b.tag !== "Step").map((b) => ({ where: `<${b.tag} ${JSON.stringify(b.prompt ?? "")}>`, id: b.id, formerIds: b.formerIds })),
+  ];
+  const steps = bodyIdentities.filter((b) => b.tag === "Step").map((b) => ({ where: `<Step ${JSON.stringify(b.prompt ?? "")}>`, id: b.id, formerIds: b.formerIds }));
+  const errors = [];
+  for (const [namespace, list] of [["item", items], ["step", steps]]) {
+    const owners = new Map(); // id → where
+    for (const e of list) {
+      for (const v of [e.id, ...e.formerIds]) if (v !== undefined && !ID_RE.test(v)) errors.push(`${e.where}: id "${v}" must be lowercase letters, digits and hyphens`);
+      if (e.id !== undefined) {
+        if (owners.has(e.id)) errors.push(`${e.where}: ${namespace} id "${e.id}" is also ${owners.get(e.id)}'s`);
+        owners.set(e.id, e.where);
+      }
+    }
+    const claimed = new Map(); // former id → where
+    for (const e of list) {
+      for (const f of e.formerIds) {
+        if (f === e.id) errors.push(`${e.where}: former id "${f}" is its own id`);
+        else if (owners.has(f)) errors.push(`${e.where}: former id "${f}" is ${owners.get(f)}'s current id`);
+        if (claimed.has(f) && claimed.get(f) !== e.where) errors.push(`${e.where}: former id "${f}" is also claimed by ${claimed.get(f)}`);
+        claimed.set(f, e.where);
+      }
+    }
+  }
+  return errors;
+}
+
+/**
+ * With `--base <ref>` (content CI: the PR's base branch), an item without an `id` whose
+ * prompt is new to the file gets a warning: if it is a reworded item, its learners' history
+ * is keyed by the old prompt's hash, which the warning names, so the author can give the
+ * item an `id` and list that hash as a former id. Items with an id are keyed by it and
+ * need nothing.
+ */
+export function promptChangeWarnings(head, base) {
+  const prompts = (t) => [
+    ...(t.data.flashcards ?? []).map((f) => ({ prompt: f.front, id: f.id, kind: "item" })),
+    ...(t.data.quiz ?? []).map((q) => ({ prompt: q.question, id: q.id, kind: "item" })),
+    ...t.identities.filter((b) => b.prompt !== undefined).map((b) => ({ prompt: b.prompt, id: b.id, kind: b.tag === "Step" ? "step" : "item" })),
+  ];
+  const before = prompts(base);
+  const now = prompts(head);
+  const warnings = [];
+  for (const kind of ["item", "step"]) {
+    const old = before.filter((p) => p.kind === kind);
+    const oldPrompts = new Set(old.map((p) => p.prompt));
+    const gone = old.filter((p) => !now.some((n) => n.kind === kind && n.prompt === p.prompt));
+    for (const n of now.filter((p) => p.kind === kind && p.id === undefined && !oldPrompts.has(p.prompt))) {
+      const hint = gone.length ? ` Prompts that vanished from this file and their hashes: ${gone.map((g) => `${JSON.stringify(g.prompt)} → ${kind === "step" ? stepHash(g.prompt) : itemHash(g.prompt)}`).join("; ")}.` : "";
+      warnings.push(`${kind} ${JSON.stringify(n.prompt)} has no id and its prompt is new to this file: if it is a reworded ${kind}, learners' progress is keyed by the old prompt's hash; give it an id and list that hash in its former ids.${hint}`);
+    }
+  }
+  return warnings;
 }
 
 /**
@@ -346,10 +461,15 @@ for (const t of topics) {
       errors.push(`${id}: glossary term "${key}" is not defined in ${where}`);
     }
   }
-  const bodyObjectives = await checkBody(id, file, content, bodyLine);
-  const objectives = objectiveProblems(data, bodyObjectives);
+  const body = await checkBody(id, file, content, bodyLine);
+  const objectives = objectiveProblems(data, body.objectives);
   for (const e of objectives.errors) errors.push(`${id}: ${e}`);
   for (const w of objectives.warnings) warnings.push(`${id}: ${w}`);
+  for (const e of identityProblems(data, body.identities)) errors.push(`${id}: ${e}`);
+  if (baseRef) {
+    const base = await topicAt(baseRef, file);
+    if (base) for (const w of promptChangeWarnings({ data, identities: body.identities }, base)) warnings.push(`${id}: ${w}`);
+  }
 }
 
 // Paths: every level's topic must be a published topic. A *draft* path may list
@@ -371,8 +491,8 @@ for (const { pid, file, data, content, bodyLine } of parsedPaths) {
     }
   }
   // A path has no objectives to refer to (LMS-content#83): an objective attribute in its body is refused, not ignored.
-  const pathObjectives = await checkBody(`path ${pid}`, file, content, bodyLine);
-  for (const id of new Set(pathObjectives)) errors.push(`path ${pid}: the body names objective "${id}", but a path declares no objectives`);
+  const pathBody = await checkBody(`path ${pid}`, file, content, bodyLine);
+  for (const id of new Set(pathBody.objectives)) errors.push(`path ${pid}: the body names objective "${id}", but a path declares no objectives`);
 }
 
 // Resources: resources/<pathId>.json against the schema; a resource's topic must exist.

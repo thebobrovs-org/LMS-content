@@ -53,7 +53,19 @@ export const ObjectiveIdSchema = z.string().regex(/^[a-z0-9][a-z0-9-]*$/, "an ob
 /** What a learner should be able to do after the lesson, in one observable sentence. */
 export const ObjectiveSchema = z.object({ id: ObjectiveIdSchema, statement: nonEmpty }).strict();
 
-export const FlashcardSchema = z.object({ front: nonEmpty, back: nonEmpty, objective: ObjectiveIdSchema.optional() }).strict();
+/**
+ * A stable id for a review item or a lesson step (ADR 0004): a slug, unique within
+ * its topic. With an `id`, a learner's progress is keyed by it and survives a
+ * rewording; without one, the app keys the item by a hash of its prompt.
+ * `formerIds` are the ids (hashes included) the item had before, so the progress
+ * stored under them still counts. The validator checks uniqueness and that no
+ * former id is another item's; a change of meaning under the same id is the
+ * assessment-validity critic's question (pipeline/AUDIT.md).
+ */
+export const ItemIdSchema = z.string().regex(/^[a-z0-9][a-z0-9-]*$/, "an id is lowercase letters, digits and hyphens");
+const identity = { id: ItemIdSchema.optional(), formerIds: z.array(ItemIdSchema).default([]) };
+
+export const FlashcardSchema = z.object({ front: nonEmpty, back: nonEmpty, objective: ObjectiveIdSchema.optional(), ...identity }).strict();
 
 export const QuizItemSchema = z
   .object({
@@ -62,6 +74,7 @@ export const QuizItemSchema = z
     answer: z.number().int().nonnegative(),
     explanation: z.string().optional(),
     objective: ObjectiveIdSchema.optional(),
+    ...identity,
   })
   .strict()
   .refine((q) => q.answer < q.choices.length, { message: "answer is out of range", path: ["answer"] });

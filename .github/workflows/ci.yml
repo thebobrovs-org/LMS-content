@@ -32,7 +32,14 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci --no-audit --no-fund
+      # A pull request's base, so the gate can warn when a prompt changes on an item without an id (ADR 0004).
+      - if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.base_ref }}
+        run: git fetch --no-tags --depth=1 origin "+refs/heads/$BASE:refs/remotes/origin/$BASE"
       - run: npm run gate
+        env:
+          PR_BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
 
   # After a merge: tell the app, so it builds main with this content and deploys it to
   # staging (LMS .github/workflows/deploy.yml, LMS#66). Production keeps serving the

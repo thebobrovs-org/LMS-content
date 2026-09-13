@@ -36,6 +36,7 @@ relatedTo: [systems/caching]
 flashcards:
   - front: What is the average-case lookup time of a hash table?
     back: O(1), assuming a good hash function and low load factor.
+    id: lookup-cost            # optional, a slug unique in the topic (ADR 0004): progress is keyed by it
 quiz:
   - question: What typically degrades hash-table performance?
     choices:
@@ -44,6 +45,8 @@ quiz:
       - Having too few keys
     answer: 0
     explanation: As the load factor rises, collisions approach O(n).
+    id: load-factor
+    formerIds: [1k2j3h]        # the ids (hashes included) it had before, so learners' progress follows
 status: published
 ---
 
@@ -98,6 +101,7 @@ recall it."
 
 ## Retrieval practice
 
+- **Give every item and step an `id`** (ADR 0004): a slug that names what it teaches, unique in the topic (items share one namespace, steps another). Progress is keyed by it, so a **rewording keeps the id**; a **change of meaning gets a new id** (retire the old one, never reuse it); a **rename lists the old id in `formerIds`** (`former-ids={[…]}` on `<Quiz>`, `<Flashcard>` and `<Step>`). An item without an id is keyed by a hash of its prompt, and the gate warns when such a prompt changes (`--base`), naming the old hash to list as a former id.
 - `flashcards` (frontmatter) and inline `<Flashcard>` → active recall.
 - `quiz` (frontmatter) and inline `<Quiz>` → auto-graded MCQs.
 - Items get a **stable id from a hash of the topic id + the prompt text**, so
