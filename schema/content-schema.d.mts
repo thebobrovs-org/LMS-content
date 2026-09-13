@@ -38,40 +38,65 @@ export const VideoSchema: z.ZodObject<{
     title?: string | undefined;
     start?: number | undefined;
 }>;
+/**
+ * A learning objective's id (LMS-content#83): lowercase, digits and hyphens, unique within
+ * its topic. A quiz item, a flashcard, an inline <Quiz> or a <Step> may name the objective it
+ * serves with `objective`; the validator checks the reference exists.
+ */
+export const ObjectiveIdSchema: z.ZodString;
+/** What a learner should be able to do after the lesson, in one observable sentence. */
+export const ObjectiveSchema: z.ZodObject<{
+    id: z.ZodString;
+    statement: z.ZodString;
+}, "strict", z.ZodTypeAny, {
+    id: string;
+    statement: string;
+}, {
+    id: string;
+    statement: string;
+}>;
 export const FlashcardSchema: z.ZodObject<{
     front: z.ZodString;
     back: z.ZodString;
+    objective: z.ZodOptional<z.ZodString>;
 }, "strict", z.ZodTypeAny, {
     front: string;
     back: string;
+    objective?: string | undefined;
 }, {
     front: string;
     back: string;
+    objective?: string | undefined;
 }>;
 export const QuizItemSchema: z.ZodEffects<z.ZodObject<{
     question: z.ZodString;
     choices: z.ZodArray<z.ZodString, "many">;
     answer: z.ZodNumber;
     explanation: z.ZodOptional<z.ZodString>;
+    objective: z.ZodOptional<z.ZodString>;
 }, "strict", z.ZodTypeAny, {
     question: string;
     choices: string[];
     answer: number;
+    objective?: string | undefined;
     explanation?: string | undefined;
 }, {
     question: string;
     choices: string[];
     answer: number;
+    objective?: string | undefined;
     explanation?: string | undefined;
 }>, {
     question: string;
     choices: string[];
     answer: number;
+    objective?: string | undefined;
     explanation?: string | undefined;
 }, {
     question: string;
     choices: string[];
     answer: number;
+    objective?: string | undefined;
     explanation?: string | undefined;
 }>;
 export const STATUSES: readonly ["draft", "published"];
@@ -95,6 +120,23 @@ export const TopicFrontmatterSchema: z.ZodObject<{
     level: z.ZodOptional<z.ZodNumber>;
     prerequisites: z.ZodDefault<z.ZodArray<z.ZodString, "many">>;
     relatedTo: z.ZodDefault<z.ZodArray<z.ZodString, "many">>;
+    /** The lesson's learning objectives (LMS-content#83); items and steps reference them by id. Optional: the app ignores them until a consumer exists. */
+    objectives: z.ZodEffects<z.ZodDefault<z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        statement: z.ZodString;
+    }, "strict", z.ZodTypeAny, {
+        id: string;
+        statement: string;
+    }, {
+        id: string;
+        statement: string;
+    }>, "many">>, {
+        id: string;
+        statement: string;
+    }[], {
+        id: string;
+        statement: string;
+    }[] | undefined>;
     videos: z.ZodDefault<z.ZodArray<z.ZodObject<{
         youtubeId: z.ZodString;
         title: z.ZodOptional<z.ZodString>;
@@ -111,37 +153,45 @@ export const TopicFrontmatterSchema: z.ZodObject<{
     flashcards: z.ZodDefault<z.ZodArray<z.ZodObject<{
         front: z.ZodString;
         back: z.ZodString;
+        objective: z.ZodOptional<z.ZodString>;
     }, "strict", z.ZodTypeAny, {
         front: string;
         back: string;
+        objective?: string | undefined;
     }, {
         front: string;
         back: string;
+        objective?: string | undefined;
     }>, "many">>;
     quiz: z.ZodDefault<z.ZodArray<z.ZodEffects<z.ZodObject<{
         question: z.ZodString;
         choices: z.ZodArray<z.ZodString, "many">;
         answer: z.ZodNumber;
         explanation: z.ZodOptional<z.ZodString>;
+        objective: z.ZodOptional<z.ZodString>;
     }, "strict", z.ZodTypeAny, {
         question: string;
         choices: string[];
         answer: number;
+        objective?: string | undefined;
         explanation?: string | undefined;
     }, {
         question: string;
         choices: string[];
         answer: number;
+        objective?: string | undefined;
         explanation?: string | undefined;
     }>, {
         question: string;
         choices: string[];
         answer: number;
+        objective?: string | undefined;
         explanation?: string | undefined;
     }, {
         question: string;
         choices: string[];
         answer: number;
+        objective?: string | undefined;
         explanation?: string | undefined;
     }>, "many">>;
     status: z.ZodDefault<z.ZodEnum<["draft", "published"]>>;
@@ -156,6 +206,10 @@ export const TopicFrontmatterSchema: z.ZodObject<{
     estimatedMinutes: number;
     prerequisites: string[];
     relatedTo: string[];
+    objectives: {
+        id: string;
+        statement: string;
+    }[];
     videos: {
         youtubeId: string;
         title?: string | undefined;
@@ -164,11 +218,13 @@ export const TopicFrontmatterSchema: z.ZodObject<{
     flashcards: {
         front: string;
         back: string;
+        objective?: string | undefined;
     }[];
     quiz: {
         question: string;
         choices: string[];
         answer: number;
+        objective?: string | undefined;
         explanation?: string | undefined;
     }[];
     authors: string[];
@@ -184,6 +240,10 @@ export const TopicFrontmatterSchema: z.ZodObject<{
     level?: number | undefined;
     prerequisites?: string[] | undefined;
     relatedTo?: string[] | undefined;
+    objectives?: {
+        id: string;
+        statement: string;
+    }[] | undefined;
     videos?: {
         youtubeId: string;
         title?: string | undefined;
@@ -192,11 +252,13 @@ export const TopicFrontmatterSchema: z.ZodObject<{
     flashcards?: {
         front: string;
         back: string;
+        objective?: string | undefined;
     }[] | undefined;
     quiz?: {
         question: string;
         choices: string[];
         answer: number;
+        objective?: string | undefined;
         explanation?: string | undefined;
     }[] | undefined;
     updated?: string | undefined;

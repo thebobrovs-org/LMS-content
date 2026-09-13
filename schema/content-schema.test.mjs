@@ -145,6 +145,33 @@ test("a date must be a real calendar day, not only shaped like one", () => {
   assert.equal(check(TopicFrontmatterSchema, { ...topic, updated: "2024-02-29" }).ok, true);
 });
 
+test("learning objectives: declared on the topic, referenced by items; ids are slugs and unique (LMS-content#83)", () => {
+  const withObjectives = {
+    ...topic,
+    objectives: [
+      { id: "index-cost", statement: "Explain why indexed access is O(1)." },
+      { id: "layout", statement: "Predict the memory layout of a 2-D array." },
+    ],
+    flashcards: [{ front: "Index cost", back: "O(1)", objective: "index-cost" }],
+    quiz: [{ question: "Cost?", choices: ["O(1)", "O(n)"], answer: 0, explanation: "Arithmetic on the base.", objective: "index-cost" }],
+  };
+  const r = check(TopicFrontmatterSchema, withObjectives, "t.mdx");
+  assert.deepEqual(r.problems, []);
+  assert.equal(r.value.objectives.length, 2);
+  assert.equal(r.value.quiz[0].objective, "index-cost");
+  assert.deepEqual(check(TopicFrontmatterSchema, topic).value.objectives, []); // optional, defaults to none
+  const bad = {
+    "an objective id with a capital or a space": { ...topic, objectives: [{ id: "Index Cost", statement: "x" }] },
+    "an objective without a statement": { ...topic, objectives: [{ id: "a" }] },
+    "duplicate objective ids": { ...topic, objectives: [{ id: "a", statement: "x" }, { id: "a", statement: "y" }] },
+    "a quiz objective that isn't a slug": { ...topic, quiz: [{ question: "Q", choices: ["a", "b"], answer: 0, objective: "Not A Slug" }] },
+    "an unknown key on an objective": { ...topic, objectives: [{ id: "a", statement: "x", weight: 2 }] },
+  };
+  for (const [name, value] of Object.entries(bad)) assert.equal(check(TopicFrontmatterSchema, value, "t.mdx").ok, false, name);
+  // Whether a reference names a declared objective is the validator's job (pipeline/validate.mjs), not the schema's.
+  assert.equal(check(TopicFrontmatterSchema, { ...topic, quiz: [{ question: "Q", choices: ["a", "b"], answer: 0, objective: "nowhere" }] }).ok, true);
+});
+
 test("the enum tuples and the MDX component list are the contract's literals", () => {
   assert.deepEqual(STATUSES, ["draft", "published"]);
   assert.deepEqual(DIFFICULTIES, ["beginner", "intermediate", "advanced"]);

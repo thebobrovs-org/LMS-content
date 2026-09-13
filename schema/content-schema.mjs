@@ -43,7 +43,17 @@ export const VideoSchema = z
   })
   .strict();
 
-export const FlashcardSchema = z.object({ front: nonEmpty, back: nonEmpty }).strict();
+/**
+ * A learning objective's id (LMS-content#83): lowercase, digits and hyphens, unique within
+ * its topic. A quiz item, a flashcard, an inline <Quiz> or a <Step> may name the objective it
+ * serves with `objective`; the validator checks the reference exists.
+ */
+export const ObjectiveIdSchema = z.string().regex(/^[a-z0-9][a-z0-9-]*$/, "an objective id is lowercase letters, digits and hyphens");
+
+/** What a learner should be able to do after the lesson, in one observable sentence. */
+export const ObjectiveSchema = z.object({ id: ObjectiveIdSchema, statement: nonEmpty }).strict();
+
+export const FlashcardSchema = z.object({ front: nonEmpty, back: nonEmpty, objective: ObjectiveIdSchema.optional() }).strict();
 
 export const QuizItemSchema = z
   .object({
@@ -51,6 +61,7 @@ export const QuizItemSchema = z
     choices: z.array(nonEmpty).min(2, "needs at least 2 choices"),
     answer: z.number().int().nonnegative(),
     explanation: z.string().optional(),
+    objective: ObjectiveIdSchema.optional(),
   })
   .strict()
   .refine((q) => q.answer < q.choices.length, { message: "answer is out of range", path: ["answer"] });
@@ -80,6 +91,11 @@ export const TopicFrontmatterSchema = z
     level: z.number().int().positive().optional(),
     prerequisites: z.array(ContentIdSchema).default([]),
     relatedTo: z.array(ContentIdSchema).default([]),
+    /** The lesson's learning objectives (LMS-content#83); items and steps reference them by id. Optional: the app ignores them until a consumer exists. */
+    objectives: z
+      .array(ObjectiveSchema)
+      .default([])
+      .refine((list) => new Set(list.map((o) => o.id)).size === list.length, { message: "objective ids must be unique within the topic" }),
     videos: z.array(VideoSchema).default([]),
     flashcards: z.array(FlashcardSchema).default([]),
     quiz: z.array(QuizItemSchema).default([]),
