@@ -152,7 +152,7 @@ function reportSize() { requestAnimationFrame(() => { if (window.sim && sim.resi
 
 function initDOM() {
   const stepsHtml = STEPS.map((step, i) => `
-    <button class="step-btn ${i === currentStep ? 'active' : ''}" data-step="${i}">
+    <button class="step-btn ${i === currentStep ? 'active' : ''}" data-step="${i}" ${i === currentStep ? 'aria-current="step"' : ''}>
       <span>${step.title}</span>
       <span class="step-badge">${step.shape}</span>
     </button>
@@ -161,9 +161,9 @@ function initDOM() {
   app.innerHTML = `
     <div class="layout-grid">
       <div class="sidebar">
-        <div class="steps-nav" role="tablist">
+        <nav class="steps-nav" aria-label="Steps">
           ${stepsHtml}
-        </div>
+        </nav>
         <div class="explain-panel">
           <div class="e-title" id="e-title"></div>
           <div class="e-desc" id="e-desc"></div>
@@ -350,6 +350,7 @@ function updateUI() {
   // Update Sidebar
   app.querySelectorAll(".step-btn").forEach((btn, i) => {
     btn.classList.toggle('active', i === currentStep);
+    if (i === currentStep) btn.setAttribute('aria-current', 'step'); else btn.removeAttribute('aria-current');
   });
   document.getElementById('e-title').innerHTML = s.title.split(': ')[1];
   document.getElementById('e-desc').innerHTML = s.desc;

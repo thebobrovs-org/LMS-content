@@ -85,8 +85,8 @@ function cls(id) { return `part ${selected === id ? "sel" : ""}`; }
 function tensorCore() {
   const vmemLabel = gen === "8i" ? `VMEM <span class="x3">3×</span>` : "VMEM";
   return `
-    <div class="${cls("tensorcore")}" data-part="tensorcore" tabindex="0" role="button">
-      <div class="tc-label">TensorCore</div>
+    <div class="${cls("tensorcore")}" data-part="tensorcore" role="group" aria-label="TensorCore">
+      <div class="tc-label" data-part="tensorcore" tabindex="0" role="button">TensorCore</div>
       <div class="tc-units">
         <div class="${cls("scalar")} u" data-part="scalar" tabindex="0" role="button">Scalar</div>
         <div class="${cls("smem")} u" data-part="smem" tabindex="0" role="button">SMEM</div>
@@ -163,7 +163,7 @@ function render() {
     </div>`;
 
   app.querySelectorAll(".gtab").forEach((el) => el.addEventListener("click", () => switchGen(el.getAttribute("data-gen"))));
-  app.querySelectorAll(".part").forEach((el) => {
+  app.querySelectorAll("[data-part]").forEach((el) => {
     const part = el.getAttribute("data-part");
     el.addEventListener("click", (e) => { e.stopPropagation(); select(part); });
     el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(part); } });

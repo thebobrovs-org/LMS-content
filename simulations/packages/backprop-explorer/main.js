@@ -113,7 +113,7 @@ function applyTheme(t) { if (t === "light" || t === "dark") document.documentEle
 function reportSize() { requestAnimationFrame(() => { if (window.sim && sim.resize) sim.resize(document.body.scrollHeight + 8); }); }
 
 function initDOM() {
-  const stepsHtml = STEPS.map((s, i) => `<button class="step-btn ${i === step ? "active" : ""}" data-s="${i}"><span>${s.t}</span><span class="step-num">${i}</span></button>`).join("");
+  const stepsHtml = STEPS.map((s, i) => `<button class="step-btn ${i === step ? "active" : ""}" data-s="${i}" ${i === step ? 'aria-current="step"' : ""}><span>${s.t}</span><span class="step-num">${i}</span></button>`).join("");
 
   // Build the static diagram once (so the backprop dashes can keep flowing across ticks).
   const P = POS;
@@ -133,7 +133,7 @@ function initDOM() {
   app.innerHTML = `
     <div class="layout-grid">
       <div class="sidebar">
-        <div class="steps-nav" role="tablist">${stepsHtml}</div>
+        <nav class="steps-nav" aria-label="Steps">${stepsHtml}</nav>
         <div class="panel explain"><div class="e-title" id="e-title"></div><div class="e-desc" id="e-desc"></div></div>
         <div id="controls" class="controls"></div>
         <div class="metrics">
@@ -289,7 +289,10 @@ function updateDiagram() {
 
 function update() {
   const { predictions, meanLoss } = evaluate();
-  app.querySelectorAll(".step-btn").forEach((b, i) => b.classList.toggle("active", i === step));
+  app.querySelectorAll(".step-btn").forEach((b, i) => {
+    b.classList.toggle("active", i === step);
+    if (i === step) b.setAttribute("aria-current", "step"); else b.removeAttribute("aria-current");
+  });
   document.getElementById("e-title").textContent = STEPS[step].t;
   document.getElementById("e-desc").innerHTML = STEPS[step].d;
   document.getElementById("diag-h").textContent = ["The network", "Forward pass", "The error", "Backprop", "Weight update", "Training", "Inference"][step];
