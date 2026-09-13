@@ -137,10 +137,10 @@ test("stable ids (ADR 0004): unique within the topic, aliases never another item
   }));
   assert.equal(ok.code, 0, ok.out); // "front-one" is an item id and a step id: separate namespaces
   const dup = fails("two items with the same id", { "topics/fundamentals/arrays.mdx": items("    id: same\n  - front: F2\n    back: B\n    id: same") });
-  assert.match(dup, /flashcards\[1\]: item id "same" is also flashcards\[0\]'s/);
+  assert.match(dup, /flashcards\.1\.id: id "same" is also flashcards\[0\]'s/); // the schema itself, so the admin editor reports it too (LMS-admin#54)
   fails("an inline item reusing a frontmatter item's id", { "topics/fundamentals/arrays.mdx": items("    id: same") + '\n<Quiz id="same" question="Q?" choices={["a", "b"]} answer={0} />\n' });
   const stolen = fails("a former id that is another item's current id", { "topics/fundamentals/arrays.mdx": items("    id: keep\n  - front: F2\n    back: B\n    id: other\n    formerIds: [keep]") });
-  assert.match(stolen, /flashcards\[1\]: former id "keep" is flashcards\[0\]'s current id/);
+  assert.match(stolen, /flashcards\.1\.formerIds\.0: former id "keep" is flashcards\[0\]'s current id/);
   fails("a former id claimed by two items", { "topics/fundamentals/arrays.mdx": items("    formerIds: [h1]\n  - front: F2\n    back: B\n    formerIds: [h1]") });
   fails("a former id that is the item's own id", { "topics/fundamentals/arrays.mdx": items("    id: me\n    formerIds: [me]") });
   fails("two steps with the same id", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Steps>\n<Step title="A" id="s">x</Step>\n<Step title="B" id="s">y</Step>\n</Steps>\n` });
@@ -160,9 +160,17 @@ test("stable ids (ADR 0004): unique within the topic, aliases never another item
   const twins = fails("two same-prompt inline quizzes claiming one former id", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Quiz id="a" former-ids={["old"]} question="Q?" choices={["a", "b"]} answer={0} />\n\n<Quiz id="b" former-ids={["old"]} question="Q?" choices={["a", "b"]} answer={0} />\n` });
   assert.match(twins, /body's 2nd check <Quiz "Q\?">: former id "old" is also claimed by body's 1st check <Quiz "Q\?">/);
   fails("two same-title steps claiming one former id", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Steps>\n<Step title="A" id="a1" former-ids={["old"]}>x</Step>\n<Step title="A" id="a2" former-ids={["old"]}>y</Step>\n</Steps>\n` });
-  // Two same-prompt inline checks with distinct ids and distinct former ids: two items, valid.
-  const distinct = run(tree({ "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Quiz id="a" former-ids={["old-a"]} question="Q?" choices={["a", "b"]} answer={0} />\n\n<Quiz id="b" former-ids={["old-b"]} question="Q?" choices={["a", "b"]} answer={0} />\n` }));
+  // Two inline checks with distinct ids and distinct former ids: two items, valid.
+  const distinct = run(tree({ "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Quiz id="a" former-ids={["old-a"]} question="Q?" choices={["a", "b"]} answer={0} />\n\n<Quiz id="b" former-ids={["old-b"]} question="R?" choices={["a", "b"]} answer={0} />\n` }));
   assert.equal(distinct.code, 0, distinct.out);
+  // An item with an id claims its prompt's hash by itself (the app reads it as a former id, LMS-content#94): two
+  // same-prompt items with ids would both inherit that history, and an idless item with that prompt still owns it.
+  const qh = itemHash("Q?");
+  const implicitTwice = fails("two same-prompt inline quizzes with distinct ids", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Quiz id="a" question="Q?" choices={["a", "b"]} answer={0} />\n\n<Quiz id="b" question="Q?" choices={["a", "b"]} answer={0} />\n` });
+  assert.match(implicitTwice, new RegExp(`body's 2nd check <Quiz "Q\\?">: its prompt's hash "${qh}" \\(a former id by itself, since it has an id\\) is also claimed by body's 1st check`));
+  const implicitOwned = fails("an item with an id whose prompt an idless item still uses", { "topics/fundamentals/arrays.mdx": items("  - front: F1\n    back: Other\n    id: named") });
+  assert.match(implicitOwned, new RegExp(`flashcards\\[1\\]: its prompt's hash "${h}" \\(a former id by itself, since it has an id\\) is flashcards\\[0\\]'s current hash`));
+  fails("two same-title steps with distinct ids", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Steps>\n<Step title="A" id="a1">x</Step>\n<Step title="A" id="a2">y</Step>\n</Steps>\n` });
 });
 
 test("--base <ref>: an item without an id whose prompt is new to the file gets a warning naming the vanished prompts' hashes", () => {
@@ -178,7 +186,7 @@ test("--base <ref>: an item without an id whose prompt is new to the file gets a
   assert.equal(r.code, 0, r.out);
   // The reworded flashcard has no id: warned, with the vanished prompt's hash to list as a former id.
   assert.match(r.out, /item "New wording" has no id and its prompt is new to this file/);
-  assert.match(r.out, /"Old wording" → [0-9a-z]+/);
+  assert.match(r.out, new RegExp(`"Old wording" → hash ${itemHash("Old wording")}\\b`)); // the exact key the history is stored under
   // The reworded quiz has an id: keyed by it, nothing to warn. The kept flashcard: nothing. The new step: warned (no id, new title), with no vanished step to point at.
   assert.doesNotMatch(r.out, /Stable Q reworded/);
   assert.doesNotMatch(r.out, /"Kept" has no id/);

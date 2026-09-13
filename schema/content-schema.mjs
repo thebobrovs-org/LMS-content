@@ -116,7 +116,28 @@ export const TopicFrontmatterSchema = z
     updated: IsoDate.optional(),
     authors: z.array(nonEmpty).default([]),
   })
-  .strict();
+  .strict()
+  // Stable ids (ADR 0004): the frontmatter's flashcards and quiz items share one namespace, so a
+  // duplicate id, or a former id that is another item's id, is refused here, where every consumer
+  // of the schema (content CI, the app build, the admin editor) sees it with the item named. The
+  // body's items and the prompt hashes are the validator's (pipeline/validate.mjs).
+  .superRefine((t, ctx) => {
+    const items = [...t.flashcards.map((f, i) => ({ path: ["flashcards", i], ...f })), ...t.quiz.map((q, i) => ({ path: ["quiz", i], ...q }))];
+    const owners = new Map();
+    for (const it of items) {
+      if (it.id === undefined) continue;
+      const other = owners.get(it.id);
+      if (other) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [...it.path, "id"], message: `id "${it.id}" is also ${other.path[0]}[${other.path[1]}]'s` });
+      else owners.set(it.id, it);
+    }
+    for (const it of items) {
+      for (const [j, f] of it.formerIds.entries()) {
+        const owner = owners.get(f);
+        if (f === it.id) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [...it.path, "formerIds", j], message: `former id "${f}" is its own id` });
+        else if (owner) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [...it.path, "formerIds", j], message: `former id "${f}" is ${owner.path[0]}[${owner.path[1]}]'s current id` });
+      }
+    }
+  });
 
 export const PathLevelSchema = z
   .object({
