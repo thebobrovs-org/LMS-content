@@ -55,48 +55,74 @@ export const ObjectiveSchema: z.ZodObject<{
     id: string;
     statement: string;
 }>;
+/**
+ * A stable id for a review item or a lesson step (ADR 0004): a slug, unique within
+ * its topic. With an `id`, a learner's progress is keyed by it and survives a
+ * rewording; without one, the app keys the item by a hash of its prompt.
+ * `formerIds` are the ids (hashes included) the item had before, so the progress
+ * stored under them still counts. The validator checks uniqueness and that no
+ * former id is another item's; a change of meaning under the same id is the
+ * assessment-validity critic's question (pipeline/AUDIT.md).
+ */
+export const ItemIdSchema: z.ZodString;
 export const FlashcardSchema: z.ZodObject<{
+    id: z.ZodOptional<z.ZodString>;
+    formerIds: z.ZodDefault<z.ZodArray<z.ZodString, "many">>;
     front: z.ZodString;
     back: z.ZodString;
     objective: z.ZodOptional<z.ZodString>;
 }, "strict", z.ZodTypeAny, {
     front: string;
     back: string;
+    formerIds: string[];
+    id?: string | undefined;
     objective?: string | undefined;
 }, {
     front: string;
     back: string;
+    id?: string | undefined;
     objective?: string | undefined;
+    formerIds?: string[] | undefined;
 }>;
 export const QuizItemSchema: z.ZodEffects<z.ZodObject<{
+    id: z.ZodOptional<z.ZodString>;
+    formerIds: z.ZodDefault<z.ZodArray<z.ZodString, "many">>;
     question: z.ZodString;
     choices: z.ZodArray<z.ZodString, "many">;
     answer: z.ZodNumber;
     explanation: z.ZodOptional<z.ZodString>;
     objective: z.ZodOptional<z.ZodString>;
 }, "strict", z.ZodTypeAny, {
+    formerIds: string[];
     question: string;
     choices: string[];
     answer: number;
+    id?: string | undefined;
     objective?: string | undefined;
     explanation?: string | undefined;
 }, {
     question: string;
     choices: string[];
     answer: number;
+    id?: string | undefined;
     objective?: string | undefined;
+    formerIds?: string[] | undefined;
     explanation?: string | undefined;
 }>, {
+    formerIds: string[];
     question: string;
     choices: string[];
     answer: number;
+    id?: string | undefined;
     objective?: string | undefined;
     explanation?: string | undefined;
 }, {
     question: string;
     choices: string[];
     answer: number;
+    id?: string | undefined;
     objective?: string | undefined;
+    formerIds?: string[] | undefined;
     explanation?: string | undefined;
 }>;
 export const STATUSES: readonly ["draft", "published"];
@@ -151,47 +177,63 @@ export const TopicFrontmatterSchema: z.ZodObject<{
         start?: number | undefined;
     }>, "many">>;
     flashcards: z.ZodDefault<z.ZodArray<z.ZodObject<{
+        id: z.ZodOptional<z.ZodString>;
+        formerIds: z.ZodDefault<z.ZodArray<z.ZodString, "many">>;
         front: z.ZodString;
         back: z.ZodString;
         objective: z.ZodOptional<z.ZodString>;
     }, "strict", z.ZodTypeAny, {
         front: string;
         back: string;
+        formerIds: string[];
+        id?: string | undefined;
         objective?: string | undefined;
     }, {
         front: string;
         back: string;
+        id?: string | undefined;
         objective?: string | undefined;
+        formerIds?: string[] | undefined;
     }>, "many">>;
     quiz: z.ZodDefault<z.ZodArray<z.ZodEffects<z.ZodObject<{
+        id: z.ZodOptional<z.ZodString>;
+        formerIds: z.ZodDefault<z.ZodArray<z.ZodString, "many">>;
         question: z.ZodString;
         choices: z.ZodArray<z.ZodString, "many">;
         answer: z.ZodNumber;
         explanation: z.ZodOptional<z.ZodString>;
         objective: z.ZodOptional<z.ZodString>;
     }, "strict", z.ZodTypeAny, {
+        formerIds: string[];
         question: string;
         choices: string[];
         answer: number;
+        id?: string | undefined;
         objective?: string | undefined;
         explanation?: string | undefined;
     }, {
         question: string;
         choices: string[];
         answer: number;
+        id?: string | undefined;
         objective?: string | undefined;
+        formerIds?: string[] | undefined;
         explanation?: string | undefined;
     }>, {
+        formerIds: string[];
         question: string;
         choices: string[];
         answer: number;
+        id?: string | undefined;
         objective?: string | undefined;
         explanation?: string | undefined;
     }, {
         question: string;
         choices: string[];
         answer: number;
+        id?: string | undefined;
         objective?: string | undefined;
+        formerIds?: string[] | undefined;
         explanation?: string | undefined;
     }>, "many">>;
     status: z.ZodDefault<z.ZodEnum<["draft", "published"]>>;
@@ -218,12 +260,16 @@ export const TopicFrontmatterSchema: z.ZodObject<{
     flashcards: {
         front: string;
         back: string;
+        formerIds: string[];
+        id?: string | undefined;
         objective?: string | undefined;
     }[];
     quiz: {
+        formerIds: string[];
         question: string;
         choices: string[];
         answer: number;
+        id?: string | undefined;
         objective?: string | undefined;
         explanation?: string | undefined;
     }[];
@@ -252,13 +298,17 @@ export const TopicFrontmatterSchema: z.ZodObject<{
     flashcards?: {
         front: string;
         back: string;
+        id?: string | undefined;
         objective?: string | undefined;
+        formerIds?: string[] | undefined;
     }[] | undefined;
     quiz?: {
         question: string;
         choices: string[];
         answer: number;
+        id?: string | undefined;
         objective?: string | undefined;
+        formerIds?: string[] | undefined;
         explanation?: string | undefined;
     }[] | undefined;
     updated?: string | undefined;

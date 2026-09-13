@@ -21,15 +21,23 @@ flashcards:
   - front: What is the JAX → TPU compile path?
     back: A jitted Python function is traced into a static graph → lowered to StableHLO → handed to XLA, which fuses ops and emits an optimized TPU executable. You write NumPy-like Python; XLA writes the machine code.
     objective: compile-path
+    id: compile-path
+    formerIds: [8tw5jt]
   - front: What does XLA fusion actually save?
     back: It merges a chain of ops (matmul + bias + activation + scale) into one kernel, so the intermediate results never leave the chip for HBM. Same FLOPs, far fewer HBM round-trips → higher arithmetic intensity.
     objective: fusion-hbm-trips
+    id: fusion-saves
+    formerIds: [1q1pobk]
   - front: JIT vs AOT in JAX
     back: Same XLA compiler, different timing. JIT compiles on the first call (and caches). AOT — jax.jit(f).lower(args).compile() — compiles without running, so you can inspect the HLO and the memory analysis and catch an OOM at compile time, before a single training step runs.
     objective: aot-facts
+    id: jit-vs-aot
+    formerIds: [oqblph]
   - front: The JAX AI stack pieces
     back: JAX (numerics + transforms) sits on XLA/StableHLO and the TPU. On top of JAX are two sibling libraries — not rungs under each other — Flax NNX (the model/module system; the recommended API, with Linen the older one you'll meet in MaxText) and Optax (optimizers). Orbax and Grain handle checkpointing and data.
     objective: stack-pieces
+    id: stack-pieces
+    formerIds: [1ijrpri]
 quiz:
   - question: Why does op fusion raise arithmetic intensity?
     choices:
@@ -39,6 +47,8 @@ quiz:
     answer: 1
     explanation: Fusion doesn't change the math — it removes the HBM round-trips between ops. Same FLOPs over fewer bytes means more FLOP/byte, which pushes a memory-bound chain over the ridge toward compute-bound.
     objective: fusion-hbm-trips
+    id: fusion-intensity
+    formerIds: [1bk9s0p]
   - question: You want to know whether a model will OOM on a v5p slice — without burning the slice. What do you use?
     choices:
       - Just run it and watch
@@ -47,6 +57,8 @@ quiz:
     answer: 1
     explanation: AOT compilation produces the executable (and its memory footprint) without running a single step, so you can read the compiled memory analysis and catch the OOM at compile time — before a single training step.
     objective: aot-facts
+    id: aot-oom-check
+    formerIds: [qcmp35]
   - question: Which is the recommended Flax API for new TPU code today?
     choices:
       - Linen (flax.linen)
@@ -55,6 +67,8 @@ quiz:
     answer: 1
     explanation: Flax NNX is the recommended API for new code; Linen still exists and powers frameworks like MaxText, so you'll read it — but new models start in NNX. TPUs are XLA/JAX-first, not TensorFlow.
     objective: stack-pieces
+    id: flax-nnx
+    formerIds: [1ohynxm]
 status: published
 ---
 
@@ -129,6 +143,8 @@ stalled on memory — that shorter wall-clock per step **is** throughput you can
 Watch the chain cross the v5p ridge from memory- to compute-bound:
 
 <Quiz
+  id="predict-fusion"
+  former-ids={["120gqb7"]}
   objective="fusion-hbm-trips"
   question="Predict before you run the race: XLA fuses a chain of three elementwise ops that follow a matmul. What changes for the chain?"
   choices={["Fewer FLOPs, so it finishes sooner", "The same FLOPs over far fewer bytes through HBM: intensity rises and the memory-bound chain moves toward the ridge", "More FLOPs, but the MXU runs them faster"]}
@@ -182,16 +198,16 @@ analysis *knows*. That's the difference this level is built to create.
 ## Put it together
 
 <Steps>
-<Step title="Watch fusion move the needle">
+<Step title="Watch fusion move the needle" id="watch-fusion" former-ids={["48zpid"]}>
 In the explorer, walk the compile pipeline (step or auto), then run the race. Read off the
 HBM round-trips and the arithmetic intensity for each side, and say in one sentence why the
 *bound* flipped from memory to compute.
 </Step>
-<Step title="Place the AOT win">
+<Step title="Place the AOT win" id="place-aot-win" former-ids={["b0d9bd"]}>
 Explain when you'd reach for `.lower(args).compile()` instead of a plain `jax.jit` call —
 and the one thing it lets you check before you spend a slice.
 </Step>
-<Step title="Name the stack">
+<Step title="Name the stack" id="name-the-stack" former-ids={["ms1oz9"]}>
 List the vertical layers from your model code to the silicon (your model → JAX → StableHLO →
 XLA → TPU), say which one *fuses* your ops, then name the two **sibling** libraries on top of
 JAX (Flax NNX, Optax) — they sit beside each other, not as rungs in that stack.

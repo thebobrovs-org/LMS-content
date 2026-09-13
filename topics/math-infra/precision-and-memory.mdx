@@ -21,15 +21,23 @@ flashcards:
   - front: A float = range + precision. Which bits do which?
     back: The exponent sets dynamic range (how big/small it can reach); the mantissa sets precision (how finely it distinguishes nearby values). bf16 keeps fp32's 8-bit exponent (range) but cuts the mantissa (precision); fp16 does the opposite.
     objective: float-range-vs-precision
+    id: float-bits
+    formerIds: [3u49oh]
   - front: Why does AI use bf16 over fp16 for training?
     back: Range. Training values span ~1e-7 (tiny gradients) to ~1e5 (activations); only an 8-bit exponent covers both. fp16's 5-bit exponent overflows to inf past ~65,504. bf16 keeps fp32's range at half the bytes; the coarser precision averages out over millions of updates.
     objective: float-range-vs-precision
+    id: bf16-over-fp16
+    formerIds: [1qeicot]
   - front: Why does lower precision make the chip faster — not just smaller?
     back: Arithmetic intensity = FLOPs ÷ bytes moved. Same math, fewer bytes → higher intensity → the matrix unit isn't waiting on memory. Halving the byte width roughly doubles intensity, pushing a workload from memory-bound toward compute-bound.
     objective: bytes-to-intensity
+    id: fewer-bytes-faster
+    formerIds: [1qp0q6p]
   - front: What is fp4 (E2M1) and the catch?
     back: A 4-bit float — 1 sign, 2 exponent, 1 mantissa. A quarter of bf16's bytes (≈2× throughput), but a tiny ~0.5–6 range and 1 mantissa bit, so values must be scaled into range first. The throughput bet for inference and parts of training.
     objective: float-range-vs-precision
+    id: fp4-catch
+    formerIds: [gheb6t]
 quiz:
   - question: Which 16-bit float overflows to infinity past ~65,504, and why?
     choices:
@@ -39,6 +47,8 @@ quiz:
     answer: 1
     explanation: fp16 spends its bits on precision (10 mantissa) and keeps only a 5-bit exponent, so its dynamic range tops out near 65,504. bf16 kept fp32's 8-bit exponent, so it holds the same value — range over precision.
     objective: overflow-prediction
+    id: fp16-overflow
+    formerIds: [u5m1v3]
   - question: You switch a matmul from fp32 to bf16. What happens to arithmetic intensity?
     choices:
       - It halves (fewer bytes of compute)
@@ -47,6 +57,8 @@ quiz:
     answer: 1
     explanation: Arithmetic intensity is FLOPs per byte moved. Same FLOPs over half the bytes ≈ double the intensity, moving the workload up toward the roofline ridge and away from being memory-bound.
     objective: bytes-to-intensity
+    id: bf16-intensity
+    formerIds: [pshxmq]
   - question: A workload sits at 40 FLOP/byte on hardware whose roofline ridge is 165 FLOP/byte. What's the bottleneck?
     choices:
       - Compute — the matrix unit is saturated
@@ -55,6 +67,8 @@ quiz:
     answer: 1
     explanation: Below the ridge (40 < 165) the device is memory-bound — it finishes the math faster than memory can feed it, so the expensive matrix unit idles. Raising intensity (lower precision, bigger batches) moves it up toward the ridge.
     objective: roofline-placement
+    id: roofline-40-vs-165
+    formerIds: [gr850k]
 status: published
 ---
 
@@ -108,6 +122,8 @@ precision averages out over millions of updates (rounding is random noise that c
 Drag a value and watch fp16 break where bf16 holds, and how little fp4 can represent at all:
 
 <Quiz
+  id="predict-70000"
+  former-ids={["19g65el"]}
   objective="overflow-prediction"
   question="Predict before you drag: a loss scale pushes an activation to 70,000. What does fp16 hold, and what does bf16 hold?"
   choices={["Both hold about 70,000", "fp16 overflows to inf; bf16 holds about 70,000, coarsely", "bf16 overflows to inf; fp16 holds it exactly"]}
@@ -175,15 +191,15 @@ spot the failure mode (the `inf`/`NaN` overflow) when it shows up.
 ## Put it together
 
 <Steps>
-<Step title="Break fp16, keep bf16">
+<Step title="Break fp16, keep bf16" id="break-fp16" former-ids={["1ja31uf"]}>
 In the format explorer, push the value to a big activation (`1e5`). Which formats overflow, and
 which holds — and say in one sentence why, from the exponent bits.
 </Step>
-<Step title="Move the workload across the ridge">
+<Step title="Move the workload across the ridge" id="cross-the-ridge" former-ids={["oapu19"]}>
 In the intensity calculator, switch the precision from fp32 to bf16 and read what happens to
 arithmetic intensity and to the memory-bound vs compute-bound verdict.
 </Step>
-<Step title="Place fp4">
+<Step title="Place fp4" id="place-fp4" former-ids={["axix76"]}>
 Explain why fp4 needs values *scaled into range* before it's usable, and what you're buying in
 return — in bytes and throughput.
 </Step>

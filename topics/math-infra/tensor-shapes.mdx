@@ -21,15 +21,23 @@ flashcards:
   - front: What is a tensor, and why does its shape matter to an operator?
     back: A tensor is an N-dimensional array (a batch of inputs, a weight matrix, a layer's activations). Its shape — the size of each dimension, not just the element count — sets its memory footprint and how it tiles onto the hardware's matrix unit. Shape, not size, is what causes surprise OOMs.
     objective: tensor-shape-footprint
+    id: tensor-and-shape
+    formerIds: [34z23c]
   - front: What does the hardware do to a dimension that isn't a multiple of its tile size?
     back: It zero-pads it up to the next multiple of the tile (a common tile is 128 wide; some units use 256) — and the vector lanes (SIMD-like slots) to multiples of 8. A dimension one past a tile boundary spills into a second tile, rounding up. You pay compute (FLOPs on zeros) and memory (storing zeros) for the overhang.
     objective: tile-padding
+    id: tile-padding
+    formerIds: [ir7bt6]
   - front: Why does padding cause OOM even when the "real" data fits?
     back: Because the padded zeros are stored too. A tensor whose dims sit just over a tile boundary takes far more memory than its element count suggests — so a job you sized by hand fits on paper but OOMs on the device.
     objective: surprise-oom
+    id: padding-oom
+    formerIds: [wi1bo7]
   - front: The operator's rule for shapes
     back: Align batch and feature dimensions to the hardware's tile size (commonly 128, and 8 for vector lanes). Aligned shapes fill whole tiles — zero padding, zero waste. It's the first thing to check on a mysterious OOM.
     objective: tile-padding
+    id: operators-rule
+    formerIds: [d3j7f7]
 quiz:
   - question: A matmul has a 129-wide dimension on hardware with a 128-wide tile. What does the compiler do?
     choices:
@@ -39,6 +47,8 @@ quiz:
     answer: 1
     explanation: 129 rounds up to the next tile multiple, 256 — nearly doubling that dimension. The padded zeros cost both FLOPs and memory, and nothing warns you; it just runs slower and bigger.
     objective: tile-padding
+    id: 129-on-128
+    formerIds: [15yk32v]
   - question: A job "should fit" in memory by your element-count math but OOMs anyway. First thing to check?
     choices:
       - Whether an accelerator is faulty
@@ -47,6 +57,8 @@ quiz:
     answer: 1
     explanation: A surprise OOM is almost always shape, not size. A dimension just over a tile boundary pads up and stores a wall of zeros, inflating the real footprint past what your back-of-envelope predicted.
     objective: surprise-oom
+    id: surprise-oom-first-check
+    formerIds: [1w1y4od]
   - question: Why are accelerator tensor shapes static (fixed at compile time)?
     choices:
       - To make the Python prettier
@@ -55,6 +67,8 @@ quiz:
     answer: 1
     explanation: The device can't malloc on the fly; it needs the exact buffer layout planned ahead. That's why shapes freeze at compile time and why changing one re-triggers tracing and compilation.
     objective: tensor-shape-footprint
+    id: static-shapes
+    formerIds: [17x76lg]
 status: published
 ---
 
@@ -102,6 +116,8 @@ Drag the dimensions of a matmul and watch the real matrix round up to the tile g
 overhang is pure waste:
 
 <Quiz
+  id="predict-129-slots"
+  former-ids={["1e8oarz"]}
   objective="padding-waste"
   question="Predict before you drag: a 129 × 129 matrix is laid out on 128-wide tiles. Roughly what fraction of the padded matrix's slots hold zeros?"
   choices={["Almost none: one extra row and one extra column", "About three quarters: each side rounds up to 256, so the padded matrix has four times the slots of the real one", "About half: one side pads, the other doesn't"]}
@@ -160,15 +176,15 @@ team that owns the model, and turn a guessed capacity plan into a sized one.
 ## Put it together
 
 <Steps>
-<Step title="Make the waste appear">
+<Step title="Make the waste appear" id="make-waste-appear" former-ids={["1ix5t4v"]}>
 In the tiler, set every dimension to 512 (zero waste), then nudge one to 513. Read off how much
 compute and memory just went to padding, and what shape it rounded up to.
 </Step>
-<Step title="Fix a surprise OOM">
+<Step title="Fix a surprise OOM" id="fix-surprise-oom" former-ids={["w6zke7"]}>
 A job with a `129`-wide feature dimension OOMs a device it should fit. Round it to the nearest
 multiple of the tile and say, in one sentence, why the footprint dropped.
 </Step>
-<Step title="Connect it to the roofline">
+<Step title="Connect it to the roofline" id="connect-roofline" former-ids={["1mpr1qw"]}>
 Explain how padding a near-tile dimension can push a workload the *wrong* way on the roofline —
 more bytes moved for the same useful math.
 </Step>
