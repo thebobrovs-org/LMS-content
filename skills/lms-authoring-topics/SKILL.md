@@ -104,8 +104,11 @@ recall it."
 - **Give every item and step an `id`** (ADR 0004): a slug that names what it teaches, unique in the topic (items share one namespace, steps another). Progress is keyed by it, so a **rewording keeps the id**; a **change of meaning gets a new id** (retire the old one, never reuse it); a **rename lists the old id in `formerIds`** (`former-ids={[…]}` on `<Quiz>`, `<Flashcard>` and `<Step>`). An item without an id is keyed by a hash of its prompt, and the gate warns when such a prompt changes (`--base`), naming the old hash to list as a former id.
 - `flashcards` (frontmatter) and inline `<Flashcard>` → active recall.
 - `quiz` (frontmatter) and inline `<Quiz>` → auto-graded MCQs.
-- Items get a **stable id from a hash of the topic id + the prompt text**, so
-  editing order is safe but editing the prompt resets that item's schedule.
+- An item **without** an `id` is keyed by a hash of its prompt text: reordering
+  is safe, but editing the prompt resets that item's schedule. Giving it an `id`
+  keeps its history by itself (the app treats the prompt's hash as a former id
+  of any item that has an id); a reworded item that *never* had an id lists the
+  old prompt's hash in `formerIds` (the gate's warning names it).
 - All of these feed the spaced-repetition engine and the `/review` session
   automatically — you just author them.
 

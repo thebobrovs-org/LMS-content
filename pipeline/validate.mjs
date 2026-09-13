@@ -35,24 +35,38 @@ const includeStaging = process.argv.includes("--staging");
 const baseIdx = process.argv.indexOf("--base");
 const baseRef = baseIdx > 0 ? (process.argv[baseIdx + 1] ?? null) : null;
 
-/** A topic's frontmatter and rendered identities at `ref` (`git show ref:path`), or null when it isn't there. */
-async function topicAt(ref, file) {
-  const r = spawnSync("git", ["show", `${ref}:${rel(file)}`], { cwd: ROOT, encoding: "utf8" });
-  if (r.status !== 0) return null;
-  try {
-    const fm = parseFrontmatter(r.stdout, rel(file));
-    const checked = check(TopicFrontmatterSchema, fm.data, rel(file));
-    if (!checked.ok) return null;
-    const urls = [], sims = [], objectives = [], identities = [];
-    await compile(fm.content, { development: false, remarkPlugins: [() => lessonRules(urls, sims, objectives, identities)] });
-    return { data: checked.value, identities };
-  } catch {
-    return null; // an unparseable base is no base to compare with
-  }
-}
 const errors = [];
 const warnings = [];
 const rel = (f) => path.relative(ROOT, f).split(path.sep).join("/");
+
+/** Whether `ref` names a commit here; a base that doesn't is an error, never a silent pass with every comparison skipped. */
+function refExists(ref) {
+  return spawnSync("git", ["rev-parse", "--verify", "-q", `${ref}^{commit}`], { cwd: ROOT, encoding: "utf8" }).status === 0;
+}
+
+/**
+ * A topic's frontmatter and rendered identities at `ref` (`git show ref:path`): `{ data, identities }`,
+ * `{ absent: true }` when the file isn't in that commit (a new topic: nothing to compare), or
+ * `{ skipped: reason }` when it is there but can't be read as a topic (the caller reports it).
+ */
+async function topicAt(ref, file) {
+  const r = spawnSync("git", ["show", `${ref}:${rel(file)}`], { cwd: ROOT, encoding: "utf8" });
+  if (r.status !== 0) {
+    if (/does not exist in|exists on disk, but not in/.test(r.stderr)) return { absent: true };
+    return { skipped: `git show failed: ${r.stderr.trim() || `exit ${r.status}`}` };
+  }
+  try {
+    const fm = parseFrontmatter(r.stdout, rel(file));
+    const checked = check(TopicFrontmatterSchema, fm.data, rel(file));
+    if (!checked.ok) return { skipped: "its frontmatter at the base does not match the schema" };
+    const urls = [], sims = [], objectives = [], identities = [];
+    await compile(fm.content, { development: false, remarkPlugins: [() => lessonRules(urls, sims, objectives, identities)] });
+    return { data: checked.value, identities };
+  } catch (e) {
+    return { skipped: `its body at the base does not compile (${String(e.reason ?? e.message).split("\n")[0]})` };
+  }
+}
+if (baseRef !== null && !refExists(baseRef)) errors.push(`--base ${baseRef}: not a commit in this repository`);
 
 function walk(dir, ext) {
   if (!fs.existsSync(dir)) return [];
@@ -366,46 +380,57 @@ const ID_RE = /^[a-z0-9][a-z0-9-]*$/;
 /**
  * Stable ids (ADR 0004): every review item (the frontmatter's flashcards and quiz, the
  * body's <Quiz> and <Flashcard>) shares one namespace within the topic, and the steps
- * another. An `id` must be unique; a former id must not be another item's id, be
- * claimed by two items, or be the item's own id. The body's ids are checked for shape
+ * another. An item's current identity is its `id`, else the hash of its prompt (what the
+ * app keys progress by), and every current identity must be unique: two ids, an id equal
+ * to another item's hash, or two idless items with the same prompt all collide. A former
+ * id must not be another item's current identity (explicit or hash), be claimed by two
+ * items, or be the item's own id. Items are told apart by position, never by label: two
+ * inline checks with the same prompt are two items. The body's ids are checked for shape
  * here (the schema checks the frontmatter's).
  */
 export function identityProblems(data, bodyIdentities) {
+  const body = (tag) => bodyIdentities.filter((b) => (tag === "Step") === (b.tag === "Step"));
   const items = [
-    ...(data.flashcards ?? []).map((f, i) => ({ where: `flashcards[${i}]`, id: f.id, formerIds: f.formerIds ?? [] })),
-    ...(data.quiz ?? []).map((q, i) => ({ where: `quiz[${i}]`, id: q.id, formerIds: q.formerIds ?? [] })),
-    ...bodyIdentities.filter((b) => b.tag !== "Step").map((b) => ({ where: `<${b.tag} ${JSON.stringify(b.prompt ?? "")}>`, id: b.id, formerIds: b.formerIds })),
+    ...(data.flashcards ?? []).map((f, i) => ({ where: `flashcards[${i}]`, prompt: f.front, id: f.id, formerIds: f.formerIds ?? [] })),
+    ...(data.quiz ?? []).map((q, i) => ({ where: `quiz[${i}]`, prompt: q.question, id: q.id, formerIds: q.formerIds ?? [] })),
+    ...body("item").map((b, i) => ({ where: `body's ${nth(i + 1)} check <${b.tag} ${JSON.stringify(b.prompt ?? "")}>`, prompt: b.prompt, id: b.id, formerIds: b.formerIds })),
   ];
-  const steps = bodyIdentities.filter((b) => b.tag === "Step").map((b) => ({ where: `<Step ${JSON.stringify(b.prompt ?? "")}>`, id: b.id, formerIds: b.formerIds }));
+  const steps = body("Step").map((b, i) => ({ where: `body's ${nth(i + 1)} step <Step ${JSON.stringify(b.prompt ?? "")}>`, prompt: b.prompt, id: b.id, formerIds: b.formerIds }));
   const errors = [];
-  for (const [namespace, list] of [["item", items], ["step", steps]]) {
-    const owners = new Map(); // id → where
+  for (const [namespace, list, hash] of [["item", items, itemHash], ["step", steps, stepHash]]) {
+    const owners = new Map(); // current identity (id, or the prompt's hash) → the record
     for (const e of list) {
       for (const v of [e.id, ...e.formerIds]) if (v !== undefined && !ID_RE.test(v)) errors.push(`${e.where}: id "${v}" must be lowercase letters, digits and hyphens`);
-      if (e.id !== undefined) {
-        if (owners.has(e.id)) errors.push(`${e.where}: ${namespace} id "${e.id}" is also ${owners.get(e.id)}'s`);
-        owners.set(e.id, e.where);
-      }
+      e.current = e.id ?? (e.prompt === undefined ? undefined : hash(e.prompt));
+      if (e.current === undefined) continue;
+      const other = owners.get(e.current);
+      if (other) errors.push(`${e.where}: ${namespace} ${e.id === undefined ? "hash" : "id"} "${e.current}" is also ${other.where}'s${other.id === undefined ? " (its prompt's hash)" : ""}`);
+      else owners.set(e.current, e);
     }
-    const claimed = new Map(); // former id → where
+    const claimed = new Map(); // former id → the record
     for (const e of list) {
       for (const f of e.formerIds) {
+        const owner = owners.get(f);
         if (f === e.id) errors.push(`${e.where}: former id "${f}" is its own id`);
-        else if (owners.has(f)) errors.push(`${e.where}: former id "${f}" is ${owners.get(f)}'s current id`);
-        if (claimed.has(f) && claimed.get(f) !== e.where) errors.push(`${e.where}: former id "${f}" is also claimed by ${claimed.get(f)}`);
-        claimed.set(f, e.where);
+        else if (owner && owner !== e) errors.push(`${e.where}: former id "${f}" is ${owner.where}'s current ${owner.id === undefined ? "hash" : "id"}`);
+        const first = claimed.get(f);
+        if (first && first !== e) errors.push(`${e.where}: former id "${f}" is also claimed by ${first.where}`);
+        else claimed.set(f, e);
       }
     }
   }
   return errors;
 }
 
+const nth = (n) => `${n}${n % 10 === 1 && n % 100 !== 11 ? "st" : n % 10 === 2 && n % 100 !== 12 ? "nd" : n % 10 === 3 && n % 100 !== 13 ? "rd" : "th"}`;
+
 /**
  * With `--base <ref>` (content CI: the PR's base branch), an item without an `id` whose
  * prompt is new to the file gets a warning: if it is a reworded item, its learners' history
  * is keyed by the old prompt's hash, which the warning names, so the author can give the
  * item an `id` and list that hash as a former id. Items with an id are keyed by it and
- * need nothing.
+ * need nothing. A vanished item that had an id is named by that id: dropping the id and
+ * rewording at once keys the history by the id, not by any hash.
  */
 export function promptChangeWarnings(head, base) {
   const prompts = (t) => [
@@ -421,8 +446,9 @@ export function promptChangeWarnings(head, base) {
     const oldPrompts = new Set(old.map((p) => p.prompt));
     const gone = old.filter((p) => !now.some((n) => n.kind === kind && n.prompt === p.prompt));
     for (const n of now.filter((p) => p.kind === kind && p.id === undefined && !oldPrompts.has(p.prompt))) {
-      const hint = gone.length ? ` Prompts that vanished from this file and their hashes: ${gone.map((g) => `${JSON.stringify(g.prompt)} → ${kind === "step" ? stepHash(g.prompt) : itemHash(g.prompt)}`).join("; ")}.` : "";
-      warnings.push(`${kind} ${JSON.stringify(n.prompt)} has no id and its prompt is new to this file: if it is a reworded ${kind}, learners' progress is keyed by the old prompt's hash; give it an id and list that hash in its former ids.${hint}`);
+      const key = (g) => (g.id !== undefined ? `id ${g.id}` : `hash ${kind === "step" ? stepHash(g.prompt) : itemHash(g.prompt)}`);
+      const hint = gone.length ? ` ${kind[0].toUpperCase()}${kind.slice(1)}s that vanished from this file and the keys their progress is stored under: ${gone.map((g) => `${JSON.stringify(g.prompt)} → ${key(g)}`).join("; ")}.` : "";
+      warnings.push(`${kind} ${JSON.stringify(n.prompt)} has no id and its prompt is new to this file: if it is a reworded ${kind}, learners' progress is keyed by the old prompt's hash (or the id it had); give it an id and list that key in its former ids, or keep its old id.${hint}`);
     }
   }
   return warnings;
@@ -466,9 +492,10 @@ for (const t of topics) {
   for (const e of objectives.errors) errors.push(`${id}: ${e}`);
   for (const w of objectives.warnings) warnings.push(`${id}: ${w}`);
   for (const e of identityProblems(data, body.identities)) errors.push(`${id}: ${e}`);
-  if (baseRef) {
+  if (baseRef !== null && refExists(baseRef)) {
     const base = await topicAt(baseRef, file);
-    if (base) for (const w of promptChangeWarnings({ data, identities: body.identities }, base)) warnings.push(`${id}: ${w}`);
+    if (base.skipped) warnings.push(`${id}: prompt changes not compared with ${baseRef}: ${base.skipped}`);
+    else if (!base.absent) for (const w of promptChangeWarnings({ data, identities: body.identities }, base)) warnings.push(`${id}: ${w}`);
   }
 }
 

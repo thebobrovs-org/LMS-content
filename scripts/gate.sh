@@ -21,8 +21,8 @@ node pipeline/validate.mjs --staging
 BASE="${PR_BASE_REF:-}"
 if [ -z "$BASE" ] && git rev-parse --verify -q origin/main > /dev/null 2>&1; then BASE=origin/main; fi
 if [ -n "$BASE" ]; then
-  step "items without an id whose prompt changed since $BASE (warnings)"
-  node pipeline/validate.mjs --base "$BASE"
+  step "items without an id whose prompt changed since $BASE, published and staged (warnings)"
+  node pipeline/validate.mjs --staging --base "$BASE"
 fi
 
 step "dependency audit"

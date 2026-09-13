@@ -10,6 +10,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { itemHash, stepHash } from "./ids.mjs";
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const VALIDATE = path.join(REPO, "pipeline", "validate.mjs");
@@ -146,6 +147,22 @@ test("stable ids (ADR 0004): unique within the topic, aliases never another item
   fails("a body id that isn't a slug", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Quiz id="Not A Slug" question="Q?" choices={["a", "b"]} answer={0} />\n` });
   fails("former-ids that isn't a string array", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Quiz former-ids="h1" question="Q?" choices={["a", "b"]} answer={0} />\n` });
   fails("a frontmatter id that isn't a slug", { "topics/fundamentals/arrays.mdx": items("    id: Not-A-Slug") });
+  // An idless item owns its prompt's hash (that is its key in the app): another item can't claim it as a former id or as its id.
+  const h = itemHash("F1");
+  const stolenHash = fails("a former id that is an idless item's prompt hash", { "topics/fundamentals/arrays.mdx": items(`  - front: F2\n    back: B\n    id: two\n    formerIds: [${h}]`) });
+  assert.match(stolenHash, new RegExp(`flashcards\\[1\\]: former id "${h}" is flashcards\\[0\\]'s current hash`));
+  const idIsHash = fails("an id equal to an idless item's prompt hash", { "topics/fundamentals/arrays.mdx": items(`  - front: F2\n    back: B\n    id: ${h}`) });
+  assert.match(idIsHash, new RegExp(`flashcards\\[1\\]: item id "${h}" is also flashcards\\[0\\]'s \\(its prompt's hash\\)`));
+  fails("two idless items with the same prompt (one key in the app)", { "topics/fundamentals/arrays.mdx": items("  - front: F1\n    back: Other") });
+  const sh = stepHash("A");
+  fails("a step's former id that is an idless step's title hash", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Steps>\n<Step title="A">x</Step>\n<Step title="B" id="b" former-ids={["${sh}"]}>y</Step>\n</Steps>\n` });
+  // Two inline checks with the same prompt are two items: they can't share a former id, and their ids must differ.
+  const twins = fails("two same-prompt inline quizzes claiming one former id", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Quiz id="a" former-ids={["old"]} question="Q?" choices={["a", "b"]} answer={0} />\n\n<Quiz id="b" former-ids={["old"]} question="Q?" choices={["a", "b"]} answer={0} />\n` });
+  assert.match(twins, /body's 2nd check <Quiz "Q\?">: former id "old" is also claimed by body's 1st check <Quiz "Q\?">/);
+  fails("two same-title steps claiming one former id", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Steps>\n<Step title="A" id="a1" former-ids={["old"]}>x</Step>\n<Step title="A" id="a2" former-ids={["old"]}>y</Step>\n</Steps>\n` });
+  // Two same-prompt inline checks with distinct ids and distinct former ids: two items, valid.
+  const distinct = run(tree({ "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Quiz id="a" former-ids={["old-a"]} question="Q?" choices={["a", "b"]} answer={0} />\n\n<Quiz id="b" former-ids={["old-b"]} question="Q?" choices={["a", "b"]} answer={0} />\n` }));
+  assert.equal(distinct.code, 0, distinct.out);
 });
 
 test("--base <ref>: an item without an id whose prompt is new to the file gets a warning naming the vanished prompts' hashes", () => {
@@ -169,6 +186,41 @@ test("--base <ref>: an item without an id whose prompt is new to the file gets a
   // Without --base, or when the file has no base version, no warning.
   const fresh = run(tree({ "topics/fundamentals/arrays.mdx": after }));
   assert.doesNotMatch(fresh.out, /has no id and its prompt is new/);
+});
+
+test("--base: a vanished item is named by the id it had; a staged topic is compared too; a bad base fails; an unreadable base is reported", () => {
+  const committed = (files) => {
+    const root = tree(files);
+    const git = (...args) => spawnSync("git", ["-c", "user.email=t@example.com", "-c", "user.name=t", ...args], { cwd: root, encoding: "utf8" });
+    git("init", "-q");
+    git("add", "-A");
+    git("commit", "-q", "-m", "base");
+    return root;
+  };
+  // Dropping an id while rewording: the history is under the id, and the hint says so (not a hash of the old prompt).
+  const withId = fm("quiz:\n  - question: Old Q?\n    choices: [a, b]\n    answer: 0\n    id: kept-id");
+  let root = committed({ "topics/fundamentals/arrays.mdx": withId });
+  fs.writeFileSync(path.join(root, "topics/fundamentals/arrays.mdx"), fm("quiz:\n  - question: New Q?\n    choices: [a, b]\n    answer: 0"));
+  let r = run(root, "--base", "HEAD");
+  assert.equal(r.code, 0, r.out);
+  assert.match(r.out, /"Old Q\?" → id kept-id/);
+  assert.doesNotMatch(r.out, /"Old Q\?" → hash/);
+  // A staged topic's prompt change is compared with the base when --staging is given (as the gate does).
+  root = committed({ "staging/topics/fundamentals/staged.mdx": fm("flashcards:\n  - front: Staged old\n    back: B") });
+  fs.writeFileSync(path.join(root, "staging/topics/fundamentals/staged.mdx"), fm("flashcards:\n  - front: Staged new\n    back: B"));
+  r = run(root, "--staging", "--base", "HEAD");
+  assert.equal(r.code, 0, r.out);
+  assert.match(r.out, /item "Staged new" has no id and its prompt is new to this file/);
+  // A base that isn't a commit: an error, not a pass with every comparison skipped.
+  r = run(committed({}), "--base", "no-such-ref");
+  assert.equal(r.code, 1, r.out);
+  assert.match(r.out, /--base no-such-ref: not a commit in this repository/);
+  // A base version that isn't a valid topic: the comparison is reported as skipped, not silently dropped.
+  root = committed({ "topics/fundamentals/arrays.mdx": "not a topic at all" });
+  fs.writeFileSync(path.join(root, "topics/fundamentals/arrays.mdx"), TOPIC);
+  r = run(root, "--base", "HEAD");
+  assert.equal(r.code, 0, r.out);
+  assert.match(r.out, /fundamentals\/arrays: prompt changes not compared with HEAD:/);
 });
 
 test("the baseline review's fixtures fail", () => {
