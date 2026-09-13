@@ -103,10 +103,10 @@ overhang is pure waste:
 
 <Quiz
   objective="padding-waste"
-  question="Predict before you drag: a 129 × 129 matmul on 128-wide tiles. Roughly how much of the padded work is waste?"
-  choices={["Almost none: one extra row and one extra column", "About three quarters: 129 rounds up to 256 in each dimension, so the padded matrix is four times the real one", "About half: one dimension pads, the other doesn't"]}
+  question="Predict before you drag: a 129 × 129 matrix is laid out on 128-wide tiles. Roughly what fraction of the padded matrix's slots hold zeros?"
+  choices={["Almost none: one extra row and one extra column", "About three quarters: each side rounds up to 256, so the padded matrix has four times the slots of the real one", "About half: one side pads, the other doesn't"]}
   answer={1}
-  explanation="Each dimension rounds up to 256, so the tiled matrix has 256 × 256 = 65,536 slots for 16,641 real values: about a quarter useful, three quarters zeros. Now set 129 in the tiler and count the red overhang."
+  explanation="Each side rounds up to 256, so the tiled matrix has 256 × 256 = 65,536 slots for 16,641 real values: about a quarter useful, three quarters zeros. (The wasted matmul work is larger still when the reduction dimension pads too.) Now set 129 in the tiler and count the red overhang."
 />
 
 <Simulation id="matmul-tiler" height={560} />

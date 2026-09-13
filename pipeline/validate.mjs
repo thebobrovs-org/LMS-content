@@ -370,7 +370,9 @@ for (const { pid, file, data, content, bodyLine } of parsedPaths) {
       }
     }
   }
-  await checkBody(`path ${pid}`, file, content, bodyLine);
+  // A path has no objectives to refer to (LMS-content#83): an objective attribute in its body is refused, not ignored.
+  const pathObjectives = await checkBody(`path ${pid}`, file, content, bodyLine);
+  for (const id of new Set(pathObjectives)) errors.push(`path ${pid}: the body names objective "${id}", but a path declares no objectives`);
 }
 
 // Resources: resources/<pathId>.json against the schema; a resource's topic must exist.
