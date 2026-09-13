@@ -85,8 +85,8 @@ function cls(id) { return `part ${selected === id ? "sel" : ""}`; }
 function tensorCore() {
   const vmemLabel = gen === "8i" ? `VMEM <span class="x3">3×</span>` : "VMEM";
   return `
-    <div class="${cls("tensorcore")}" data-part="tensorcore" tabindex="0" role="button">
-      <div class="tc-label">TensorCore</div>
+    <div class="${cls("tensorcore")}" data-part="tensorcore" role="group" aria-label="TensorCore">
+      <div class="tc-label" data-part="tensorcore" tabindex="0" role="button">TensorCore</div>
       <div class="tc-units">
         <div class="${cls("scalar")} u" data-part="scalar" tabindex="0" role="button">Scalar</div>
         <div class="${cls("smem")} u" data-part="smem" tabindex="0" role="button">SMEM</div>
@@ -163,10 +163,18 @@ function render() {
     </div>`;
 
   app.querySelectorAll(".gtab").forEach((el) => el.addEventListener("click", () => switchGen(el.getAttribute("data-gen"))));
-  app.querySelectorAll(".part").forEach((el) => {
+  // Every part selects on click (the TensorCore frame too, for the mouse); only the focusable parts
+  // take the keyboard, and a key press never bubbles on to the frame the unit sits in (#98).
+  app.querySelectorAll("[data-part]").forEach((el) => {
     const part = el.getAttribute("data-part");
     el.addEventListener("click", (e) => { e.stopPropagation(); select(part); });
-    el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(part); } });
+    if (el.getAttribute("tabindex") === null) return;
+    el.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      e.stopPropagation();
+      select(part);
+    });
   });
   reportSize();
 }
