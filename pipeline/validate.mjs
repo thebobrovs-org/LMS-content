@@ -407,14 +407,19 @@ export function identityProblems(data, bodyIdentities) {
       if (other) errors.push(`${e.where}: ${namespace} ${e.id === undefined ? "hash" : "id"} "${e.current}" is also ${other.where}'s${other.id === undefined ? " (its prompt's hash)" : ""}`);
       else owners.set(e.current, e);
     }
+    // What each record claims as history: its listed former ids and, when it has an id, its prompt's
+    // hash (the app treats that as a former id by itself, so giving an item an id keeps its history).
+    // A claim on another record's current identity, or on the same history twice, is a conflict.
     const claimed = new Map(); // former id → the record
     for (const e of list) {
-      for (const f of e.formerIds) {
+      const implicit = e.id !== undefined && e.prompt !== undefined ? hash(e.prompt) : undefined;
+      const claims = [...e.formerIds.map((f) => ({ f, label: `former id "${f}"` })), ...(implicit === undefined ? [] : [{ f: implicit, label: `its prompt's hash "${implicit}" (a former id by itself, since it has an id)` }])];
+      for (const { f, label } of claims) {
         const owner = owners.get(f);
-        if (f === e.id) errors.push(`${e.where}: former id "${f}" is its own id`);
-        else if (owner && owner !== e) errors.push(`${e.where}: former id "${f}" is ${owner.where}'s current ${owner.id === undefined ? "hash" : "id"}`);
+        if (f === e.id) errors.push(`${e.where}: ${label} is its own id`);
+        else if (owner && owner !== e) errors.push(`${e.where}: ${label} is ${owner.where}'s current ${owner.id === undefined ? "hash" : "id"}`);
         const first = claimed.get(f);
-        if (first && first !== e) errors.push(`${e.where}: former id "${f}" is also claimed by ${first.where}`);
+        if (first && first !== e) errors.push(`${e.where}: ${label} is also claimed by ${first.where}`);
         else claimed.set(f, e);
       }
     }

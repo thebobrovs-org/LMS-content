@@ -136,7 +136,7 @@ export const MDX_COMPONENTS: readonly ["YouTube", "Callout", "Simulation", "Flas
 /** The `type` a `<Callout>` may carry (the app's Callout component); anything else renders as a plain note. */
 export const CALLOUT_TYPES: readonly ["tip", "note", "warning"];
 /** A topic file's frontmatter (`topics/<dir>/<name>.mdx`). The app adds `id` from the path. */
-export const TopicFrontmatterSchema: z.ZodObject<{
+export const TopicFrontmatterSchema: z.ZodEffects<z.ZodObject<{
     title: z.ZodString;
     summary: z.ZodString;
     tags: z.ZodArray<z.ZodString, "many">;
@@ -240,6 +240,80 @@ export const TopicFrontmatterSchema: z.ZodObject<{
     updated: z.ZodOptional<z.ZodEffects<z.ZodString, string, string>>;
     authors: z.ZodDefault<z.ZodArray<z.ZodString, "many">>;
 }, "strict", z.ZodTypeAny, {
+    title: string;
+    status: "draft" | "published";
+    summary: string;
+    tags: string[];
+    difficulty: "beginner" | "intermediate" | "advanced";
+    estimatedMinutes: number;
+    prerequisites: string[];
+    relatedTo: string[];
+    objectives: {
+        id: string;
+        statement: string;
+    }[];
+    videos: {
+        youtubeId: string;
+        title?: string | undefined;
+        start?: number | undefined;
+    }[];
+    flashcards: {
+        front: string;
+        back: string;
+        formerIds: string[];
+        id?: string | undefined;
+        objective?: string | undefined;
+    }[];
+    quiz: {
+        formerIds: string[];
+        question: string;
+        choices: string[];
+        answer: number;
+        id?: string | undefined;
+        objective?: string | undefined;
+        explanation?: string | undefined;
+    }[];
+    authors: string[];
+    level?: number | undefined;
+    updated?: string | undefined;
+}, {
+    title: string;
+    summary: string;
+    tags: string[];
+    difficulty: "beginner" | "intermediate" | "advanced";
+    estimatedMinutes: number;
+    status?: "draft" | "published" | undefined;
+    level?: number | undefined;
+    prerequisites?: string[] | undefined;
+    relatedTo?: string[] | undefined;
+    objectives?: {
+        id: string;
+        statement: string;
+    }[] | undefined;
+    videos?: {
+        youtubeId: string;
+        title?: string | undefined;
+        start?: number | undefined;
+    }[] | undefined;
+    flashcards?: {
+        front: string;
+        back: string;
+        id?: string | undefined;
+        objective?: string | undefined;
+        formerIds?: string[] | undefined;
+    }[] | undefined;
+    quiz?: {
+        question: string;
+        choices: string[];
+        answer: number;
+        id?: string | undefined;
+        objective?: string | undefined;
+        formerIds?: string[] | undefined;
+        explanation?: string | undefined;
+    }[] | undefined;
+    updated?: string | undefined;
+    authors?: string[] | undefined;
+}>, {
     title: string;
     status: "draft" | "published";
     summary: string;

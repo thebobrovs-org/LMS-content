@@ -189,8 +189,20 @@ test("stable ids (ADR 0004): optional id and formerIds on flashcards and quiz it
     "a former id that isn't a slug": { ...topic, flashcards: [{ front: "F", back: "B", formerIds: ["Old Name"] }] },
     "formerIds that isn't a list": { ...topic, flashcards: [{ front: "F", back: "B", formerIds: "abc" }] },
   })) assert.equal(check(TopicFrontmatterSchema, value, "t.mdx").ok, false, name);
-  // Uniqueness and alias ownership are the validator's job (pipeline/validate.mjs), across the frontmatter and the body.
-  assert.equal(check(TopicFrontmatterSchema, { ...topic, quiz: [{ question: "Q", choices: ["a", "b"], answer: 0, id: "same" }, { question: "R", choices: ["a", "b"], answer: 0, id: "same" }] }).ok, true);
+  // The frontmatter's items share one namespace, and the schema refuses a collision with the item named (LMS-admin#54:
+  // the editor shows it before a PR is opened). The body's items and the prompt hashes are the validator's (pipeline/validate.mjs).
+  const q = (question, extra) => ({ question, choices: ["a", "b"], answer: 0, ...extra });
+  const dup = check(TopicFrontmatterSchema, { ...topic, quiz: [q("Q", { id: "same" }), q("R", { id: "same" })] }, "t.mdx");
+  assert.equal(dup.ok, false);
+  assert.match(dup.problems.join("\n"), /t\.mdx: quiz\.1\.id: id "same" is also quiz\[0\]'s/);
+  const across = check(TopicFrontmatterSchema, { ...topic, flashcards: [{ front: "F", back: "B", id: "same" }], quiz: [q("Q", { id: "same" })] }, "t.mdx");
+  assert.match(across.problems.join("\n"), /quiz\.0\.id: id "same" is also flashcards\[0\]'s/);
+  const stolen = check(TopicFrontmatterSchema, { ...topic, flashcards: [{ front: "F", back: "B", id: "keep" }], quiz: [q("Q", { id: "other", formerIds: ["keep"] })] }, "t.mdx");
+  assert.match(stolen.problems.join("\n"), /quiz\.0\.formerIds\.0: former id "keep" is flashcards\[0\]'s current id/);
+  const own = check(TopicFrontmatterSchema, { ...topic, quiz: [q("Q", { id: "me", formerIds: ["me"] })] }, "t.mdx");
+  assert.match(own.problems.join("\n"), /former id "me" is its own id/);
+  // Distinct ids, and a former id nobody owns: fine.
+  assert.equal(check(TopicFrontmatterSchema, { ...topic, flashcards: [{ front: "F", back: "B", id: "a", formerIds: ["gone"] }], quiz: [q("Q", { id: "b" })] }, "t.mdx").ok, true);
 });
 
 test("the enum tuples and the MDX component list are the contract's literals", () => {
