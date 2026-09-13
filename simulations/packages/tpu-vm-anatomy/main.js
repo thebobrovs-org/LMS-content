@@ -163,10 +163,18 @@ function render() {
     </div>`;
 
   app.querySelectorAll(".gtab").forEach((el) => el.addEventListener("click", () => switchGen(el.getAttribute("data-gen"))));
+  // Every part selects on click (the TensorCore frame too, for the mouse); only the focusable parts
+  // take the keyboard, and a key press never bubbles on to the frame the unit sits in (#98).
   app.querySelectorAll("[data-part]").forEach((el) => {
     const part = el.getAttribute("data-part");
     el.addEventListener("click", (e) => { e.stopPropagation(); select(part); });
-    el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(part); } });
+    if (el.getAttribute("tabindex") === null) return;
+    el.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      e.stopPropagation();
+      select(part);
+    });
   });
   reportSize();
 }
