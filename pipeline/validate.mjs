@@ -412,7 +412,8 @@ export function identityProblems(data, bodyIdentities) {
     // A claim on another record's current identity, or on the same history twice, is a conflict.
     const claimed = new Map(); // former id → the record
     for (const e of list) {
-      const implicit = e.id !== undefined && e.prompt !== undefined ? hash(e.prompt) : undefined;
+      // An id equal to the prompt's own hash freezes the current key as the stable id: nothing to claim.
+      const implicit = e.id !== undefined && e.prompt !== undefined && hash(e.prompt) !== e.id ? hash(e.prompt) : undefined;
       const claims = [...e.formerIds.map((f) => ({ f, label: `former id "${f}"` })), ...(implicit === undefined ? [] : [{ f: implicit, label: `its prompt's hash "${implicit}" (a former id by itself, since it has an id)` }])];
       for (const { f, label } of claims) {
         const owner = owners.get(f);
