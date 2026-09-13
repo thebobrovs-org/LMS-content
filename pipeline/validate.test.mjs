@@ -171,6 +171,9 @@ test("stable ids (ADR 0004): unique within the topic, aliases never another item
   const implicitOwned = fails("an item with an id whose prompt an idless item still uses", { "topics/fundamentals/arrays.mdx": items("  - front: F1\n    back: Other\n    id: named") });
   assert.match(implicitOwned, new RegExp(`flashcards\\[1\\]: its prompt's hash "${h}" \\(a former id by itself, since it has an id\\) is flashcards\\[0\\]'s current hash`));
   fails("two same-title steps with distinct ids", { "topics/fundamentals/arrays.mdx": `${TOPIC}\n<Steps>\n<Step title="A" id="a1">x</Step>\n<Step title="A" id="a2">y</Step>\n</Steps>\n` });
+  // Freezing the current hash as the stable id (id equal to the prompt's own hash): the key stays, nothing is claimed, valid.
+  const frozen = run(tree({ "topics/fundamentals/arrays.mdx": items(`    id: ${h}`) + `\n<Steps>\n<Step title="A" id="${sh}">x</Step>\n</Steps>\n` }));
+  assert.equal(frozen.code, 0, frozen.out);
 });
 
 test("--base <ref>: an item without an id whose prompt is new to the file gets a warning naming the vanished prompts' hashes", () => {
