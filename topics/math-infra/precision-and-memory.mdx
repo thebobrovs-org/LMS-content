@@ -7,16 +7,29 @@ estimatedMinutes: 11
 level: 100
 prerequisites: [math-infra/what-is-a-tensor]
 relatedTo: [math-infra/tensor-shapes, math-infra/gradient-descent]
+objectives:
+  - id: float-range-vs-precision
+    statement: "Explain a float as range (the exponent) versus precision (the mantissa), and why bf16 trades precision for range while fp16 does the opposite."
+  - id: bytes-to-intensity
+    statement: "State the systems reason for low precision: fewer bytes moved at the memory boundary raise arithmetic intensity, so the matrix unit stays fed, for the same FLOPs."
+  - id: overflow-prediction
+    statement: "Predict that a value past fp16's range overflows to inf while bf16 holds it."
+  - id: roofline-placement
+    statement: "Given FLOPs and bytes, place a workload on the roofline and name the lever that moves it."
 videos: []
 flashcards:
   - front: A float = range + precision. Which bits do which?
     back: The exponent sets dynamic range (how big/small it can reach); the mantissa sets precision (how finely it distinguishes nearby values). bf16 keeps fp32's 8-bit exponent (range) but cuts the mantissa (precision); fp16 does the opposite.
+    objective: float-range-vs-precision
   - front: Why does AI use bf16 over fp16 for training?
     back: Range. Training values span ~1e-7 (tiny gradients) to ~1e5 (activations); only an 8-bit exponent covers both. fp16's 5-bit exponent overflows to inf past ~65,504. bf16 keeps fp32's range at half the bytes; the coarser precision averages out over millions of updates.
+    objective: float-range-vs-precision
   - front: Why does lower precision make the chip faster — not just smaller?
     back: Arithmetic intensity = FLOPs ÷ bytes moved. Same math, fewer bytes → higher intensity → the matrix unit isn't waiting on memory. Halving the byte width roughly doubles intensity, pushing a workload from memory-bound toward compute-bound.
+    objective: bytes-to-intensity
   - front: What is fp4 (E2M1) and the catch?
     back: A 4-bit float — 1 sign, 2 exponent, 1 mantissa. A quarter of bf16's bytes (≈2× throughput), but a tiny ~0.5–6 range and 1 mantissa bit, so values must be scaled into range first. The throughput bet for inference and parts of training.
+    objective: float-range-vs-precision
 quiz:
   - question: Which 16-bit float overflows to infinity past ~65,504, and why?
     choices:
@@ -25,6 +38,7 @@ quiz:
       - fp32 — it never overflows
     answer: 1
     explanation: fp16 spends its bits on precision (10 mantissa) and keeps only a 5-bit exponent, so its dynamic range tops out near 65,504. bf16 kept fp32's 8-bit exponent, so it holds the same value — range over precision.
+    objective: overflow-prediction
   - question: You switch a matmul from fp32 to bf16. What happens to arithmetic intensity?
     choices:
       - It halves (fewer bytes of compute)
@@ -32,6 +46,7 @@ quiz:
       - It's unchanged — precision doesn't affect intensity
     answer: 1
     explanation: Arithmetic intensity is FLOPs per byte moved. Same FLOPs over half the bytes ≈ double the intensity, moving the workload up toward the roofline ridge and away from being memory-bound.
+    objective: bytes-to-intensity
   - question: A workload sits at 40 FLOP/byte on hardware whose roofline ridge is 165 FLOP/byte. What's the bottleneck?
     choices:
       - Compute — the matrix unit is saturated
@@ -39,6 +54,7 @@ quiz:
       - Neither — 40 is above the ridge
     answer: 1
     explanation: Below the ridge (40 < 165) the device is memory-bound — it finishes the math faster than memory can feed it, so the expensive matrix unit idles. Raising intensity (lower precision, bigger batches) moves it up toward the ridge.
+    objective: roofline-placement
 status: published
 ---
 
@@ -90,6 +106,14 @@ precision averages out over millions of updates (rounding is random noise that c
 *range* does not — one overflow to `inf` poisons everything downstream, and the run diverges.
 
 Drag a value and watch fp16 break where bf16 holds, and how little fp4 can represent at all:
+
+<Quiz
+  objective="overflow-prediction"
+  question="Predict before you drag: a loss scale pushes an activation to 70,000. What does fp16 hold, and what does bf16 hold?"
+  choices={["Both hold about 70,000", "fp16 overflows to inf; bf16 holds about 70,000, coarsely", "bf16 overflows to inf; fp16 holds it exactly"]}
+  answer={1}
+  explanation="fp16's 5-bit exponent tops out near 65,504, so 70,000 becomes inf. bf16 kept fp32's 8-bit exponent: it holds the value with fewer mantissa bits. Now drag past 65,504 in the explorer and watch which format breaks."
+/>
 
 <Simulation id="number-format-explorer" height={500} />
 

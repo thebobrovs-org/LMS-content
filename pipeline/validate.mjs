@@ -220,7 +220,7 @@ function stringValue(attribute) {
  * `urls` receives the URLs of every image, link, definition and `src`/`href`; `sims` the
  * `id` of every `<Simulation>`, however it is written.
  */
-function lessonRules(urls, sims) {
+function lessonRules(urls, sims, objectives = []) {
   return (tree, vfile) => {
     const url = (value, node, what) => {
       if (UNSAFE_URL_CHARS.test(value)) vfile.fail(`${what} holds whitespace or a control character, which a browser drops before reading the scheme; encode it`, node);
@@ -262,6 +262,12 @@ function lessonRules(urls, sims) {
               if (typeof value !== "string") vfile.fail(`<Simulation id={…}> must be a string`, node);
               else sims.push(value);
             }
+            // An inline check or a step may name the objective it serves (LMS-content#83); the id is checked against the topic's list.
+            if ((node.name === "Quiz" || node.name === "Flashcard" || node.name === "Step") && a.name === "objective") {
+              const value = stringValue(a);
+              if (typeof value !== "string") vfile.fail(`<${node.name} objective={…}> must be a string`, node);
+              else objectives.push(value);
+            }
           }
         }
       }
@@ -271,13 +277,14 @@ function lessonRules(urls, sims) {
   };
 }
 
-/** Compile one MDX body as the app would; a failure names the file and its line in the file. Returns the URLs and simulation ids it references, or null. */
+/** Compile one MDX body as the app would; a failure names the file and its line in the file. Returns the URLs, simulation ids and objective references it holds, or null. */
 async function compiles(file, content, bodyLine) {
   const urls = [];
   const sims = [];
+  const objectives = [];
   try {
-    await compile(content, { development: false, remarkPlugins: [() => lessonRules(urls, sims)] });
-    return { urls, sims };
+    await compile(content, { development: false, remarkPlugins: [() => lessonRules(urls, sims, objectives)] });
+    return { urls, sims, objectives };
   } catch (e) {
     // The position is in the message's body coordinates, as fields or as a "(line:col-line:col)" suffix.
     const reason = String(e.reason ?? e.message);
@@ -293,7 +300,7 @@ async function compiles(file, content, bodyLine) {
 /** The /media/... files a document references, from the URLs its compiled tree holds; the file name is the pathname, not a fragment or query string. */
 export const mediaRefs = (urls) => [...new Set(urls.filter((u) => u.startsWith("/media/")).map((u) => u.replace(/[#?].*$/, "")))];
 
-/** The checks a topic or path body needs beyond its frontmatter: it compiles under the lesson rules, its media exist, and its simulations are packaged. */
+/** The checks a topic or path body needs beyond its frontmatter: it compiles under the lesson rules, its media exist, and its simulations are packaged. Returns the objective ids the body references. */
 async function checkBody(id, file, content, bodyLine) {
   const found = await compiles(file, content, bodyLine);
   for (const ref of mediaRefs(found?.urls ?? [])) {
@@ -303,6 +310,25 @@ async function checkBody(id, file, content, bodyLine) {
   for (const sim of new Set(found?.sims ?? [])) {
     if (!simIds.has(sim)) errors.push(`${id}: simulation "${sim}" has no simulations/packages/${sim}`);
   }
+  return found?.objectives ?? [];
+}
+
+/**
+ * Learning objectives (LMS-content#83): every `objective` a quiz item, a flashcard, an inline
+ * <Quiz>/<Flashcard> or a <Step> names must be one of the topic's `objectives`; an objective
+ * nothing references is a warning (it is stated but never practised or checked).
+ */
+export function objectiveProblems(data, bodyRefs) {
+  const declared = new Set((data.objectives ?? []).map((o) => o.id));
+  const refs = [
+    ...(data.quiz ?? []).map((q, i) => ({ where: `quiz[${i}]`, id: q.objective })),
+    ...(data.flashcards ?? []).map((f, i) => ({ where: `flashcards[${i}]`, id: f.objective })),
+    ...bodyRefs.map((id) => ({ where: "the body", id })),
+  ].filter((r) => r.id != null);
+  const errors = refs.filter((r) => !declared.has(r.id)).map((r) => `${r.where} names objective "${r.id}", which the topic does not declare`);
+  const used = new Set(refs.map((r) => r.id));
+  const warnings = [...declared].filter((id) => !used.has(id)).map((id) => `objective "${id}" is declared but nothing practises or checks it`);
+  return { errors, warnings };
 }
 
 for (const t of topics) {
@@ -320,7 +346,10 @@ for (const t of topics) {
       errors.push(`${id}: glossary term "${key}" is not defined in ${where}`);
     }
   }
-  await checkBody(id, file, content, bodyLine);
+  const bodyObjectives = await checkBody(id, file, content, bodyLine);
+  const objectives = objectiveProblems(data, bodyObjectives);
+  for (const e of objectives.errors) errors.push(`${id}: ${e}`);
+  for (const w of objectives.warnings) warnings.push(`${id}: ${w}`);
 }
 
 // Paths: every level's topic must be a published topic. A *draft* path may list

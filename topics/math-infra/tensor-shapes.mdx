@@ -7,16 +7,29 @@ estimatedMinutes: 10
 level: 100
 prerequisites: [math-infra/what-is-a-tensor]
 relatedTo: [math-infra/what-is-a-tensor, math-infra/precision-and-memory]
+objectives:
+  - id: tensor-shape-footprint
+    statement: "Define a tensor and its shape, and say why the shape, not only the element count, sets the memory footprint."
+  - id: tile-padding
+    statement: "Explain the 128-wide tile and that a misaligned dimension is zero-padded to the next multiple."
+  - id: padding-waste
+    statement: "Estimate the wasted compute and memory of a misaligned dimension."
+  - id: surprise-oom
+    statement: "Diagnose a surprise OOM by asking first whether the batch and feature dimensions are multiples of 128."
 videos: []
 flashcards:
   - front: What is a tensor, and why does its shape matter to an operator?
     back: A tensor is an N-dimensional array (a batch of inputs, a weight matrix, a layer's activations). Its shape — the size of each dimension, not just the element count — sets its memory footprint and how it tiles onto the hardware's matrix unit. Shape, not size, is what causes surprise OOMs.
+    objective: tensor-shape-footprint
   - front: What does the hardware do to a dimension that isn't a multiple of its tile size?
     back: It zero-pads it up to the next multiple of the tile (a common tile is 128 wide; some units use 256) — and the vector lanes (SIMD-like slots) to multiples of 8. A dimension one past a tile boundary spills into a second tile, rounding up. You pay compute (FLOPs on zeros) and memory (storing zeros) for the overhang.
+    objective: tile-padding
   - front: Why does padding cause OOM even when the "real" data fits?
     back: Because the padded zeros are stored too. A tensor whose dims sit just over a tile boundary takes far more memory than its element count suggests — so a job you sized by hand fits on paper but OOMs on the device.
+    objective: surprise-oom
   - front: The operator's rule for shapes
     back: Align batch and feature dimensions to the hardware's tile size (commonly 128, and 8 for vector lanes). Aligned shapes fill whole tiles — zero padding, zero waste. It's the first thing to check on a mysterious OOM.
+    objective: tile-padding
 quiz:
   - question: A matmul has a 129-wide dimension on hardware with a 128-wide tile. What does the compiler do?
     choices:
@@ -25,6 +38,7 @@ quiz:
       - Refuses to compile until you fix the shape
     answer: 1
     explanation: 129 rounds up to the next tile multiple, 256 — nearly doubling that dimension. The padded zeros cost both FLOPs and memory, and nothing warns you; it just runs slower and bigger.
+    objective: tile-padding
   - question: A job "should fit" in memory by your element-count math but OOMs anyway. First thing to check?
     choices:
       - Whether an accelerator is faulty
@@ -32,6 +46,7 @@ quiz:
       - Whether the learning rate is too high
     answer: 1
     explanation: A surprise OOM is almost always shape, not size. A dimension just over a tile boundary pads up and stores a wall of zeros, inflating the real footprint past what your back-of-envelope predicted.
+    objective: surprise-oom
   - question: Why are accelerator tensor shapes static (fixed at compile time)?
     choices:
       - To make the Python prettier
@@ -39,6 +54,7 @@ quiz:
       - They aren't — shapes can change freely each step
     answer: 1
     explanation: The device can't malloc on the fly; it needs the exact buffer layout planned ahead. That's why shapes freeze at compile time and why changing one re-triggers tracing and compilation.
+    objective: tensor-shape-footprint
 status: published
 ---
 
@@ -84,6 +100,14 @@ smaller version of the same tax; but the headline rule is the matrix tile.)
 
 Drag the dimensions of a matmul and watch the real matrix round up to the tile grid — the red
 overhang is pure waste:
+
+<Quiz
+  objective="padding-waste"
+  question="Predict before you drag: a 129 × 129 matmul on 128-wide tiles. Roughly how much of the padded work is waste?"
+  choices={["Almost none: one extra row and one extra column", "About three quarters: 129 rounds up to 256 in each dimension, so the padded matrix is four times the real one", "About half: one dimension pads, the other doesn't"]}
+  answer={1}
+  explanation="Each dimension rounds up to 256, so the tiled matrix has 256 × 256 = 65,536 slots for 16,641 real values: about a quarter useful, three quarters zeros. Now set 129 in the tiler and count the red overhang."
+/>
 
 <Simulation id="matmul-tiler" height={560} />
 

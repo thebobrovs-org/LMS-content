@@ -90,6 +90,31 @@ test("a well-formed tree passes, with and without staging", () => {
   assert.equal(fine.code, 0, fine.out);
 });
 
+test("learning objectives: a reference must name a declared objective; an unreferenced one warns (LMS-content#83)", () => {
+  const OBJECTIVES = "objectives:\n  - id: index-cost\n    statement: Explain why indexed access is O(1).";
+  const declared = fm(OBJECTIVES);
+  // Declared and referenced from the frontmatter quiz, an inline <Quiz> and a <Step>: passes, no warning.
+  const referenced =
+    fm(`${OBJECTIVES}\nquiz:\n  - question: Cost of a[i]?\n    choices: [O(1), O(n)]\n    answer: 0\n    objective: index-cost`) +
+    '\n<Quiz objective="index-cost" question="Predict: a[1000]?" choices={["O(1)", "O(n)"]} answer={0} />\n\n<Steps>\n<Step title="Find it" objective="index-cost">Look.</Step>\n</Steps>\n';
+  const ok = run(tree({ "topics/fundamentals/arrays.mdx": referenced }));
+  assert.equal(ok.code, 0, ok.out);
+  assert.doesNotMatch(ok.out, /declared but nothing/);
+  // Declared but never referenced: a warning, still valid.
+  const unused = run(tree({ "topics/fundamentals/arrays.mdx": declared }));
+  assert.equal(unused.code, 0, unused.out);
+  assert.match(unused.out, /objective "index-cost" is declared but nothing practises or checks it/);
+  // A reference to an objective the topic doesn't declare fails, wherever it is.
+  const quizNowhere = fm("quiz:\n  - question: Q?\n    choices: [a, b]\n    answer: 0\n    objective: nowhere");
+  fails("a quiz item naming an undeclared objective", { "topics/fundamentals/arrays.mdx": quizNowhere });
+  fails("a flashcard naming an undeclared objective", { "topics/fundamentals/arrays.mdx": fm("flashcards:\n  - front: F\n    back: B\n    objective: nowhere") });
+  fails("an inline Quiz naming an undeclared objective", { "topics/fundamentals/arrays.mdx": `${declared}\n<Quiz objective="nowhere" question="Q?" choices={["a", "b"]} answer={0} />\n` });
+  fails("a Step naming an undeclared objective", { "topics/fundamentals/arrays.mdx": `${declared}\n<Steps>\n<Step title="S" objective="nowhere">x</Step>\n</Steps>\n` });
+  fails("an objective attribute that isn't a string", { "topics/fundamentals/arrays.mdx": `${declared}\n<Steps>\n<Step title="S" objective={1}>x</Step>\n</Steps>\n` });
+  const r = run(tree({ "topics/fundamentals/arrays.mdx": quizNowhere }));
+  assert.match(r.out, /quiz\[0\] names objective "nowhere", which the topic does not declare/);
+});
+
 test("the baseline review's fixtures fail", () => {
   const cases = {
     "a numeric title": { "topics/fundamentals/arrays.mdx": withTitle("42") },

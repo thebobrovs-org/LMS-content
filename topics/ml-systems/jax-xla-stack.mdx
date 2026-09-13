@@ -7,16 +7,29 @@ estimatedMinutes: 14
 level: 200
 prerequisites: [ml-systems/why-tpus, ml-systems/tpu-chip-systolic-array, ml-systems/tpu-cloud-architecture]
 relatedTo: [ml-systems/tpu-chip-systolic-array, ml-systems/gpu-or-tpu]
+objectives:
+  - id: compile-path
+    statement: "Draw the path from a Python function through tracing, StableHLO and XLA fusion to a TPU executable."
+  - id: fusion-hbm-trips
+    statement: "Explain what fusion buys in HBM-trip terms and link it to arithmetic intensity."
+  - id: aot-facts
+    statement: "Use ahead-of-time lowering to read compile-time facts, such as memory, before running."
+  - id: stack-pieces
+    statement: "Place Flax NNX, Optax and the compilation cache in the stack."
 videos: []
 flashcards:
   - front: What is the JAX → TPU compile path?
     back: A jitted Python function is traced into a static graph → lowered to StableHLO → handed to XLA, which fuses ops and emits an optimized TPU executable. You write NumPy-like Python; XLA writes the machine code.
+    objective: compile-path
   - front: What does XLA fusion actually save?
     back: It merges a chain of ops (matmul + bias + activation + scale) into one kernel, so the intermediate results never leave the chip for HBM. Same FLOPs, far fewer HBM round-trips → higher arithmetic intensity.
+    objective: fusion-hbm-trips
   - front: JIT vs AOT in JAX
     back: Same XLA compiler, different timing. JIT compiles on the first call (and caches). AOT — jax.jit(f).lower(args).compile() — compiles without running, so you can inspect the HLO and the memory analysis and catch an OOM at compile time, before a single training step runs.
+    objective: aot-facts
   - front: The JAX AI stack pieces
     back: JAX (numerics + transforms) sits on XLA/StableHLO and the TPU. On top of JAX are two sibling libraries — not rungs under each other — Flax NNX (the model/module system; the recommended API, with Linen the older one you'll meet in MaxText) and Optax (optimizers). Orbax and Grain handle checkpointing and data.
+    objective: stack-pieces
 quiz:
   - question: Why does op fusion raise arithmetic intensity?
     choices:
@@ -25,6 +38,7 @@ quiz:
       - It increases the clock speed of the MXU
     answer: 1
     explanation: Fusion doesn't change the math — it removes the HBM round-trips between ops. Same FLOPs over fewer bytes means more FLOP/byte, which pushes a memory-bound chain over the ridge toward compute-bound.
+    objective: fusion-hbm-trips
   - question: You want to know whether a model will OOM on a v5p slice — without burning the slice. What do you use?
     choices:
       - Just run it and watch
@@ -32,6 +46,7 @@ quiz:
       - Add more HBM
     answer: 1
     explanation: AOT compilation produces the executable (and its memory footprint) without running a single step, so you can read the compiled memory analysis and catch the OOM at compile time — before a single training step.
+    objective: aot-facts
   - question: Which is the recommended Flax API for new TPU code today?
     choices:
       - Linen (flax.linen)
@@ -39,6 +54,7 @@ quiz:
       - Raw TensorFlow layers
     answer: 1
     explanation: Flax NNX is the recommended API for new code; Linen still exists and powers frameworks like MaxText, so you'll read it — but new models start in NNX. TPUs are XLA/JAX-first, not TensorFlow.
+    objective: stack-pieces
 status: published
 ---
 
@@ -111,6 +127,14 @@ starved on HBM bandwidth; above it *compute-bound* — saturating the MXU.) Walk
 pipeline, then run the race: the fused kernel makes fewer HBM trips, so it spends less time
 stalled on memory — that shorter wall-clock per step **is** throughput you can measure.
 Watch the chain cross the v5p ridge from memory- to compute-bound:
+
+<Quiz
+  objective="fusion-hbm-trips"
+  question="Predict before you run the race: XLA fuses a chain of three elementwise ops that follow a matmul. What changes for the chain?"
+  choices={["Fewer FLOPs, so it finishes sooner", "The same FLOPs over far fewer bytes through HBM: intensity rises and the memory-bound chain moves toward the ridge", "More FLOPs, but the MXU runs them faster"]}
+  answer={1}
+  explanation="Fusion changes no math. It keeps the intermediates on-chip, so the same FLOPs move fewer bytes: more FLOP per byte and less time stalled on HBM. Now run the explorer and watch the chain cross the ridge."
+/>
 
 <Simulation id="xla-fusion-explorer" height={520} />
 
