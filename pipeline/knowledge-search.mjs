@@ -92,8 +92,9 @@ if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).
   const tag = opt("--tag");
   const ranking = args.includes("--rank");
   const question = opt("--rank");
+  const hasK = args.includes("--k");
   const kArg = opt("--k");
-  const k = kArg === undefined ? 5 : /^\d+$/.test(kArg) ? Number(kArg) : NaN;
+  const k = !hasK ? 5 : kArg !== undefined && /^\d+$/.test(kArg) ? Number(kArg) : NaN;
   if (ranking && (question === undefined || !question.trim())) { console.error("--rank needs a question"); process.exit(2); }
   if (!(Number.isInteger(k) && k >= 1 && k <= RANK_MAX)) { console.error(`--k must be an integer from 1 to ${RANK_MAX}`); process.exit(2); }
   const words = args.filter((a) => a !== "--json");

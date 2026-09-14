@@ -97,7 +97,7 @@ test("the CLI reads knowledge/index.json under --root, takes --topic, --tag, wor
   assert.deepEqual(rankedJson, [{ id: "claim/padding-to-tile-multiples", score: 4, matched: ["tile"] }]); // title 3 + the objective slug 1
   assert.match(cli("--rank", "zzz").stdout, /no record scores/);
   // Malformed ranking arguments fail with status 2 and a reason, never a misleading listing.
-  for (const bad of [["--rank"], ["--rank", ""], ["--rank", "tpu", "--k", "nope"], ["--rank", "tpu", "--k", "-1"], ["--rank", "tpu", "--k", "0"], ["--rank", "tpu", "--k", "51"]]) {
+  for (const bad of [["--rank"], ["--rank", ""], ["--rank", "tpu", "--k"], ["--rank", "tpu", "--k", "nope"], ["--rank", "tpu", "--k", "-1"], ["--rank", "tpu", "--k", "0"], ["--rank", "tpu", "--k", "51"]]) {
     const r = cli(...bad);
     assert.equal(r.status, 2, bad.join(" "));
     assert.equal(r.stdout, "");
