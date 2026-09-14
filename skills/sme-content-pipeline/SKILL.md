@@ -13,22 +13,44 @@ gated by review. Three skills compose: **this** (the process), the **persona**
 Resolve the topic's SME: exact id → subject → `_default` in `personas/`. Read it.
 You are now that expert — use their sources, standards, and voice.
 
-## 1. Research
-- Gather facts from the persona's authoritative sources. **Every non-obvious
+## 1. Research: retrieve first, then read, then record
+- **Retrieve before you write** (hyperstack ADR 0005): what the platform already
+  established is in `knowledge/` and its index. Run it for the topic's neighbours
+  and its key terms, and read every record that matches:
+  ```bash
+  node pipeline/knowledge-search.mjs --topic <prerequisite topic id>
+  node pipeline/knowledge-search.mjs <key term> [<key term> …]
+  node pipeline/knowledge-search.mjs --tag <tag>
+  ```
+  An approved record is a claim already checked against its source: build on it
+  and cite its id; do not re-derive it. A `disputed` one is a warning.
+- Gather the rest from the persona's authoritative sources. **Every non-obvious
   number/claim must be traceable** to one; note the citations.
+- **Record before you draft.** A fact the lesson will rely on that no record
+  holds becomes a record first (`knowledge/README.md`: `claim`, `concept` or
+  `misconception`, status `proposed`, `sources` as locators, `provenance.origin:
+  authoring`, `touches` the *existing* topics it concerns; the new lesson's id
+  is added at promotion, since a staged topic does not resolve in production).
+  Regenerate `knowledge/index.json`. The research is then on record before the
+  lesson text exists, and the technical-accuracy critic reviews the records
+  with the lesson.
 - Identify prerequisites (existing topic ids) and where a simulation is the right
   way to "prove it."
 
 ## 2. Plan
 Write a short plan (in the PR description or a `staging/<id>.plan.md`):
 - learning objective, prerequisites, the arc, the simulation(s) + checkpoints,
-  the flashcards/quiz/steps, and the sources. Get it reviewed before drafting if
-  the topic is large.
+  the flashcards/quiz/steps, and the sources: the **record ids** the lesson
+  relies on (`claim/…`, `concept/…`) and the records it will add. Get it
+  reviewed before drafting if the topic is large.
 
 ## 3. Draft into staging
 - Author `staging/topics/<subject>/<slug>.mdx` with `status: draft`, following
   the `lms-authoring-topics` skill (frontmatter contract + component catalog).
 - Put images in `media/`; define terms in the path's `glossary/<pathId>.json` (a topic resolves terms against the glossaries of the paths that contain it).
+- Where the lesson states a fact a record holds, the PR's **Knowledge delta**
+  names that record by id; a lesson's own sources list cites the record's
+  source locator, the same one the record carries.
 - Validate: `node pipeline/validate.mjs --staging`.
 
 ## 4. Audit (human + sub-agent critics)
@@ -46,6 +68,9 @@ passed on the current revision, and signs off on the PR.
 ## 5. Promote
 - `node pipeline/promote.mjs staging/topics/<…>.mdx` → moves it to `topics/` and
   sets `status: published`.
+- Add the promoted topic's id (and the objectives, items and steps it serves) to
+  the `touches` of the records it relies on; `node pipeline/knowledge-index.mjs`;
+  the Knowledge delta lists the ids.
 - `node pipeline/validate.mjs`, commit, merge. The app rebuilds and the topic is
   live.
 

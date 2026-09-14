@@ -14,7 +14,7 @@ Each critic owns **one dimension** and returns `pass`, `fail` or
 wrong, propose the repair). Verdicts are **not averaged or voted**: a high
 score elsewhere never cancels a failure (LMS-content#84).
 
-- **Technical accuracy** — every claim, number, and Big-O is correct and current; sources cited; the simulation and notebook agree with the prose. **A verified factual error blocks promotion on its own.**
+- **Technical accuracy** — every claim, number, and Big-O is correct and current; sources cited; the simulation and notebook agree with the prose; the `knowledge/` records the lesson relies on or adds (the PR's Knowledge delta) are checked with it, source locators opened, and a record moves to `approved` only on this verdict. **A verified factual error blocks promotion on its own.**
 - **Assessment validity** — every quiz question and flashcard is solved independently and compared with the key; one defensible answer per question; distractors plausible; explanations correct; each check tests what the lesson taught, not its wording. **A wrong or ambiguous key blocks promotion on its own.**
 - **Pedagogy & clarity** — clear progression; every symbol and term defined or linked before use; a simulation, figure or worked example serves a stated objective (a lesson without a simulation is fine when a figure or a worked example does the job); checks (flashcards/quiz/steps) follow the thing they test.
 - **Voice & standard** — plain, confident, sentence-case, no emoji; matches the design-system content rules.

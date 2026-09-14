@@ -9,6 +9,23 @@ A **topic** is one lesson: a single `.mdx` file that is also one node in the
 knowledge graph. Prose, simulation, video, and recall items live together in that
 one file so it reviews as a unit.
 
+## Knowledge first
+
+Before writing or changing a lesson, retrieve what the platform already
+established (hyperstack ADR 0005):
+
+```bash
+node pipeline/knowledge-search.mjs --topic <this or a neighbouring topic id>
+node pipeline/knowledge-search.mjs <key term> [<key term> …]
+```
+
+An approved record (`knowledge/<folder>/<slug>.md`, indexed in
+`knowledge/index.json`) is a fact already checked against its source: rely on it
+and name its id in the PR's **Knowledge delta**; cite the same source locator in
+the lesson. A fact the lesson needs that no record holds becomes a record first
+(`knowledge/README.md`), `proposed`, with its sources; regenerate the index. A
+lesson never carries a number its sources or its records cannot support.
+
 ## Where it goes
 
 ```
