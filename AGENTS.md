@@ -22,6 +22,7 @@ The learning content for Hyperstack:
 | `schema/` | The content schema (zod) and its generated declarations |
 | `pipeline/` | Validation (against the schema, plus links, glossaries, media, simulations and an MDX compile) and the staging → prod promotion |
 | `skills/` | Authoring guides |
+| `knowledge/` | The platform wiki (hyperstack ADR 0005): Markdown records (concept, claim, misconception, decision, question) with sources, provenance and the curriculum ids they touch; `index.json` is generated from the approved ones |
 
 The learner app (LMS) fetches this repo at build time.
 
@@ -43,6 +44,7 @@ The learner app (LMS) fetches this repo at build time.
   - keep them keyboard-operable;
   - don't run animation loops while idle or hidden.
 - **Checkpoint ids are stable.** Renaming one silently erases the progress learners already made.
+- **Knowledge records are reviewed like content** (`knowledge/README.md`): a record becomes `approved` only through a PR with Codex's technical-accuracy verdict; every `touches` reference resolves against the curriculum; a `disputed` record a published lesson depends on names the open issue; a `question` record carries no person; `knowledge/index.json` is generated (`pipeline/knowledge-index.mjs`), never edited.
 - **Accuracy:** hardware and ML-systems numbers cite a primary source in the PR. Codex reviews technical accuracy.
 
 ## `risk:high` paths

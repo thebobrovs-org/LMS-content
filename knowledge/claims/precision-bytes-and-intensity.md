@@ -2,10 +2,18 @@
 id: claim/precision-bytes-and-intensity
 type: claim
 status: approved
+title: "Precision, bytes and arithmetic intensity"
 scope: "Roofline reasoning at one stated memory boundary (HBM, or another named level), for a kernel whose FLOPs are fixed"
-source: "Williams, Waterman, Patterson (2008), Roofline: an insightful visual performance model for floating-point programs and multicore architectures, EECS-2008-134, §2–3"
+sources:
+  - "Williams, Waterman, Patterson (2008), Roofline: an insightful visual performance model for floating-point programs and multicore architectures, EECS-2008-134, §2–3"
 touches: [math-infra/precision-and-memory]
 reviewed: 2026-09-12
+provenance:
+  origin: authoring
+  by: agent:claude
+  model: claude-fable-5-1
+  from: "LMS-content#87"
+review-by: 2027-09-12
 ---
 
 **Claim.** Arithmetic intensity is FLOPs divided by the bytes moved across the stated boundary. If a precision change halves *all* of those bytes and the FLOPs are unchanged, intensity doubles and the roofline's memory-bound ceiling doubles with it.

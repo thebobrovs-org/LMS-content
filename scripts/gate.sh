@@ -12,6 +12,9 @@ node --test schema/*.test.mjs pipeline/*.test.mjs scripts/schema-declarations.te
 step "schema declarations are generated from the implementation"
 node scripts/schema-declarations.mjs --check
 
+step "knowledge index is generated from the approved records"
+node pipeline/knowledge-index.mjs --check
+
 step "validate published content"
 node pipeline/validate.mjs
 

@@ -25,6 +25,7 @@ import { compile } from "@mdx-js/mdx";
 import { itemHash, stepHash } from "./ids.mjs";
 import { parseFrontmatter } from "./frontmatter.mjs";
 import { effectiveGlossary, pathsByTopic as indexPathsByTopic, termKeys } from "./glossary.mjs";
+import { loadRecords, recordProblems } from "./knowledge.mjs";
 import {
   GlossarySchema, CALLOUT_TYPES, MDX_COMPONENTS, PathFrontmatterSchema, ResourcesSchema, SimConfigSchema, TopicFrontmatterSchema, check,
 } from "../schema/content-schema.mjs";
@@ -90,6 +91,7 @@ function json(file) {
 // ── simulations: sim.config.json against the schema; the id must match its directory ──
 const SIMS_DIR = path.join(ROOT, "simulations", "packages");
 const simIds = new Set();
+const simCheckpoints = new Map(); // sim id → every checkpoint id, former ids included (LMS#62), for the knowledge records' references
 if (fs.existsSync(SIMS_DIR)) {
   for (const e of fs.readdirSync(SIMS_DIR, { withFileTypes: true })) {
     if (!e.isDirectory()) continue;
@@ -104,6 +106,7 @@ if (fs.existsSync(SIMS_DIR)) {
     errors.push(...r.problems);
     if (r.ok && r.value.id !== e.name) errors.push(`${rel(file)}: id "${r.value.id}" must equal the directory name "${e.name}"`);
     if (r.ok) simIds.add(e.name);
+    if (r.ok) simCheckpoints.set(e.name, new Set((r.value.checkpoints ?? []).flatMap((c) => [c.id, ...(c.renamedFrom ?? [])])));
   }
 }
 
@@ -478,6 +481,8 @@ export function objectiveProblems(data, bodyRefs) {
   return { errors, warnings };
 }
 
+// What each topic offers a knowledge record to touch (LMS-content#105): its objectives, and its items' and steps' current and former identities (ADR 0004).
+const touchable = new Map();
 for (const t of topics) {
   const { id, file, data, content, bodyLine, tree } = t;
   // A published topic may link only to published topics; a staged one to either.
@@ -494,6 +499,7 @@ for (const t of topics) {
     }
   }
   const body = await checkBody(id, file, content, bodyLine);
+  touchable.set(id, touchableIn(data, body.identities, tree));
   const objectives = objectiveProblems(data, body.objectives);
   for (const e of objectives.errors) errors.push(`${id}: ${e}`);
   for (const w of objectives.warnings) warnings.push(`${id}: ${w}`);
@@ -528,6 +534,60 @@ for (const { pid, file, data, content, bodyLine } of parsedPaths) {
   for (const id of new Set(pathBody.objectives)) errors.push(`path ${pid}: the body names objective "${id}", but a path declares no objectives`);
 }
 
+// Knowledge records (knowledge/, LMS-content#105): the schema, and every `touches` reference resolved
+// against what was just loaded: a topic, one of its objectives, an item or step under any identity it
+// has had, a simulation or one of its checkpoints. A published lesson may depend only on records whose
+// references resolve in production; a disputed record it depends on names the open issue.
+export function touchableIn(data, identities, tree) {
+  const items = new Set();
+  const steps = new Set();
+  const add = (set, prompt, id, formerIds, hash) => {
+    if (id !== undefined) set.add(id);
+    if (prompt !== undefined) set.add(hash(prompt));
+    for (const f of formerIds ?? []) set.add(f);
+  };
+  for (const f of data.flashcards ?? []) add(items, f.front, f.id, f.formerIds, itemHash);
+  for (const q of data.quiz ?? []) add(items, q.question, q.id, q.formerIds, itemHash);
+  for (const b of identities) add(b.tag === "Step" ? steps : items, b.prompt, b.id, b.formerIds, b.tag === "Step" ? stepHash : itemHash);
+  return { objectives: new Set((data.objectives ?? []).map((o) => o.id)), items, steps, tree };
+}
+const resolveRef = (ref) => {
+  const m = /^(?:(objective|item|step|sim|checkpoint|topic):)?(.+)$/.exec(ref);
+  const kind = m[1] ?? "topic";
+  const rest = m[2];
+  const topicOf = (tid) => {
+    const t = touchable.get(tid);
+    if (!t) return { why: `names topic "${tid}", which does not exist${!includeStaging && fs.existsSync(path.join(ROOT, "staging", "topics", `${tid}.mdx`)) ? " in production (it is staged)" : ""}` };
+    return { t };
+  };
+  if (kind === "topic") return touchable.has(rest) ? { ok: true } : { ok: false, why: topicOf(rest).why };
+  if (kind === "sim") return simIds.has(rest) ? { ok: true } : { ok: false, why: `names simulation "${rest}", which has no simulations/packages/${rest}` };
+  if (kind === "checkpoint") {
+    const [sim, cp] = rest.split("/");
+    if (!simIds.has(sim)) return { ok: false, why: `names simulation "${sim}", which has no simulations/packages/${sim}` };
+    return simCheckpoints.get(sim)?.has(cp) ? { ok: true } : { ok: false, why: `names checkpoint "${cp}", which ${sim} does not declare (current or former)` };
+  }
+  const sep = kind === "step" ? ":" : "#";
+  const i = rest.lastIndexOf(sep);
+  const tid = rest.slice(0, i);
+  const sub = rest.slice(i + 1);
+  const { t, why } = topicOf(tid);
+  if (!t) return { ok: false, why };
+  const set = kind === "objective" ? t.objectives : kind === "item" ? t.items : t.steps;
+  return set.has(sub) ? { ok: true } : { ok: false, why: `names ${kind} "${sub}", which ${tid} does not declare${kind === "objective" ? "" : " under any current or former id"}` };
+};
+const publishedTopic = (ref) => {
+  const m = /^(?:(?:objective|item|step|topic):)?([a-z0-9/-]+?)(?:[#:][a-z0-9-]+)?$/.exec(ref);
+  return Boolean(m && touchable.get(m[1])?.tree === "prod" && prodIds.get(m[1])?.data.status !== "draft");
+};
+const knowledge = loadRecords(path.join(ROOT, "knowledge"), ROOT);
+errors.push(...knowledge.problems);
+{
+  const r = recordProblems(knowledge.records, { resolve: resolveRef, publishedTopic });
+  errors.push(...r.errors);
+  warnings.push(...r.warnings);
+}
+
 // Resources: resources/<pathId>.json against the schema; a resource's topic must exist.
 const RES_DIR = path.join(ROOT, "resources");
 let resourceFiles = 0;
@@ -553,5 +613,5 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `✓ valid — ${prod.length} prod topic(s)${includeStaging ? ` + ${staging.length} staged` : ""}, ${parsedPaths.length} path(s), ${Object.keys(glossaries).length} glossary file(s), ${resourceFiles} resource file(s), ${simIds.size} simulation(s); every .mdx compiles, with no JavaScript.`,
+  `✓ valid — ${prod.length} prod topic(s)${includeStaging ? ` + ${staging.length} staged` : ""}, ${parsedPaths.length} path(s), ${Object.keys(glossaries).length} glossary file(s), ${resourceFiles} resource file(s), ${simIds.size} simulation(s), ${knowledge.records.length} knowledge record(s); every .mdx compiles, with no JavaScript.`,
 );

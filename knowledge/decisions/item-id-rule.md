@@ -2,10 +2,17 @@
 id: decision/item-id-rule
 type: decision
 status: approved
+title: "A rewording keeps the id, a change of meaning gets a new one"
 scope: "Every quiz item, flashcard and lesson step"
-source: "hyperstack ADR 0004 (accepted 2026-09-13), LMS-content#91"
+sources:
+  - "hyperstack ADR 0004 (accepted 2026-09-13), LMS-content#91"
 touches: [math-infra/precision-and-memory, math-infra/tensor-shapes, ml-systems/jax-xla-stack]
 reviewed: 2026-09-13
+provenance:
+  origin: review
+  by: human
+  from: "hyperstack ADR 0004"
+review-by: 2027-09-13
 ---
 
 **Decision.** An item's `id` names what it teaches, not how it is worded. A rewording keeps the id; a change of meaning (a different fact, a different correct answer) gets a new id, and the old one is retired rather than reused. Renaming an id lists the old one in `formerIds`, so learners' progress follows.

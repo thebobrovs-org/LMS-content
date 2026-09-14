@@ -2,10 +2,17 @@
 id: misconception/fewer-bytes-faster-training
 type: misconception
 status: approved
+title: "Fewer bytes always means faster training"
 scope: "Learners meeting reduced-precision formats for the first time"
-source: "Learning roadmap review, hyperstack docs/audits/2026-09-11, §9 (the worked pilot)"
+sources:
+  - "Learning roadmap review, hyperstack docs/audits/2026-09-11, §9 (the worked pilot)"
 touches: [math-infra/precision-and-memory]
 reviewed: 2026-09-12
+provenance:
+  origin: review
+  by: agent:codex
+  from: "hyperstack docs/audits/2026-09-11 §9"
+review-by: 2027-09-12
 ---
 
 **The incorrect model.** "Half the bytes always means twice the training speed."
