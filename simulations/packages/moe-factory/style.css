@@ -146,13 +146,15 @@ button.secondary {
 .expert.on {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--primary-contrast);
 }
 .expert.on .score {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--primary-contrast);
 }
 .expert.off {
-  opacity: 0.45;
+  /* greyed, never faded: the name and score keep their contrast (LMS-content#99) */
+  filter: grayscale(1);
+  border-style: dashed;
 }
 .stats {
   display: flex;

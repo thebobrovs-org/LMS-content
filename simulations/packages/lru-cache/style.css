@@ -134,7 +134,7 @@ button.secondary {
   padding: 6px 14px;
   border-radius: 8px;
   background: var(--accent);
-  color: #ffffff;
+  color: var(--primary-contrast);
   font-size: 14px;
 }
 .slot.touched {

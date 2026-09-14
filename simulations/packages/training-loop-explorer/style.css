@@ -51,7 +51,7 @@ body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, syst
 input[type=range] { accent-color: var(--good); width: 100%; cursor: ew-resize; margin: 0; }
 
 .btn-auto-train { width: 100%; margin-top: 4px; padding: 10px; font-weight: 800; font-size: 14px; color: var(--primary-contrast); background: var(--primary); border: none; border-radius: 8px; cursor: pointer; transition: filter 0.2s; }
-.btn-auto-train:hover { filter: brightness(1.1); }
+.btn-auto-train:hover { filter: brightness(.92); }
 .btn-auto-train.pause { background: var(--warn); }
 
 /* Stage & Content */

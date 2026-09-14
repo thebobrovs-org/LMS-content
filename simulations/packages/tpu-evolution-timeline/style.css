@@ -83,7 +83,7 @@ body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, syst
 button.btn { font: inherit; padding: 9px 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--fg); cursor: pointer; font-weight: 600; font-size: 14px; transition: filter 0.2s; }
 button.btn.primary { background: var(--primary); color: var(--primary-contrast); border-color: var(--primary); }
 button.btn:disabled { opacity: 0.4; cursor: not-allowed; }
-button.btn:not(:disabled):hover { filter: brightness(1.1); }
+button.btn:not(:disabled):hover { filter: brightness(.92); }
 :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
 @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

@@ -1,7 +1,7 @@
 /* TPU VM anatomy — interactive cutaway across generations. LMS tokens, theme-aware, no CDNs. */
 :root {
   --bg: #ffffff; --fg: #202124; --muted: #5f6368; --border: #dadce0;
-  --panel: #ffffff; --primary: #1a73e8;
+  --panel: #ffffff; --primary: #1558b0; --primary-contrast: #ffffff; --surface: #f8fafc;
   --amber: #fbc02d; --amber-fg: #3c2e00;
   --chip-bg: #c5d9fb; --chip-fg: #202124;
   --core-bg: #ffffff; --core-fg: #202124;
@@ -15,7 +15,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0f172a; --fg: #e8eaed; --muted: #9aa0a6; --border: #3c4043;
-    --panel: #1e293b; --primary: #8ab4f8;
+    --panel: #1e293b; --primary: #8ab4f8; --primary-contrast: #0b1220; --surface: #1e293b;
     --amber: #f9ab00; --amber-fg: #201600;
     --chip-bg: #1c3357; --chip-fg: #e8eaed;
     --core-bg: #16233a; --core-fg: #e8eaed;
@@ -28,13 +28,13 @@
   }
 }
 [data-theme="light"] {
-  --bg: #ffffff; --fg: #202124; --muted: #5f6368; --border: #dadce0; --panel: #ffffff; --primary: #1a73e8;
+  --bg: #ffffff; --fg: #202124; --muted: #5f6368; --border: #dadce0; --panel: #ffffff; --primary: #1558b0; --primary-contrast: #ffffff; --surface: #f8fafc;
   --amber: #fbc02d; --amber-fg: #3c2e00; --chip-bg: #c5d9fb; --chip-fg: #202124; --core-bg: #ffffff; --core-fg: #202124;
   --unit: #d2e3fc; --unit-fg: #174ea6; --mxu: #fde293; --mxu-fg: #5c4400; --hbm: #1e7e34; --hbm-fg: #fff;
   --ici: #1a5fd0; --ici-fg: #fff; --neighbor: #aecbfa; --neighbor-fg: #202124; --marker: #1a73e8; --marker-fg: #fff;
 }
 [data-theme="dark"] {
-  --bg: #0f172a; --fg: #e8eaed; --muted: #9aa0a6; --border: #3c4043; --panel: #1e293b; --primary: #8ab4f8;
+  --bg: #0f172a; --fg: #e8eaed; --muted: #9aa0a6; --border: #3c4043; --panel: #1e293b; --primary: #8ab4f8; --primary-contrast: #0b1220; --surface: #1e293b;
   --amber: #f9ab00; --amber-fg: #201600; --chip-bg: #1c3357; --chip-fg: #e8eaed; --core-bg: #16233a; --core-fg: #e8eaed;
   --unit: #28456e; --unit-fg: #c7dbff; --mxu: #c9a227; --mxu-fg: #1a1400; --hbm: #34a853; --hbm-fg: #0b1220;
   --ici: #4285f4; --ici-fg: #0b1220; --neighbor: #28456e; --neighbor-fg: #e8eaed; --marker: #4285f4; --marker-fg: #0b1220;
@@ -64,7 +64,7 @@ body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, syst
 .cae { flex: 1; background: color-mix(in srgb, var(--marker) 22%, var(--core-bg)); color: var(--fg);
   border: 1.5px solid var(--marker); font-weight: 700; }
 .u.big { background: color-mix(in srgb, var(--marker) 24%, var(--unit)); border: 1.5px solid var(--marker); }
-.x3 { font-size: 10px; font-weight: 800; color: var(--marker); background: color-mix(in srgb, var(--marker) 18%, transparent);
+.x3 { font-size: 10px; font-weight: 800; color: var(--marker-fg); background: var(--marker);
   border-radius: 4px; padding: 0 4px; margin-left: 2px; }
 
 .side { flex: none; display: grid; place-items: center; border-radius: 10px; font-weight: 700; font-size: 14px; text-align: center; padding: 8px; }

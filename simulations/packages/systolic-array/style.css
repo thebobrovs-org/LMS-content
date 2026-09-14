@@ -168,11 +168,11 @@ button:disabled { opacity: .5; cursor: default; box-shadow: none; }
 .qarrow { color: var(--muted); }
 .pe { position: relative; width: 84px; height: 84px; display: grid; place-items: center; border: 2px solid var(--border); border-radius: 12px; background: var(--inset); transition: all .25s cubic-bezier(.4,0,.2,1); }
 .pe.on { border-color: var(--data); background: color-mix(in srgb, var(--data) 18%, var(--inset)); box-shadow: 0 0 22px color-mix(in srgb, var(--data) 30%, transparent); transform: scale(1.05); }
-.pe .w { position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: 700; color: var(--weight); }
+.pe .w { position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: 700; color: color-mix(in srgb, var(--weight) 75%, var(--fg)); }
 .pe .math { font-size: 16px; font-weight: 700; color: var(--muted); }
 .pe.on .math { color: var(--fg); }
-.pe .math b { color: var(--data); } .pe .math i { color: var(--weight); font-style: normal; }
-.pe .psum { position: absolute; bottom: 6px; left: 8px; font-size: 12px; font-weight: 700; color: var(--result); background: color-mix(in srgb, var(--result) 12%, transparent); padding: 1px 6px; border-radius: 5px; }
+.pe .math b { color: color-mix(in srgb, var(--data) 75%, var(--fg)); } .pe .math i { color: color-mix(in srgb, var(--weight) 75%, var(--fg)); font-style: normal; }
+.pe .psum { position: absolute; bottom: 6px; left: 8px; font-size: 12px; font-weight: 700; color: color-mix(in srgb, var(--result) 75%, var(--fg)); background: color-mix(in srgb, var(--result) 12%, transparent); padding: 1px 6px; border-radius: 5px; }
 
 @media (prefers-reduced-motion: reduce) {
   .cpu-packet.run, .tpu-packet.run, .tpu-cell.f1, .tpu-cell.f2, .tpu-cell.f3, .heart.beat { animation: none; }
