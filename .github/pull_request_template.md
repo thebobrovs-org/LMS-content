@@ -12,7 +12,7 @@ Closes #
 - Cross-repo impact and companion PRs:
 
 ## Knowledge delta
-<!-- Records in knowledge/ this PR adds or changes (claims, misconceptions, decisions), or "none" with a word on why. See knowledge/README.md. -->
+<!-- Records in knowledge/ this PR adds or changes, by id (concept/…, claim/…, misconception/…, decision/…, question/…), or "none" with a word on why. Regenerate knowledge/index.json with them. See knowledge/README.md. -->
 - none
 
 ## Acceptance criteria

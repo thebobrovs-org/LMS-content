@@ -376,3 +376,81 @@ test("problems name the file, and a parse failure doesn't stop the run", () => {
   assert.match(out, /topics\/fundamentals\/arrays\.mdx: frontmatter must be YAML/);
   assert.match(out, /glossary\/foundations\.json: invalid JSON/);
 });
+
+// ── Knowledge records (LMS-content#105): every reference resolves against the loaded curriculum ──
+const RECORD = (fm, body = "**Claim.** One idea.\n") => `---\n${fm.trim()}\n---\n\n${body}`;
+const CLAIM = (touches, extra = "") => RECORD(`
+id: claim/one-idea
+type: claim
+status: approved
+scope: "Arrays"
+sources: ["A locator, §1"]
+touches: [${touches}]
+reviewed: "2026-09-12"
+${extra}`);
+const RICH_TOPIC = fm(`objectives:
+  - id: contiguity
+    statement: "Say why an array is contiguous."
+quiz:
+  - question: "Is an array contiguous?"
+    choices: ["Yes", "No"]
+    answer: 0
+    id: contiguous
+    formerIds: [was-contiguous]`) + `\n<Steps>\n<Step title="Look at memory" id="look">Look.</Step>\n</Steps>\n`;
+const SIM_WITH_CP = JSON.stringify({ id: "demo-sim", title: "Demo", version: "1.0.0", checkpoints: [{ id: "observe-x", hint: "Look.", renamedFrom: ["see-x"] }] });
+
+test("knowledge: a record's touches resolve to the topic, its objectives, items and steps under any identity, sims and checkpoints; the index must be current", () => {
+  const good = run(tree({
+    "topics/fundamentals/arrays.mdx": RICH_TOPIC,
+    "simulations/packages/demo-sim/sim.config.json": SIM_WITH_CP,
+    "knowledge/claims/one-idea.md": CLAIM(`fundamentals/arrays, topic:fundamentals/arrays, "objective:fundamentals/arrays#contiguity", "item:fundamentals/arrays#contiguous", "item:fundamentals/arrays#was-contiguous", "item:fundamentals/arrays#${itemHash("Is an array contiguous?")}", "step:fundamentals/arrays:look", "step:fundamentals/arrays:${stepHash("Look at memory")}", "sim:demo-sim", "checkpoint:demo-sim/observe-x", "checkpoint:demo-sim/see-x"`),
+  }));
+  assert.equal(good.code, 0, good.out);
+  assert.match(good.out, /1 knowledge record\(s\)/);
+
+  const out = fails("unresolved references", {
+    "topics/fundamentals/arrays.mdx": RICH_TOPIC,
+    "simulations/packages/demo-sim/sim.config.json": SIM_WITH_CP,
+    "staging/topics/fundamentals/lists.mdx": withTitle("Lists").replace("fundamentals/arrays", "x"),
+    "knowledge/claims/one-idea.md": CLAIM(`fundamentals/nope, fundamentals/lists, "objective:fundamentals/arrays#speed", "item:fundamentals/arrays#other", "step:fundamentals/arrays:jump", "sim:no-sim", "checkpoint:demo-sim/gone"`),
+  });
+  assert.match(out, /touches "fundamentals\/nope", which names topic "fundamentals\/nope", which does not exist/);
+  assert.match(out, /touches "fundamentals\/lists", which names topic "fundamentals\/lists", which does not exist in production \(it is staged\)/);
+  assert.match(out, /names objective "speed", which fundamentals\/arrays does not declare/);
+  assert.match(out, /names item "other", which fundamentals\/arrays does not declare under any current or former id/);
+  assert.match(out, /names step "jump", which fundamentals\/arrays does not declare under any current or former id/);
+  assert.match(out, /names simulation "no-sim", which has no simulations\/packages\/no-sim/);
+  assert.match(out, /names checkpoint "gone", which demo-sim does not declare \(current or former\)/);
+});
+
+test("knowledge: a disputed record a published lesson depends on names its issue; an approved one names a source; the schema is enforced", () => {
+  const out = fails("disputed without an issue", {
+    "knowledge/claims/one-idea.md": CLAIM("fundamentals/arrays").replace("status: approved", "status: disputed"),
+    "knowledge/claims/no-source.md": CLAIM("fundamentals/arrays").replace("claim/one-idea", "claim/no-source").replace('sources: ["A locator, §1"]', "sources: []"),
+    "knowledge/claims/odd.md": CLAIM("fundamentals/arrays").replace("claim/one-idea", "claim/odd") + "",
+    "knowledge/concepts/misplaced.md": CLAIM("fundamentals/arrays").replace("claim/one-idea", "claim/misplaced"),
+  });
+  assert.match(out, /one-idea\.md: a disputed record that a published lesson depends on names the open issue/);
+  assert.match(out, /no-source\.md: an approved record names at least one source/);
+  assert.match(out, /misplaced\.md: a claim record "claim\/misplaced" lives at knowledge\/claims\/misplaced\.md/);
+  const ok = run(tree({ "knowledge/claims/one-idea.md": CLAIM("fundamentals/arrays", 'disputed-by: "thebobrovs-org/LMS-content#1"').replace("status: approved", "status: disputed") }));
+  assert.equal(ok.code, 0, ok.out);
+});
+
+test("knowledge: a disputed record touching a simulation or a checkpoint that a published lesson embeds names its issue; a draft-only consumer does not require it", () => {
+  const sims = { "simulations/packages/demo-sim/sim.config.json": SIM_WITH_CP };
+  const out = fails("disputed sim record", {
+    ...sims,
+    "knowledge/claims/one-idea.md": CLAIM('"sim:demo-sim"').replace("status: approved", "status: disputed"),
+    "knowledge/claims/two-idea.md": CLAIM('"checkpoint:demo-sim/see-x"').replace("claim/one-idea", "claim/two-idea").replace("status: approved", "status: disputed"),
+  });
+  assert.match(out, /one-idea\.md: a disputed record that a published lesson depends on names the open issue/);
+  assert.match(out, /two-idea\.md: a disputed record that a published lesson depends on names the open issue/);
+  const draftOnly = run(tree({
+    ...sims,
+    "topics/fundamentals/arrays.mdx": fm("status: draft"),
+    "paths/foundations.mdx": PATH_MDX.replace("levels:", "status: draft\nlevels:"),
+    "knowledge/claims/one-idea.md": CLAIM('"sim:demo-sim"').replace("status: approved", "status: disputed"),
+  }));
+  assert.equal(draftOnly.code, 0, draftOnly.out);
+});
