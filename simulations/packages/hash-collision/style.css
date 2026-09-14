@@ -7,8 +7,8 @@
   --border: #e2e8f0;
   --primary: #2563eb;
   --primary-contrast: #ffffff;
-  --accent: #0d9488;
-  --danger: #dc2626;
+  --accent: #0f766e;
+  --danger: #b91c1c;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -31,8 +31,8 @@
   --border: #e2e8f0;
   --primary: #2563eb;
   --primary-contrast: #ffffff;
-  --accent: #0d9488;
-  --danger: #dc2626;
+  --accent: #0f766e;
+  --danger: #b91c1c;
 }
 [data-theme="dark"] {
   --bg: #1a1a1a;
@@ -134,7 +134,7 @@ button.secondary {
   padding: 3px 9px;
   border-radius: 999px;
   background: var(--accent);
-  color: #ffffff;
+  color: var(--primary-contrast);
   font-size: 13px;
 }
 .legend {

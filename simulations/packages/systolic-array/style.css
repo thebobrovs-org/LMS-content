@@ -1,30 +1,30 @@
 /* Faithful port of the "Systolic Array Explained" design, on LMS design tokens
  * (docs/12) so it adapts to light/dark, with no CDN dependencies. */
 :root {
-  --bg: #ffffff; --fg: #0f172a; --muted: #64748b; --surface: #f1f5f9;
+  --bg: #ffffff; --fg: #0f172a; --muted: #475569; --surface: #f1f5f9;
   --panel: #ffffff; --border: #e2e8f0; --inset: #f8fafc;
   --primary: #2563eb; --primary-contrast: #ffffff;
-  --weight: #7c3aed; --data: #2563eb; --result: #0d9488; --blood: #dc2626;
+  --weight: #7c3aed; --data: #2563eb; --result: #0f766e; --blood: #b91c1c;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0f172a; --fg: #f8fafc; --muted: #94a3b8; --surface: #1e293b;
+    --bg: #0f172a; --fg: #f8fafc; --muted: #a5b1c2; --surface: #1e293b;
     --panel: #1e293b; --border: #334155; --inset: #0f172a;
-    --primary: #3b82f6; --primary-contrast: #ffffff;
-    --weight: #8b5cf6; --data: #3b82f6; --result: #10b981; --blood: #ef4444;
+    --primary: #60a5fa; --primary-contrast: #0b1220;
+    --weight: #a78bfa; --data: #60a5fa; --result: #2dd4bf; --blood: #f87171;
   }
 }
 [data-theme="light"] {
-  --bg: #ffffff; --fg: #0f172a; --muted: #64748b; --surface: #f1f5f9;
+  --bg: #ffffff; --fg: #0f172a; --muted: #475569; --surface: #f1f5f9;
   --panel: #ffffff; --border: #e2e8f0; --inset: #f8fafc;
   --primary: #2563eb; --primary-contrast: #ffffff;
-  --weight: #7c3aed; --data: #2563eb; --result: #0d9488; --blood: #dc2626;
+  --weight: #7c3aed; --data: #2563eb; --result: #0f766e; --blood: #b91c1c;
 }
 [data-theme="dark"] {
-  --bg: #0f172a; --fg: #f8fafc; --muted: #94a3b8; --surface: #1e293b;
+  --bg: #0f172a; --fg: #f8fafc; --muted: #a5b1c2; --surface: #1e293b;
   --panel: #1e293b; --border: #334155; --inset: #0f172a;
-  --primary: #3b82f6; --primary-contrast: #ffffff;
-  --weight: #8b5cf6; --data: #3b82f6; --result: #10b981; --blood: #ef4444;
+  --primary: #60a5fa; --primary-contrast: #0b1220;
+  --weight: #a78bfa; --data: #60a5fa; --result: #2dd4bf; --blood: #f87171;
 }
 
 * { box-sizing: border-box; }
@@ -122,8 +122,8 @@ body {
 .statbox-h { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; color: var(--muted); margin-bottom: 10px; }
 .statrow { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; }
 .pill { font-weight: 700; padding: 3px 8px; border-radius: 6px; }
-.pill.bad { color: var(--blood); background: color-mix(in srgb, var(--blood) 12%, transparent); }
-.pill.good { color: var(--data); background: color-mix(in srgb, var(--data) 12%, transparent); }
+.pill.bad { color: color-mix(in srgb, var(--blood) 75%, var(--fg)); background: color-mix(in srgb, var(--blood) 12%, transparent); }
+.pill.good { color: color-mix(in srgb, var(--data) 75%, var(--fg)); background: color-mix(in srgb, var(--data) 12%, transparent); }
 .statnote { font-size: 11px; color: var(--muted); margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; }
 
 .heart { color: var(--blood); display: inline-flex; }
@@ -163,16 +163,16 @@ button:disabled { opacity: .5; cursor: default; box-shadow: none; }
 .mrow { display: flex; align-items: center; gap: 12px; }
 .queue { display: flex; gap: 6px; align-items: center; }
 .qi { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 7px; font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
-.qi.data { background: var(--data); color: #fff; box-shadow: 0 0 10px color-mix(in srgb, var(--data) 45%, transparent); }
+.qi.data { background: var(--data); color: var(--primary-contrast); box-shadow: 0 0 10px color-mix(in srgb, var(--data) 45%, transparent); }
 .qi.zero { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
 .qarrow { color: var(--muted); }
 .pe { position: relative; width: 84px; height: 84px; display: grid; place-items: center; border: 2px solid var(--border); border-radius: 12px; background: var(--inset); transition: all .25s cubic-bezier(.4,0,.2,1); }
 .pe.on { border-color: var(--data); background: color-mix(in srgb, var(--data) 18%, var(--inset)); box-shadow: 0 0 22px color-mix(in srgb, var(--data) 30%, transparent); transform: scale(1.05); }
-.pe .w { position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: 700; color: var(--weight); }
+.pe .w { position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: 700; color: color-mix(in srgb, var(--weight) 75%, var(--fg)); }
 .pe .math { font-size: 16px; font-weight: 700; color: var(--muted); }
 .pe.on .math { color: var(--fg); }
-.pe .math b { color: var(--data); } .pe .math i { color: var(--weight); font-style: normal; }
-.pe .psum { position: absolute; bottom: 6px; left: 8px; font-size: 12px; font-weight: 700; color: var(--result); background: color-mix(in srgb, var(--result) 12%, transparent); padding: 1px 6px; border-radius: 5px; }
+.pe .math b { color: color-mix(in srgb, var(--data) 75%, var(--fg)); } .pe .math i { color: color-mix(in srgb, var(--weight) 75%, var(--fg)); font-style: normal; }
+.pe .psum { position: absolute; bottom: 6px; left: 8px; font-size: 12px; font-weight: 700; color: color-mix(in srgb, var(--result) 75%, var(--fg)); background: color-mix(in srgb, var(--result) 12%, transparent); padding: 1px 6px; border-radius: 5px; }
 
 @media (prefers-reduced-motion: reduce) {
   .cpu-packet.run, .tpu-packet.run, .tpu-cell.f1, .tpu-cell.f2, .tpu-cell.f3, .heart.beat { animation: none; }

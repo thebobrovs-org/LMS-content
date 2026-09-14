@@ -3,7 +3,15 @@
 const app = document.getElementById("app");
 
 const RING = 65536; // hash space 0..RING-1
-const PALETTE = ["#2563eb", "#0d9488", "#d97706", "#7c3aed", "#db2777", "#16a34a", "#0891b2", "#ca8a04"];
+// Node colours, one palette per theme: each reads at 4.5:1 as the 13px labels on that theme's page
+// (checked by simulations/tests/palette-contrast.test.mjs, LMS-content#99).
+const PALETTE_LIGHT = ["#2563eb", "#0f766e", "#b45309", "#7c3aed", "#db2777", "#15803d", "#0e7490", "#854d0e"];
+const PALETTE_DARK = ["#60a5fa", "#2dd4bf", "#fbbf24", "#a78bfa", "#f472b6", "#4ade80", "#22d3ee", "#facc15"];
+function palette() {
+  const t = document.documentElement.dataset.theme;
+  const dark = t === "dark" || (t !== "light" && typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches);
+  return dark ? PALETTE_DARK : PALETTE_LIGHT;
+}
 
 let keyCount = 24;
 let replicas = 1;
@@ -26,7 +34,7 @@ function hash(str) {
 
 function nodeColor(node) {
   const i = nodes.indexOf(node);
-  return PALETTE[(i < 0 ? 0 : i) % PALETTE.length];
+  return palette()[(i < 0 ? 0 : i) % palette().length];
 }
 
 // Virtual nodes for a node list: `replicas` positions per node, sorted by hash.

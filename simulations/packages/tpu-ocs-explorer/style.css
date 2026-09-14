@@ -1,17 +1,17 @@
 /* OCS — light is the network. LMS tokens for the UI; the canvas keeps a dark
  * "stage" in both themes (like the other 3D/canvas sims). No CDNs. */
 :root {
-  --bg:#fff; --fg:#0f172a; --muted:#64748b; --faint:#94a3b8; --surface:#f1f5f9; --panel:#fff;
+  --bg:#fff; --fg:#0f172a; --muted:#475569; --faint:#596a82; --surface:#f1f5f9; --panel:#fff;
   --border:#e2e8f0; --inset:#f8fafc; --primary:#2563eb; --primary-contrast:#fff;
-  --beam:#0e7490; --photon:#b45309; --good:#0d9488; --bad:#dc2626; --warn:#d97706;
+  --beam:#0e7490; --photon:#b45309; --good:#0f766e; --bad:#b91c1c; --warn:#b45309;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg:#0f172a; --fg:#f8fafc; --muted:#94a3b8; --faint:#5c7194; --surface:#1e293b; --panel:#0d1626;
+  :root { --bg:#0f172a; --fg:#f8fafc; --muted:#a5b1c2; --faint:#8497b3; --surface:#1e293b; --panel:#0d1626;
     --border:#1d2c49; --inset:#101c33; --primary:#5eb0ff; --primary-contrast:#0b1220;
     --beam:#4cc9f0; --photon:#ffc24b; --good:#34d399; --bad:#f87171; --warn:#fbbf24; }
 }
-[data-theme="light"] { --bg:#fff; --fg:#0f172a; --muted:#64748b; --faint:#94a3b8; --surface:#f1f5f9; --panel:#fff; --border:#e2e8f0; --inset:#f8fafc; --primary:#2563eb; --primary-contrast:#fff; --beam:#0e7490; --photon:#b45309; --good:#0d9488; --bad:#dc2626; --warn:#d97706; }
-[data-theme="dark"] { --bg:#0f172a; --fg:#f8fafc; --muted:#94a3b8; --faint:#5c7194; --surface:#1e293b; --panel:#0d1626; --border:#1d2c49; --inset:#101c33; --primary:#5eb0ff; --primary-contrast:#0b1220; --beam:#4cc9f0; --photon:#ffc24b; --good:#34d399; --bad:#f87171; --warn:#fbbf24; }
+[data-theme="light"] { --bg:#fff; --fg:#0f172a; --muted:#475569; --faint:#596a82; --surface:#f1f5f9; --panel:#fff; --border:#e2e8f0; --inset:#f8fafc; --primary:#2563eb; --primary-contrast:#fff; --beam:#0e7490; --photon:#b45309; --good:#0f766e; --bad:#b91c1c; --warn:#b45309; }
+[data-theme="dark"] { --bg:#0f172a; --fg:#f8fafc; --muted:#a5b1c2; --faint:#8497b3; --surface:#1e293b; --panel:#0d1626; --border:#1d2c49; --inset:#101c33; --primary:#5eb0ff; --primary-contrast:#0b1220; --beam:#4cc9f0; --photon:#ffc24b; --good:#34d399; --bad:#f87171; --warn:#fbbf24; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 15px; line-height: 1.6; }

@@ -53,6 +53,10 @@ Step / Auto / Reset, and a short event log. Other exemplars: **`moe-factory`**
 - [ ] Rich enough to be an instrument (viz + live metrics + Step/Auto/Reset) — see `systolic-array`.
 - [ ] Self-sizing (grows to content via `sim.resize`); no clipping or runaway scroll; no page chrome.
 - [ ] Token theme (copied block); correct in light + dark; respects reduced motion.
+- [ ] Every text colour reads at **4.5:1** on what it sits on, in both modes (3:1 for
+      marks and lines); no text faded with `opacity`; ink on a fill is the fill's
+      `*-contrast` token, never a bare `#fff`. `simulations/tests/palette-contrast.test.mjs`
+      checks the token block; the hub's audit (`hyperstack/docs/audits/tools`) checks the rendered sim.
 - [ ] Plain HTML/CSS/JS — no CSS framework or CDN.
 - [ ] A measurable readout that states the takeaway.
 - [ ] `controls → viz → readout → legend`; keyboard + focus ring.
@@ -155,6 +159,18 @@ setTimeout(() => { if (!sim.isInitialized()) render(); }, 300);
 - Copy the token block from [`template/style.css`](template/style.css) so the sim
   matches light/dark; apply `theme` from `onInit` via `dataset.theme`.
 - Honor `reducedMotion` (passed to `onInit`). Visible focus ring; keyboard-operable.
+- **Contrast (WCAG 1.4.3 / 1.4.11).** Text at 4.5:1 or better on its background; marks,
+  lines and borders at 3:1. The template's palette meets this: in light mode muted text
+  is `#475569` (not the `#64748b` many sims once used, 4.3:1 on the surface), the teal
+  accent `#0f766e`, success `#15803d`, warning `#b45309`, danger `#b91c1c`; in dark
+  mode muted text is `#a5b1c2` on the sims' `#0f172a`/`#1e293b`. Add a token to the
+  block for any extra colour; the gate's `palette-contrast` test checks every token it
+  finds against the page, surface and panel in both modes (fills and line colours are
+  listed there as not-text). Ink on a filled chip or button is `var(--primary-contrast)`
+  (white in light, near-black in dark), never a bare `#fff`: white fails on every light
+  fill in dark mode. Never fade text with `opacity` or `filter: grayscale()` to mean
+  "inactive": grey the border or chrome instead. LMS-content#99 has the audit that
+  found 21 sims short of this.
 
 ## Build, embed, validate
 

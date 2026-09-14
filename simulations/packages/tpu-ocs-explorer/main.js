@@ -221,7 +221,7 @@ function render() {
   ctx.fillStyle = "#7e93b6"; ctx.font = "600 15px " + SANS; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
   ctx.fillText("Logical topology — 8 of 64 cubes", topoOffset.x + 195, 46);
   ctx.fillText("Palomar OCS — MEMS mirror matrix", ocsOffset.x + (N * ocsSpacing) / 2 - 20, 46);
-  ctx.font = "11px " + MONO; ctx.fillStyle = "#54688c";
+  ctx.font = "11px " + MONO; ctx.fillStyle = "#8497b3";
   ctx.fillText("what software sees", topoOffset.x + 195, 64);
   ctx.fillText("what photons see", ocsOffset.x + (N * ocsSpacing) / 2 - 20, 64);
 
@@ -234,7 +234,7 @@ function render() {
     ctx.beginPath(); ctx.roundRect(r.x, topoOffset.y, 140, 455, 12); ctx.fill(); ctx.stroke();
     ctx.fillStyle = "#9fb3d4"; ctx.font = "600 13px " + SANS; ctx.textAlign = "center";
     ctx.fillText(r.name, r.x + 70, topoOffset.y + 28);
-    ctx.font = "10px " + MONO; ctx.fillStyle = "#54688c";
+    ctx.font = "10px " + MONO; ctx.fillStyle = "#8497b3";
     ctx.fillText("4 racks · 256 chips", r.x + 70, topoOffset.y + 44);
   });
 
@@ -251,7 +251,7 @@ function render() {
   cubes.forEach((c) => {
     const dead = c.status === "failed", spare = c.status === "spare";
     ctx.fillStyle = dead ? "#1a2336" : "#0a1426";
-    ctx.strokeStyle = dead ? "#f87171" : spare ? "#54688c" : c.color;
+    ctx.strokeStyle = dead ? "#f87171" : spare ? "#8497b3" : c.color;
     ctx.lineWidth = 2;
     if (spare) ctx.setLineDash([4, 4]);
     ctx.beginPath(); ctx.roundRect(c.tx - 27, c.ty - 27, 54, 54, 9); ctx.fill(); ctx.stroke();
@@ -259,7 +259,7 @@ function render() {
     ctx.textAlign = "center";
     ctx.fillStyle = dead ? "#f87171" : spare ? "#7e93b6" : "#e9effc";
     ctx.font = "600 11px " + MONO; ctx.fillText("CUBE " + c.id, c.tx, c.ty - 3);
-    ctx.font = "9px " + MONO; ctx.fillStyle = dead ? "#b35e5e" : "#54688c";
+    ctx.font = "9px " + MONO; ctx.fillStyle = dead ? "#fca5a5" : "#8497b3";
     ctx.fillText(dead ? "FAILED" : spare ? "SPARE" : "64 chips", c.tx, c.ty + 12);
   });
 
@@ -267,7 +267,7 @@ function render() {
   ctx.lineWidth = 1; ctx.strokeStyle = "#1c2a44";
   for (let i = 0; i < N; i++) {
     const c = cubes[i];
-    const lbl = c.status === "failed" ? "#f87171" : c.status === "spare" ? "#54688c" : c.color;
+    const lbl = c.status === "failed" ? "#f87171" : c.status === "spare" ? "#8497b3" : c.color;
     ctx.beginPath(); ctx.moveTo(ocsOffset.x - 20, ocsOffset.y + i * ocsSpacing);
     ctx.lineTo(ocsOffset.x + (N - 1) * ocsSpacing + 30, ocsOffset.y + i * ocsSpacing); ctx.stroke();
     ctx.fillStyle = lbl; ctx.font = "600 11px " + MONO; ctx.textAlign = "right"; ctx.textBaseline = "middle";
@@ -304,7 +304,7 @@ function render() {
       ctx.lineWidth = isMoving ? 2 : 3;
       if (isMoving && !reducedMotion) { ctx.shadowBlur = 6; ctx.shadowColor = "#60a5fa"; }
     } else {
-      ctx.strokeStyle = isMoving ? "#64748b" : "#22304d";
+      ctx.strokeStyle = isMoving ? "#475569" : "#22304d";
       ctx.lineWidth = 1;
     }
     ctx.stroke(); ctx.restore(); ctx.shadowBlur = 0;
