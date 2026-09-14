@@ -16,7 +16,8 @@ const TYPE_OF_FOLDER = Object.fromEntries(Object.entries(FOLDER_OF).map(([t, f])
 /**
  * Every record a body links to, as ids, and the links that are broken. Forms: a Markdown link
  * or reference definition whose destination is a record file (`[the claim](../claims/x.md)`,
- * `[claim/x]: ../claims/x.md`), which must exist and, when the label is itself an id, match it;
+ * `[claim/x]: ../claims/x.md`, and usages of it: `[claim/x][ref]`, `[ref][]`, `[ref]`), which must
+ * exist and, when the label is itself an id, match it; a destination may be written `<…>`;
  * `[[claim/x]]`; and a bare `claim/x` in backticks. `file` is the record's own path, for
  * relative destinations. Anything else that looks like a link is left to Markdown.
  */
@@ -38,8 +39,15 @@ export function linksIn(body, file = "knowledge/x/y.md", exists = () => true) {
     if (new RegExp(`^${ID}$`).test(label) && label !== id) problems.push(`links to ${dest} under the label "${label}", which is another record's id`);
     ids.add(id);
   };
-  for (const m of body.matchAll(/\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g)) take(m[1], m[2]);
-  for (const m of body.matchAll(/^\[([^\]]+)\]:\s*(\S+)/gm)) take(m[1], m[2]);
+  // A destination may be wrapped in angle brackets; a reference-style usage resolves through its definition.
+  const dest = (d) => (d.startsWith("<") && d.endsWith(">") ? d.slice(1, -1) : d);
+  const defs = new Map();
+  for (const m of body.matchAll(/^\[([^\]]+)\]:\s*(\S+)/gm)) defs.set(m[1].toLowerCase(), dest(m[2]));
+  const text = body.replace(/^\[[^\]]+\]:\s*\S+.*$/gm, "");
+  for (const m of text.matchAll(/\[([^\]]*)\]\((<[^>]*>|[^)\s]+)(?:\s+"[^"]*")?\)/g)) take(m[1], dest(m[2]));
+  for (const m of text.matchAll(/\[([^\]]*)\]\[([^\]]*)\]/g)) { const ref = (m[2] || m[1]).toLowerCase(); if (defs.has(ref)) take(m[1], defs.get(ref)); }
+  for (const m of text.matchAll(/(?<!\])\[([^\]]+)\](?![\[(:])/g)) if (defs.has(m[1].toLowerCase())) take(m[1], defs.get(m[1].toLowerCase()));
+  for (const [label, d] of defs) take(label, d);
   for (const m of body.matchAll(new RegExp(`\\[\\[(${ID})\\]\\]|\`(${ID})\``, "g"))) {
     const id = m[1] ?? m[2];
     if (exists(id)) ids.add(id); else problems.push(`links to "${id}", which is not a record`);

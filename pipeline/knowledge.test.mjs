@@ -111,7 +111,7 @@ test("links point at records: a Markdown destination must be a record file, an i
       "See [claim/other](../claims/other.md), [the concept](../concepts/roofline.md#ridge), [claim/other](../concepts/roofline.md), [gone](../claims/missing.md), [[concept/roofline]], `concept/none`, and [a lesson](/topics/x) or [a paper](https://example.org/p.md).\n",
     ),
     "claims/other.md": RECORD({ id: "claim/other", title: "Another idea" }),
-    "concepts/roofline.md": RECORD({ id: "concept/roofline", type: "concept", title: "Roofline" }, "[ref]: ../claims/other.md\n\nSee [ref].\n"),
+    "concepts/roofline.md": RECORD({ id: "concept/roofline", type: "concept", title: "Roofline" }, "[ref]: ../claims/other.md\n[Other]: <../claims/other.md>\n\nSee [ref], [other][], [claim/bytes-set-intensity][ref], [more](<../claims/missing.md>) and [also][nope].\n"),
   });
   const { errors } = recordProblems(records, { resolve: resolveAll });
   assert.deepEqual(errors.sort(), [
@@ -119,9 +119,11 @@ test("links point at records: a Markdown destination must be a record file, an i
     "knowledge/claims/bytes-set-intensity.md: links to ../claims/missing.md, which is not a record (no knowledge/claims/missing.md)",
     'knowledge/claims/bytes-set-intensity.md: links to ../concepts/roofline.md under the label "claim/other", which is another record\'s id',
     'knowledge/claims/bytes-set-intensity.md: related names "misconception/nope", which is not a record',
+    'knowledge/concepts/roofline.md: links to ../claims/missing.md, which is not a record (no knowledge/claims/missing.md)',
+    'knowledge/concepts/roofline.md: links to ../claims/other.md under the label "claim/bytes-set-intensity", which is another record\'s id',
   ]);
   assert.deepEqual(records[0].links.sort(), ["claim/other", "concept/roofline"]);
-  assert.deepEqual(records[2].links, ["claim/other"], "a reference-style definition counts");
+  assert.deepEqual(records[2].links, ["claim/other"], "reference-style usages resolve through their definitions; an angle-bracket destination is read; an undefined reference is left to Markdown");
   const direct = linksIn("[x](../claims/a.md) [[claim/b]] `decision/c` decision/d", "knowledge/claims/z.md", (id) => id !== "decision/c");
   assert.deepEqual(direct.ids, ["claim/a", "claim/b"]);
   assert.deepEqual(direct.problems, ['links to "decision/c", which is not a record']);
