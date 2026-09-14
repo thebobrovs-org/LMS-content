@@ -24,7 +24,9 @@
         "concept/jax-compile-path"
       ],
       "backlinks": [
-        "concept/jax-compile-path"
+        "concept/jax-compile-path",
+        "concept/tensor-shape-sets-the-footprint",
+        "misconception/oom-means-the-data-is-too-big"
       ],
       "file": "knowledge/claims/aot-compile-exposes-memory-analysis.md"
     },
@@ -274,7 +276,8 @@
       ],
       "backlinks": [
         "claim/padding-inflates-bytes-and-flops",
-        "concept/tensor-shape-sets-the-footprint"
+        "concept/tensor-shape-sets-the-footprint",
+        "misconception/oom-means-the-data-is-too-big"
       ],
       "file": "knowledge/claims/padding-to-tile-multiples.md"
     },
@@ -555,6 +558,7 @@
       "reviewed": "2026-09-13",
       "reviewBy": "2027-09-13",
       "links": [
+        "claim/aot-compile-exposes-memory-analysis",
         "claim/padding-inflates-bytes-and-flops",
         "claim/padding-to-tile-multiples"
       ],
@@ -716,7 +720,9 @@
       "reviewed": "2026-09-13",
       "reviewBy": "2027-09-13",
       "links": [
-        "claim/padding-inflates-bytes-and-flops"
+        "claim/aot-compile-exposes-memory-analysis",
+        "claim/padding-inflates-bytes-and-flops",
+        "claim/padding-to-tile-multiples"
       ],
       "backlinks": [],
       "file": "knowledge/misconceptions/oom-means-the-data-is-too-big.md"
