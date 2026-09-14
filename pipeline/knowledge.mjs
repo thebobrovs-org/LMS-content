@@ -10,18 +10,57 @@ import { FOLDER_OF, RECORD_TYPES, RecordFrontmatterSchema, sourcesOf, titleOf } 
 
 const rel = (root, f) => path.relative(root, f).split(path.sep).join("/");
 
-/** Every `<type>/<slug>` a body links to: `[claim/x](…)`, `[[claim/x]]` or a bare `claim/x` in backticks. */
-export function linksIn(body) {
+const ID = `(?:${RECORD_TYPES.join("|")})\\/[a-z0-9]+(?:-[a-z0-9]+)*`;
+const TYPE_OF_FOLDER = Object.fromEntries(Object.entries(FOLDER_OF).map(([t, f]) => [f, t]));
+
+/**
+ * Every record a body links to, as ids, and the links that are broken. Forms: a Markdown link
+ * or reference definition whose destination is a record file (`[the claim](../claims/x.md)`,
+ * `[claim/x]: ../claims/x.md`), which must exist and, when the label is itself an id, match it;
+ * `[[claim/x]]`; and a bare `claim/x` in backticks. `file` is the record's own path, for
+ * relative destinations. Anything else that looks like a link is left to Markdown.
+ */
+export function linksIn(body, file = "knowledge/x/y.md", exists = () => true) {
   const ids = new Set();
-  const re = new RegExp(`(?:\\[|\`)((?:${RECORD_TYPES.join("|")})\\/[a-z0-9]+(?:-[a-z0-9]+)*)(?:\\]|\`)`, "g");
-  for (const m of body.matchAll(re)) ids.add(m[1]);
-  return [...ids];
+  const problems = [];
+  const dir = path.posix.dirname(file);
+  const idOfDest = (dest) => {
+    const target = path.posix.normalize(path.posix.join(dir, dest.replace(/[#?].*$/, "")));
+    const m = /^knowledge\/([a-z]+)\/([a-z0-9]+(?:-[a-z0-9]+)*)\.md$/.exec(target);
+    if (!m || !TYPE_OF_FOLDER[m[1]]) return { outside: true };
+    return { id: `${TYPE_OF_FOLDER[m[1]]}/${m[2]}`, target };
+  };
+  const take = (label, dest) => {
+    if (/^[a-z][a-z0-9+.-]*:/i.test(dest) || dest.startsWith("/")) return; // a URL or a site path
+    const { outside, id, target } = idOfDest(dest);
+    if (outside) return;
+    if (!exists(id)) { problems.push(`links to ${dest}, which is not a record (no ${target})`); return; }
+    if (new RegExp(`^${ID}$`).test(label) && label !== id) problems.push(`links to ${dest} under the label "${label}", which is another record's id`);
+    ids.add(id);
+  };
+  for (const m of body.matchAll(/\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g)) take(m[1], m[2]);
+  for (const m of body.matchAll(/^\[([^\]]+)\]:\s*(\S+)/gm)) take(m[1], m[2]);
+  for (const m of body.matchAll(new RegExp(`\\[\\[(${ID})\\]\\]|\`(${ID})\``, "g"))) {
+    const id = m[1] ?? m[2];
+    if (exists(id)) ids.add(id); else problems.push(`links to "${id}", which is not a record`);
+  }
+  return { ids: [...ids], problems };
 }
 
-/** Something that looks like a person: an e-mail address or an @handle. A question record must carry none. */
+/**
+ * Something that looks like a person: an e-mail address or an @handle, anywhere in the text,
+ * code spans included (a handle in backticks is still a handle). A question record must carry
+ * none; write a decorator as `jax.jit`, not `@jax.jit`.
+ */
 export function identifierIn(text) {
-  const m = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+\.[A-Za-z]{2,}|(?<![\w`])@[A-Za-z0-9_]{2,}/.exec(text);
+  const m = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+\.[A-Za-z]{2,}|(?<!\w)@[A-Za-z0-9_]{2,}/.exec(text);
   return m ? m[0] : null;
+}
+
+/** Every string a record commits or publishes: its front matter's text fields and its body. */
+export function textOf(r) {
+  const d = r.data;
+  return [d.title, d.scope, ...(d.sources ?? []), d.source, ...(d.tags ?? []), d.provenance?.by, d.provenance?.model, d.provenance?.from, r.body].filter(Boolean).join("\n");
 }
 
 /**
@@ -47,9 +86,16 @@ export function loadRecords(dir, root = path.dirname(dir)) {
     problems.push(...r.problems);
     if (!r.ok) continue;
     const data = r.value;
-    const expected = `${FOLDER_OF[data.type]}/${path.basename(file, ".md")}`;
-    if (rel(dir, file) !== `${expected}.md`) problems.push(`${where}: a ${data.type} record "${data.id}" lives at knowledge/${expected}.md`);
-    records.push({ id: data.id, file: where, data, body: fm.content, links: linksIn(fm.content), sources: sourcesOf(data), title: titleOf(data) });
+    const expected = `${FOLDER_OF[data.type]}/${data.id.split("/")[1]}.md`;
+    if (rel(dir, file) !== expected) problems.push(`${where}: a ${data.type} record "${data.id}" lives at knowledge/${expected}`);
+    records.push({ id: data.id, file: where, data, body: fm.content, sources: sourcesOf(data), title: titleOf(data) });
+  }
+  // Links resolve against the set just loaded, so a record may link forward to one later in the walk.
+  const ids = new Set(records.map((r) => r.id));
+  for (const r of records) {
+    const l = linksIn(r.body, r.file, (id) => ids.has(id));
+    r.links = l.ids;
+    r.linkProblems = l.problems;
   }
   return { records, problems };
 }
@@ -80,13 +126,14 @@ export function recordProblems(records, { resolve, publishedTopic = () => false,
       const res = resolve ? resolve(ref) : { ok: true };
       if (!res.ok) errors.push(at(`touches "${ref}", which ${res.why ?? "does not exist"}`));
     }
-    for (const id of [...(data.related ?? []), ...r.links]) if (!byId.has(id)) errors.push(at(`links to "${id}", which is not a record`));
+    for (const id of data.related ?? []) if (!byId.has(id)) errors.push(at(`related names "${id}", which is not a record`));
+    for (const p of r.linkProblems ?? []) errors.push(at(p));
     if (data["superseded-by"] && !byId.has(data["superseded-by"])) errors.push(at(`superseded by "${data["superseded-by"]}", which is not a record`));
     if (data.status === "disputed" && data.touches.some(publishedTopic) && !data["disputed-by"]) {
       errors.push(at("a disputed record that a published lesson depends on names the open issue on that lesson (disputed-by: owner/repo#n)"));
     }
     if (data.type === "question") {
-      const found = identifierIn(`${data.scope}\n${r.body}`);
+      const found = identifierIn(textOf(r));
       if (found) errors.push(at(`a question record carries what looks like a person ("${found}"); rewrite the question without it`));
     }
     if (data["review-by"] && data["review-by"] < today) warnings.push(at(`past its review-by date (${data["review-by"]})`));

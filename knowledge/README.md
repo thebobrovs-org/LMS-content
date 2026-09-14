@@ -53,7 +53,8 @@ Then the body: the claim in one sentence and its limits; the concept and its wor
 - An `approved` record names at least one source. Ids are unique; a title that reads like another record's warns (one idea, one record).
 - A `disputed` record that a published lesson depends on names the open issue on that lesson (`disputed-by: owner/repo#n`); the validator refuses the status otherwise. That is a technical-accuracy finding on the lesson (`pipeline/AUDIT.md` §2).
 - A `superseded` record names the record that replaces it.
-- A `question` record carries no person: an e-mail address or an @handle in it is refused. Rewrite the question without the asker; the learner's own words and identity stay in their space, never here (this repository is public).
+- A `question` record carries no person: an e-mail address or an @handle anywhere in it (the body, a code span, the title, a source, the provenance) is refused. Rewrite the question without the asker, and write a decorator as `jax.jit`, never `@jax.jit`; the learner's own words and identity stay in their space, never here (this repository is public).
+- A link in a body points at a record: a Markdown link or reference definition whose destination is a record file must find that file (and an id used as its label must be that record's id); `[[claim/x]]` and a bare `claim/x` in backticks must name a record. Links to lessons, URLs and other files are left alone.
 - Records past `review-by` are listed as warnings on every run, never hidden.
 
 ## Status changes

@@ -436,3 +436,21 @@ test("knowledge: a disputed record a published lesson depends on names its issue
   const ok = run(tree({ "knowledge/claims/one-idea.md": CLAIM("fundamentals/arrays", 'disputed-by: "thebobrovs-org/LMS-content#1"').replace("status: approved", "status: disputed") }));
   assert.equal(ok.code, 0, ok.out);
 });
+
+test("knowledge: a disputed record touching a simulation or a checkpoint that a published lesson embeds names its issue; a draft-only consumer does not require it", () => {
+  const sims = { "simulations/packages/demo-sim/sim.config.json": SIM_WITH_CP };
+  const out = fails("disputed sim record", {
+    ...sims,
+    "knowledge/claims/one-idea.md": CLAIM('"sim:demo-sim"').replace("status: approved", "status: disputed"),
+    "knowledge/claims/two-idea.md": CLAIM('"checkpoint:demo-sim/see-x"').replace("claim/one-idea", "claim/two-idea").replace("status: approved", "status: disputed"),
+  });
+  assert.match(out, /one-idea\.md: a disputed record that a published lesson depends on names the open issue/);
+  assert.match(out, /two-idea\.md: a disputed record that a published lesson depends on names the open issue/);
+  const draftOnly = run(tree({
+    ...sims,
+    "topics/fundamentals/arrays.mdx": fm("status: draft"),
+    "paths/foundations.mdx": PATH_MDX.replace("levels:", "status: draft\nlevels:"),
+    "knowledge/claims/one-idea.md": CLAIM('"sim:demo-sim"').replace("status: approved", "status: disputed"),
+  }));
+  assert.equal(draftOnly.code, 0, draftOnly.out);
+});

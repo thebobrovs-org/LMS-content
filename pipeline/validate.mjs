@@ -375,7 +375,7 @@ async function checkBody(id, file, content, bodyLine) {
   for (const sim of new Set(found?.sims ?? [])) {
     if (!simIds.has(sim)) errors.push(`${id}: simulation "${sim}" has no simulations/packages/${sim}`);
   }
-  return { objectives: found?.objectives ?? [], identities: found?.identities ?? [] };
+  return { objectives: found?.objectives ?? [], identities: found?.identities ?? [], sims: [...new Set(found?.sims ?? [])] };
 }
 
 const ID_RE = /^[a-z0-9][a-z0-9-]*$/;
@@ -499,7 +499,7 @@ for (const t of topics) {
     }
   }
   const body = await checkBody(id, file, content, bodyLine);
-  touchable.set(id, touchableIn(data, body.identities, tree));
+  touchable.set(id, { ...touchableIn(data, body.identities, tree), sims: new Set(body.sims) });
   const objectives = objectiveProblems(data, body.objectives);
   for (const e of objectives.errors) errors.push(`${id}: ${e}`);
   for (const w of objectives.warnings) warnings.push(`${id}: ${w}`);
@@ -551,6 +551,8 @@ export function touchableIn(data, identities, tree) {
   for (const b of identities) add(b.tag === "Step" ? steps : items, b.prompt, b.id, b.formerIds, b.tag === "Step" ? stepHash : itemHash);
   return { objectives: new Set((data.objectives ?? []).map((o) => o.id)), items, steps, tree };
 }
+/** Whether a topic is published: in production and not a draft. */
+const isPublished = (tid) => touchable.get(tid)?.tree === "prod" && prodIds.get(tid)?.data.status !== "draft";
 const resolveRef = (ref) => {
   const m = /^(?:(objective|item|step|sim|checkpoint|topic):)?(.+)$/.exec(ref);
   const kind = m[1] ?? "topic";
@@ -576,9 +578,12 @@ const resolveRef = (ref) => {
   const set = kind === "objective" ? t.objectives : kind === "item" ? t.items : t.steps;
   return set.has(sub) ? { ok: true } : { ok: false, why: `names ${kind} "${sub}", which ${tid} does not declare${kind === "objective" ? "" : " under any current or former id"}` };
 };
+// A published lesson depends on a reference to itself or its parts, and on a simulation (or a checkpoint of one) it embeds.
 const publishedTopic = (ref) => {
+  const sim = /^(?:sim:([a-z0-9-]+)|checkpoint:([a-z0-9-]+)\/[a-z0-9-]+)$/.exec(ref);
+  if (sim) return [...touchable.keys()].some((tid) => isPublished(tid) && touchable.get(tid).sims.has(sim[1] ?? sim[2]));
   const m = /^(?:(?:objective|item|step|topic):)?([a-z0-9/-]+?)(?:[#:][a-z0-9-]+)?$/.exec(ref);
-  return Boolean(m && touchable.get(m[1])?.tree === "prod" && prodIds.get(m[1])?.data.status !== "draft");
+  return Boolean(m && isPublished(m[1]));
 };
 const knowledge = loadRecords(path.join(ROOT, "knowledge"), ROOT);
 errors.push(...knowledge.problems);

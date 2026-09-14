@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 // Build knowledge/index.json from the approved records (LMS-content#105): what the app and the
 // agents read. `--check` fails when the committed file is not what the records produce, so the
-// gate keeps it generated, never hand-edited. Usage: node pipeline/knowledge-index.mjs [--check]
+// gate keeps it generated, never hand-edited. Usage: node pipeline/knowledge-index.mjs [--check] [--root <dir>]
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildIndex, indexText, loadRecords, recordProblems } from "./knowledge.mjs";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const rootArg = process.argv.indexOf("--root");
+const ROOT = rootArg > 0 ? path.resolve(process.argv[rootArg + 1]) : path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIR = path.join(ROOT, "knowledge");
 const OUT = path.join(DIR, "index.json");
 const checkOnly = process.argv.includes("--check");
