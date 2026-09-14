@@ -21,6 +21,8 @@ reviewed: 2026-09-13
 review-by: 2026-12-12
 ---
 
-**Claim.** `jax.jit(f).lower(*args).compile()` traces, lowers and compiles without executing. The compiled object exposes `memory_analysis()` and `cost_analysis()` (backend permitting), so the HBM a batch size or sharding will need can be read at compile time, before a slice is spent on a run that would fail to allocate.
+**Claim.** `jax.jit(f).lower(*args).compile()` traces, lowers and compiles without executing. The compiled object exposes `memory_analysis()` and `cost_analysis()` (backend permitting), so the HBM an executable needs for a batch size or sharding can be read at compile time, before a slice is spent on a run that would fail to allocate.
 
-**Limits.** The analyses are the compiler's estimates for that executable; runtime allocations outside it (input buffers, other programs on the device) are not in them. Availability of the analyses is per backend.
+**What the memory analysis reports.** The executable's argument buffers (`argument_size_in_bytes`), its outputs, its temporaries and the aliased buffers, as the compiler estimates them for that executable. Inputs are therefore included; do not add them again.
+
+**Limits.** Outside the estimate: other live arrays on the device, other executables, and allocator or runtime overhead. The analyses are per backend; where a backend does not provide them the call returns nothing useful.

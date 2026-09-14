@@ -2,7 +2,7 @@
 id: claim/elementwise-ops-are-memory-bound-alone
 type: claim
 status: approved
-title: "An elementwise op on its own is memory-bound: about one operation per element read and written"
+title: "A large, simple elementwise kernel on its own is memory-bound at the HBM boundary"
 scope: "Elementwise operations on accelerators"
 sources:
   - "Austin et al., \"How to Scale Your Model\" (jax-ml.github.io/scaling-book), Part 1: Rooflines"
@@ -23,6 +23,8 @@ reviewed: 2026-09-13
 review-by: 2027-09-13
 ---
 
-**Claim.** Bias, activation and scale operations do one cheap arithmetic operation per element but read and write every element: a few FLOPs per byte, far below any accelerator's ridge point. Alone they stall on HBM bandwidth; that is why fusing them into the matmul's epilogue is the optimisation that matters most in a transformer layer.
+**Claim.** A simple streaming elementwise kernel over a large tensor (a bias add, a scale) does a few operations per element but reads and writes every element: a few FLOPs per byte at the HBM boundary, far below the ridge point of a matrix unit. Run alone, such a kernel is bounded by HBM bandwidth, which is why XLA fuses it into the producing matmul's epilogue where it can.
 
-**Limits.** The exact FLOP-per-byte depends on the element width and the operation; the conclusion (below the ridge by a wide margin) holds for every common case.
+**Limits.**
+- Scope: large tensors and simple operations at the stated boundary. An activation with transcendental functions does more work per element; a small array can be bounded by launch and dispatch overhead instead; and the applicable compute ceiling is that of the unit the operation runs on (the vector unit, not the MXU).
+- Fusing these kernels helps in proportion to the time they and their transfers take in the whole step. A layer whose time is dominated by its matmuls gains little; the lesson's race shows the chain's own time, not the layer's.

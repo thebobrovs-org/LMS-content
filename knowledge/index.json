@@ -62,7 +62,7 @@
     {
       "id": "claim/elementwise-ops-are-memory-bound-alone",
       "type": "claim",
-      "title": "An elementwise op on its own is memory-bound: about one operation per element read and written",
+      "title": "A large, simple elementwise kernel on its own is memory-bound at the HBM boundary",
       "scope": "Elementwise operations on accelerators",
       "tags": [
         "roofline",
@@ -88,7 +88,7 @@
     {
       "id": "claim/fp16-overflows-past-65504",
       "type": "claim",
-      "title": "fp16's largest finite value is 65,504; a larger magnitude overflows to infinity",
+      "title": "fp16's largest finite value is 65,504; under round-to-nearest a magnitude of 65,520 or more overflows to infinity",
       "scope": "IEEE binary16 under round-to-nearest",
       "tags": [
         "precision",
@@ -142,7 +142,7 @@
     {
       "id": "claim/loss-scaling-for-fp16",
       "type": "claim",
-      "title": "fp16 training needs loss scaling because small gradients underflow; bf16's range removes that need",
+      "title": "fp16 training commonly needs loss scaling because small gradients underflow; bf16's range removes that particular need",
       "scope": "Mixed-precision training of neural networks",
       "tags": [
         "precision",
@@ -170,7 +170,7 @@
     {
       "id": "claim/mxu-multiplies-bf16-accumulates-fp32",
       "type": "claim",
-      "title": "The TPU matrix unit multiplies bf16 inputs and accumulates in fp32",
+      "title": "The TPU matrix unit multiplies bf16 inputs and accumulates in fp32, which reduces, not removes, rounding error",
       "scope": "Cloud TPU matrix units",
       "tags": [
         "precision",
@@ -218,7 +218,7 @@
     {
       "id": "claim/padding-inflates-bytes-and-flops",
       "type": "claim",
-      "title": "A 129-wide dimension on 128-wide tiles becomes 256: four times the slots of a 129×129 matrix, three quarters zeros",
+      "title": "Under square tile padding, a 129×129 matrix is executed as 256×256: four times the slots, a quarter useful",
       "scope": "Padding arithmetic on a square tile grid",
       "tags": [
         "padding",
@@ -240,6 +240,7 @@
         "concept/arithmetic-intensity-and-the-ridge"
       ],
       "backlinks": [
+        "claim/padding-to-tile-multiples",
         "concept/arithmetic-intensity-and-the-ridge",
         "concept/tensor-shape-sets-the-footprint",
         "misconception/oom-means-the-data-is-too-big"
@@ -249,7 +250,7 @@
     {
       "id": "claim/padding-to-tile-multiples",
       "type": "claim",
-      "title": "XLA pads a misaligned matmul dimension up to the next multiple of the tile",
+      "title": "A misaligned matmul dimension is executed in whole tiles; the guide's alignment rule is multiples of 8 and 128",
       "scope": "Dense matmuls on Cloud TPU",
       "tags": [
         "padding",
@@ -268,7 +269,8 @@
       "reviewed": "2026-09-13",
       "reviewBy": "2026-12-12",
       "links": [
-        "claim/mxu-tile-is-128-wide"
+        "claim/mxu-tile-is-128-wide",
+        "claim/padding-inflates-bytes-and-flops"
       ],
       "backlinks": [
         "claim/padding-inflates-bytes-and-flops",
@@ -279,7 +281,7 @@
     {
       "id": "claim/persistent-compilation-cache",
       "type": "claim",
-      "title": "JAX's persistent compilation cache lets every host reuse one compile",
+      "title": "The persistent compilation cache reuses compiled executables on later matching lookups, given storage every host can reach",
       "scope": "Multi-host JAX jobs",
       "tags": [
         "jax",

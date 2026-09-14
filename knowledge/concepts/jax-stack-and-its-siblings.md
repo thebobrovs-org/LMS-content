@@ -21,8 +21,8 @@ reviewed: 2026-09-13
 review-by: 2026-12-12
 ---
 
-**Concept.** The vertical stack is model code → JAX → StableHLO → XLA → device. JAX provides the numerics and the transformations (`jit`, `grad`, `vmap`). Flax (the module system; **NNX** is the recommended API for new code, **Linen** the previous one that existing frameworks still use), Optax (composable optimisers), Orbax (checkpointing) and Grain (data loading) are libraries built on JAX, side by side; none of them is a compiler rung.
+**Concept.** The vertical stack is model code → JAX → StableHLO → XLA → device. JAX provides the numerics and the transformations (`jit`, `grad`, `vmap`). Around it sit libraries with different roles: Flax (the module system; **NNX** is the recommended API for new code, **Linen** the previous one that existing frameworks still use) and Optax (composable optimisers) express the model and its updates as JAX computations; Orbax (checkpointing) and Grain (data loading) supply and persist data on the host, around that path. None of them is a compiler rung.
 
-**Relationships.** Everything they produce still passes through [concept/jax-compile-path](../concepts/jax-compile-path.md).
+**Relationships.** The model's and the optimiser's numerical computations pass through [concept/jax-compile-path](../concepts/jax-compile-path.md); checkpoint serialisation and the input pipeline largely run on the host without becoming a jaxpr or StableHLO.
 
 **Canonical terms.** JAX, Flax NNX, Flax Linen, Optax, Orbax, Grain.

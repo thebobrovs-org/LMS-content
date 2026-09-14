@@ -2,7 +2,7 @@
 id: claim/padding-to-tile-multiples
 type: claim
 status: approved
-title: "XLA pads a misaligned matmul dimension up to the next multiple of the tile"
+title: "A misaligned matmul dimension is executed in whole tiles; the guide's alignment rule is multiples of 8 and 128"
 scope: "Dense matmuls on Cloud TPU"
 sources:
   - "Google Cloud, \"Cloud TPU performance guide\", cloud.google.com/tpu/docs/performance-guide, section \"Padding\""
@@ -24,6 +24,9 @@ reviewed: 2026-09-13
 review-by: 2026-12-12
 ---
 
-**Claim.** When a dimension of a matmul operand is not a multiple of the MXU tile width, the compiler pads it with zeros up to the next multiple before the operation runs; the padded elements are stored and multiplied like real ones. The Cloud TPU performance guide states the alignment to aim for: the batch dimension a multiple of 8, the feature dimension a multiple of 128.
+**Claim.** The matrix unit executes a matmul in fixed-size tiles, so a dimension that is not a multiple of the tile width is processed as if it were rounded up to the next multiple: the extra rows or columns are zeros the unit still multiplies. The Cloud TPU performance guide's rule for avoiding that waste is to make the batch dimension a multiple of 8 and the feature dimension a multiple of 128.
 
-**Limits.** The exact padded layout is the compiler's choice and can differ by generation and by operation; the rule of thumb (multiples of 8 and 128) is the guide's, not a guarantee of the layout XLA picks.
+**Limits.**
+- This is about **execution tiling**, not the physical buffer in HBM. How XLA lays a tensor out in memory (which dimensions are padded, and to what) is the compiler's choice per operation and generation; the execution rounding does not by itself say how many bytes a buffer occupies.
+- The lesson's simulation assumes square 128 × 128 padding on both matmul operands so the effect is visible; that is the simulation's model, and the arithmetic in [claim/padding-inflates-bytes-and-flops](../claims/padding-inflates-bytes-and-flops.md) is stated under it.
+- The 8-and-128 rule is the guide's recommendation for common layouts, not a description of every layout XLA picks.

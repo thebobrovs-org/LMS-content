@@ -23,4 +23,4 @@ review-by: 2026-12-12
 
 **Claim.** On the first call, JAX evaluates the function with tracers that stand in for arrays (shape and dtype, no values), so the trace and XLA's compile consume host CPU and RAM. The TPU receives work only once the compiled executable is transferred to it.
 
-**Limits.** Host cost is per distinct shape signature; a warm cache skips both steps ([claim/persistent-compilation-cache](../claims/persistent-compilation-cache.md)).
+**Limits.** Two caches avoid different stages. An **in-process JIT cache** hit (the same function called again with the same shapes and dtypes in the same process) bypasses tracing, lowering and compilation. A **persistent compilation cache** hit ([claim/persistent-compilation-cache](../claims/persistent-compilation-cache.md)) still traces and lowers the function, because the lookup key is computed from the lowered computation; it skips the backend compile only.

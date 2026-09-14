@@ -28,4 +28,4 @@ review-by: 2027-09-13
 
 **How it shows.** A learner predicts that a 70,000 activation is fine in both formats, or that a value fp16 overflows on must overflow in bf16 too.
 
-**The correcting example.** Push a value past 65,504 in the number-format explorer: fp16 becomes infinity, bf16 keeps a rounded value, because bf16 spends 8 bits on the exponent and fp16 only 5. Same byte width, opposite bets.
+**The correcting example.** Push a value to 70,000 in the number-format explorer: fp16 becomes infinity (its largest finite value is 65,504; from 65,520 up it overflows), bf16 keeps a rounded value, because bf16 spends 8 bits on the exponent and fp16 only 5. Same byte width, opposite bets.

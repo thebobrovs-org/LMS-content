@@ -25,4 +25,4 @@ review-by: 2027-09-13
 
 **How it shows.** A learner reads a workload above the ridge as a warning, or tries to move it down.
 
-**The correcting example.** Compute-bound is the matrix unit saturated: the hardware you paid for is fully used. Memory-bound is the unit idling while bytes arrive. Every lever in these lessons (narrower formats, fusion, aligned shapes) pushes a workload up toward the compute ceiling, never down.
+**The correcting example.** On the roofline, memory-bound and compute-bound name which resource **caps** attainable throughput at that intensity; neither is a fault. A kernel on the compute-limited side is bounded by the compute ceiling, but that is a ceiling: it does not show the kernel reaches it, runs on the matrix unit, or does useful work efficiently. The objective is useful throughput and runtime. Levers that move fewer bytes for the same work (narrower formats, fusion) push toward the compute ceiling; levers that remove wasted work (aligned shapes, fewer padded FLOPs) can shorten runtime even when the reported intensity or FLOP/s falls.
