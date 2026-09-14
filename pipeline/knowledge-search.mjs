@@ -7,6 +7,8 @@
 //   node pipeline/knowledge-search.mjs --tag roofline
 //   node pipeline/knowledge-search.mjs padding tile
 //   node pipeline/knowledge-search.mjs --json …   (the matching records as JSON, for a script)
+//   node pipeline/knowledge-search.mjs --rank "why does a 129-wide matmul waste slots" [--topic t] [--k 5]
+//                                              (the top records for a question, scored; the mentor's retrieval)
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -20,6 +22,58 @@ export function search(index, { topic, tag, words = [] } = {}) {
     const text = `${r.title}\n${r.scope}`.toLowerCase();
     return w.every((x) => text.includes(x));
   });
+}
+
+/** Words that carry no signal for retrieval; kept short and English, like the records. */
+const STOPWORDS = new Set("a an and are as at be by can do does for from how i if in is it its my of on or so than that the this to was what when where which why will with you your".split(" "));
+
+/** The searchable tokens of a text: lowercase words of two or more letters or digits, stopwords dropped, a trailing `s` (not `ss`) folded whenever two or more characters remain. */
+export function tokens(text) {
+  return String(text ?? "")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 2 && !STOPWORDS.has(w))
+    .map((w) => (w.length >= 3 && w.endsWith("s") && !w.endsWith("ss") ? w.slice(0, -1) : w));
+}
+
+/** The slug of a reference or an id, without its kind: `claim/x` → `x`, `objective:t#o` → `t#o`, `sim:x` → `x`. */
+const slugOf = (ref) => ref.replace(/^[a-z]+[:/]/, "");
+
+/** The largest `k` the ranking returns; a request is one question, not a listing. */
+export const RANK_MAX = 50;
+
+/**
+ * Rank an index's records for a question (text search, no synonyms, no embeddings): each
+ * distinct question token scores 3 in the title, 2 in the scope, 2 in a tag and 1 in the slug of
+ * the id or of a `touches` reference (the kind, `claim/` or `objective:`, is not searchable),
+ * summed; a record that touches `topic` gets 2 more. Records scoring 0 are left out. Returns the
+ * top `k` (1 to RANK_MAX) as `{ record, score, matched }`, ties broken by id; an empty question
+ * or a `k` outside the range throws. This is the retrieval the mentor's benchmark measures (hyperstack#71) and the mentor's
+ * service reuses (hyperstack ADR 0006 §4): the same code, so what is measured is what ships.
+ */
+export function rank(index, question, { topic, k = 5 } = {}) {
+  if (typeof question !== "string" || !question.trim()) throw new TypeError("rank needs a question");
+  if (!(Number.isInteger(k) && k >= 1 && k <= RANK_MAX)) throw new RangeError(`k must be an integer from 1 to ${RANK_MAX}`);
+  const q = [...new Set(tokens(question))];
+  const scored = [];
+  for (const r of index.records) {
+    const title = new Set(tokens(r.title));
+    const scope = new Set(tokens(r.scope));
+    const tags = new Set((r.tags ?? []).flatMap(tokens));
+    const slugs = new Set([r.id, ...r.touches].flatMap((t) => tokens(slugOf(t))));
+    let score = 0;
+    const matched = [];
+    for (const w of q) {
+      const s = (title.has(w) ? 3 : 0) + (scope.has(w) ? 2 : 0) + (tags.has(w) ? 2 : 0) + (slugs.has(w) ? 1 : 0);
+      if (s) {
+        score += s;
+        matched.push(w);
+      }
+    }
+    if (topic && r.touches.some((t) => t === topic || t === `topic:${topic}` || t.startsWith(`objective:${topic}#`) || t.startsWith(`item:${topic}#`) || t.startsWith(`step:${topic}:`))) score += 2;
+    if (score > 0) scored.push({ record: r, score, matched });
+  }
+  return scored.sort((a, b) => b.score - a.score || (a.record.id < b.record.id ? -1 : 1)).slice(0, k);
 }
 
 export function format(records) {
@@ -36,11 +90,23 @@ if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).
   const json = args.includes("--json");
   const topic = opt("--topic");
   const tag = opt("--tag");
+  const ranking = args.includes("--rank");
+  const question = opt("--rank");
+  const hasK = args.includes("--k");
+  const kArg = opt("--k");
+  const k = !hasK ? 5 : kArg !== undefined && /^\d+$/.test(kArg) ? Number(kArg) : NaN;
+  if (ranking && (question === undefined || !question.trim())) { console.error("--rank needs a question"); process.exit(2); }
+  if (!(Number.isInteger(k) && k >= 1 && k <= RANK_MAX)) { console.error(`--k must be an integer from 1 to ${RANK_MAX}`); process.exit(2); }
   const words = args.filter((a) => a !== "--json");
   const root = rootArg ? path.resolve(rootArg) : path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const file = path.join(root, "knowledge", "index.json");
   if (!fs.existsSync(file)) { console.error(`no ${file}: run node pipeline/knowledge-index.mjs`); process.exit(1); }
   const index = JSON.parse(fs.readFileSync(file, "utf8"));
-  const found = search(index, { topic, tag, words });
-  process.stdout.write(json ? `${JSON.stringify(found, null, 2)}\n` : format(found));
+  if (ranking) {
+    const ranked = rank(index, question, { topic, k });
+    process.stdout.write(json ? `${JSON.stringify(ranked.map((h) => ({ id: h.record.id, score: h.score, matched: h.matched })), null, 2)}\n` : ranked.length ? ranked.map((h) => `${String(h.score).padStart(3)}  ${h.record.id}  (${h.matched.join(", ")})`).join("\n") + "\n" : "no record scores for this question\n");
+  } else {
+    const found = search(index, { topic, tag, words });
+    process.stdout.write(json ? `${JSON.stringify(found, null, 2)}\n` : format(found));
+  }
 }
