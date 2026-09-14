@@ -8,8 +8,8 @@
   --border: #e2e8f0;
   --primary: #2563eb;
   --primary-contrast: #ffffff;
-  --accent: #0d9488;
-  --success: #16a34a;
+  --accent: #0f766e;
+  --success: #15803d;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -32,8 +32,8 @@
   --border: #e2e8f0;
   --primary: #2563eb;
   --primary-contrast: #ffffff;
-  --accent: #0d9488;
-  --success: #16a34a;
+  --accent: #0f766e;
+  --success: #15803d;
 }
 [data-theme="dark"] {
   --bg: #1a1a1a;

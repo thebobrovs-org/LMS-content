@@ -304,7 +304,7 @@ function render() {
       ctx.lineWidth = isMoving ? 2 : 3;
       if (isMoving && !reducedMotion) { ctx.shadowBlur = 6; ctx.shadowColor = "#60a5fa"; }
     } else {
-      ctx.strokeStyle = isMoving ? "#64748b" : "#22304d";
+      ctx.strokeStyle = isMoving ? "#475569" : "#22304d";
       ctx.lineWidth = 1;
     }
     ctx.stroke(); ctx.restore(); ctx.shadowBlur = 0;

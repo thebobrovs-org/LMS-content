@@ -3,7 +3,7 @@
 const app = document.getElementById("app");
 
 const RING = 65536; // hash space 0..RING-1
-const PALETTE = ["#2563eb", "#0d9488", "#d97706", "#7c3aed", "#db2777", "#16a34a", "#0891b2", "#ca8a04"];
+const PALETTE = ["#2563eb", "#0f766e", "#b45309", "#7c3aed", "#db2777", "#15803d", "#0891b2", "#ca8a04"];
 
 let keyCount = 24;
 let replicas = 1;

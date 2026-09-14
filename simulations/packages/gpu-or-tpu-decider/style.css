@@ -1,15 +1,15 @@
 /* GPU or TPU? decision tree — LMS tokens, theme-aware, no CDNs. */
 :root {
-  --bg:#fff; --fg:#0f172a; --muted:#64748b; --surface:#f1f5f9; --panel:#fff;
+  --bg:#fff; --fg:#0f172a; --muted:#475569; --surface:#f1f5f9; --panel:#fff;
   --border:#e2e8f0; --inset:#f8fafc; --primary:#2563eb; --primary-contrast:#fff;
-  --tpu:#0d9488; --gpu:#7c3aed;
+  --tpu:#0f766e; --gpu:#7c3aed;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg:#0f172a; --fg:#f8fafc; --muted:#94a3b8; --surface:#1e293b; --panel:#1e293b;
+  :root { --bg:#0f172a; --fg:#f8fafc; --muted:#a5b1c2; --surface:#1e293b; --panel:#1e293b;
     --border:#334155; --inset:#0f172a; --primary:#60a5fa; --primary-contrast:#0b1220; --tpu:#2dd4bf; --gpu:#a78bfa; }
 }
-[data-theme="light"] { --bg:#fff; --fg:#0f172a; --muted:#64748b; --surface:#f1f5f9; --panel:#fff; --border:#e2e8f0; --inset:#f8fafc; --primary:#2563eb; --primary-contrast:#fff; --tpu:#0d9488; --gpu:#7c3aed; }
-[data-theme="dark"] { --bg:#0f172a; --fg:#f8fafc; --muted:#94a3b8; --surface:#1e293b; --panel:#1e293b; --border:#334155; --inset:#0f172a; --primary:#60a5fa; --primary-contrast:#0b1220; --tpu:#2dd4bf; --gpu:#a78bfa; }
+[data-theme="light"] { --bg:#fff; --fg:#0f172a; --muted:#475569; --surface:#f1f5f9; --panel:#fff; --border:#e2e8f0; --inset:#f8fafc; --primary:#2563eb; --primary-contrast:#fff; --tpu:#0f766e; --gpu:#7c3aed; }
+[data-theme="dark"] { --bg:#0f172a; --fg:#f8fafc; --muted:#a5b1c2; --surface:#1e293b; --panel:#1e293b; --border:#334155; --inset:#0f172a; --primary:#60a5fa; --primary-contrast:#0b1220; --tpu:#2dd4bf; --gpu:#a78bfa; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; }

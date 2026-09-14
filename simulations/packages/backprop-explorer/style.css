@@ -1,14 +1,14 @@
 /* Backprop explorer — step walkthrough. Hyperstack tokens, theme-aware, no CDNs. */
 :root {
-  --bg:#fff; --fg:#0f172a; --muted:#64748b; --surface:#f1f5f9; --panel:#fff; --border:#e2e8f0; --inset:#f8fafc;
-  --primary:#2563eb; --primary-contrast:#fff; --good:#16a34a; --warn:#d97706; --bad:#dc2626; --neuron:#7c3aed;
+  --bg:#fff; --fg:#0f172a; --muted:#475569; --surface:#f1f5f9; --panel:#fff; --border:#e2e8f0; --inset:#f8fafc;
+  --primary:#2563eb; --primary-contrast:#fff; --good:#15803d; --warn:#b45309; --bad:#b91c1c; --neuron:#7c3aed;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg:#0f172a; --fg:#f8fafc; --muted:#94a3b8; --surface:#1e293b; --panel:#1e293b; --border:#334155; --inset:#0f172a;
+  :root { --bg:#0f172a; --fg:#f8fafc; --muted:#a5b1c2; --surface:#1e293b; --panel:#1e293b; --border:#334155; --inset:#0f172a;
     --primary:#60a5fa; --primary-contrast:#0b1220; --good:#22c55e; --warn:#fbbf24; --bad:#f87171; --neuron:#a78bfa; }
 }
-[data-theme="light"] { --bg:#fff; --fg:#0f172a; --muted:#64748b; --surface:#f1f5f9; --panel:#fff; --border:#e2e8f0; --inset:#f8fafc; --primary:#2563eb; --primary-contrast:#fff; --good:#16a34a; --warn:#d97706; --bad:#dc2626; --neuron:#7c3aed; }
-[data-theme="dark"] { --bg:#0f172a; --fg:#f8fafc; --muted:#94a3b8; --surface:#1e293b; --panel:#1e293b; --border:#334155; --inset:#0f172a; --primary:#60a5fa; --primary-contrast:#0b1220; --good:#22c55e; --warn:#fbbf24; --bad:#f87171; --neuron:#a78bfa; }
+[data-theme="light"] { --bg:#fff; --fg:#0f172a; --muted:#475569; --surface:#f1f5f9; --panel:#fff; --border:#e2e8f0; --inset:#f8fafc; --primary:#2563eb; --primary-contrast:#fff; --good:#15803d; --warn:#b45309; --bad:#b91c1c; --neuron:#7c3aed; }
+[data-theme="dark"] { --bg:#0f172a; --fg:#f8fafc; --muted:#a5b1c2; --surface:#1e293b; --panel:#1e293b; --border:#334155; --inset:#0f172a; --primary:#60a5fa; --primary-contrast:#0b1220; --good:#22c55e; --warn:#fbbf24; --bad:#f87171; --neuron:#a78bfa; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; }
@@ -30,7 +30,7 @@ body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, syst
 .step-btn:hover { background: color-mix(in srgb, var(--primary) 8%, transparent); color: var(--fg); }
 .step-btn.active { background: var(--primary); color: var(--primary-contrast); box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 40%, transparent); }
 .step-num { font-size: 11px; font-family: ui-monospace, monospace; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--fg) 10%, transparent); }
-.step-btn.active .step-num { background: color-mix(in srgb, var(--primary-contrast) 20%, transparent); }
+.step-btn.active .step-num { background: color-mix(in srgb, var(--fg) 25%, var(--primary)); }
 
 .explain { border-left: 4px solid var(--primary); min-height: 150px; }
 .e-title { font-size: 15px; font-weight: 800; color: var(--fg); margin-bottom: 6px; }

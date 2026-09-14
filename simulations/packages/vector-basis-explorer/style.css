@@ -1,16 +1,16 @@
 /* Vector basis explorer — Hyperstack tokens, theme-aware, no CDNs. */
 :root {
-  --bg:#fff; --fg:#0f172a; --muted:#64748b; --surface:#f1f5f9; --panel:#fff; --border:#e2e8f0; --inset:#f8fafc;
+  --bg:#fff; --fg:#0f172a; --muted:#475569; --surface:#f1f5f9; --panel:#fff; --border:#e2e8f0; --inset:#f8fafc;
   --primary:#2563eb; --primary-contrast:#fff;
-  --cx:#dc2626; --cy:#0d9488; --cz:#7c3aed; --guide:#94a3b8; --grid:#e2e8f0; --axis:#94a3b8;
+  --cx:#b91c1c; --cy:#0f766e; --cz:#7c3aed; --guide:#94a3b8; --grid:#e2e8f0; --axis:#94a3b8;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg:#0f172a; --fg:#f8fafc; --muted:#94a3b8; --surface:#1e293b; --panel:#1e293b; --border:#334155; --inset:#0f172a;
+  :root { --bg:#0f172a; --fg:#f8fafc; --muted:#a5b1c2; --surface:#1e293b; --panel:#1e293b; --border:#334155; --inset:#0f172a;
     --primary:#60a5fa; --primary-contrast:#0b1220;
-    --cx:#f87171; --cy:#2dd4bf; --cz:#a78bfa; --guide:#64748b; --grid:#1e293b; --axis:#475569; }
+    --cx:#f87171; --cy:#2dd4bf; --cz:#a78bfa; --guide:#475569; --grid:#1e293b; --axis:#475569; }
 }
-[data-theme="light"] { --bg:#fff; --fg:#0f172a; --muted:#64748b; --surface:#f1f5f9; --panel:#fff; --border:#e2e8f0; --inset:#f8fafc; --primary:#2563eb; --primary-contrast:#fff; --cx:#dc2626; --cy:#0d9488; --cz:#7c3aed; --guide:#94a3b8; --grid:#e2e8f0; --axis:#94a3b8; }
-[data-theme="dark"] { --bg:#0f172a; --fg:#f8fafc; --muted:#94a3b8; --surface:#1e293b; --panel:#1e293b; --border:#334155; --inset:#0f172a; --primary:#60a5fa; --primary-contrast:#0b1220; --cx:#f87171; --cy:#2dd4bf; --cz:#a78bfa; --guide:#64748b; --grid:#1e293b; --axis:#475569; }
+[data-theme="light"] { --bg:#fff; --fg:#0f172a; --muted:#475569; --surface:#f1f5f9; --panel:#fff; --border:#e2e8f0; --inset:#f8fafc; --primary:#2563eb; --primary-contrast:#fff; --cx:#b91c1c; --cy:#0f766e; --cz:#7c3aed; --guide:#94a3b8; --grid:#e2e8f0; --axis:#94a3b8; }
+[data-theme="dark"] { --bg:#0f172a; --fg:#f8fafc; --muted:#a5b1c2; --surface:#1e293b; --panel:#1e293b; --border:#334155; --inset:#0f172a; --primary:#60a5fa; --primary-contrast:#0b1220; --cx:#f87171; --cy:#2dd4bf; --cz:#a78bfa; --guide:#475569; --grid:#1e293b; --axis:#475569; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }

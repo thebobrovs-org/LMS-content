@@ -97,9 +97,9 @@ function render() {
 
   const colBorder = cssVar("--border") || "#888";
   const colLink = cssVar("--link") || colBorder;
-  const colChip = cssVar("--accent") || "#0d9488";
+  const colChip = cssVar("--accent") || "#0f766e";
   const colSel = cssVar("--primary") || "#2563eb";
-  const colWrap = cssVar("--danger") || "#dc2626";
+  const colWrap = cssVar("--danger") || "#b91c1c";
   const colNbr = cssVar("--nbr") || colSel;
 
   // --- Links ---

@@ -131,7 +131,7 @@ function renderUI() {
           <canvas id="c"></canvas>
           <div class="legend">
             <div class="leg-item"><div class="dot" style="background:rgba(59,130,246,0.6)"></div> Mesh</div>
-            <div class="leg-item"><div class="dot" style="background:#dc2626;box-shadow:0 0 10px #dc2626"></div> Worst-case path</div>
+            <div class="leg-item"><div class="dot" style="background:#b91c1c;box-shadow:0 0 10px #b91c1c"></div> Worst-case path</div>
           </div>
           <div class="drag-hint">Drag to rotate</div>
         </div>

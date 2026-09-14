@@ -1,16 +1,16 @@
 /* Arithmetic intensity & padding — LMS tokens, theme-aware, no CDNs. */
 :root {
-  --bg:#fff; --fg:#0f172a; --muted:#64748b; --surface:#f1f5f9; --panel:#fff;
+  --bg:#fff; --fg:#0f172a; --muted:#475569; --surface:#f1f5f9; --panel:#fff;
   --border:#e2e8f0; --inset:#f8fafc; --primary:#2563eb; --primary-contrast:#fff;
-  --ok:#0d9488; --warn:#dc2626; --weight:#7c3aed;
+  --ok:#0f766e; --warn:#b91c1c; --weight:#7c3aed;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg:#0f172a; --fg:#f8fafc; --muted:#94a3b8; --surface:#1e293b; --panel:#1e293b;
+  :root { --bg:#0f172a; --fg:#f8fafc; --muted:#a5b1c2; --surface:#1e293b; --panel:#1e293b;
     --border:#334155; --inset:#0f172a; --primary:#60a5fa; --primary-contrast:#0b1220;
     --ok:#2dd4bf; --warn:#f87171; --weight:#a78bfa; }
 }
-[data-theme="light"] { --bg:#fff; --fg:#0f172a; --muted:#64748b; --surface:#f1f5f9; --panel:#fff; --border:#e2e8f0; --inset:#f8fafc; --primary:#2563eb; --primary-contrast:#fff; --ok:#0d9488; --warn:#dc2626; --weight:#7c3aed; }
-[data-theme="dark"] { --bg:#0f172a; --fg:#f8fafc; --muted:#94a3b8; --surface:#1e293b; --panel:#1e293b; --border:#334155; --inset:#0f172a; --primary:#60a5fa; --primary-contrast:#0b1220; --ok:#2dd4bf; --warn:#f87171; --weight:#a78bfa; }
+[data-theme="light"] { --bg:#fff; --fg:#0f172a; --muted:#475569; --surface:#f1f5f9; --panel:#fff; --border:#e2e8f0; --inset:#f8fafc; --primary:#2563eb; --primary-contrast:#fff; --ok:#0f766e; --warn:#b91c1c; --weight:#7c3aed; }
+[data-theme="dark"] { --bg:#0f172a; --fg:#f8fafc; --muted:#a5b1c2; --surface:#1e293b; --panel:#1e293b; --border:#334155; --inset:#0f172a; --primary:#60a5fa; --primary-contrast:#0b1220; --ok:#2dd4bf; --warn:#f87171; --weight:#a78bfa; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; }
@@ -29,7 +29,7 @@ code { font-family: ui-monospace, Menlo, monospace; background: var(--surface); 
 input[type=range] { width: 180px; accent-color: var(--primary); }
 .tiles { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
 .t { font: inherit; font-size: 12px; padding: 5px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--muted); cursor: pointer; }
-.t.on { background: var(--weight); color: #fff; border-color: var(--weight); }
+.t.on { background: var(--weight); color: var(--primary-contrast); border-color: var(--weight); }
 
 /* roofline */
 .roofline { margin-bottom: 16px; }
