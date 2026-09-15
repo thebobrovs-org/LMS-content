@@ -65,6 +65,8 @@ export const RecordFrontmatterSchema = z
     sources: z.array(nonEmpty).optional(),
     touches: z.array(RecordRefSchema).default([]),
     tags: z.array(slug).optional(),
+    /** Words a question may use for this record beyond its title, scope and tags (LMS-content#111); a concept's **Canonical terms** line joins them in the index. */
+    terms: z.array(nonEmpty).max(20).optional(),
     /** Other records this one builds on or corrects. */
     related: z.array(RecordIdSchema).optional(),
     provenance: ProvenanceSchema.optional(),

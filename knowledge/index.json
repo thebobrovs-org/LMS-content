@@ -11,6 +11,7 @@
         "jax",
         "compilation"
       ],
+      "terms": [],
       "touches": [
         "ml-systems/jax-xla-stack",
         "objective:ml-systems/jax-xla-stack#aot-facts"
@@ -40,6 +41,7 @@
         "bf16",
         "fp16"
       ],
+      "terms": [],
       "touches": [
         "math-infra/precision-and-memory",
         "objective:math-infra/precision-and-memory#float-range-vs-precision"
@@ -70,6 +72,7 @@
         "roofline",
         "fusion"
       ],
+      "terms": [],
       "touches": [
         "ml-systems/jax-xla-stack",
         "objective:ml-systems/jax-xla-stack#fusion-hbm-trips"
@@ -97,6 +100,7 @@
         "fp16",
         "overflow"
       ],
+      "terms": [],
       "touches": [
         "math-infra/precision-and-memory",
         "objective:math-infra/precision-and-memory#overflow-prediction",
@@ -127,6 +131,7 @@
         "precision",
         "fp4"
       ],
+      "terms": [],
       "touches": [
         "math-infra/precision-and-memory",
         "objective:math-infra/precision-and-memory#float-range-vs-precision",
@@ -150,6 +155,7 @@
         "precision",
         "training"
       ],
+      "terms": [],
       "touches": [
         "math-infra/precision-and-memory",
         "objective:math-infra/precision-and-memory#float-range-vs-precision"
@@ -178,6 +184,7 @@
         "precision",
         "mxu"
       ],
+      "terms": [],
       "touches": [
         "math-infra/precision-and-memory",
         "objective:math-infra/precision-and-memory#bytes-to-intensity"
@@ -200,6 +207,7 @@
         "mxu",
         "tpu"
       ],
+      "terms": [],
       "touches": [
         "math-infra/tensor-shapes",
         "objective:math-infra/tensor-shapes#tile-padding",
@@ -226,6 +234,7 @@
         "padding",
         "roofline"
       ],
+      "terms": [],
       "touches": [
         "math-infra/tensor-shapes",
         "objective:math-infra/tensor-shapes#padding-waste",
@@ -258,6 +267,7 @@
         "padding",
         "xla"
       ],
+      "terms": [],
       "touches": [
         "math-infra/tensor-shapes",
         "objective:math-infra/tensor-shapes#tile-padding",
@@ -290,6 +300,7 @@
         "jax",
         "compilation"
       ],
+      "terms": [],
       "touches": [
         "ml-systems/jax-xla-stack",
         "objective:ml-systems/jax-xla-stack#stack-pieces"
@@ -311,6 +322,7 @@
       "title": "Precision, bytes and arithmetic intensity",
       "scope": "Roofline reasoning at one stated memory boundary (HBM, or another named level), for a kernel whose FLOPs are fixed",
       "tags": [],
+      "terms": [],
       "touches": [
         "math-infra/precision-and-memory"
       ],
@@ -337,6 +349,7 @@
         "jax",
         "compilation"
       ],
+      "terms": [],
       "touches": [
         "math-infra/tensor-shapes",
         "objective:math-infra/tensor-shapes#surprise-oom",
@@ -363,6 +376,7 @@
         "jax",
         "compilation"
       ],
+      "terms": [],
       "touches": [
         "ml-systems/jax-xla-stack",
         "objective:ml-systems/jax-xla-stack#compile-path"
@@ -389,6 +403,7 @@
         "fusion",
         "roofline"
       ],
+      "terms": [],
       "touches": [
         "ml-systems/jax-xla-stack",
         "objective:ml-systems/jax-xla-stack#fusion-hbm-trips",
@@ -420,6 +435,14 @@
       "tags": [
         "roofline",
         "performance"
+      ],
+      "terms": [
+        "arithmetic intensity",
+        "roofline",
+        "ridge point",
+        "memory-bound",
+        "compute-bound",
+        "attainable throughput"
       ],
       "touches": [
         "math-infra/precision-and-memory",
@@ -458,6 +481,15 @@
         "precision",
         "floating-point"
       ],
+      "terms": [
+        "exponent",
+        "significand",
+        "mantissa",
+        "dynamic range",
+        "precision",
+        "overflow",
+        "underflow"
+      ],
       "touches": [
         "math-infra/precision-and-memory",
         "objective:math-infra/precision-and-memory#float-range-vs-precision"
@@ -485,6 +517,14 @@
         "jax",
         "xla",
         "compilation"
+      ],
+      "terms": [
+        "tracing",
+        "jaxpr",
+        "lowering",
+        "stablehlo",
+        "xla",
+        "executable"
       ],
       "touches": [
         "ml-systems/jax-xla-stack",
@@ -521,6 +561,14 @@
         "jax",
         "ecosystem"
       ],
+      "terms": [
+        "jax",
+        "flax nnx",
+        "flax linen",
+        "optax",
+        "orbax",
+        "grain"
+      ],
       "touches": [
         "ml-systems/jax-xla-stack",
         "objective:ml-systems/jax-xla-stack#stack-pieces"
@@ -547,6 +595,14 @@
         "tensors",
         "memory"
       ],
+      "terms": [
+        "shape",
+        "dimension",
+        "element count",
+        "footprint",
+        "layout",
+        "allocation"
+      ],
       "touches": [
         "math-infra/tensor-shapes",
         "objective:math-infra/tensor-shapes#tensor-shape-footprint"
@@ -571,6 +627,7 @@
       "title": "A rewording keeps the id, a change of meaning gets a new one",
       "scope": "Every quiz item, flashcard and lesson step",
       "tags": [],
+      "terms": [],
       "touches": [
         "math-infra/precision-and-memory",
         "math-infra/tensor-shapes",
@@ -591,6 +648,7 @@
       "title": "A simulation serves an objective; it is not mandatory",
       "scope": "Every lesson",
       "tags": [],
+      "terms": [],
       "touches": [
         "math-infra/precision-and-memory",
         "math-infra/tensor-shapes",
@@ -613,6 +671,7 @@
       "tags": [
         "precision"
       ],
+      "terms": [],
       "touches": [
         "math-infra/precision-and-memory",
         "objective:math-infra/precision-and-memory#overflow-prediction",
@@ -639,6 +698,7 @@
       "tags": [
         "roofline"
       ],
+      "terms": [],
       "touches": [
         "math-infra/precision-and-memory",
         "objective:math-infra/precision-and-memory#roofline-placement"
@@ -660,6 +720,7 @@
       "title": "Fewer bytes always means faster training",
       "scope": "Learners meeting reduced-precision formats for the first time",
       "tags": [],
+      "terms": [],
       "touches": [
         "math-infra/precision-and-memory"
       ],
@@ -685,6 +746,7 @@
         "fusion",
         "roofline"
       ],
+      "terms": [],
       "touches": [
         "ml-systems/jax-xla-stack",
         "objective:ml-systems/jax-xla-stack#fusion-hbm-trips",
@@ -710,6 +772,7 @@
         "padding",
         "memory"
       ],
+      "terms": [],
       "touches": [
         "math-infra/tensor-shapes",
         "objective:math-infra/tensor-shapes#surprise-oom"
@@ -736,6 +799,7 @@
         "jax",
         "tpu"
       ],
+      "terms": [],
       "touches": [
         "ml-systems/jax-xla-stack",
         "objective:ml-systems/jax-xla-stack#stack-pieces"

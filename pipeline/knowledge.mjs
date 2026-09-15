@@ -72,9 +72,21 @@ export function textOf(r) {
 }
 
 /**
+ * A record's terms (LMS-content#111): the front matter's `terms` list, plus a concept's
+ * **Canonical terms.** line (comma-separated; a parenthesised alias counts too), lowercased and
+ * deduplicated, in the order given. What a question may call the record beyond its title, scope
+ * and tags; the index carries them and the ranking scores a question word found among them.
+ */
+export function termsOf(data, body) {
+  const line = /^\*\*Canonical terms\.\*\*\s*(.+?)\s*$/m.exec(body ?? "");
+  const canonical = line ? line[1].replace(/\.$/, "").replace(/\(([^)]*)\)/g, ", $1").split(",") : [];
+  return [...new Set([...(data.terms ?? []), ...canonical].map((t) => t.trim().toLowerCase()).filter(Boolean))];
+}
+
+/**
  * Load every record under `dir` (knowledge/): `{ records, problems }`. A record is
- * `{ id, file, data, body, links, sources, title }`; a file that cannot be read as a record is a
- * problem and is left out.
+ * `{ id, file, data, body, links, sources, title, terms }`; a file that cannot be read as a
+ * record is a problem and is left out.
  */
 export function loadRecords(dir, root = path.dirname(dir)) {
   const records = [];
@@ -96,7 +108,7 @@ export function loadRecords(dir, root = path.dirname(dir)) {
     const data = r.value;
     const expected = `${FOLDER_OF[data.type]}/${data.id.split("/")[1]}.md`;
     if (rel(dir, file) !== expected) problems.push(`${where}: a ${data.type} record "${data.id}" lives at knowledge/${expected}`);
-    records.push({ id: data.id, file: where, data, body: fm.content, sources: sourcesOf(data), title: titleOf(data) });
+    records.push({ id: data.id, file: where, data, body: fm.content, sources: sourcesOf(data), title: titleOf(data), terms: termsOf(data, fm.content) });
   }
   // Links resolve against the set just loaded, so a record may link forward to one later in the walk.
   const ids = new Set(records.map((r) => r.id));
@@ -171,6 +183,7 @@ export function buildIndex(records) {
       title: r.title,
       scope: r.data.scope,
       tags: r.data.tags ?? [],
+      terms: r.terms ?? termsOf(r.data, r.body),
       touches: r.data.touches,
       sources: r.sources,
       reviewed: r.data.reviewed,

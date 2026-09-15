@@ -7,7 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { RANK_MAX, format, rank, search, tokens } from "./knowledge-search.mjs";
+import { RANK_MAX, SYNONYMS, expandSynonyms, format, rank, search, tokens } from "./knowledge-search.mjs";
 
 const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), "knowledge-search.mjs");
 const rec = (id, title, scope, touches, tags = [], sources = ["A locator, §1"]) => ({ id, type: id.split("/")[0], title, scope, tags, touches, sources, reviewed: "2026-09-13", reviewBy: null, links: [], backlinks: [], file: `knowledge/${id}.md` });
@@ -104,4 +104,29 @@ test("the CLI reads knowledge/index.json under --root, takes --topic, --tag, wor
     assert.match(r.stderr, /--rank needs a question|--k must be an integer from 1 to 50/);
   }
   fs.rmSync(root, { recursive: true, force: true });
+});
+
+test("rank scores a question word found in a record's terms 2, like a tag, and expands the question with the synonym map first: a question in other words finds the record without the map being tuned to it (LMS-content#111)", () => {
+  const index = {
+    records: [
+      { id: "claim/elementwise-ops-are-memory-bound-alone", title: "A large, simple elementwise kernel on its own is memory-bound at the HBM boundary", scope: "Elementwise operations on accelerators", tags: ["roofline", "fusion"], terms: [], touches: ["ml-systems/jax-xla-stack"] },
+      { id: "concept/tensor-shape-sets-the-footprint", title: "A tensor's shape sets its footprint", scope: "Dense tensors on accelerators", tags: [], terms: ["shape", "dimension", "element count", "footprint", "layout", "allocation"], touches: ["math-infra/tensor-shapes"] },
+      { id: "claim/static-shapes-recompile", title: "A new input shape recompiles a jitted function", scope: "JAX on XLA", tags: ["xla"], touches: ["ml-systems/jax-xla-stack"] },
+    ],
+  };
+  // The terms: "allocation" is neither in the title nor the scope; it scores 2 through the terms, and the word is reported as matched.
+  const byTerm = rank(index, "allocation layout", { k: 3 });
+  assert.deepEqual(byTerm.map((r) => [r.record.id, r.score, r.matched]), [["concept/tensor-shape-sets-the-footprint", 4, ["allocation", "layout"]]]);
+  // The synonyms: "pointwise" and "bandwidth-limited" become "elementwise" and "memory-bound" as well, so the claim scores on its title; a record without terms is unaffected.
+  const q14 = rank(index, "Is a pointwise op like GELU bandwidth-limited when it runs by itself?", { k: 3 });
+  assert.equal(q14[0].record.id, "claim/elementwise-ops-are-memory-bound-alone");
+  assert.ok(q14[0].matched.includes("elementwise") && q14[0].matched.includes("memory") && q14[0].matched.includes("bound"));
+  // "buffer" and "allocates" reach the footprint concept through its terms; the recompile claim still leads on its own words.
+  const q16 = rank(index, "When a new shape forces a recompile, can the buffer XLA allocates be larger than the element count?", { k: 3 });
+  assert.deepEqual(q16.map((r) => r.record.id).slice(0, 2).sort(), ["claim/static-shapes-recompile", "concept/tensor-shape-sets-the-footprint"]);
+  assert.equal(expandSynonyms("Is a Pointwise op bandwidth-limited? half precision, mantissa."), "Is a Pointwise elementwise op bandwidth-limited memory-bound? half precision fp16, mantissa significand.");
+  assert.equal(expandSynonyms("nonpointwise bandwidth-limitedness"), "nonpointwise bandwidth-limitedness", "a phrase matches on word boundaries only");
+  assert.equal(expandSynonyms(""), "");
+  for (const [from, to] of Object.entries(SYNONYMS)) assert.match(to, /^[a-z0-9-]+( [a-z0-9-]+)*$/, `${from} → ${to} is words`);
+  assert.ok(Object.isFrozen(SYNONYMS));
 });

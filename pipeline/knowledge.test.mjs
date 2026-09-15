@@ -11,7 +11,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { buildIndex, identifierIn, indexText, linksIn, loadRecords, recordProblems } from "./knowledge.mjs";
+import { buildIndex, identifierIn, indexText, linksIn, loadRecords, recordProblems , termsOf } from "./knowledge.mjs";
 
 const INDEX_CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), "knowledge-index.mjs");
 
@@ -203,4 +203,21 @@ test("knowledge-index.mjs writes the index, and --check accepts it, refuses a st
   assert.equal(stale.status, 1);
   assert.match(fs.readFileSync(out, "utf8"), /Edited by hand/, "--check leaves the file as it found it");
   fs.rmSync(root, { recursive: true, force: true });
+});
+
+test("a record's terms are its front matter's terms list plus a concept's Canonical terms line, a parenthesised alias included, lowercased and deduplicated; the index carries them (LMS-content#111)", () => {
+  assert.deepEqual(termsOf({ terms: ["Pointwise", "GELU"] }, "**Concept.** x\n\n**Canonical terms.** exponent, significand (mantissa), Dynamic range, precision.\n"), ["pointwise", "gelu", "exponent", "significand", "mantissa", "dynamic range", "precision"]);
+  assert.deepEqual(termsOf({}, "no terms line here"), []);
+  assert.deepEqual(termsOf({ terms: ["a", "A", " a "] }, ""), ["a"]);
+  assert.deepEqual(termsOf({}, "**Canonical terms.** one, two.\n**Canonical terms.** three.\n"), ["one", "two"], "the first line only");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "knowledge-terms-"));
+  fs.mkdirSync(path.join(dir, "knowledge", "concepts"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "knowledge", "claims"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "knowledge", "concepts", "c.md"), `---\nid: concept/c\ntype: concept\nstatus: approved\nscope: s\nsources: [x]\nterms: [footprint]\nreviewed: 2026-09-01\n---\n**Concept.** c\n\n**Canonical terms.** shape, allocation.\n`);
+  fs.writeFileSync(path.join(dir, "knowledge", "claims", "d.md"), `---\nid: claim/d\ntype: claim\nstatus: approved\nscope: s\nsources: [x]\nreviewed: 2026-09-01\n---\n**Claim.** d\n`);
+  const { records, problems } = loadRecords(path.join(dir, "knowledge"), dir);
+  assert.deepEqual(problems, []);
+  const index = buildIndex(records);
+  assert.deepEqual(index.records.map((r) => [r.id, r.terms]), [["claim/d", []], ["concept/c", ["footprint", "shape", "allocation"]]]);
+  fs.rmSync(dir, { recursive: true, force: true });
 });

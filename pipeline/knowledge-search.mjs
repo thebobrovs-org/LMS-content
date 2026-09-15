@@ -36,6 +36,40 @@ export function tokens(text) {
     .map((w) => (w.length >= 3 && w.endsWith("s") && !w.endsWith("ss") ? w.slice(0, -1) : w));
 }
 
+/**
+ * The synonyms the ranking knows (LMS-content#111): a small, reviewed map from what a question
+ * may say to the words the records use. A phrase is matched whole, case-insensitively, on word
+ * boundaries; the question keeps its own words and gains the canonical ones, so a record named
+ * either way scores. Grow it from the benchmark's misses, never from one question.
+ */
+export const SYNONYMS = Object.freeze({
+  pointwise: "elementwise",
+  "element-wise": "elementwise",
+  "bandwidth-limited": "memory-bound",
+  "bandwidth limited": "memory-bound",
+  "bandwidth-bound": "memory-bound",
+  "memory limited": "memory-bound",
+  "compute-limited": "compute-bound",
+  mantissa: "significand",
+  "half precision": "fp16",
+  "half-precision": "fp16",
+  "brain float": "bf16",
+  bfloat16: "bf16",
+  buffer: "footprint allocation",
+  allocate: "allocation",
+  allocates: "allocation",
+  allocated: "allocation",
+  recompilation: "recompile",
+  recompiles: "recompile",
+  "kernel fusion": "fusion",
+  "operator fusion": "fusion",
+  "loss scaling": "loss-scaling",
+  "gradient scaling": "loss-scaling",
+});
+const SYNONYM_RE = new RegExp(`(?<![a-z0-9])(${Object.keys(SYNONYMS).sort((a, b) => b.length - a.length).map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})(?![a-z0-9])`, "gi");
+/** The question with each synonym's canonical words appended after it (the original words stay). */
+export const expandSynonyms = (text) => String(text ?? "").replace(SYNONYM_RE, (m) => `${m} ${SYNONYMS[m.toLowerCase()]}`);
+
 /** The slug of a reference or an id, without its kind: `claim/x` → `x`, `objective:t#o` → `t#o`, `sim:x` → `x`. */
 const slugOf = (ref) => ref.replace(/^[a-z]+[:/]/, "");
 
@@ -43,10 +77,11 @@ const slugOf = (ref) => ref.replace(/^[a-z]+[:/]/, "");
 export const RANK_MAX = 50;
 
 /**
- * Rank an index's records for a question (text search, no synonyms, no embeddings): each
- * distinct question token scores 3 in the title, 2 in the scope, 2 in a tag and 1 in the slug of
- * the id or of a `touches` reference (the kind, `claim/` or `objective:`, is not searchable),
- * summed; a record that touches `topic` gets 2 more. Records scoring 0 are left out. Returns the
+ * Rank an index's records for a question (text search with a small synonym map, no embeddings):
+ * the question is expanded with SYNONYMS first, then each distinct token scores 3 in the title,
+ * 2 in the scope, 2 in a tag, 2 in the record's terms (its canonical terms and its `terms`
+ * list, LMS-content#111) and 1 in the slug of the id or of a `touches` reference (the kind,
+ * `claim/` or `objective:`, is not searchable), summed; a record that touches `topic` gets 2 more. Records scoring 0 are left out. Returns the
  * top `k` (1 to RANK_MAX) as `{ record, score, matched }`, ties broken by id; an empty question
  * or a `k` outside the range throws. This is the retrieval the mentor's benchmark measures (hyperstack#71) and the mentor's
  * service reuses (hyperstack ADR 0006 §4): the same code, so what is measured is what ships.
@@ -54,17 +89,18 @@ export const RANK_MAX = 50;
 export function rank(index, question, { topic, k = 5 } = {}) {
   if (typeof question !== "string" || !question.trim()) throw new TypeError("rank needs a question");
   if (!(Number.isInteger(k) && k >= 1 && k <= RANK_MAX)) throw new RangeError(`k must be an integer from 1 to ${RANK_MAX}`);
-  const q = [...new Set(tokens(question))];
+  const q = [...new Set(tokens(expandSynonyms(question)))];
   const scored = [];
   for (const r of index.records) {
     const title = new Set(tokens(r.title));
     const scope = new Set(tokens(r.scope));
     const tags = new Set((r.tags ?? []).flatMap(tokens));
+    const terms = new Set((r.terms ?? []).flatMap(tokens));
     const slugs = new Set([r.id, ...r.touches].flatMap((t) => tokens(slugOf(t))));
     let score = 0;
     const matched = [];
     for (const w of q) {
-      const s = (title.has(w) ? 3 : 0) + (scope.has(w) ? 2 : 0) + (tags.has(w) ? 2 : 0) + (slugs.has(w) ? 1 : 0);
+      const s = (title.has(w) ? 3 : 0) + (scope.has(w) ? 2 : 0) + (tags.has(w) ? 2 : 0) + (terms.has(w) ? 2 : 0) + (slugs.has(w) ? 1 : 0);
       if (s) {
         score += s;
         matched.push(w);
