@@ -111,7 +111,7 @@ function buildHow() {
         <div class="console-log mono" id="log" tabindex="0" role="region" aria-label="Engineer's event log (scrollable)"></div>
       </div>
     </div>
-    <div class="grid-panel">
+    <div class="grid-panel" tabindex="0" role="region" aria-label="Systolic array grid">
       <div class="legend">
         <span><i class="dot w"></i> Stationary weights</span>
         <span><i class="dot a"></i> Flowing activations</span>

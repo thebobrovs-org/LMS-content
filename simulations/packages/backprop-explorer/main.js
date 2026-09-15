@@ -144,7 +144,7 @@ function initDOM() {
       </div>
 
       <div class="main-content">
-        <div class="panel diagram">
+        <div class="panel diagram" tabindex="0" role="region" aria-labelledby="diag-h">
           <h2 id="diag-h">Network</h2>
           <svg viewBox="0 0 760 280" role="img" aria-label="a 2-3-1 neural network: price and color inputs, three hidden neurons, one output, with backpropagation arrows">
             <defs>

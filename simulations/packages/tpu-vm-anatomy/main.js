@@ -137,6 +137,7 @@ function render() {
       <span class="hint">Toggle the architectures to watch the silicon change.</span>
     </div>
 
+    <div class="stage-scroll" tabindex="0" role="region" aria-label="TPU VM cutaway">
     <div class="stage">
       <div class="${cls("host")} side host" data-part="host" tabindex="0" role="button">Host</div>
       <div class="arr">↔</div>
@@ -153,6 +154,7 @@ function render() {
       <div class="${cls("ici")} side ici" data-part="ici" tabindex="0" role="button">ICI</div>
       <div class="arr">↔</div>
       <div class="${cls("chip")} side neighbor" data-part="chip" tabindex="0" role="button">Chip</div>
+    </div>
     </div>
 
     <div class="gennote">${genNote}</div>
