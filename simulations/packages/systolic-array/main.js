@@ -266,6 +266,8 @@ function render() {
   }
   const panel = app.querySelector("#panel");
   panel.setAttribute("aria-labelledby", `tab-${mode}`);
+  // The Why view holds nothing focusable, so its panel is the next Tab stop after the tab; the How view's own controls are.
+  panel.setAttribute("tabindex", mode === "why" ? "0" : "-1");
   panel.innerHTML = mode === "why" ? renderWhy() : buildHow();
   if (mode === "array") { resetArray(); wireHow(); }
   reportSize();

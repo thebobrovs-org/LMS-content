@@ -202,12 +202,14 @@ test("systolic-array: the tab list is built once; the arrow keys, Home and End m
   const array = sim.el("tab-array");
   const state = () => [why, array].map((t) => [t.getAttribute("aria-selected"), t.getAttribute("tabindex"), t.classList.contains("active")]);
   assert.deepEqual(state(), [["true", "0", true], ["false", "-1", false]]);
+  assert.equal(sim.el("panel").getAttribute("tabindex"), "0", "the Why panel holds nothing focusable, so it is the next Tab stop");
   const afterMount = sim.writes.length;
   assert.equal(sim.key(why, "ArrowRight").defaultPrevented, true);
   assert.equal(sim.run("mode"), "array");
   assert.equal(sim.doc.activeElement, array, "focus follows the selected tab");
   assert.deepEqual(state(), [["false", "-1", false], ["true", "0", true]]);
   assert.equal(sim.el("panel").getAttribute("aria-labelledby"), "tab-array");
+  assert.equal(sim.el("panel").getAttribute("tabindex"), "-1", "the How panel leaves Tab to its own controls");
   assert.match(sim.el("panel").innerHTML, /id="step"/, "the How panel, with its controls");
   sim.key(array, "Home");
   assert.deepEqual([sim.run("mode"), sim.doc.activeElement], ["why", why]);
