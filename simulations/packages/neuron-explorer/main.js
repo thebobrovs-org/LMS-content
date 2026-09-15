@@ -96,7 +96,7 @@ function initDOM() {
       <p class="hint">A <b>neuron</b> is the smallest real model: it takes inputs (a car's <b>price</b> and <b>color</b>), multiplies each by a learned <b>weight</b>, adds a <b>bias</b>, and squashes the result to a 0–1 score. <b>Train</b> it and gradient descent tunes those three numbers until the line separates buy from walk. Then <b>predict</b> a new car.</p>
     </div>
 
-    <div class="panel diagram">
+    <div class="panel diagram" tabindex="0" role="region" aria-label="Live network data flow">
       <h2>Live network data flow</h2>
       <svg viewBox="0 0 800 232" role="img" aria-label="neuron diagram: price and color inputs flow through weights into the neuron, out to a guess, with the optimizer updating the weights">
         <defs>

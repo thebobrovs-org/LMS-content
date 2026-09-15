@@ -2,9 +2,9 @@
 // A code overlay or an event log holds no control, so unless it is focusable a keyboard user can't
 // scroll what doesn't fit (axe `scrollable-region-focusable`). Every element a package's style.css
 // lets scroll (`overflow`, `overflow-x` or `overflow-y` of `auto` or `scroll`) is classified here:
-// a TEXT_REGION must be `tabindex="0"` with a role (`region` or `log`) and a name wherever the
-// package writes it; a WIDTH_GUARD is a wrapper that only scrolls when a drawing is wider than a
-// narrow screen. A scrolling rule is classified by the class or id of the element it applies to (its
+// a TEXT_REGION is a panel of text, a WIDTH_GUARD a wrapper that only scrolls when a drawing is wider
+// than a narrow screen (at 320 px they do, LMS-content#130). Each must be `tabindex="0"` with a role
+// (`region` or `log`) and a name wherever the package writes it. A scrolling rule is classified by the class or id of the element it applies to (its
 // last compound selector, whatever other classes, states or attributes qualify it: `.panel.active` and
 // `.panel:hover` are `.panel`); a new one fails until it is classified, and one with no class or id to
 // classify it by (`pre { overflow: auto }`) fails outright (LMS-content#128). The check is static, over
@@ -26,14 +26,13 @@ const TEXT_REGIONS = {
   "training-loop-explorer": [".code-overlay"],
   "xla-fusion-explorer": [".inspector-code"],
 };
-/** Wrappers that scroll only when their drawing is wider than the screen. */
+/** Wrappers that scroll only when their drawing is wider than the screen: each is a focusable, named region too. */
 const WIDTH_GUARDS = {
   "backprop-explorer": [".diagram"],
   "neuron-explorer": [".diagram"],
   "systolic-array": [".grid-panel"],
   "tpu-ocs-explorer": [".canvas-wrap"],
-  "tpu-vm-anatomy": ["#app"],
-  "xla-fusion-explorer": [".compile-stage"],
+  "tpu-vm-anatomy": [".stage-scroll"],
 };
 
 /** The index just past the quoted string that starts at `i`, a backslash escaping the character after it. */
@@ -152,13 +151,13 @@ export function regionProblems(open) {
 for (const name of fs.readdirSync(PACKAGES).sort()) {
   const dir = path.join(PACKAGES, name);
   if (!fs.existsSync(path.join(dir, "style.css"))) continue;
-  test(`${name}: every scrolling panel of text is reached by Tab and named`, () => {
+  test(`${name}: every scrolling panel of text or drawing is reached by Tab and named`, () => {
     const scrolling = scrollingSelectors(fs.readFileSync(path.join(dir, "style.css"), "utf8"));
     const regions = TEXT_REGIONS[name] ?? [];
     const guards = WIDTH_GUARDS[name] ?? [];
     assert.deepEqual(unclassified(scrolling, [...regions, ...guards]), [], "each scrolling rule's element is listed as a TEXT_REGION or a WIDTH_GUARD in this test");
     const sources = ["index.html", "main.js"].filter((f) => fs.existsSync(path.join(dir, f))).map((f) => [f, fs.readFileSync(path.join(dir, f), "utf8")]);
-    for (const selector of regions) {
+    for (const selector of [...regions, ...guards]) {
       const found = sources.flatMap(([file, src]) => tagsMatching(src, selector).map((t) => ({ ...t, file })));
       assert.ok(found.length > 0, `${selector} is written somewhere in index.html or main.js`);
       const short = found.map((t) => [t, regionProblems(t.open)]).filter(([, p]) => p.length).map(([t, p]) => `${t.file}:${t.line} ${t.open.slice(0, 80)} lacks ${p.join(", ")}`);

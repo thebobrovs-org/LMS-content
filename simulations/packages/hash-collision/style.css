@@ -62,8 +62,10 @@ body {
 #app {
   padding: 16px;
 }
+/* The buttons wrap below the key field when the row can't hold all three (LMS-content#130: a 286 px lesson frame). */
 .controls {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 12px;
 }
@@ -72,7 +74,8 @@ button {
   font: inherit;
 }
 input {
-  flex: 1;
+  flex: 1 1 12rem;
+  min-width: 0;
   padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: 6px;

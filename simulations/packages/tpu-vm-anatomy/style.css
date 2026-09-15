@@ -43,7 +43,11 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-#app { padding: 16px; overflow-x: auto; max-width: 900px; margin: 0 auto; }
+#app { padding: 16px; max-width: 900px; margin: 0 auto; }
+/* Only the cutaway scrolls sideways, as a focusable, named region, where the whole app used to (LMS-content#130). The
+   padding keeps a part's focus ring inside the scrolling box, and the scroll padding keeps it there when a focused part is
+   scrolled into view. */
+.stage-scroll { overflow-x: auto; padding: 6px; scroll-padding-inline: 8px; }
 :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .hint { font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 16px; }
 

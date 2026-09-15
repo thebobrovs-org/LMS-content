@@ -38,6 +38,14 @@ body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, syst
 .node:focus-visible .node-chip { outline: 2px solid var(--primary); outline-offset: 6px; }
 .node-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; transition: color 0.3s ease; }
 .node.active .node-label { color: var(--fg); }
+/* Eight generations don't fit one row in a 286 px lesson frame: the nodes pushed past it and each chip overlapped its
+   neighbour's focus ring. On a narrow screen they're two rows of four, without the connecting line (LMS-content#130). */
+@media (max-width: 480px) {
+  .timeline-track { display: grid; grid-template-columns: repeat(4, 1fr); row-gap: 16px; padding: 0; }
+  .timeline-line, .timeline-progress { display: none; }
+  .node { gap: 10px; }
+  .node-label { text-transform: none; letter-spacing: 0; }
+}
 
 /* --- The Wall vs The Fix Panels --- */
 .story-container { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }

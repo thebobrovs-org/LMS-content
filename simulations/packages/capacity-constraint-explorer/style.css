@@ -37,7 +37,9 @@ body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, syst
 
 .stage { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; align-items: start; }
 @media (max-width: 700px) { .stage { grid-template-columns: 1fr; } }
-.panel { background: var(--inset); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+/* min-width 0: a grid item is otherwise as wide as its widest line of code, and the panel pushed past a 286 px lesson
+   frame; the code block scrolls inside it instead, as a region (LMS-content#130). */
+.panel { background: var(--inset); border: 1px solid var(--border); border-radius: 14px; padding: 14px; min-width: 0; }
 .ptitle { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 10px; }
 .panel svg { width: 100%; height: auto; display: block; }
 
