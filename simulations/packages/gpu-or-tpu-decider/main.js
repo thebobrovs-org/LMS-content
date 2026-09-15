@@ -63,13 +63,18 @@ function choose(i) {
   } else {
     node = opt.next;
   }
-  render();
+  render(true);
 }
 let verdictWhy = "";
 
-function restart() { node = "start"; trail = []; verdictWhy = ""; render(); }
+function restart() { node = "start"; trail = []; verdictWhy = ""; render(true); }
 
-function render() {
+/**
+ * An answer replaces the buttons it was given on, so when a choice or Start over rendered the view,
+ * focus moves to what replaced them: the next question, or the verdict. A keyboard user carries on
+ * from there instead of from the top of the page (LMS-content#122). The first render moves no focus.
+ */
+function render(moveFocus = false) {
   const trailHtml = trail.length
     ? `<ol class="trail">${trail.map((t) => `<li><span class="tq">${t.q}</span><span class="ta">${t.choice}</span></li>`).join("")}</ol>`
     : "";
@@ -79,7 +84,7 @@ function render() {
     const v = VERDICTS[node.split(":")[1]];
     body = `
       <div class="verdict ${v.tone}">
-        <div class="vlabel">Use a <b>${v.label}</b></div>
+        <div class="vlabel" id="step-focus" tabindex="-1">Use a <b>${v.label}</b></div>
         <div class="vwhy">${verdictWhy}</div>
       </div>
       <button class="restart" id="restart">↺ Start over</button>`;
@@ -88,7 +93,7 @@ function render() {
     body = `
       <div class="qcard">
         <div class="qnum">Question ${trail.length + 1}</div>
-        <div class="qtext">${cur.q}</div>
+        <div class="qtext" id="step-focus" tabindex="-1">${cur.q}</div>
         <div class="opts">
           ${cur.opts.map((o, i) => `<button class="opt" data-i="${i}">${o.label}</button>`).join("")}
         </div>
@@ -103,6 +108,7 @@ function render() {
   app.querySelectorAll(".opt").forEach((el) => el.addEventListener("click", () => choose(+el.getAttribute("data-i"))));
   const r = app.querySelector("#restart");
   if (r) r.addEventListener("click", restart);
+  if (moveFocus) document.getElementById("step-focus").focus();
   reportSize();
 }
 

@@ -1,6 +1,7 @@
 // LMS-content#59: moving a slider must not rebuild it. Five sims used to rewrite the
 // markup holding their range inputs on every input event, so keyboard users lost focus
-// after one arrow press and mouse drags were cut short. Each real main.js runs in a
+// after one arrow press and mouse drags were cut short; three more, and a decider whose
+// answers dropped focus to the page, were found by a browser keyboard pass (#122). Each real main.js runs in a
 // Node vm with a small fake DOM: it records every innerHTML write and every listener,
 // and it finds the inputs and buttons in the markup written so far (and in the sim's
 // static index.html), so tests drive the real handlers. Run by `npm run gate`.
@@ -21,7 +22,10 @@ const PACKAGES = path.join(path.dirname(fileURLToPath(import.meta.url)), "../pac
 function fakeDom() {
   const writes = []; // { key, html }, in order
   const els = new Map();
+  const generation = new Map(); // key -> how many times its markup was written
+  let active = null;
   const doc = {
+    get activeElement() { return active; },
     getElementById: (id) => el(id),
     querySelector: (sel) => el(sel.startsWith("#") ? sel.slice(1) : sel),
     querySelectorAll: (sel) => select(sel),
@@ -44,6 +48,9 @@ function fakeDom() {
       textContent: "",
       className: "",
       hidden: false,
+      checked: false,
+      disabled: false,
+      focus() { active = this; },
       style: {},
       dataset,
       classList: {
@@ -61,7 +68,7 @@ function fakeDom() {
       querySelector: (sel) => doc.querySelector(sel),
       querySelectorAll: (sel) => doc.querySelectorAll(sel),
       get innerHTML() { return html; },
-      set innerHTML(value) { html = String(value); writes.push({ key, html }); },
+      set innerHTML(value) { html = String(value); writes.push({ key, html }); generation.set(key, (generation.get(key) ?? 0) + 1); },
     };
   }
   function el(key, attrs = {}) {
@@ -74,14 +81,18 @@ function fakeDom() {
   function select(sel) {
     const html = markup();
     if (/\binput$/.test(sel)) return [...new Set([...html.matchAll(/<input[^>]*\bid="([^"]+)"/g)].map((m) => m[1]))].map((id) => el(id));
-    // Buttons are identified by their position in the markup, which these sims never reorder.
-    const buttons = [...html.matchAll(/<button\b[^>]*>/g)].map((m, n) => el(`button:${n}`, attrsOf(m[0])));
+    // Buttons are identified by their position in the markup of the element holding them and that markup's
+    // generation: a button written again is a new element, without the listeners of the one it replaced.
+    const buttons = [...els.entries()]
+      .filter(([key]) => !key.startsWith("button:"))
+      .flatMap(([key, owner]) => [...owner.innerHTML.matchAll(/<button\b[^>]*>/g)].map((m, n) => el(`button:${key}#${generation.get(key) ?? 0}:${n}`, attrsOf(m[0]))));
     if (sel === ".presets button") return buttons.filter((b) => b.getAttribute("data-l") !== null);
     if (/^\.[\w-]+$/.test(sel)) return buttons.filter((b) => b.classList.contains(sel.slice(1)));
     return [];
   }
   return { doc, el, writes };
 }
+
 
 function loadSim(id) {
   const { doc, el, writes } = fakeDom();
@@ -116,8 +127,17 @@ function loadSim(id) {
   };
   return {
     run: (code) => vm.runInContext(code, context),
+    doc,
     el,
     writes,
+    /** Tick or clear a checkbox the way Space does: set it and fire its change listeners. */
+    toggle(boxId, checked) {
+      const box = el(boxId);
+      box.checked = checked;
+      fire(box, "change");
+    },
+    /** Click the element with this id through its registered handlers. */
+    clickId: (id) => fire(el(id), "click"),
     events,
     checkpoints: () => events.filter((e) => e.startsWith("checkpoint:")),
     buttons: (sel) => doc.querySelectorAll(sel),
@@ -136,8 +156,8 @@ function loadSim(id) {
   };
 }
 
-/** Keys of the elements whose markup was rewritten with a slider in it since write number `from`. */
-const rebuilt = (sim, from) => sim.writes.slice(from).filter((w) => /type="range"/.test(w.html)).map((w) => w.key);
+/** Keys of the elements whose markup was rewritten with a slider or a checkbox in it since write number `from`. */
+const rebuilt = (sim, from) => sim.writes.slice(from).filter((w) => /type="(range|checkbox)"/.test(w.html)).map((w) => w.key);
 
 // Every slider in every sim the issue lists.
 const CASES = [
@@ -150,6 +170,14 @@ const CASES = [
   { id: "matmul-tiler", start: "render()", slider: "s-M", moves: [400, 500], label: ["M-val", "500"] },
   { id: "matmul-tiler", start: "render()", slider: "s-K", moves: [300, 384], label: ["K-val", "384"] },
   { id: "matmul-tiler", start: "render()", slider: "s-N", moves: [700, 640], label: ["N-val", "640"] },
+  // LMS-content#122. The rack slider starts at its maximum of 40, so it moves down here.
+  { id: "capacity-constraint-explorer", start: "render()", slider: "c-cap", moves: [30, 20], label: ["cap-val", "20"] },
+  { id: "capacity-constraint-explorer", start: "render()", slider: "c-bud", moves: [110, 120], label: ["bud-val", "120"] },
+  { id: "network-graph-explorer", start: "render()", slider: "c-r", moves: [5, 6], label: ["r-val", "6"] },
+  { id: "network-graph-explorer", start: "render()", slider: "c-c", moves: [9, 10], label: ["c-val", "10"] },
+  { id: "vector-basis-explorer", start: "render()", slider: "sx", moves: [3, 2], label: ["sx-val", "2"] },
+  { id: "vector-basis-explorer", start: "render()", slider: "sy", moves: [4, 5], label: ["sy-val", "5"] },
+  { id: "vector-basis-explorer", start: "render()", slider: "sz", moves: [1, 2], label: ["sz-val", "2"] },
 ];
 
 for (const c of CASES) {
@@ -242,4 +270,45 @@ test("consistent-hash-ring: changing vnodes redraws the ring and the readout", (
   sim.input("rep", 4);
   assert.match(sim.el("readout").innerHTML, /Virtual nodes per node: 4/);
   assert.equal((sim.el("ring").innerHTML.match(/<title>[ABC]<\/title>/g) ?? []).length, 12); // 3 nodes × 4 vnodes
+});
+
+test("capacity-constraint-explorer and network-graph-explorer: the toggle updates the view in place, rebuilds no control, and completes the checkpoint (#122)", () => {
+  const cap = loadSim("capacity-constraint-explorer");
+  cap.run("render()");
+  const capMount = cap.writes.length;
+  cap.toggle("c-sing", true);
+  assert.deepEqual(cap.checkpoints(), ["checkpoint:observe-singular"]);
+  assert.equal(cap.el("c-bud").disabled, true, "the budget has no meaning while the rules conflict");
+  assert.match(cap.el("banner").innerHTML, /Impossible deployment/);
+  cap.toggle("c-sing", false);
+  assert.equal(cap.el("c-bud").disabled, false);
+  assert.deepEqual(rebuilt(cap, capMount), []);
+  assert.equal(cap.el("c-sing").listeners.change.length, 1, "the toggle is wired once");
+
+  const net = loadSim("network-graph-explorer");
+  net.run("render()");
+  const netMount = net.writes.length;
+  net.toggle("c-w", true);
+  assert.deepEqual(net.checkpoints(), ["checkpoint:observe-topology"]);
+  assert.match(net.el("note").innerHTML, /torus \(wrapped\)/);
+  assert.deepEqual(rebuilt(net, netMount), []);
+  assert.equal(net.el("c-w").listeners.change.length, 1);
+});
+
+test("gpu-or-tpu-decider: an answer moves focus to the next question, then to the verdict, and Start over to the first question, never to the page body (#122)", () => {
+  const sim = loadSim("gpu-or-tpu-decider");
+  sim.run("render()");
+  assert.equal(sim.doc.activeElement, null, "the first render moves no focus");
+  sim.click(".opt", (b) => b.getAttribute("data-i") === "0"); // JAX / PyTorch-XLA
+  assert.equal(sim.doc.activeElement, sim.el("step-focus"));
+  assert.match(sim.el("app").innerHTML, /id="step-focus" tabindex="-1">Can you reliably get the TPU capacity/);
+  sim.click(".opt", (b) => b.getAttribute("data-i") === "0"); // Yes
+  assert.equal(sim.doc.activeElement, sim.el("step-focus"));
+  assert.match(sim.el("app").innerHTML, /id="step-focus" tabindex="-1">Use a <b>TPU<\/b>/);
+  assert.deepEqual(sim.checkpoints(), ["checkpoint:observe-decision"]);
+  sim.el("app").focus(); // focus elsewhere, so the assertion below shows Start over moving it
+  assert.equal(sim.doc.activeElement, sim.el("app"));
+  sim.clickId("restart");
+  assert.match(sim.el("app").innerHTML, /id="step-focus" tabindex="-1">What is your model code optimized for\?/);
+  assert.equal(sim.doc.activeElement, sim.el("step-focus"));
 });
