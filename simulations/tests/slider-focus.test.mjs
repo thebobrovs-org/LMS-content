@@ -295,40 +295,48 @@ test("capacity-constraint-explorer and network-graph-explorer: the toggle update
   assert.equal(net.el("c-w").listeners.change.length, 1);
 });
 
+/**
+ * Press a decider button the way a keyboard user does: focus on it first, so each assertion after it
+ * shows the step moving focus itself. The fake keeps elements across renders, so without this a step
+ * that forgot to move focus would still find it on the element an earlier step focused (#123 review).
+ */
+function press(sim, button) {
+  button.focus();
+  assert.equal(sim.doc.activeElement, button);
+  if (button.id === "restart") sim.clickId("restart");
+  else sim.click(".opt", (b) => b === button);
+}
+const answer = (sim, i) => sim.doc.querySelectorAll(".opt").find((b) => b.getAttribute("data-i") === String(i));
+
 test("gpu-or-tpu-decider: an answer moves focus to the next question, then to the verdict, and Start over to the first question, never to the page body (#122)", () => {
   const sim = loadSim("gpu-or-tpu-decider");
   sim.run("render()");
   assert.equal(sim.doc.activeElement, null, "the first render moves no focus");
-  sim.click(".opt", (b) => b.getAttribute("data-i") === "0"); // JAX / PyTorch-XLA
+  press(sim, answer(sim, 0)); // JAX / PyTorch-XLA
   assert.equal(sim.doc.activeElement, sim.el("step-focus"));
   assert.match(sim.el("app").innerHTML, /id="step-focus" tabindex="-1">Can you reliably get the TPU capacity/);
-  sim.click(".opt", (b) => b.getAttribute("data-i") === "0"); // Yes
-  assert.equal(sim.doc.activeElement, sim.el("step-focus"));
+  press(sim, answer(sim, 0)); // Yes
+  assert.equal(sim.doc.activeElement, sim.el("step-focus"), "the verdict takes focus from the pressed answer");
   assert.match(sim.el("app").innerHTML, /id="step-focus" tabindex="-1">Use a <b>TPU<\/b>/);
   assert.deepEqual(sim.checkpoints(), ["checkpoint:observe-decision"]);
-  sim.el("app").focus(); // focus elsewhere, so the assertion below shows Start over moving it
-  assert.equal(sim.doc.activeElement, sim.el("app"));
-  sim.clickId("restart");
+  press(sim, sim.el("restart"));
   assert.match(sim.el("app").innerHTML, /id="step-focus" tabindex="-1">What is your model code optimized for\?/);
-  assert.equal(sim.doc.activeElement, sim.el("step-focus"));
+  assert.equal(sim.doc.activeElement, sim.el("step-focus"), "Start over takes focus to the first question");
 });
 
-test("gpu-or-tpu-decider: alternative paths (CUDA branch to GPU verdict) move focus to next question and verdict (#122)", () => {
+test("gpu-or-tpu-decider: the CUDA branch moves focus to its question, then to the GPU verdict, and Start over back to the first question (#122)", () => {
   const sim = loadSim("gpu-or-tpu-decider");
   sim.run("render()");
-  assert.equal(sim.doc.activeElement, null, "initial render sets no focus");
-  // Choose option 1: "CUDA / GPU-specific kernels" -> leads to kernels question
-  sim.click(".opt", (b) => b.getAttribute("data-i") === "1");
+  assert.equal(sim.doc.activeElement, null, "the first render moves no focus");
+  press(sim, answer(sim, 1)); // CUDA / GPU-specific kernels
   assert.equal(sim.doc.activeElement, sim.el("step-focus"));
   assert.match(sim.el("app").innerHTML, /id="step-focus" tabindex="-1">Does it depend on hand-tuned CUDA kernels/);
-  // Choose option 0: "Yes" -> leads to GPU verdict
-  sim.click(".opt", (b) => b.getAttribute("data-i") === "0");
-  assert.equal(sim.doc.activeElement, sim.el("step-focus"));
+  press(sim, answer(sim, 0)); // Yes
+  assert.equal(sim.doc.activeElement, sim.el("step-focus"), "the verdict takes focus from the pressed answer");
   assert.match(sim.el("app").innerHTML, /id="step-focus" tabindex="-1">Use a <b>GPU<\/b>/);
   assert.deepEqual(sim.checkpoints(), ["checkpoint:observe-decision"]);
-  // Restart returns to root question with focus
-  sim.clickId("restart");
-  assert.equal(sim.doc.activeElement, sim.el("step-focus"));
+  press(sim, sim.el("restart"));
+  assert.equal(sim.doc.activeElement, sim.el("step-focus"), "Start over takes focus to the first question");
   assert.match(sim.el("app").innerHTML, /id="step-focus" tabindex="-1">What is your model code optimized for\?/);
 });
 
