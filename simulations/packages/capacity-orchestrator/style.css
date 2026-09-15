@@ -38,7 +38,8 @@ body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, syst
 
 .calendar-input { display: none; margin-top: 6px; padding: 10px 12px; background: color-mix(in srgb, var(--primary) 8%, transparent); border-radius: 8px; border: 1px dashed var(--primary); }
 .calendar-input.active { display: block; }
-.cal-label { font-size: 10px; color: var(--primary); font-weight: 800; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
+/* The label's own ink, not --primary: on the box's primary tint, primary text reads under 4.5:1 (tests/code-contrast.test.mjs). */
+.cal-label { font-size: 10px; color: var(--fg); font-weight: 800; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
 .cal-value { font-size: 14px; font-weight: 600; color: var(--fg); }
 
 .telemetry { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }

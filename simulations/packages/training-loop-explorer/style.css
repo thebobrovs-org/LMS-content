@@ -89,6 +89,8 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; flex: 1;
 .code-overlay .hl-bg { background: color-mix(in srgb, var(--warn) 30%, transparent); color: var(--fg); font-weight: 900; border-radius: 3px; padding: 1px 3px; margin: -1px -3px; }
 .code-overlay .kw { color: var(--good); font-weight: bold; }
 .code-overlay .op { color: var(--primary); }
+/* On a tint, the tokens take the tint's text colour: their own read under 4.5:1 there (tests/code-contrast.test.mjs). */
+.code-overlay .hl .kw, .code-overlay .hl .op, .code-overlay .hl .cm, .code-overlay .hl-bg .kw, .code-overlay .hl-bg .op, .code-overlay .hl-bg .cm { color: inherit; }
 .code-overlay .cm { color: var(--muted); font-style: italic; }
 
 @media (prefers-reduced-motion: reduce) {
