@@ -93,3 +93,36 @@ test("the check finds scrolling selectors, matches their tags, and names what a 
   assert.deepEqual(regionProblems(tagsMatching(html, "#out")[0].open), []);
   assert.deepEqual(regionProblems(`<div role="log" tabindex="0" aria-labelledby="h">`), []);
 });
+
+test("regionProblems flags tabindex -1, empty aria-label, missing roles, and accepts single quotes and reordered attributes", () => {
+  // tabindex="-1" cannot be reached by Tab navigation
+  assert.deepEqual(
+    regionProblems('<div tabindex="-1" role="region" aria-label="Output">'),
+    ['tabindex="0"']
+  );
+  // Empty aria-label provides no accessible name
+  assert.deepEqual(
+    regionProblems('<div tabindex="0" role="region" aria-label="">'),
+    ["a name (aria-label or aria-labelledby)"]
+  );
+  // Missing role
+  assert.deepEqual(
+    regionProblems('<div tabindex="0" aria-label="Output">'),
+    ['role="region" (or "log")']
+  );
+  // Missing tabindex
+  assert.deepEqual(
+    regionProblems('<div role="region" aria-label="Output">'),
+    ['tabindex="0"']
+  );
+  // Bare element missing all three
+  assert.deepEqual(
+    regionProblems('<div class="panel">'),
+    ['tabindex="0"', 'role="region" (or "log")', "a name (aria-label or aria-labelledby)"]
+  );
+  // Single-quoted attributes and reordered attributes
+  assert.deepEqual(
+    regionProblems("<pre aria-label='Output log' role='region' tabindex='0'>"),
+    []
+  );
+});

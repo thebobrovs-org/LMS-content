@@ -190,3 +190,58 @@ test("the overlay check tints, inherits and nests as the browser does, and repor
   assert.ok(overlayProblems(nested, t).some((p) => p.startsWith(".mark text #2563eb on .hl in .mark")), overlayProblems(nested, t).join("\n"));
   assert.deepEqual(overlayProblems(".code-overlay { background: rgb(1, 2, 3); color: var(--fg); } .code-overlay .kw { color: var(--good); }", t), [".code-overlay: rgb(1, 2, 3) is not a colour this check resolves"]);
 });
+
+test("image-tensor-explorer: pixelInk contrast holds on grayscale crossover threshold, primaries and all simulation states", () => {
+  const { pixelInk } = loadPixelInk();
+  // Mathematical crossover threshold is luminance ~0.179128 (grayscale c=117 vs c=118)
+  assert.equal(pixelInk(117, 117, 117), "#fff", "c=117 luminance is just below crossover; contrast with white is >4.5:1");
+  assert.equal(pixelInk(118, 118, 118), "#000", "c=118 luminance is just above crossover; contrast with black is >4.5:1");
+  assert.ok(contrast("#ffffff", toHex([117, 117, 117])) >= 4.5);
+  assert.ok(contrast("#000000", toHex([118, 118, 118])) >= 4.5);
+
+  // sRGB linear threshold boundary (c=10 linear, c=11 power curve)
+  for (const c of [0, 10, 11, 255]) {
+    const ink = pixelInk(c, c, c);
+    const ratio = contrast(ink === "#000" ? "#000000" : "#ffffff", toHex([c, c, c]));
+    assert.ok(ratio >= 4.5, `grayscale ${c}: ${ratio.toFixed(2)}:1`);
+  }
+
+  // Extreme primaries and secondaries
+  const primaries = [
+    [255, 0, 0], [0, 255, 0], [0, 0, 255],
+    [255, 255, 0], [0, 255, 255], [255, 0, 255],
+    [0, 0, 0], [255, 255, 255],
+  ];
+  for (const [r, g, b] of primaries) {
+    const ink = pixelInk(r, g, b);
+    const ratio = contrast(ink === "#000" ? "#000000" : "#ffffff", toHex([r, g, b]));
+    assert.ok(ratio >= 4.5, `rgb(${r},${g},${b}): ${ratio.toFixed(2)}:1`);
+  }
+
+  // Actual landscape generator pixels across frames 0, 1, 2 and steps
+  for (let f = 0; f < 3; f++) {
+    for (let y = 0; y < 8; y++) {
+      for (let x = 0; x < 8; x++) {
+        const sunY = 3 + f * 1.5;
+        const dist = Math.sqrt((x - 3.5) ** 2 + (y - sunY) ** 2);
+        let r, g, b;
+        if (y > 5) { r = 34 + f * 10; g = 139 - f * 20; b = 34; }
+        else if (dist < 2.5) { r = 255; g = 200 - f * 40; b = 50; }
+        else { r = 135 - f * 30; g = 206 - f * 50; b = 235; }
+
+        const variants = [
+          [r, g, b],
+          [r, 0, 0],
+          [0, g, 0],
+          [0, 0, b],
+          [Math.floor(0.3 * r + 0.59 * g + 0.11 * b), Math.floor(0.3 * r + 0.59 * g + 0.11 * b), Math.floor(0.3 * r + 0.59 * g + 0.11 * b)],
+        ];
+        for (const [pr, pg, pb] of variants) {
+          const ink = pixelInk(pr, pg, pb);
+          const ratio = contrast(ink === "#000" ? "#000000" : "#ffffff", toHex([pr, pg, pb]));
+          assert.ok(ratio >= 4.5, `pixel (${x},${y},f=${f}) rgb(${pr},${pg},${pb}): ${ratio.toFixed(2)}:1`);
+        }
+      }
+    }
+  }
+});
