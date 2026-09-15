@@ -13,11 +13,24 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-/** The records of an index that match: every word in the title or scope, the topic in `touches`, the tag in `tags`. */
+/**
+ * Whether a record touches a topic: through the topic itself, one of its objectives, items or
+ * steps, or a simulation or checkpoint the lesson embeds (the index's `simulations` map,
+ * LMS-content#110); the lesson id alone, never the `topic:` prefix, is what a caller passes.
+ */
+export function touchesTopic(index, record, topic) {
+  return record.touches.some((t) => {
+    if (t === topic || t === `topic:${topic}` || t.startsWith(`objective:${topic}#`) || t.startsWith(`item:${topic}#`) || t.startsWith(`step:${topic}:`)) return true;
+    const sim = /^(?:sim:([a-z0-9][a-z0-9-]*)|checkpoint:([a-z0-9][a-z0-9-]*)\/[a-z0-9][a-z0-9-]*)$/.exec(t);
+    return sim !== null && (index.simulations?.[sim[1] ?? sim[2]] ?? []).includes(topic);
+  });
+}
+
+/** The records of an index that match: every word in the title or scope, the topic in `touches` (touchesTopic), the tag in `tags`. */
 export function search(index, { topic, tag, words = [] } = {}) {
   const w = words.map((x) => x.toLowerCase());
   return index.records.filter((r) => {
-    if (topic && !r.touches.some((t) => t === topic || t === `topic:${topic}` || t.startsWith(`objective:${topic}#`) || t.startsWith(`item:${topic}#`) || t.startsWith(`step:${topic}:`))) return false;
+    if (topic && !touchesTopic(index, r, topic)) return false;
     if (tag && !r.tags.includes(tag)) return false;
     const text = `${r.title}\n${r.scope}`.toLowerCase();
     return w.every((x) => text.includes(x));
@@ -106,7 +119,7 @@ export function rank(index, question, { topic, k = 5 } = {}) {
         matched.push(w);
       }
     }
-    if (topic && r.touches.some((t) => t === topic || t === `topic:${topic}` || t.startsWith(`objective:${topic}#`) || t.startsWith(`item:${topic}#`) || t.startsWith(`step:${topic}:`))) score += 2;
+    if (topic && touchesTopic(index, r, topic)) score += 2;
     if (score > 0) scored.push({ record: r, score, matched });
   }
   return scored.sort((a, b) => b.score - a.score || (a.record.id < b.record.id ? -1 : 1)).slice(0, k);

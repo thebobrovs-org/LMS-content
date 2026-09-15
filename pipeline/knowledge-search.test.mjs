@@ -7,7 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { RANK_MAX, SYNONYMS, expandSynonyms, format, rank, search, tokens } from "./knowledge-search.mjs";
+import { RANK_MAX, SYNONYMS, expandSynonyms, format, rank, search, tokens, touchesTopic } from "./knowledge-search.mjs";
 
 const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), "knowledge-search.mjs");
 const rec = (id, title, scope, touches, tags = [], sources = ["A locator, §1"]) => ({ id, type: id.split("/")[0], title, scope, tags, touches, sources, reviewed: "2026-09-13", reviewBy: null, links: [], backlinks: [], file: `knowledge/${id}.md` });
@@ -19,6 +19,30 @@ const INDEX = {
     rec("misconception/fusion-reduces-flops", "Fusion makes a chain faster because it does less math", "Learners predicting what fusion changes", ["objective:ml-systems/jax-xla-stack#fusion-hbm-trips"], ["fusion"]),
   ],
 };
+
+test("a record touches a topic through each reference form: the topic, an objective, an item, a step, and a simulation or a checkpoint of one the lesson embeds; never through a simulation the lesson does not embed (LMS-content#110)", () => {
+  const T = "math-infra/tensor-shapes";
+  const index = {
+    version: 1,
+    simulations: { "matmul-tiler": [T, "ml-systems/jax-xla-stack"], roofline: ["ml-systems/jax-xla-stack"] },
+    records: [
+      rec("claim/by-topic", "By topic", "s", [T]),
+      rec("claim/by-topic-prefix", "By topic prefix", "s", [`topic:${T}`]),
+      rec("claim/by-objective", "By objective", "s", [`objective:${T}#tile-padding`]),
+      rec("claim/by-item", "By item", "s", [`item:${T}#predict-padding`]),
+      rec("claim/by-step", "By step", "s", [`step:${T}:make-waste-appear`]),
+      rec("claim/by-sim", "By sim", "s", ["sim:matmul-tiler"]),
+      rec("claim/by-checkpoint", "By checkpoint", "s", ["checkpoint:matmul-tiler/tile-fit"]),
+      rec("claim/other-sim", "Other sim", "s", ["sim:roofline"]),
+      rec("claim/other-topic", "Other topic", "s", ["ml-systems/jax-xla-stack", "objective:ml-systems/jax-xla-stack#x"]),
+    ],
+  };
+  assert.deepEqual(search(index, { topic: T }).map((r) => r.id), ["claim/by-topic", "claim/by-topic-prefix", "claim/by-objective", "claim/by-item", "claim/by-step", "claim/by-sim", "claim/by-checkpoint"]);
+  assert.deepEqual(search(index, { topic: "ml-systems/jax-xla-stack" }).map((r) => r.id), ["claim/by-sim", "claim/by-checkpoint", "claim/other-sim", "claim/other-topic"]);
+  assert.equal(touchesTopic({ records: [] }, index.records[5], T), false, "an index without the map: a simulation reference reaches no topic");
+  assert.equal(touchesTopic(index, rec("claim/odd", "o", "s", ["sim:Matmul-Tiler", "checkpoint:matmul-tiler"]), T), false, "a reference that is not of the schema's shape is not resolved");
+  assert.deepEqual(rank(index, "by sim", { topic: T, k: 2 }).map((h) => [h.record.id, h.score]), [["claim/by-sim", 6], ["claim/other-sim", 4]], "the topic boost (2) reaches a record through the embedded simulation, not one through another lesson's");
+});
 
 test("search matches a topic through any of its references, a tag, and every word in the title or scope", () => {
   assert.deepEqual(search(INDEX, { topic: "ml-systems/jax-xla-stack" }).map((r) => r.id), ["concept/jax-compile-path", "misconception/fusion-reduces-flops"]);

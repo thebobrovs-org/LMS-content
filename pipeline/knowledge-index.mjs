@@ -6,6 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildIndex, indexText, loadRecords, recordProblems } from "./knowledge.mjs";
+import { simulationTopics } from "./lesson-sims.mjs";
 
 const rootArg = process.argv.indexOf("--root");
 const ROOT = rootArg > 0 ? path.resolve(process.argv[rootArg + 1]) : path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -21,7 +22,7 @@ if (all.length) {
   for (const e of all) console.error(`  - ${e}`);
   process.exit(1);
 }
-const text = indexText(buildIndex(records));
+const text = indexText(buildIndex(records, { simulations: await simulationTopics(ROOT) }));
 if (checkOnly) {
   const current = fs.existsSync(OUT) ? fs.readFileSync(OUT, "utf8") : "";
   if (current !== text) {
