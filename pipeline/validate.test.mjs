@@ -309,11 +309,16 @@ test("a lesson is prose plus the documented components: no JavaScript, no other 
 
 test("a lesson's HTML is prose: no active elements, attributes or URL schemes", () => {
   const cases = {
-    "an HTML string as a prop": [`${TOPIC}\n<div dangerouslySetInnerHTML={{ __html: "<img src=x onerror=alert(1)>" }} />\n`, /<div dangerouslySetInnerHTML>: a lesson's HTML may carry only/],
+    "an HTML string as a prop": [`${TOPIC}\n<div dangerouslySetInnerHTML={{ __html: "<img src=x onerror=alert(1)>" }} />\n`, /<div dangerouslySetInnerHTML>: an attribute that injects HTML, loads a document or runs code/],
+    // A documented component is held to the same attribute rule as prose HTML (hyperstack#114).
+    "an HTML string on a component": [`${TOPIC}\n<Callout type="tip" dangerouslySetInnerHTML={{ __html: "<b>x</b>" }} />\n`, /<Callout dangerouslySetInnerHTML>: an attribute that injects HTML, loads a document or runs code/],
+    "a style on a component": [`${TOPIC}\n<Figure src="/media/array.svg" alt="x" style={{ color: "red" }} />\n`, /<Figure style>: an attribute that injects HTML, loads a document or runs code/],
+    "a handler on a component": [`${TOPIC}\n<Callout type="note" onMouseOver="x">t</Callout>\n`, /<Callout onMouseOver>: an attribute that injects HTML, loads a document or runs code/],
+    "an HTML attribute outside the list": [`${TOPIC}\n<p hidden>x</p>\n`, /<p hidden>: a lesson's HTML may carry only/],
     "a script element": [`${TOPIC}\n<script>alert(1)</script>\n`, /<script> isn't HTML a lesson may write/],
     "an iframe with srcDoc": [`${TOPIC}\n<iframe srcDoc="<script>alert(1)</script>" />\n`, /<iframe> isn't HTML a lesson may write/],
-    "an inline handler": [`${TOPIC}\n<a href="/x" onclick="alert(1)">x</a>\n`, /<a onclick>: a lesson's HTML may carry only/],
-    "a style attribute": [`${TOPIC}\n<span style={{ color: "red" }}>x</span>\n`, /<span style>: a lesson's HTML may carry only/],
+    "an inline handler": [`${TOPIC}\n<a href="/x" onclick="alert(1)">x</a>\n`, /<a onclick>: an attribute that injects HTML, loads a document or runs code/],
+    "a style attribute": [`${TOPIC}\n<span style={{ color: "red" }}>x</span>\n`, /<span style>: an attribute that injects HTML, loads a document or runs code/],
     "a javascript: href": [`${TOPIC}\n<a href="javascript:alert(1)">x</a>\n`, /<a href> may point at a same-site path, http\(s\) or mailto, not "javascript:"/],
     "a data: src": [`${TOPIC}\n<img src="data:text/html,<script>alert(1)</script>" alt="x" />\n`, /<img src> may point at .*, not "data:"/],
     "a javascript: Markdown link": [`${TOPIC}\n[x](javascript:alert(1))\n`, /a link may point at .*, not "javascript:"/],
