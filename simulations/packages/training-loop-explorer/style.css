@@ -89,6 +89,8 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; flex: 1;
 .code-overlay .hl-bg { background: color-mix(in srgb, var(--warn) 30%, transparent); color: var(--fg); font-weight: 900; border-radius: 3px; padding: 1px 3px; margin: -1px -3px; }
 .code-overlay .kw { color: var(--good); font-weight: bold; }
 .code-overlay .op { color: var(--primary); }
+/* On the highlighted line the tint lowers the token colours below 4.5:1; they take the line's text colour there. */
+.code-overlay .hl .kw, .code-overlay .hl .op { color: inherit; }
 .code-overlay .cm { color: var(--muted); font-style: italic; }
 
 @media (prefers-reduced-motion: reduce) {
