@@ -22,8 +22,13 @@ export const HTML_ATTRIBUTES = new Set(["alt", "className", "colSpan", "height",
 // (" javascript:", "java\tscript:"), so a URL holding any of them is rejected rather than normalized: encode it.
 export const SAFE_SCHEMES = new Set(["http", "https", "mailto"]);
 export const UNSAFE_URL_CHARS = /[\u0000-\u0020\u007f]/;
-/** Attributes no element may carry, documented components included: they inject HTML, load a document, or run code (the learner app refuses them at build, LMS#48). */
-export const ACTIVE_ATTRIBUTE = /^(?:dangerouslySetInnerHTML|srcDoc|srcdoc|style|on[A-Z]|on[a-z])/;
+/**
+ * Attributes no element may carry, documented components included: they inject HTML, load a document, or
+ * run code (the learner app refuses them at build, LMS#48). `dangerouslySetInnerHTML`, `srcDoc`/`srcdoc` and
+ * `style` are matched whole, so an ordinary prop that only begins the same way (`styleName`) is not one;
+ * an event handler is any name starting `on` and a letter.
+ */
+export const ACTIVE_ATTRIBUTE = /^(?:(?:dangerouslySetInnerHTML|srcDoc|srcdoc|style)$|on[A-Za-z])/;
 export const urlScheme = (url) => /^([a-z][a-z0-9+.-]*):/i.exec(url)?.[1].toLowerCase();
 
 /**

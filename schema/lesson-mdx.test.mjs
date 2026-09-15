@@ -62,11 +62,18 @@ test("the rules refuse code, undocumented tags, non-prose HTML attributes, attri
 
 test("the attribute rule names exactly the attributes that inject HTML, load a document or run code, never an ordinary prop", () => {
   for (const name of ["dangerouslySetInnerHTML", "srcDoc", "srcdoc", "style", "onClick", "onload", "onMouseOver"]) assert.match(name, ACTIVE_ATTRIBUTE, name);
-  for (const name of ["src", "href", "alt", "title", "id", "type", "height", "choices", "answer", "objective", "open", "former-ids", "data-k", "aria-label"]) assert.doesNotMatch(name, ACTIVE_ATTRIBUTE, name);
+  for (const name of ["src", "href", "alt", "title", "id", "type", "height", "choices", "answer", "objective", "open", "former-ids", "data-k", "aria-label", "styleName", "srcDocument", "srcdocs", "dangerouslySetInnerHTMLLabel", "stylesheet"]) assert.doesNotMatch(name, ACTIVE_ATTRIBUTE, name);
   // The prose allow-lists carry nothing active either.
   assert.deepEqual([...HTML_ATTRIBUTES].filter((a) => ACTIVE_ATTRIBUTE.test(a)), []);
   assert.deepEqual(["script", "iframe", "object", "embed", "style", "form", "svg", "video"].filter((e) => HTML_ELEMENTS.has(e)), []);
   assert.deepEqual(MDX_COMPONENTS.filter((c) => HTML_ELEMENTS.has(c)), []);
+});
+
+test("an ordinary prop that only begins like an active attribute compiles on a documented component", async () => {
+  for (const mdx of ['<Callout type="tip" styleName="note">t</Callout>', '<Figure src="/media/array.svg" alt="a" srcDocument="x" />', '<Callout type="note" dangerouslySetInnerHTMLLabel="x">t</Callout>']) {
+    const r = await run(mdx);
+    assert.equal(r.ok, true, `${mdx}: ${r.reason}`);
+  }
 });
 
 test("literal data is strings, numbers, booleans, null, plain templates, signed numbers, and arrays and objects of them; anything else is code", () => {
