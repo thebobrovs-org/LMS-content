@@ -133,6 +133,22 @@ test("links point at records: a Markdown destination must be a record file, an i
   assert.deepEqual(twice.problems, ["links to ../claims/missing.md, which is not a record (no knowledge/claims/missing.md)"]);
   const first = linksIn("[ref]\n\n[ref]: ../claims/a.md\n[ref]: ../claims/missing.md", "knowledge/claims/z.md", (id) => id !== "claim/missing");
   assert.deepEqual([first.ids, first.problems], [["claim/a"], ["links to ../claims/missing.md, which is not a record (no knowledge/claims/missing.md)"]]);
+  // Collapsed reference links [ref][] and angle-bracket destinations with duplicate definitions (#114):
+  const collapsed = linksIn("[ref][]\n\n[ref]: <../claims/missing.md>\n[ref]: <../claims/a.md>", "knowledge/claims/z.md", (id) => id !== "claim/missing");
+  assert.deepEqual(collapsed.ids, ["claim/a"], "collapsed reference resolves to the first definition; both destinations checked");
+  assert.deepEqual(collapsed.problems, ["links to ../claims/missing.md, which is not a record (no knowledge/claims/missing.md)"]);
+  // A usage with an id label proves which definition was used (#107, #114):
+  const labelWins = linksIn("[claim/other][ref]\n\n[ref]: ../claims/other.md\n[ref]: ../claims/a.md", "knowledge/claims/z.md");
+  assert.deepEqual(labelWins.ids.sort(), ["claim/a", "claim/other"]);
+  assert.deepEqual(labelWins.problems, [], "usage resolved to claim/other matching its label; if the second had won, a label mismatch would be reported");
+  // A duplicate definition under an id label pointing elsewhere is reported:
+  const mismatched = linksIn("[claim/other]: ../claims/other.md\n[claim/other]: ../concepts/roofline.md", "knowledge/claims/z.md");
+  assert.deepEqual(mismatched.ids.sort(), ["claim/other", "concept/roofline"]);
+  assert.deepEqual(mismatched.problems, ['links to ../concepts/roofline.md under the label "claim/other", which is another record\'s id']);
+  // Duplicate definitions pointing at the same destination are deduplicated:
+  const identical = linksIn("[ref]\n\n[ref]: ../claims/a.md\n[ref]: ../claims/a.md", "knowledge/claims/z.md");
+  assert.deepEqual(identical.ids, ["claim/a"]);
+  assert.deepEqual(identical.problems, []);
 });
 
 test("a duplicate id and a look-alike title are caught, and an overdue review warns", () => {
