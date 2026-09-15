@@ -145,3 +145,31 @@ test("a part that takes focus is scrolled fully into the cutaway's view; a gener
   sim.focusIn(tab);
   assert.deepEqual(tab.scrolledIntoView, []);
 });
+
+test("selecting a part with the Space key keeps the cutaway's scroll and the part's focus", () => {
+  const sim = loadSim();
+  const stage = sim.app.querySelector(".stage-scroll");
+  stage.scrollLeft = 450;
+  const ici = sim.all('[data-part="ici"]')[0];
+  ici.focus();
+  sim.fire(ici, "keydown", { key: " " });
+  const after = sim.app.querySelector(".stage-scroll");
+  assert.notEqual(after, stage, "the render wrote the cutaway again");
+  assert.equal(after.scrollLeft, 450);
+  assert.equal(sim.active(), sim.all('[data-part="ici"]')[0]);
+  assert.match(sim.app.innerHTML, /class="part sel side ici"/);
+});
+
+test("non-activation key presses on a part do not trigger selection or re-render", () => {
+  const sim = loadSim();
+  const stage = sim.app.querySelector(".stage-scroll");
+  stage.scrollLeft = 300;
+  const host = sim.all('[data-part="host"]')[0];
+  host.focus();
+  sim.fire(host, "keydown", { key: "ArrowRight" });
+  const after = sim.app.querySelector(".stage-scroll");
+  assert.equal(after, stage, "no re-render occurred");
+  assert.equal(after.scrollLeft, 300);
+  assert.equal(sim.active(), host);
+});
+
