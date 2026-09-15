@@ -31,8 +31,9 @@ function wrappingLabelNames(source, index, id) {
   if (open < 0 || open < before.lastIndexOf("</label>")) return false;
   const tag = /^<label\b([^>]*)>/.exec(source.slice(open));
   if (!tag) return false;
-  const forId = tag[1].match(/\bfor=["']([^"']+)["']/)?.[1] ?? null;
-  if (forId !== null) return forId === id;
+  // An explicit `for` names only the control with that id; an empty one names nothing (LMS-content#119).
+  const forAttr = tag[1].match(/\bfor=["']([^"']*)["']/);
+  if (forAttr) return forAttr[1] !== "" && forAttr[1] === id;
   const inside = source.slice(open + tag[0].length, index);
   return ![...inside.matchAll(LABELABLE)].some((x) => !(x[1] === "input" && isHidden(x[2])));
 }
@@ -59,9 +60,14 @@ export function controls(source) {
   return out;
 }
 
-/** Every id a source text declares (a template id keeps its `${…}`). */
+/** Every id a source text declares on an element: read from opening tags' attributes only, never from text or script (a template id keeps its `${…}`; LMS-content#119). */
 export function declaredIds(source) {
-  return new Set([...source.matchAll(new RegExp(ID_ATTR, "g"))].map((m) => m[1]));
+  const ids = new Set();
+  for (const tag of source.matchAll(/<[A-Za-z][\w-]*\b([^>]*)>/g)) {
+    const id = tag[1].match(ID_ATTR)?.[1];
+    if (id) ids.add(id);
+  }
+  return ids;
 }
 
 /**
@@ -113,12 +119,18 @@ test("the check sees the ways a control is named, an unnamed one, and the ways a
 <label>J <input id="j1"> <input id="j2"></label>
 <label><input type="hidden" name="k0"> K <input id="k"></label>
 <label for="l">L <input id="l"></label>
-<input data-id="x" id="m" aria-label="M">`;
+<input data-id="x" id="m" aria-label="M">
+<label for="">N <input id="n"></label>
+<p>id="t-name"</p><input id="t" aria-labelledby="t-name">
+<script>const id="u-name";</script><input id="u" aria-labelledby="u-name">`;
   const labelled = labelledIds(src);
   const ids = declaredIds(src);
-  assert.deepEqual(controls(src).map((c) => c.id), ["a", "b", "c", "d", "e", "g", "h", "h2", "h3", "i", "j1", "j2", "k", "l", "m"]);
+  assert.deepEqual(controls(src).map((c) => c.id), ["a", "b", "c", "d", "e", "g", "h", "h2", "h3", "i", "j1", "j2", "k", "l", "m", "n", "t", "u"]);
   // Named: a label for it, a label around it, a non-empty aria-label, a resolvable aria-labelledby, the first control in a label, a label whose for is the control, an id beside a data-id.
-  // Unnamed: nothing (e), an empty aria-label (g), a labelledby naming a missing id (h, h2) or none (h3, though a label is for it), a wrapping label whose for points elsewhere (i), the second control in one label (j2).
+  // Unnamed: nothing (e), an empty aria-label (g), a labelledby naming a missing id (h, h2) or none (h3, though a label is for it), a wrapping label whose for points elsewhere (i), the second control in one label (j2),
+  // a wrapping label with an explicit empty for (n), a labelledby whose id appears only in text (t) or only in script (u).
   assert.deepEqual(controls(src).filter((c) => isNamed(c, { labelled, ids })).map((c) => c.id), ["a", "b", "c", "d", "j1", "k", "l", "m"]);
   assert.equal(ids.has("x"), false, "a data-id is not an id");
+  assert.equal(ids.has("t-name") || ids.has("u-name"), false, "text and script declare no id");
+  assert.ok(ids.has("d-name") && ids.has("h3"), "an element's id attribute is read");
 });
