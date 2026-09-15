@@ -127,6 +127,12 @@ test("links point at records: a Markdown destination must be a record file, an i
   const direct = linksIn("[x](../claims/a.md) [[claim/b]] `decision/c` decision/d", "knowledge/claims/z.md", (id) => id !== "decision/c");
   assert.deepEqual(direct.ids, ["claim/a", "claim/b"]);
   assert.deepEqual(direct.problems, ['links to "decision/c", which is not a record']);
+  // A label defined twice resolves through its first definition, as Markdown does; the later one is checked as a destination and never wins (#107).
+  const twice = linksIn("[ref] and [also][ref]\n\n[ref]: ../claims/missing.md\n[ref]: ../claims/a.md\n[REF]: ../claims/b.md", "knowledge/claims/z.md", (id) => id !== "claim/missing");
+  assert.deepEqual(twice.ids, ["claim/a", "claim/b"], "the definitions' destinations count; the usages resolve to the first, a missing record");
+  assert.deepEqual(twice.problems, ["links to ../claims/missing.md, which is not a record (no knowledge/claims/missing.md)"]);
+  const first = linksIn("[ref]\n\n[ref]: ../claims/a.md\n[ref]: ../claims/missing.md", "knowledge/claims/z.md", (id) => id !== "claim/missing");
+  assert.deepEqual([first.ids, first.problems], [["claim/a"], ["links to ../claims/missing.md, which is not a record (no knowledge/claims/missing.md)"]]);
 });
 
 test("a duplicate id and a look-alike title are caught, and an overdue review warns", () => {
