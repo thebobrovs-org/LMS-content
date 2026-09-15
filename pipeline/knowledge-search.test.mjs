@@ -162,3 +162,31 @@ test("rank scores a question word found in a record's terms 2, like a tag, and e
   for (const [from, to] of Object.entries(SYNONYMS)) assert.match(to, /^[a-z0-9-]+( [a-z0-9-]+)*$/, `${from} → ${to} is words`);
   assert.ok(Object.isFrozen(SYNONYMS));
 });
+
+test("touchesTopic handles simulation map edge cases: null-prototype maps, own constructor property, non-array objects, and checkpoint named constructor (#116, #117)", () => {
+  const T = "math-infra/tensor-shapes";
+
+  // Object.create(null) as simulations map works without throwing
+  const nullProtoMap = Object.create(null);
+  nullProtoMap["matmul-tiler"] = [T];
+  assert.equal(touchesTopic({ simulations: nullProtoMap }, rec("claim/sim", "Sim", "s", ["sim:matmul-tiler"]), T), true);
+  assert.equal(touchesTopic({ simulations: nullProtoMap }, rec("claim/ctor", "Ctor", "s", ["sim:constructor"]), T), false);
+
+  // An own property named constructor with a valid list of topics is resolved
+  const ownConstructorMap = { constructor: [T] };
+  assert.equal(touchesTopic({ simulations: ownConstructorMap }, rec("claim/own-ctor", "Own", "s", ["sim:constructor"]), T), true);
+  assert.equal(touchesTopic({ simulations: ownConstructorMap }, rec("claim/own-ctor-cp", "Own", "s", ["checkpoint:constructor/tile-fit"]), T), true);
+
+  // A checkpoint whose name is constructor on a normal simulation is resolved through the simulation
+  assert.equal(touchesTopic({ simulations: { "matmul-tiler": [T] } }, rec("claim/cp-ctor", "CP ctor", "s", ["checkpoint:matmul-tiler/constructor"]), T), true);
+
+  // Non-array object values (including duck-typed objects with an includes method) reach no topic
+  const duckTyping = { "matmul-tiler": { includes: () => true } };
+  assert.equal(touchesTopic({ simulations: duckTyping }, rec("claim/sim", "Sim", "s", ["sim:matmul-tiler"]), T), false);
+
+  // Non-object primitive simulation maps (number, boolean, string) reach no topic
+  assert.equal(touchesTopic({ simulations: 42 }, rec("claim/sim", "Sim", "s", ["sim:matmul-tiler"]), T), false);
+  assert.equal(touchesTopic({ simulations: "math-infra/tensor-shapes" }, rec("claim/sim", "Sim", "s", ["sim:matmul-tiler"]), T), false);
+  assert.equal(touchesTopic({ simulations: true }, rec("claim/sim", "Sim", "s", ["sim:matmul-tiler"]), T), false);
+});
+
