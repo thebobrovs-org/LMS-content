@@ -87,3 +87,47 @@ test("literal data is strings, numbers, booleans, null, plain templates, signed 
   assert.equal(isLiteralData({ type: "CallExpression" }), false);
   assert.equal(isLiteralData({ type: "ArrayExpression", elements: [null] }), false, "a hole is not data");
 });
+
+test("active attributes are refused across all documented components, including lowercase srcdoc and boolean props", async () => {
+  for (const [mdx, name] of [
+    ['<Flashcard front="F" back="B" style={{ color: "blue" }} />', "style"],
+    ['<Quiz question="Q" choices={["a"]} answer={0} onClick="x" />', "onClick"],
+    ['<Simulation id="demo-sim" srcdoc="<p>x</p>" />', "srcdoc"],
+    ['<YouTube id="xyz" dangerouslySetInnerHTML={{ __html: "x" }} />', "dangerouslySetInnerHTML"],
+    ['<Tip onFocus="run()">text</Tip>', "onFocus"],
+    ['<Term srcDoc="x">term</Term>', "srcDoc"],
+    ['<Step title="S" style={{ color: "red" }}>text</Step>', "style"],
+    ['<Callout type="tip" style>t</Callout>', "style"],
+  ]) {
+    const r = await run(mdx);
+    assert.equal(r.ok, false, `accepted: ${mdx}`);
+    assert.match(r.reason, /an attribute that injects HTML, loads a document or runs code isn't allowed on any element/, mdx);
+  }
+});
+
+test("Flashcard and Step identity, former-ids and objectives are collected, and malformed id/former-ids fail", async () => {
+  const r = await run(`
+<Flashcard id="card-1" former-ids={["old-card"]} front="What is X?" back="Y" objective="obj-card" />
+
+<Steps>
+  <Step id="step-1" former-ids={["old-step"]} title="Step One" objective="obj-step">Do this.</Step>
+</Steps>
+`);
+  assert.equal(r.ok, true, r.reason);
+  assert.deepEqual(r.objectives, ["obj-card", "obj-step"]);
+  assert.deepEqual(r.identities, [
+    { tag: "Flashcard", prompt: "What is X?", id: "card-1", formerIds: ["old-card"] },
+    { tag: "Step", prompt: "Step One", id: "step-1", formerIds: ["old-step"] },
+  ]);
+
+  for (const [mdx, reason] of [
+    ['<Flashcard id={123} front="F" back="B" />', /<Flashcard id=\{…\}> must be a string/],
+    ['<Step former-ids="not-an-array" title="S">body</Step>', /<Step former-ids=\{…\}> must be an array of strings/],
+    ['<Flashcard former-ids={[123]} front="F" back="B" />', /<Flashcard former-ids=\{…\}> must be an array of strings/],
+    ['<Step objective={123} title="S">body</Step>', /<Step objective=\{…\}> must be a string/],
+  ]) {
+    const res = await run(mdx);
+    assert.equal(res.ok, false, `accepted: ${mdx}`);
+    assert.match(res.reason, reason, mdx);
+  }
+});
