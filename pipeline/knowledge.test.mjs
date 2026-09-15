@@ -152,6 +152,18 @@ test("links point at records: a Markdown destination must be a record file, an i
   const identical = linksIn("[ref]\n\n[ref]: ../claims/a.md\n[ref]: ../claims/a.md", "knowledge/claims/z.md");
   assert.deepEqual(identical.ids, ["claim/a"]);
   assert.deepEqual(identical.problems, []);
+  // Three definitions of a label: first wins for usage, intermediate and later destinations are still checked (#114):
+  const threeDefs = linksIn("[ref]\n\n[REF]: ../claims/a.md\n[ref]: ../claims/missing.md\n[Ref]: ../claims/b.md", "knowledge/claims/z.md", (id) => id !== "claim/missing");
+  assert.deepEqual(threeDefs.ids.sort(), ["claim/a", "claim/b"]);
+  assert.deepEqual(threeDefs.problems, ["links to ../claims/missing.md, which is not a record (no knowledge/claims/missing.md)"]);
+  // Duplicate definitions where the first is an external URL: usage resolves externally, subsequent record destination is checked (#114):
+  const externalFirst = linksIn("[ref]\n\n[ref]: https://example.com/docs\n[ref]: ../claims/missing.md\n[ref]: ../claims/a.md", "knowledge/claims/z.md", (id) => id !== "claim/missing");
+  assert.deepEqual(externalFirst.ids, ["claim/a"]);
+  assert.deepEqual(externalFirst.problems, ["links to ../claims/missing.md, which is not a record (no knowledge/claims/missing.md)"]);
+  // Duplicate definitions with optional titles: first definition wins for usage, all destinations checked (#114):
+  const titled = linksIn("[ref]\n\n[ref]: ../claims/a.md 'First Title'\n[ref]: ../claims/b.md \"Second Title\"", "knowledge/claims/z.md");
+  assert.deepEqual(titled.ids.sort(), ["claim/a", "claim/b"]);
+  assert.deepEqual(titled.problems, []);
 });
 
 test("a duplicate id and a look-alike title are caught, and an overdue review warns", () => {
