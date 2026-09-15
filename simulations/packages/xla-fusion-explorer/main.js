@@ -82,7 +82,7 @@ const inspectorData = {
 function updateInspector(key, isXla) {
   const d = inspectorData[key];
   inspectorContent.innerHTML =
-    `<div class="inspector-code">${d.code}</div>` +
+    `<div class="inspector-code" tabindex="0" role="region" aria-label="The code for this stage (scrollable)">${d.code}</div>` +
     `<div class="inspector-explain ${isXla ? "xla-h4" : ""}"><h4>${d.title}</h4><p>${d.desc}</p></div>`;
   reportSize();
 }

@@ -108,7 +108,7 @@ function buildHow() {
       </div>
       <div class="console">
         <div class="console-h">&gt;_ Engineer's event log</div>
-        <div class="console-log mono" id="log"></div>
+        <div class="console-log mono" id="log" tabindex="0" role="region" aria-label="Engineer's event log (scrollable)"></div>
       </div>
     </div>
     <div class="grid-panel">

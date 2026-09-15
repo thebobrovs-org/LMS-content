@@ -110,7 +110,8 @@ function bottomRow() {
       <div class="${cls("cae")} sc cae" data-part="cae" tabindex="0" role="button">CAE — Collectives Acceleration Engine</div>
     </div>`;
   }
-  return `<div class="sparse"><div class="sc" style="background:transparent;border:2px dashed var(--border);color:var(--muted);cursor:default;">No SparseCores (introduced in v4)</div></div>`;
+  // Drawn on the chip's fill, so in the chip's ink: --muted reads under 4.5:1 there (tests/code-contrast.test.mjs).
+  return `<div class="sparse"><div class="sc" style="background:transparent;border:2px dashed var(--border);color:var(--chip-fg);cursor:default;">No SparseCores (introduced in v4)</div></div>`;
 }
 
 function render() {

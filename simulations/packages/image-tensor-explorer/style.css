@@ -152,6 +152,8 @@ input[type=range] { accent-color: var(--good); width: 100%; cursor: ew-resize; m
 .code-overlay .kw { color: var(--good); font-weight: bold; }
 .code-overlay .op { color: var(--primary); }
 .code-overlay .cm { color: var(--muted); font-style: italic; }
+/* On a tint, the tokens and a nested highlight take the tint's text colour: their own read under 4.5:1 there (tests/code-contrast.test.mjs). */
+.code-overlay .hl-bg .hl, .code-overlay .hl-bg .kw, .code-overlay .hl-bg .op, .code-overlay .hl-bg .cm { color: inherit; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }

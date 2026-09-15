@@ -48,6 +48,14 @@ let REDUCE = typeof window.matchMedia === "function" && window.matchMedia("(pref
 const W = 8;
 const H = 8;
 
+// A pixel's value is drawn in whichever of black and white reads better on the pixel's colour, by the
+// WCAG contrast ratio; one of the two always reaches 4.5:1 (LMS-content#126). tests/code-contrast.test.mjs.
+function pixelInk(r, g, b) {
+  const lin = (c) => { const v = c / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+  const l = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  return (l + 0.05) / 0.05 >= 1.05 / (l + 0.05) ? "#000" : "#fff";
+}
+
 // Generates a recognizable landscape pattern (Sky, Sun, Ground)
 function getPixel(x, y, frame) {
   const sunY = 3 + frame * 1.5;
@@ -527,10 +535,8 @@ function renderPixels() {
         pixels[i].style.backgroundColor = `rgb(${r},${g},${b})`;
         pixels[i].style.opacity = visible ? 1 : 0;
 
-        // Contrast for readability
         pixels[i].innerText = displayVal;
-        const luminance = (r * 0.299 + g * 0.587 + b * 0.114);
-        pixels[i].style.color = luminance > 128 ? "rgba(0,0,0,0.85)" : "rgba(255,255,255,0.95)";
+        pixels[i].style.color = pixelInk(r, g, b);
 
         // Remove Z-axis translation in flat views to prevent perspective parallax
         const transformPop = currentStep < 3 ? 'scale(1.15)' : 'translateZ(12px) scale(1.35)';

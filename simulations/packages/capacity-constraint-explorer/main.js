@@ -126,7 +126,7 @@ function render() {
       ${sentence2}
     </div>
     ${solHTML}
-    <div class="code">${codeHTML()}</div>`;
+    <div class="code" tabindex="0" role="region" aria-label="The code for this plan (scrollable)">${codeHTML()}</div>`;
 
   reportSize();
 }

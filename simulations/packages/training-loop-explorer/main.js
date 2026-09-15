@@ -159,7 +159,7 @@ function initDOM() {
             <canvas id="loss-canvas"></canvas>
           </div>
         </div>
-        <div id="code-overlay" class="code-overlay"></div>
+        <div id="code-overlay" class="code-overlay" tabindex="0" role="region" aria-label="The code for this step (scrollable)"></div>
       </div>
     </div>`;
 
