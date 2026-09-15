@@ -40,11 +40,55 @@ function pickPath(n) {
 }
 function pickHost(n) { hi = n; render(); }
 
+let mounted = false;
+
+/**
+ * The buttons are built once, so the one a keyboard user pressed stays the same element and keeps
+ * focus; a pick updates the pressed state and rewrites only the panels without controls in them
+ * (LMS-content#100, as the sliders were in #59).
+ */
+function mount() {
+  const pathTabs = PATHS.map((x, n) => `<button type="button" class="tab" data-p="${n}" aria-pressed="false">${x.label}</button>`).join("");
+  const hostTabs = HOSTS.map((x, n) => `<button type="button" class="htab" data-h="${n}" aria-pressed="false">${x.label}</button>`).join("");
+  app.innerHTML = `
+    <div class="hint">You never rent a bare chip — you consume <b>host + chip VM units</b> through a path. Pick one and watch what <b>you</b> manage vs what's <b>managed</b>. Storage and networking are always there underneath.</div>
+
+    <div class="tabs" role="group" aria-label="Consumption path">${pathTabs}</div>
+
+    <div class="grid">
+      <div class="stack" id="stack"></div>
+      <div class="side">
+        <div class="meterbox" id="meters"></div>
+        <div class="use" id="use"></div>
+        <div class="hostsec">
+          <div class="glabel" id="shape-label">Workload shape</div>
+          <div class="htabs" role="group" aria-labelledby="shape-label">${hostTabs}</div>
+          <div class="hostrow" id="hostrow"></div>
+          <div class="hdesc" id="hdesc"></div>
+        </div>
+      </div>
+    </div>`;
+  app.querySelectorAll("[data-p]").forEach((el) => el.addEventListener("click", () => pickPath(+el.getAttribute("data-p"))));
+  app.querySelectorAll("[data-h]").forEach((el) => el.addEventListener("click", () => pickHost(+el.getAttribute("data-h"))));
+  mounted = true;
+}
+
+/** Mark the pressed button of a group, found by its data attribute. */
+function press(attr, current) {
+  app.querySelectorAll(`[${attr}]`).forEach((el) => {
+    const on = +el.getAttribute(attr) === current;
+    el.classList.toggle("on", on);
+    el.setAttribute("aria-pressed", String(on));
+  });
+}
+
 function render() {
+  if (!mounted) mount();
   const p = PATHS[pi];
   const h = HOSTS[hi];
+  press("data-p", pi);
+  press("data-h", hi);
 
-  const pathTabs = PATHS.map((x, n) => `<button class="tab ${n === pi ? "on" : ""}" data-p="${n}">${x.label}</button>`).join("");
   const layers = LAYERS.map((name, i) => {
     if (i === 0) return `<div class="layer you"><span>${name}</span><span class="who you-t">you</span></div>`;
     const label = i === 1 ? `${name}: <span class="orch">${p.orch}</span>` : name;
@@ -55,36 +99,18 @@ function render() {
   const conv = 4 - p.control; // convenience inverse of control
   const meter = (v, max) => Array.from({ length: max }, (_, k) => `<span class="seg ${k < v ? "on" : ""}"></span>`).join("");
 
-  const hostTabs = HOSTS.map((x, n) => `<button class="htab ${n === hi ? "on" : ""}" data-h="${n}">${x.label}</button>`).join("");
-  const hostDiagram = Array.from({ length: h.hosts }, (_, hostIdx) => {
+  const hostDiagram = Array.from({ length: h.hosts }, () => {
     const chips = Array.from({ length: h.chips }, (_, c) => `<span class="chip ${c < h.used ? "used" : ""}"></span>`).join("");
     return `<div class="hostvm"><div class="chips">${chips}</div><div class="hlabel">host VM</div></div>`;
   }).join(`<span class="ici">ICI</span>`);
 
-  app.innerHTML = `
-    <div class="hint">You never rent a bare chip — you consume <b>host + chip VM units</b> through a path. Pick one and watch what <b>you</b> manage vs what's <b>managed</b>. Storage and networking are always there underneath.</div>
-
-    <div class="tabs">${pathTabs}</div>
-
-    <div class="grid">
-      <div class="stack">${layers}</div>
-      <div class="side">
-        <div class="meterbox">
+  document.getElementById("stack").innerHTML = layers;
+  document.getElementById("meters").innerHTML = `
           <div class="mrow"><span>control</span><span class="segs">${meter(p.control, 3)}</span></div>
-          <div class="mrow"><span>convenience</span><span class="segs">${meter(conv, 3)}</span></div>
-        </div>
-        <div class="use">${p.use}</div>
-        <div class="hostsec">
-          <div class="glabel">Workload shape</div>
-          <div class="htabs">${hostTabs}</div>
-          <div class="hostrow">${hostDiagram}</div>
-          <div class="hdesc">${h.desc}</div>
-        </div>
-      </div>
-    </div>`;
-
-  app.querySelectorAll("[data-p]").forEach((el) => el.addEventListener("click", () => pickPath(+el.getAttribute("data-p"))));
-  app.querySelectorAll("[data-h]").forEach((el) => el.addEventListener("click", () => pickHost(+el.getAttribute("data-h"))));
+          <div class="mrow"><span>convenience</span><span class="segs">${meter(conv, 3)}</span></div>`;
+  document.getElementById("use").textContent = p.use;
+  document.getElementById("hostrow").innerHTML = hostDiagram;
+  document.getElementById("hdesc").textContent = h.desc;
   reportSize();
 }
 

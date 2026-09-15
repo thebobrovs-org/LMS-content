@@ -224,15 +224,49 @@ function switchMode(m) {
   mode = m;
   render();
 }
-function render() {
+
+/** The two views, in tab order: the mode and its tab's label. */
+const TABS = [["why", "Why: CPU vs TPU"], ["array", "How: the array"]];
+let mounted = false;
+
+/**
+ * The tab list is built once, so the tab a keyboard user is on stays the same element and keeps
+ * focus; only the panel is rewritten. The selected tab is the one in the Tab order, and the arrow
+ * keys, Home and End move between the tabs and show each, as a tab list does (LMS-content#100, #98).
+ */
+function mount() {
   app.innerHTML = `
-    <div class="tabs" role="tablist">
-      <button id="tab-why" class="tab ${mode === "why" ? "active" : ""}" role="tab" aria-selected="${mode === "why"}">Why: CPU vs TPU</button>
-      <button id="tab-array" class="tab ${mode === "array" ? "active" : ""}" role="tab" aria-selected="${mode === "array"}">How: the array</button>
-    </div>
-    <div class="body">${mode === "why" ? renderWhy() : buildHow()}</div>`;
-  app.querySelector("#tab-why").addEventListener("click", () => switchMode("why"));
-  app.querySelector("#tab-array").addEventListener("click", () => switchMode("array"));
+    <div class="tabs" role="tablist" aria-label="View">${TABS.map(([m, label]) => `<button type="button" id="tab-${m}" class="tab" role="tab" aria-controls="panel" aria-selected="false" tabindex="-1">${label}</button>`).join("")}</div>
+    <div class="body" id="panel" role="tabpanel"></div>`;
+  TABS.forEach(([m], at) => {
+    const tab = app.querySelector(`#tab-${m}`);
+    tab.addEventListener("click", () => switchMode(m));
+    tab.addEventListener("keydown", (e) => {
+      let to = -1;
+      if (e.key === "ArrowRight") to = (at + 1) % TABS.length;
+      else if (e.key === "ArrowLeft") to = (at + TABS.length - 1) % TABS.length;
+      else if (e.key === "Home") to = 0;
+      else if (e.key === "End") to = TABS.length - 1;
+      if (to < 0) return;
+      e.preventDefault();
+      switchMode(TABS[to][0]);
+      app.querySelector(`#tab-${TABS[to][0]}`).focus();
+    });
+  });
+  mounted = true;
+}
+
+function render() {
+  if (!mounted) mount();
+  for (const [m] of TABS) {
+    const tab = app.querySelector(`#tab-${m}`);
+    tab.classList.toggle("active", m === mode);
+    tab.setAttribute("aria-selected", String(m === mode));
+    tab.setAttribute("tabindex", m === mode ? "0" : "-1");
+  }
+  const panel = app.querySelector("#panel");
+  panel.setAttribute("aria-labelledby", `tab-${mode}`);
+  panel.innerHTML = mode === "why" ? renderWhy() : buildHow();
   if (mode === "array") { resetArray(); wireHow(); }
   reportSize();
 }
