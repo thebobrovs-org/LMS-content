@@ -52,7 +52,7 @@ export function linksIn(body, file = "knowledge/x/y.md", exists = () => true) {
   for (const m of text.matchAll(/\[([^\]]*)\]\((<[^>]*>|[^)\s]+)(?:\s+"[^"]*")?\)/g)) take(m[1], dest(m[2]));
   for (const m of text.matchAll(/\[([^\]]*)\]\[([^\]]*)\]/g)) { const ref = (m[2] || m[1]).toLowerCase(); if (defs.has(ref)) take(m[1], defs.get(ref)); }
   for (const m of text.matchAll(/(?<!\])\[([^\]]+)\](?![\[(:])/g)) if (defs.has(m[1].toLowerCase())) take(m[1], defs.get(m[1].toLowerCase()));
-  for (const [label, d] of definitions) take(label, d);
+  for (const [label, d] of definitions) take(label.toLowerCase(), d); // the label normalised, so a record id under another case is still a mismatch
   for (const m of body.matchAll(new RegExp(`\\[\\[(${ID})\\]\\]|\`(${ID})\``, "g"))) {
     const id = m[1] ?? m[2];
     if (exists(id)) ids.add(id); else problems.add(`links to "${id}", which is not a record`);

@@ -133,6 +133,9 @@ test("links point at records: a Markdown destination must be a record file, an i
   assert.deepEqual(twice.problems, ["links to ../claims/missing.md, which is not a record (no knowledge/claims/missing.md)"]);
   const first = linksIn("[ref]\n\n[ref]: ../claims/a.md\n[ref]: ../claims/missing.md", "knowledge/claims/z.md", (id) => id !== "claim/missing");
   assert.deepEqual([first.ids, first.problems], [["claim/a"], ["links to ../claims/missing.md, which is not a record (no knowledge/claims/missing.md)"]]);
+  // A definition's label is judged normalised: a record id under another case is still another record's id.
+  const cased = linksIn("[CLAIM/a]\n\n[CLAIM/a]: ../claims/b.md", "knowledge/claims/z.md", () => true);
+  assert.deepEqual([cased.ids, cased.problems], [["claim/b"], ['links to ../claims/b.md under the label "claim/a", which is another record\'s id']]);
   // Collapsed reference links [ref][] and angle-bracket destinations with duplicate definitions (#114):
   const collapsed = linksIn("[ref][]\n\n[ref]: <../claims/missing.md>\n[ref]: <../claims/a.md>", "knowledge/claims/z.md", (id) => id !== "claim/missing");
   assert.deepEqual(collapsed.ids, ["claim/a"], "collapsed reference resolves to the first definition; both destinations checked");
