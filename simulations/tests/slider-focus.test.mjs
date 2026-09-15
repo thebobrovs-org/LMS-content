@@ -312,3 +312,38 @@ test("gpu-or-tpu-decider: an answer moves focus to the next question, then to th
   assert.match(sim.el("app").innerHTML, /id="step-focus" tabindex="-1">What is your model code optimized for\?/);
   assert.equal(sim.doc.activeElement, sim.el("step-focus"));
 });
+
+test("gpu-or-tpu-decider: alternative paths (CUDA branch to GPU verdict) move focus to next question and verdict (#122)", () => {
+  const sim = loadSim("gpu-or-tpu-decider");
+  sim.run("render()");
+  assert.equal(sim.doc.activeElement, null, "initial render sets no focus");
+  // Choose option 1: "CUDA / GPU-specific kernels" -> leads to kernels question
+  sim.click(".opt", (b) => b.getAttribute("data-i") === "1");
+  assert.equal(sim.doc.activeElement, sim.el("step-focus"));
+  assert.match(sim.el("app").innerHTML, /id="step-focus" tabindex="-1">Does it depend on hand-tuned CUDA kernels/);
+  // Choose option 0: "Yes" -> leads to GPU verdict
+  sim.click(".opt", (b) => b.getAttribute("data-i") === "0");
+  assert.equal(sim.doc.activeElement, sim.el("step-focus"));
+  assert.match(sim.el("app").innerHTML, /id="step-focus" tabindex="-1">Use a <b>GPU<\/b>/);
+  assert.deepEqual(sim.checkpoints(), ["checkpoint:observe-decision"]);
+  // Restart returns to root question with focus
+  sim.clickId("restart");
+  assert.equal(sim.doc.activeElement, sim.el("step-focus"));
+  assert.match(sim.el("app").innerHTML, /id="step-focus" tabindex="-1">What is your model code optimized for\?/);
+});
+
+test("vector-basis-explorer: moving Z to and from zero updates note in place without rebuilding controls (#122)", () => {
+  const sim = loadSim("vector-basis-explorer");
+  sim.run("render()");
+  const afterMount = sim.writes.length;
+  assert.match(sim.el("note").innerHTML, /flat/);
+  sim.input("sz", 2);
+  assert.match(sim.el("note").innerHTML, /points up off the floor/);
+  assert.equal(sim.el("sz-val").textContent, "2");
+  assert.deepEqual(rebuilt(sim, afterMount), []);
+  sim.input("sz", 0);
+  assert.match(sim.el("note").innerHTML, /flat/);
+  assert.equal(sim.el("sz-val").textContent, "0");
+  assert.deepEqual(rebuilt(sim, afterMount), []);
+});
+
