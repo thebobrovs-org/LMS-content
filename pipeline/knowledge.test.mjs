@@ -154,6 +154,7 @@ test("a question record carries no person anywhere: an e-mail address or an @han
     "questions/in-title.md": q("in-title", { title: "Asked by @grace" }, "Why does fp8 need scaling?\n"),
     "questions/in-source.md": q("in-source", { sources: ["a chat with linus@example.org"] }, "Why does fp8 need scaling?\n"),
     "questions/in-provenance.md": q("in-provenance", { provenance: { origin: "question", by: "agent:claude", from: "DM from @alan" } }, "Why does fp8 need scaling?\n"),
+    "questions/in-terms.md": q("in-terms", { terms: ["scaling", "asked by @ada"] }, "Why does fp8 need scaling?\n"),
     "questions/clean.md": q("clean", {}, "Why does fp8 need scaling? The decorator is written jax.jit here, and 1e-7 is a number.\n"),
   });
   const { errors } = recordProblems(records, { resolve: resolveAll });
@@ -162,6 +163,7 @@ test("a question record carries no person anywhere: an e-mail address or an @han
     'knowledge/questions/in-code.md: a question record carries what looks like a person ("@someone"); rewrite the question without it',
     'knowledge/questions/in-provenance.md: a question record carries what looks like a person ("@alan"); rewrite the question without it',
     'knowledge/questions/in-source.md: a question record carries what looks like a person ("linus@example.org"); rewrite the question without it',
+    'knowledge/questions/in-terms.md: a question record carries what looks like a person ("@ada"); rewrite the question without it',
     'knowledge/questions/in-title.md: a question record carries what looks like a person ("@grace"); rewrite the question without it',
   ]);
   assert.equal(identifierIn("`@channel` in backticks is still a handle"), "@channel");

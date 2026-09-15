@@ -65,10 +65,10 @@ export function identifierIn(text) {
   return m ? m[0] : null;
 }
 
-/** Every string a record commits or publishes: its front matter's text fields and its body. */
+/** Every string a record commits or publishes: its front matter's text fields (the terms included: the index publishes them) and its body. */
 export function textOf(r) {
   const d = r.data;
-  return [d.title, d.scope, ...(d.sources ?? []), d.source, ...(d.tags ?? []), d.provenance?.by, d.provenance?.model, d.provenance?.from, r.body].filter(Boolean).join("\n");
+  return [d.title, d.scope, ...(d.sources ?? []), d.source, ...(d.tags ?? []), ...(d.terms ?? []), d.provenance?.by, d.provenance?.model, d.provenance?.from, r.body].filter(Boolean).join("\n");
 }
 
 /**
