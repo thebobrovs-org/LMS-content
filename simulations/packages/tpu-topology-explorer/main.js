@@ -21,7 +21,8 @@ const TOPOLOGIES = [
 
 let i = 1; // start on 3D torus
 let particles = [], targetParticles = [], baseLinks = [], pathLinks = [], opticalSpines = [];
-let yaw = -0.5, pitch = -0.4, currentCamDist = 60, targetCamDist = 60;
+const START_YAW = -0.5, START_PITCH = -0.4;
+let yaw = START_YAW, pitch = START_PITCH, currentCamDist = 60, targetCamDist = 60;
 let isDragging = false, lastX = 0, lastY = 0, observed = false, pulseTime = 0, animating = false;
 let canvas, ctx;
 const REDUCE = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -118,32 +119,31 @@ function setTab(n) {
   updateDataState();
 }
 
-function renderUI() {
-  const t = TOPOLOGIES[i];
-  const tabs = TOPOLOGIES.map((x, n) => `<button class="tab ${n === i ? "active" : ""}" data-i="${n}">${x.name}</button>`).join("");
-  const bars = TOPOLOGIES.map((x, n) => `<div class="bar-wrap ${n === i ? "active" : ""}"><div class="bar-val">${x.hops}</div><div class="bar" style="height:${(x.hops / x.maxHops) * 100}%"></div><div class="bar-label">${x.name.replace(" Torus", "")}</div></div>`).join("");
+let mounted = false;
 
+/**
+ * The tabs, the canvas and the panels' frames are built once, so the tab pressed keeps focus and
+ * the canvas keeps its context; a tab change updates them in place (LMS-content#100). The canvas
+ * is focusable: the arrow keys rotate the view as a drag does, and Home resets it.
+ */
+function mountUI() {
+  const tabs = TOPOLOGIES.map((x, n) => `<button type="button" class="tab" data-i="${n}" aria-pressed="false">${x.name}</button>`).join("");
   app.innerHTML = `
-    <div class="tabs">${tabs}</div>
+    <div class="tabs" role="group" aria-label="Topology">${tabs}</div>
     <div class="layout-grid">
       <div class="stage-container">
         <div class="stage">
-          <canvas id="c"></canvas>
+          <canvas id="c" tabindex="0" role="img"></canvas>
           <div class="legend">
             <div class="leg-item"><div class="dot" style="background:rgba(59,130,246,0.6)"></div> Mesh</div>
             <div class="leg-item"><div class="dot" style="background:#b91c1c;box-shadow:0 0 10px #b91c1c"></div> Worst-case path</div>
           </div>
-          <div class="drag-hint">Drag to rotate</div>
+          <div class="drag-hint">Drag, or use the arrow keys, to rotate</div>
         </div>
       </div>
       <div class="sidebar">
-        <div class="readout-panel">
-          <div class="r-header"><div class="r-title">${t.name}</div><div class="r-badge">${t.gens}</div></div>
-          <div class="r-stat">Shape: <b>${t.chips}</b><br/>Network diameter: <span class="hop-count">${t.hops} hops</span><br/><span class="r-illus">mesh illustrative (~256 nodes shown)</span></div>
-          <div class="r-desc">${t.desc}</div>
-          <div class="r-why"><b>Why it matters:</b> ${t.why}</div>
-        </div>
-        <div class="chart"><div class="chart-axis">Max hops ↓</div>${bars}</div>
+        <div class="readout-panel" id="readout" aria-live="polite"></div>
+        <div class="chart" id="chart"></div>
       </div>
     </div>`;
 
@@ -151,6 +151,36 @@ function renderUI() {
   canvas = document.getElementById("c");
   ctx = canvas.getContext("2d");
   canvas.addEventListener("pointerdown", (e) => { isDragging = true; lastX = e.clientX; lastY = e.clientY; nudge(); });
+  canvas.addEventListener("keydown", (e) => {
+    const step = 0.12;
+    if (e.key === "ArrowLeft") yaw -= step;
+    else if (e.key === "ArrowRight") yaw += step;
+    else if (e.key === "ArrowUp") pitch = Math.max(-Math.PI / 2, pitch - step);
+    else if (e.key === "ArrowDown") pitch = Math.min(Math.PI / 2, pitch + step);
+    else if (e.key === "Home") { yaw = START_YAW; pitch = START_PITCH; }
+    else return;
+    e.preventDefault();
+    nudge();
+  });
+  mounted = true;
+}
+
+function renderUI() {
+  if (!mounted) mountUI();
+  const t = TOPOLOGIES[i];
+  app.querySelectorAll(".tab").forEach((el) => {
+    const on = +el.getAttribute("data-i") === i;
+    el.classList.toggle("active", on);
+    el.setAttribute("aria-pressed", String(on));
+  });
+  const bars = TOPOLOGIES.map((x, n) => `<div class="bar-wrap ${n === i ? "active" : ""}"><div class="bar-val">${x.hops}</div><div class="bar" style="height:${(x.hops / x.maxHops) * 100}%"></div><div class="bar-label">${x.name.replace(" Torus", "")}</div></div>`).join("");
+  canvas.setAttribute("aria-label", `3D view of the ${t.name} mesh, ${t.hops} hops across. Arrow keys rotate; Home resets the view.`);
+  document.getElementById("readout").innerHTML = `
+          <div class="r-header"><div class="r-title">${t.name}</div><div class="r-badge">${t.gens}</div></div>
+          <div class="r-stat">Shape: <b>${t.chips}</b><br/>Network diameter: <span class="hop-count">${t.hops} hops</span><br/><span class="r-illus">mesh illustrative (~256 nodes shown)</span></div>
+          <div class="r-desc">${t.desc}</div>
+          <div class="r-why"><b>Why it matters:</b> ${t.why}</div>`;
+  document.getElementById("chart").innerHTML = `<div class="chart-axis">Max hops ↓</div>${bars}`;
   resizeCanvas();
   reportSize();
   nudge(); // a new view: draw it, and restart the idle timer
