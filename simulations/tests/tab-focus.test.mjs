@@ -129,7 +129,7 @@ function loadSim(id) {
     requestAnimationFrame: () => 0,
     setTimeout: () => 0,
     clearTimeout: () => {},
-    setInterval: () => 0,
+    setInterval: () => 1,
     clearInterval: () => {},
     matchMedia: () => ({ matches: false }),
     performance: { now: () => 0 },
@@ -267,3 +267,50 @@ test("tpu-topology-explorer: a tab updates the pressed state, the readout and th
   assert.deepEqual([sim.run("yaw"), sim.run("pitch")], [-0.5, -0.4]);
   assert.equal(sim.key(canvas, "Tab").defaultPrevented, false, "Tab still leaves the canvas");
 });
+
+test("systolic-array: switching tabs via keyboard clears auto-play timer, and ArrowLeft / boundary keys behave correctly", () => {
+  const sim = loadSim("systolic-array");
+  sim.run("render()");
+  const why = sim.el("tab-why");
+  const array = sim.el("tab-array");
+
+  // Switch to array mode
+  sim.key(why, "ArrowRight");
+  assert.equal(sim.run("mode"), "array");
+
+  // Start auto-play
+  sim.click("#play", () => true);
+  assert.notEqual(sim.run("arrTimer"), null, "auto-play timer started");
+
+  // Keyboard navigation back to Why tab stops timer
+  sim.key(array, "ArrowLeft");
+  assert.equal(sim.run("mode"), "why");
+  assert.equal(sim.run("arrTimer"), null, "auto-play timer is cleared on tab switch");
+  assert.equal(sim.doc.activeElement, why, "focus moves to Why tab");
+
+  // Boundary idempotency: Home on Why stays on Why, End on Array stays on Array
+  sim.key(why, "Home");
+  assert.equal(sim.run("mode"), "why");
+  assert.equal(sim.doc.activeElement, why);
+
+  sim.key(why, "End");
+  assert.equal(sim.run("mode"), "array");
+  assert.equal(sim.doc.activeElement, array);
+
+  sim.key(array, "End");
+  assert.equal(sim.run("mode"), "array");
+  assert.equal(sim.doc.activeElement, array);
+});
+
+test("tpu-topology-explorer: pitch clamps at negative limit on repeated ArrowUp and non-navigation keys are not prevented", () => {
+  const sim = loadSim("tpu-topology-explorer");
+  sim.run("start()");
+  const canvas = sim.el("c");
+
+  for (let n = 0; n < 40; n++) sim.key(canvas, "ArrowUp");
+  assert.equal(sim.run("pitch"), -Math.PI / 2, "pitch is clamped at -Math.PI / 2 on repeated ArrowUp");
+
+  assert.equal(sim.key(canvas, "Escape").defaultPrevented, false, "Escape is not prevented");
+  assert.equal(sim.key(canvas, "Enter").defaultPrevented, false, "Enter is not prevented");
+});
+
