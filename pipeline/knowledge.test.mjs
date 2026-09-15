@@ -11,7 +11,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { buildIndex, identifierIn, indexText, linksIn, loadRecords, recordProblems } from "./knowledge.mjs";
+import { buildIndex, identifierIn, indexText, linksIn, loadRecords, recordProblems , termsOf } from "./knowledge.mjs";
 
 const INDEX_CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), "knowledge-index.mjs");
 
@@ -154,6 +154,7 @@ test("a question record carries no person anywhere: an e-mail address or an @han
     "questions/in-title.md": q("in-title", { title: "Asked by @grace" }, "Why does fp8 need scaling?\n"),
     "questions/in-source.md": q("in-source", { sources: ["a chat with linus@example.org"] }, "Why does fp8 need scaling?\n"),
     "questions/in-provenance.md": q("in-provenance", { provenance: { origin: "question", by: "agent:claude", from: "DM from @alan" } }, "Why does fp8 need scaling?\n"),
+    "questions/in-terms.md": q("in-terms", { terms: ["scaling", "asked by @ada"] }, "Why does fp8 need scaling?\n"),
     "questions/clean.md": q("clean", {}, "Why does fp8 need scaling? The decorator is written jax.jit here, and 1e-7 is a number.\n"),
   });
   const { errors } = recordProblems(records, { resolve: resolveAll });
@@ -162,6 +163,7 @@ test("a question record carries no person anywhere: an e-mail address or an @han
     'knowledge/questions/in-code.md: a question record carries what looks like a person ("@someone"); rewrite the question without it',
     'knowledge/questions/in-provenance.md: a question record carries what looks like a person ("@alan"); rewrite the question without it',
     'knowledge/questions/in-source.md: a question record carries what looks like a person ("linus@example.org"); rewrite the question without it',
+    'knowledge/questions/in-terms.md: a question record carries what looks like a person ("@ada"); rewrite the question without it',
     'knowledge/questions/in-title.md: a question record carries what looks like a person ("@grace"); rewrite the question without it',
   ]);
   assert.equal(identifierIn("`@channel` in backticks is still a handle"), "@channel");
@@ -203,4 +205,21 @@ test("knowledge-index.mjs writes the index, and --check accepts it, refuses a st
   assert.equal(stale.status, 1);
   assert.match(fs.readFileSync(out, "utf8"), /Edited by hand/, "--check leaves the file as it found it");
   fs.rmSync(root, { recursive: true, force: true });
+});
+
+test("a record's terms are its front matter's terms list plus a concept's Canonical terms line, a parenthesised alias included, lowercased and deduplicated; the index carries them (LMS-content#111)", () => {
+  assert.deepEqual(termsOf({ terms: ["Pointwise", "GELU"] }, "**Concept.** x\n\n**Canonical terms.** exponent, significand (mantissa), Dynamic range, precision.\n"), ["pointwise", "gelu", "exponent", "significand", "mantissa", "dynamic range", "precision"]);
+  assert.deepEqual(termsOf({}, "no terms line here"), []);
+  assert.deepEqual(termsOf({ terms: ["a", "A", " a "] }, ""), ["a"]);
+  assert.deepEqual(termsOf({}, "**Canonical terms.** one, two.\n**Canonical terms.** three.\n"), ["one", "two"], "the first line only");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "knowledge-terms-"));
+  fs.mkdirSync(path.join(dir, "knowledge", "concepts"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "knowledge", "claims"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "knowledge", "concepts", "c.md"), `---\nid: concept/c\ntype: concept\nstatus: approved\nscope: s\nsources: [x]\nterms: [footprint]\nreviewed: 2026-09-01\n---\n**Concept.** c\n\n**Canonical terms.** shape, allocation.\n`);
+  fs.writeFileSync(path.join(dir, "knowledge", "claims", "d.md"), `---\nid: claim/d\ntype: claim\nstatus: approved\nscope: s\nsources: [x]\nreviewed: 2026-09-01\n---\n**Claim.** d\n`);
+  const { records, problems } = loadRecords(path.join(dir, "knowledge"), dir);
+  assert.deepEqual(problems, []);
+  const index = buildIndex(records);
+  assert.deepEqual(index.records.map((r) => [r.id, r.terms]), [["claim/d", []], ["concept/c", ["footprint", "shape", "allocation"]]]);
+  fs.rmSync(dir, { recursive: true, force: true });
 });
