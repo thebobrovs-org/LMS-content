@@ -40,6 +40,14 @@ test("a record touches a topic through each reference form: the topic, an object
   assert.deepEqual(search(index, { topic: T }).map((r) => r.id), ["claim/by-topic", "claim/by-topic-prefix", "claim/by-objective", "claim/by-item", "claim/by-step", "claim/by-sim", "claim/by-checkpoint"]);
   assert.deepEqual(search(index, { topic: "ml-systems/jax-xla-stack" }).map((r) => r.id), ["claim/by-sim", "claim/by-checkpoint", "claim/other-sim", "claim/other-topic"]);
   assert.equal(touchesTopic({ records: [] }, index.records[5], T), false, "an index without the map: a simulation reference reaches no topic");
+  // A reference named like an inherited property, or a map entry that is not a list, reaches no topic and never throws (LMS-content#116).
+  const inherited = rec("claim/inherited", "Inherited", "s", ["sim:constructor", "checkpoint:constructor/x", "sim:toString", "sim:__proto__", "sim:hasownproperty"]);
+  assert.equal(touchesTopic(index, inherited, T), false);
+  assert.equal(touchesTopic({ ...index, simulations: { "matmul-tiler": "math-infra/tensor-shapes" } }, index.records[5], T), false, "a map entry that is not a list");
+  assert.equal(touchesTopic({ ...index, simulations: null }, index.records[5], T), false, "a null map");
+  const withInherited = { ...index, records: [...index.records, inherited] };
+  assert.deepEqual(search(withInherited, { topic: T }).map((r) => r.id).includes("claim/inherited"), false);
+  assert.equal(rank(withInherited, "inherited", { topic: T }).find((h) => h.record.id === "claim/inherited")?.score, 4, "ranked on its title (3) and slug (1), with no topic boost");
   assert.equal(touchesTopic(index, rec("claim/odd", "o", "s", ["sim:Matmul-Tiler", "checkpoint:matmul-tiler"]), T), false, "a reference that is not of the schema's shape is not resolved");
   assert.deepEqual(rank(index, "by sim", { topic: T, k: 2 }).map((h) => [h.record.id, h.score]), [["claim/by-sim", 6], ["claim/other-sim", 4]], "the topic boost (2) reaches a record through the embedded simulation, not one through another lesson's");
 });

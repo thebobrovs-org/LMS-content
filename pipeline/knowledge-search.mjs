@@ -22,7 +22,11 @@ export function touchesTopic(index, record, topic) {
   return record.touches.some((t) => {
     if (t === topic || t === `topic:${topic}` || t.startsWith(`objective:${topic}#`) || t.startsWith(`item:${topic}#`) || t.startsWith(`step:${topic}:`)) return true;
     const sim = /^(?:sim:([a-z0-9][a-z0-9-]*)|checkpoint:([a-z0-9][a-z0-9-]*)\/[a-z0-9][a-z0-9-]*)$/.exec(t);
-    return sim !== null && (index.simulations?.[sim[1] ?? sim[2]] ?? []).includes(topic);
+    if (sim === null) return false;
+    // Only the map's own entries, and only a list: a name like `constructor` never reads Object's prototype.
+    const map = index.simulations;
+    const topics = map && typeof map === "object" && Object.hasOwn(map, sim[1] ?? sim[2]) ? map[sim[1] ?? sim[2]] : null;
+    return Array.isArray(topics) && topics.includes(topic);
   });
 }
 
