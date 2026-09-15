@@ -127,6 +127,43 @@ test("links point at records: a Markdown destination must be a record file, an i
   const direct = linksIn("[x](../claims/a.md) [[claim/b]] `decision/c` decision/d", "knowledge/claims/z.md", (id) => id !== "decision/c");
   assert.deepEqual(direct.ids, ["claim/a", "claim/b"]);
   assert.deepEqual(direct.problems, ['links to "decision/c", which is not a record']);
+  // A label defined twice resolves through its first definition, as Markdown does; the later one is checked as a destination and never wins (#107).
+  const twice = linksIn("[ref] and [also][ref]\n\n[ref]: ../claims/missing.md\n[ref]: ../claims/a.md\n[REF]: ../claims/b.md", "knowledge/claims/z.md", (id) => id !== "claim/missing");
+  assert.deepEqual(twice.ids, ["claim/a", "claim/b"], "the definitions' destinations count; the usages resolve to the first, a missing record");
+  assert.deepEqual(twice.problems, ["links to ../claims/missing.md, which is not a record (no knowledge/claims/missing.md)"]);
+  const first = linksIn("[ref]\n\n[ref]: ../claims/a.md\n[ref]: ../claims/missing.md", "knowledge/claims/z.md", (id) => id !== "claim/missing");
+  assert.deepEqual([first.ids, first.problems], [["claim/a"], ["links to ../claims/missing.md, which is not a record (no knowledge/claims/missing.md)"]]);
+  // A definition's label is judged normalised: a record id under another case is still another record's id.
+  const cased = linksIn("[CLAIM/a]\n\n[CLAIM/a]: ../claims/b.md", "knowledge/claims/z.md", () => true);
+  assert.deepEqual([cased.ids, cased.problems], [["claim/b"], ['links to ../claims/b.md under the label "claim/a", which is another record\'s id']]);
+  // Collapsed reference links [ref][] and angle-bracket destinations with duplicate definitions (#114):
+  const collapsed = linksIn("[ref][]\n\n[ref]: <../claims/missing.md>\n[ref]: <../claims/a.md>", "knowledge/claims/z.md", (id) => id !== "claim/missing");
+  assert.deepEqual(collapsed.ids, ["claim/a"], "collapsed reference resolves to the first definition; both destinations checked");
+  assert.deepEqual(collapsed.problems, ["links to ../claims/missing.md, which is not a record (no knowledge/claims/missing.md)"]);
+  // A usage with an id label proves which definition was used (#107, #114):
+  const labelWins = linksIn("[claim/other][ref]\n\n[ref]: ../claims/other.md\n[ref]: ../claims/a.md", "knowledge/claims/z.md");
+  assert.deepEqual(labelWins.ids.sort(), ["claim/a", "claim/other"]);
+  assert.deepEqual(labelWins.problems, [], "usage resolved to claim/other matching its label; if the second had won, a label mismatch would be reported");
+  // A duplicate definition under an id label pointing elsewhere is reported:
+  const mismatched = linksIn("[claim/other]: ../claims/other.md\n[claim/other]: ../concepts/roofline.md", "knowledge/claims/z.md");
+  assert.deepEqual(mismatched.ids.sort(), ["claim/other", "concept/roofline"]);
+  assert.deepEqual(mismatched.problems, ['links to ../concepts/roofline.md under the label "claim/other", which is another record\'s id']);
+  // Duplicate definitions pointing at the same destination are deduplicated:
+  const identical = linksIn("[ref]\n\n[ref]: ../claims/a.md\n[ref]: ../claims/a.md", "knowledge/claims/z.md");
+  assert.deepEqual(identical.ids, ["claim/a"]);
+  assert.deepEqual(identical.problems, []);
+  // Three definitions of a label: first wins for usage, intermediate and later destinations are still checked (#114):
+  const threeDefs = linksIn("[ref]\n\n[REF]: ../claims/a.md\n[ref]: ../claims/missing.md\n[Ref]: ../claims/b.md", "knowledge/claims/z.md", (id) => id !== "claim/missing");
+  assert.deepEqual(threeDefs.ids.sort(), ["claim/a", "claim/b"]);
+  assert.deepEqual(threeDefs.problems, ["links to ../claims/missing.md, which is not a record (no knowledge/claims/missing.md)"]);
+  // Duplicate definitions where the first is an external URL: usage resolves externally, subsequent record destination is checked (#114):
+  const externalFirst = linksIn("[ref]\n\n[ref]: https://example.com/docs\n[ref]: ../claims/missing.md\n[ref]: ../claims/a.md", "knowledge/claims/z.md", (id) => id !== "claim/missing");
+  assert.deepEqual(externalFirst.ids, ["claim/a"]);
+  assert.deepEqual(externalFirst.problems, ["links to ../claims/missing.md, which is not a record (no knowledge/claims/missing.md)"]);
+  // Duplicate definitions with optional titles: first definition wins for usage, all destinations checked (#114):
+  const titled = linksIn("[ref]\n\n[ref]: ../claims/a.md 'First Title'\n[ref]: ../claims/b.md \"Second Title\"", "knowledge/claims/z.md");
+  assert.deepEqual(titled.ids.sort(), ["claim/a", "claim/b"]);
+  assert.deepEqual(titled.problems, []);
 });
 
 test("a duplicate id and a look-alike title are caught, and an overdue review warns", () => {

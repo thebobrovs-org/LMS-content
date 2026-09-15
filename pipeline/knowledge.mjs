@@ -23,7 +23,7 @@ const TYPE_OF_FOLDER = Object.fromEntries(Object.entries(FOLDER_OF).map(([t, f])
  */
 export function linksIn(body, file = "knowledge/x/y.md", exists = () => true) {
   const ids = new Set();
-  const problems = [];
+  const problems = new Set(); // one problem per destination, however many usages resolve to it
   const dir = path.posix.dirname(file);
   const idOfDest = (dest) => {
     const target = path.posix.normalize(path.posix.join(dir, dest.replace(/[#?].*$/, "")));
@@ -35,24 +35,29 @@ export function linksIn(body, file = "knowledge/x/y.md", exists = () => true) {
     if (/^[a-z][a-z0-9+.-]*:/i.test(dest) || dest.startsWith("/")) return; // a URL or a site path
     const { outside, id, target } = idOfDest(dest);
     if (outside) return;
-    if (!exists(id)) { problems.push(`links to ${dest}, which is not a record (no ${target})`); return; }
-    if (new RegExp(`^${ID}$`).test(label) && label !== id) problems.push(`links to ${dest} under the label "${label}", which is another record's id`);
+    if (!exists(id)) { problems.add(`links to ${dest}, which is not a record (no ${target})`); return; }
+    if (new RegExp(`^${ID}$`).test(label) && label !== id) problems.add(`links to ${dest} under the label "${label}", which is another record's id`);
     ids.add(id);
   };
   // A destination may be wrapped in angle brackets; a reference-style usage resolves through its definition.
   const dest = (d) => (d.startsWith("<") && d.endsWith(">") ? d.slice(1, -1) : d);
+  // The first definition of a label wins, as Markdown resolves it; every definition's destination is still checked.
   const defs = new Map();
-  for (const m of body.matchAll(/^\[([^\]]+)\]:\s*(\S+)/gm)) defs.set(m[1].toLowerCase(), dest(m[2]));
+  const definitions = [];
+  for (const m of body.matchAll(/^\[([^\]]+)\]:\s*(\S+)/gm)) {
+    definitions.push([m[1], dest(m[2])]);
+    if (!defs.has(m[1].toLowerCase())) defs.set(m[1].toLowerCase(), dest(m[2]));
+  }
   const text = body.replace(/^\[[^\]]+\]:\s*\S+.*$/gm, "");
   for (const m of text.matchAll(/\[([^\]]*)\]\((<[^>]*>|[^)\s]+)(?:\s+"[^"]*")?\)/g)) take(m[1], dest(m[2]));
   for (const m of text.matchAll(/\[([^\]]*)\]\[([^\]]*)\]/g)) { const ref = (m[2] || m[1]).toLowerCase(); if (defs.has(ref)) take(m[1], defs.get(ref)); }
   for (const m of text.matchAll(/(?<!\])\[([^\]]+)\](?![\[(:])/g)) if (defs.has(m[1].toLowerCase())) take(m[1], defs.get(m[1].toLowerCase()));
-  for (const [label, d] of defs) take(label, d);
+  for (const [label, d] of definitions) take(label.toLowerCase(), d); // the label normalised, so a record id under another case is still a mismatch
   for (const m of body.matchAll(new RegExp(`\\[\\[(${ID})\\]\\]|\`(${ID})\``, "g"))) {
     const id = m[1] ?? m[2];
-    if (exists(id)) ids.add(id); else problems.push(`links to "${id}", which is not a record`);
+    if (exists(id)) ids.add(id); else problems.add(`links to "${id}", which is not a record`);
   }
-  return { ids: [...ids], problems };
+  return { ids: [...ids], problems: [...problems] };
 }
 
 /**
