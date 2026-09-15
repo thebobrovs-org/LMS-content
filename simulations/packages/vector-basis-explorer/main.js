@@ -100,11 +100,33 @@ function readoutHTML() {
     </div>`;
 }
 
-function render() {
+let mounted = false;
+
+/**
+ * The controls are built once, so the one a keyboard user moves keeps focus; a change updates their
+ * value labels and redraws the outputs in place (LMS-content#122, as #59 did for the sliders of five
+ * other simulations).
+ */
+function mount() {
   $("controls").innerHTML =
-    `<div class="sl x"><label for="sx">X <b>${cx}</b></label><input type="range" id="sx" min="0" max="${AX}" step="1" value="${cx}"></div>` +
-    `<div class="sl y"><label for="sy">Y <b>${cy}</b></label><input type="range" id="sy" min="0" max="${AX}" step="1" value="${cy}"></div>` +
-    `<div class="sl z"><label for="sz">Z <b>${cz}</b></label><input type="range" id="sz" min="0" max="${AX}" step="1" value="${cz}"></div>`;
+    `<div class="sl x"><label for="sx">X <b id="sx-val">${cx}</b></label><input type="range" id="sx" min="0" max="${AX}" step="1" value="${cx}"></div>` +
+    `<div class="sl y"><label for="sy">Y <b id="sy-val">${cy}</b></label><input type="range" id="sy" min="0" max="${AX}" step="1" value="${cy}"></div>` +
+    `<div class="sl z"><label for="sz">Z <b id="sz-val">${cz}</b></label><input type="range" id="sz" min="0" max="${AX}" step="1" value="${cz}"></div>`;
+  document.querySelectorAll(".sl input").forEach((el) => el.addEventListener("input", (e) => {
+    const v = +e.target.value;
+    if (e.target.id === "sx") cx = v; else if (e.target.id === "sy") cy = v; else cz = v;
+    if (!observed) { observed = true; sim.checkpoint("observe-tensor"); }
+    sim.event("vector", { cx, cy, cz });
+    render();
+  }));
+  mounted = true;
+}
+
+function render() {
+  if (!mounted) mount();
+  $("sx-val").textContent = String(cx);
+  $("sy-val").textContent = String(cy);
+  $("sz-val").textContent = String(cz);
 
   $("scene").innerHTML = sceneSVG();
   $("readout").innerHTML = readoutHTML();
@@ -113,14 +135,6 @@ function render() {
   $("note").innerHTML = flat
     ? `Right now the arrow lies <b>flat</b> on the X–Y floor — two non-zero shadows, so two numbers carry it (the third is just <b>0</b>). This is exactly Dan Fleisch's <b>[4, 3, 0]</b> arrow. Add some <span class="c3">Z</span> and you lift it off the floor — you've <b>added a dimension</b>, and now you need all three numbers.`
     : `The arrow points up off the floor, so all three shadows are non-zero — the array <b>[${cx}, ${cy}, ${cz}]</b> needs every number to place it. That list <b>is</b> the tensor: the chip never stores an arrow, only these components. (The <span class="c2">unit vectors</span> x̂ ŷ ẑ are just the agreed "1-step" ruler that makes the numbers mean a real direction.)`;
-
-  document.querySelectorAll(".sl input").forEach((el) => el.addEventListener("input", (e) => {
-    const v = +e.target.value;
-    if (e.target.id === "sx") cx = v; else if (e.target.id === "sy") cy = v; else cz = v;
-    if (!observed) { observed = true; sim.checkpoint("observe-tensor"); }
-    sim.event("vector", { cx, cy, cz });
-    render();
-  }));
   reportSize();
 }
 

@@ -75,11 +75,36 @@ b <span class="op">=</span> np.array([${cap}, ${budget}])
 np.linalg.solve(A, b)   <span class="hl"># → [${s ? fmt(s.C) : "?"}, ${s ? fmt(s.G) : "?"}]</span>`;
 }
 
-function render() {
+let mounted = false;
+
+/**
+ * The controls are built once, so the one a keyboard user moves keeps focus; a change updates their
+ * value labels and redraws the outputs in place (LMS-content#122, as #59 did for the sliders of five
+ * other simulations).
+ */
+function mount() {
   $("controls").innerHTML =
-    `<div class="sl cap"><label for="c-cap">Rack capacity (nodes) <b>${cap}</b></label><input type="range" id="c-cap" min="10" max="40" step="1" value="${cap}"></div>` +
-    `<div class="sl bud"><label for="c-bud">Budget ($k) <b>${budget}</b></label><input type="range" id="c-bud" min="40" max="160" step="2" value="${budget}" ${singular ? "disabled" : ""}></div>` +
-    `<label class="toggle"><input type="checkbox" id="c-sing" ${singular ? "checked" : ""}><span>Conflicting constraints (singular)</span></label>`;
+    `<div class="sl cap"><label for="c-cap">Rack capacity (nodes) <b id="cap-val">${cap}</b></label><input type="range" id="c-cap" min="10" max="40" step="1" value="${cap}"></div>` +
+    `<div class="sl bud"><label for="c-bud">Budget ($k) <b id="bud-val">${budget}</b></label><input type="range" id="c-bud" min="40" max="160" step="2" value="${budget}"></div>` +
+    `<label class="toggle"><input type="checkbox" id="c-sing"><span>Conflicting constraints (singular)</span></label>`;
+  $("note").innerHTML = `A <b>matrix</b> is just those coefficients — the <code>1</code>s and <code>4</code> — stored for a computer; the variable names <code>C</code>, <code>G</code> are stripped away. The <b>solution</b> is where the rules agree. <b>Heads-up:</b> neural-net ML uses matrices as <i>learned transformations</i> (matmul), not systems it solves — solving systems like this lives in classical ML and optimization. This lesson is about reading a matrix concretely.`;
+  $("c-cap").addEventListener("input", (e) => { cap = +e.target.value; render(); });
+  const bud = $("c-bud"); if (bud) bud.addEventListener("input", (e) => { budget = +e.target.value; render(); });
+  $("c-sing").addEventListener("change", (e) => {
+    singular = e.target.checked;
+    if (singular && !observed) { observed = true; sim.checkpoint("observe-singular"); }
+    sim.event("mode", { singular });
+    render();
+  });
+  mounted = true;
+}
+
+function render() {
+  if (!mounted) mount();
+  $("cap-val").textContent = String(cap);
+  $("bud-val").textContent = String(budget);
+  $("c-bud").disabled = singular;
+  $("c-sing").checked = singular;
 
   $("banner").className = "banner" + (singular ? " show" : "");
   $("banner").innerHTML = singular ? `<b>Impossible deployment.</b> The two rules are parallel — they never cross, so no CPU/GPU config satisfies both. That's a <b>singular matrix</b>: no unique solution.` : "";
@@ -103,16 +128,6 @@ function render() {
     ${solHTML}
     <div class="code">${codeHTML()}</div>`;
 
-  $("note").innerHTML = `A <b>matrix</b> is just those coefficients — the <code>1</code>s and <code>4</code> — stored for a computer; the variable names <code>C</code>, <code>G</code> are stripped away. The <b>solution</b> is where the rules agree. <b>Heads-up:</b> neural-net ML uses matrices as <i>learned transformations</i> (matmul), not systems it solves — solving systems like this lives in classical ML and optimization. This lesson is about reading a matrix concretely.`;
-
-  $("c-cap").addEventListener("input", (e) => { cap = +e.target.value; render(); });
-  const bud = $("c-bud"); if (bud) bud.addEventListener("input", (e) => { budget = +e.target.value; render(); });
-  $("c-sing").addEventListener("change", (e) => {
-    singular = e.target.checked;
-    if (singular && !observed) { observed = true; sim.checkpoint("observe-singular"); }
-    sim.event("mode", { singular });
-    render();
-  });
   reportSize();
 }
 

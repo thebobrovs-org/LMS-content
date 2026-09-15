@@ -91,11 +91,29 @@ function graphSVG(g, m) {
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${R} by ${C} interconnect graph; diameter ${m.dia} hops, bisection ${m.bisection} links">${e}${n}</svg>`;
 }
 
-function render() {
+let mounted = false;
+
+/**
+ * The controls are built once, so the one a keyboard user moves keeps focus; a change updates their
+ * value labels and redraws the outputs in place (LMS-content#122, as #59 did for the sliders of five
+ * other simulations).
+ */
+function mount() {
   $("controls").innerHTML =
-    `<div class="sl"><label for="c-r">Rows <b>${R}</b></label><input type="range" id="c-r" min="1" max="8" step="1" value="${R}"></div>` +
-    `<div class="sl"><label for="c-c">Columns <b>${C}</b></label><input type="range" id="c-c" min="2" max="12" step="1" value="${C}"></div>` +
-    `<label class="toggle"><input type="checkbox" id="c-w" ${wrap ? "checked" : ""}><span>Wrap-around (mesh → torus)</span></label>`;
+    `<div class="sl"><label for="c-r">Rows <b id="r-val">${R}</b></label><input type="range" id="c-r" min="1" max="8" step="1" value="${R}"></div>` +
+    `<div class="sl"><label for="c-c">Columns <b id="c-val">${C}</b></label><input type="range" id="c-c" min="2" max="12" step="1" value="${C}"></div>` +
+    `<label class="toggle"><input type="checkbox" id="c-w"><span>Wrap-around (mesh → torus)</span></label>`;
+  $("c-r").addEventListener("input", (e) => { R = +e.target.value; sim.event("shape", { R, C }); render(); });
+  $("c-c").addEventListener("input", (e) => { C = +e.target.value; sim.event("shape", { R, C }); render(); });
+  $("c-w").addEventListener("change", (e) => { wrap = e.target.checked; if (wrap && !observed) { observed = true; sim.checkpoint("observe-topology"); } render(); });
+  mounted = true;
+}
+
+function render() {
+  if (!mounted) mount();
+  $("r-val").textContent = String(R);
+  $("c-val").textContent = String(C);
+  $("c-w").checked = wrap;
 
   const g = buildGraph();
   const m = metrics(g);
@@ -110,10 +128,6 @@ function render() {
     `<div class="legend"><div class="it"><span class="sw edge"></span>link</div><div class="it"><span class="sw dia"></span>diameter path (worst-case hops)</div><div class="it"><span class="sw cut"></span>bisection cut</div></div>`;
 
   $("note").innerHTML = `This shape: <b>${R}×${C}</b>${wrap ? " torus (wrapped)" : " mesh"} — <span class="dia">diameter ${m.dia} hops</span> (worst-case latency, the amber path) and <span class="cut">bisection ${m.bisection} links</span> (the red cut to split it in half — your cross-section throughput). The all-reduce from the last lesson <b>rides this graph</b>, so these two numbers are its speed limit. Flip wrap-around to halve the diameter; square up the grid to raise the bisection — same nodes, faster network.`;
-
-  $("c-r").addEventListener("input", (e) => { R = +e.target.value; sim.event("shape", { R, C }); render(); });
-  $("c-c").addEventListener("input", (e) => { C = +e.target.value; sim.event("shape", { R, C }); render(); });
-  $("c-w").addEventListener("change", (e) => { wrap = e.target.checked; if (wrap && !observed) { observed = true; sim.checkpoint("observe-topology"); } render(); });
   reportSize();
 }
 
