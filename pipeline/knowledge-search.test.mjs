@@ -40,6 +40,14 @@ test("a record touches a topic through each reference form: the topic, an object
   assert.deepEqual(search(index, { topic: T }).map((r) => r.id), ["claim/by-topic", "claim/by-topic-prefix", "claim/by-objective", "claim/by-item", "claim/by-step", "claim/by-sim", "claim/by-checkpoint"]);
   assert.deepEqual(search(index, { topic: "ml-systems/jax-xla-stack" }).map((r) => r.id), ["claim/by-sim", "claim/by-checkpoint", "claim/other-sim", "claim/other-topic"]);
   assert.equal(touchesTopic({ records: [] }, index.records[5], T), false, "an index without the map: a simulation reference reaches no topic");
+  // A reference named like an inherited property, or a map entry that is not a list, reaches no topic and never throws (LMS-content#116).
+  const inherited = rec("claim/inherited", "Inherited", "s", ["sim:constructor", "checkpoint:constructor/x", "sim:toString", "sim:__proto__", "sim:hasownproperty"]);
+  assert.equal(touchesTopic(index, inherited, T), false);
+  assert.equal(touchesTopic({ ...index, simulations: { "matmul-tiler": "math-infra/tensor-shapes" } }, index.records[5], T), false, "a map entry that is not a list");
+  assert.equal(touchesTopic({ ...index, simulations: null }, index.records[5], T), false, "a null map");
+  const withInherited = { ...index, records: [...index.records, inherited] };
+  assert.deepEqual(search(withInherited, { topic: T }).map((r) => r.id).includes("claim/inherited"), false);
+  assert.equal(rank(withInherited, "inherited", { topic: T }).find((h) => h.record.id === "claim/inherited")?.score, 4, "ranked on its title (3) and slug (1), with no topic boost");
   assert.equal(touchesTopic(index, rec("claim/odd", "o", "s", ["sim:Matmul-Tiler", "checkpoint:matmul-tiler"]), T), false, "a reference that is not of the schema's shape is not resolved");
   assert.deepEqual(rank(index, "by sim", { topic: T, k: 2 }).map((h) => [h.record.id, h.score]), [["claim/by-sim", 6], ["claim/other-sim", 4]], "the topic boost (2) reaches a record through the embedded simulation, not one through another lesson's");
 });
@@ -154,3 +162,31 @@ test("rank scores a question word found in a record's terms 2, like a tag, and e
   for (const [from, to] of Object.entries(SYNONYMS)) assert.match(to, /^[a-z0-9-]+( [a-z0-9-]+)*$/, `${from} → ${to} is words`);
   assert.ok(Object.isFrozen(SYNONYMS));
 });
+
+test("touchesTopic handles simulation map edge cases: null-prototype maps, own constructor property, non-array objects, and checkpoint named constructor (#116, #117)", () => {
+  const T = "math-infra/tensor-shapes";
+
+  // Object.create(null) as simulations map works without throwing
+  const nullProtoMap = Object.create(null);
+  nullProtoMap["matmul-tiler"] = [T];
+  assert.equal(touchesTopic({ simulations: nullProtoMap }, rec("claim/sim", "Sim", "s", ["sim:matmul-tiler"]), T), true);
+  assert.equal(touchesTopic({ simulations: nullProtoMap }, rec("claim/ctor", "Ctor", "s", ["sim:constructor"]), T), false);
+
+  // An own property named constructor with a valid list of topics is resolved
+  const ownConstructorMap = { constructor: [T] };
+  assert.equal(touchesTopic({ simulations: ownConstructorMap }, rec("claim/own-ctor", "Own", "s", ["sim:constructor"]), T), true);
+  assert.equal(touchesTopic({ simulations: ownConstructorMap }, rec("claim/own-ctor-cp", "Own", "s", ["checkpoint:constructor/tile-fit"]), T), true);
+
+  // A checkpoint whose name is constructor on a normal simulation is resolved through the simulation
+  assert.equal(touchesTopic({ simulations: { "matmul-tiler": [T] } }, rec("claim/cp-ctor", "CP ctor", "s", ["checkpoint:matmul-tiler/constructor"]), T), true);
+
+  // Non-array object values (including duck-typed objects with an includes method) reach no topic
+  const duckTyping = { "matmul-tiler": { includes: () => true } };
+  assert.equal(touchesTopic({ simulations: duckTyping }, rec("claim/sim", "Sim", "s", ["sim:matmul-tiler"]), T), false);
+
+  // Non-object primitive simulation maps (number, boolean, string) reach no topic
+  assert.equal(touchesTopic({ simulations: 42 }, rec("claim/sim", "Sim", "s", ["sim:matmul-tiler"]), T), false);
+  assert.equal(touchesTopic({ simulations: "math-infra/tensor-shapes" }, rec("claim/sim", "Sim", "s", ["sim:matmul-tiler"]), T), false);
+  assert.equal(touchesTopic({ simulations: true }, rec("claim/sim", "Sim", "s", ["sim:matmul-tiler"]), T), false);
+});
+
