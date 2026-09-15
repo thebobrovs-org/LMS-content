@@ -35,13 +35,6 @@ body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, syst
 
 /* Compile pipeline */
 .compile-stage { display: flex; justify-content: space-between; align-items: center; background: var(--inset); padding: 16px 20px; border-radius: 14px; border: 1px solid var(--border); margin-bottom: 16px; gap: 8px; }
-/* In a row the four stages need about 680 px. Narrower, they stack and the arrows point down, where the row used to
-   scroll sideways out of a keyboard's reach (LMS-content#130). */
-@media (max-width: 760px) {
-  .compile-stage { flex-direction: column; align-items: stretch; }
-  .c-node { min-width: 0; }
-  .c-arrow { align-self: center; transform: rotate(90deg); line-height: 1; }
-}
 .c-node { flex: 1; min-width: 140px; background: var(--panel); border: 2px solid var(--border); border-radius: 10px; padding: 14px 10px; text-align: center; transition: border-color .4s, box-shadow .4s, transform .4s; border-style: dashed; }
 .c-node.active { border-style: solid; border-color: var(--compile); box-shadow: 0 4px 16px color-mix(in srgb, var(--compile) 30%, transparent); transform: translateY(-2px); }
 .c-node.active.xla { border-color: var(--primary); box-shadow: 0 4px 20px color-mix(in srgb, var(--primary) 40%, transparent); }
@@ -51,6 +44,13 @@ body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, syst
 .c-desc small { color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; font-weight: 500; display: block; margin-top: 4px; }
 .c-arrow { color: var(--border); font-size: 24px; font-weight: bold; opacity: .4; transition: color .4s, opacity .4s; }
 .c-arrow.active { color: var(--compile); opacity: 1; }
+/* In a row the four stages need about 680 px. Narrower, they stack and the arrows point down, where the row used to
+   scroll sideways out of a keyboard's reach (LMS-content#130). After the rules it overrides, so that it wins. */
+@media (max-width: 760px) {
+  .compile-stage { flex-direction: column; align-items: stretch; }
+  .c-node { min-width: 0; }
+  .c-arrow { align-self: center; transform: rotate(90deg); line-height: 1; }
+}
 
 /* Compiler inspector */
 .inspector-panel { display: none; background: var(--panel); border: 1px solid var(--compile); border-radius: 12px; margin-bottom: 24px; overflow: hidden; box-shadow: 0 8px 24px color-mix(in srgb, var(--compile) 15%, transparent); }

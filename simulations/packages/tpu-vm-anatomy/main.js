@@ -114,7 +114,25 @@ function bottomRow() {
   return `<div class="sparse"><div class="sc" style="background:transparent;border:2px dashed var(--border);color:var(--chip-fg);cursor:default;">No SparseCores (introduced in v4)</div></div>`;
 }
 
+/**
+ * The focused control, as the attribute that identifies it and its position among the elements that share it, so that
+ * its replacement can take focus after a render (LMS-content#130); null when focus is elsewhere.
+ */
+function focusKey() {
+  const el = document.activeElement;
+  if (!el || !app.contains(el)) return null;
+  for (const attr of ["data-part", "data-gen"]) {
+    const value = el.getAttribute(attr);
+    if (value !== null) return { attr, value, index: [...app.querySelectorAll(`[${attr}="${value}"]`)].indexOf(el) };
+  }
+  return null;
+}
+
 function render() {
+  // Every render writes the whole app again. The cutaway keeps its horizontal scroll, so a part selected after
+  // scrolling stays in view, and the part or tab that had focus keeps it (LMS-content#130).
+  const scrollLeft = app.querySelector(".stage-scroll")?.scrollLeft ?? 0;
+  const focused = focusKey();
   const d = detail();
   const hbmStr = hbmGB();
 
@@ -165,6 +183,10 @@ function render() {
       <div class="dspec">${d.spec}</div>
     </div>`;
 
+  const stageScroll = app.querySelector(".stage-scroll");
+  if (stageScroll) stageScroll.scrollLeft = scrollLeft;
+  if (focused) app.querySelectorAll(`[${focused.attr}="${focused.value}"]`)[focused.index]?.focus({ preventScroll: true });
+
   app.querySelectorAll(".gtab").forEach((el) => el.addEventListener("click", () => switchGen(el.getAttribute("data-gen"))));
   // Every part selects on click (the TensorCore frame too, for the mouse); only the focusable parts
   // take the keyboard, and a key press never bubbles on to the frame the unit sits in (#98).
@@ -181,6 +203,13 @@ function render() {
   });
   reportSize();
 }
+
+// A part that takes focus is scrolled fully into the cutaway's view: focus alone leaves a part that is partly visible
+// where it is, cut off at the cutaway's edge (LMS-content#130). Every [data-part] is inside the cutaway, and #app is
+// never written again, so this listens once.
+app.addEventListener("focusin", (e) => {
+  if (e.target.hasAttribute("data-part")) e.target.scrollIntoView({ block: "nearest", inline: "nearest" });
+});
 
 window.sim = typeof createSim !== "undefined" ? createSim({ onInit({ theme }) { applyTheme(theme); render(); } }) : null;
 setTimeout(() => { if ((!window.sim || !sim.isInitialized()) && app.innerHTML === "") render(); }, 300);
