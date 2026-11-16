@@ -31,7 +31,8 @@ export function isCalendarDate(s) {
 
 /** A YAML date must be quoted: an unquoted `2026-09-11` parses as a Date, which the app can't render. */
 const IsoDate = z
-  .string({ invalid_type_error: "must be a quoted YYYY-MM-DD string (an unquoted date parses as a Date)" })
+  // A missing value keeps the default message (`error` returns undefined), as invalid_type_error did in zod 3.
+  .string({ error: (iss) => (iss.input === undefined ? undefined : "must be a quoted YYYY-MM-DD string (an unquoted date parses as a Date)") })
   .regex(/^\d{4}-\d{2}-\d{2}$/, "must be a quoted YYYY-MM-DD string")
   .refine(isCalendarDate, "must be a real calendar date");
 
@@ -127,14 +128,14 @@ export const TopicFrontmatterSchema = z
     for (const it of items) {
       if (it.id === undefined) continue;
       const other = owners.get(it.id);
-      if (other) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [...it.path, "id"], message: `id "${it.id}" is also ${other.path[0]}[${other.path[1]}]'s` });
+      if (other) ctx.addIssue({ code: "custom", path: [...it.path, "id"], message: `id "${it.id}" is also ${other.path[0]}[${other.path[1]}]'s` });
       else owners.set(it.id, it);
     }
     for (const it of items) {
       for (const [j, f] of it.formerIds.entries()) {
         const owner = owners.get(f);
-        if (f === it.id) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [...it.path, "formerIds", j], message: `former id "${f}" is its own id` });
-        else if (owner) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [...it.path, "formerIds", j], message: `former id "${f}" is ${owner.path[0]}[${owner.path[1]}]'s current id` });
+        if (f === it.id) ctx.addIssue({ code: "custom", path: [...it.path, "formerIds", j], message: `former id "${f}" is its own id` });
+        else if (owner) ctx.addIssue({ code: "custom", path: [...it.path, "formerIds", j], message: `former id "${f}" is ${owner.path[0]}[${owner.path[1]}]'s current id` });
       }
     }
   });

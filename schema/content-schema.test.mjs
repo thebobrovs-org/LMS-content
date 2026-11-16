@@ -56,7 +56,7 @@ test("the baseline review's fixtures all fail", () => {
     assert.equal(r.ok, false, name);
     assert.ok(r.problems.every((p) => p.startsWith("t.mdx: ")), name);
   }
-  assert.deepEqual(check(TopicFrontmatterSchema, { ...topic, id: "x" }, "t.mdx").problems, ["t.mdx: Unrecognized key(s) in object: 'id'"]);
+  assert.deepEqual(check(TopicFrontmatterSchema, { ...topic, id: "x" }, "t.mdx").problems, ['t.mdx: Unrecognized key: "id"']);
   assert.match(check(TopicFrontmatterSchema, { ...topic, updated: new Date(0) }).problems[0], /updated: .*quoted YYYY-MM-DD/);
 });
 

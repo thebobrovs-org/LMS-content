@@ -80,10 +80,10 @@ export const RecordFrontmatterSchema = z
   })
   .strict()
   .superRefine((r, ctx) => {
-    if (!r.id.startsWith(`${r.type}/`)) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["id"], message: `id "${r.id}" must start with "${r.type}/" (its type)` });
-    if (r.status === "superseded" && !r["superseded-by"]) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["superseded-by"], message: "a superseded record names the record that replaces it" });
-    if (r["superseded-by"] === r.id) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["superseded-by"], message: "a record cannot supersede itself" });
-    if (r["review-by"] && r["review-by"] < r.reviewed) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["review-by"], message: "review-by is before reviewed" });
+    if (!r.id.startsWith(`${r.type}/`)) ctx.addIssue({ code: "custom", path: ["id"], message: `id "${r.id}" must start with "${r.type}/" (its type)` });
+    if (r.status === "superseded" && !r["superseded-by"]) ctx.addIssue({ code: "custom", path: ["superseded-by"], message: "a superseded record names the record that replaces it" });
+    if (r["superseded-by"] === r.id) ctx.addIssue({ code: "custom", path: ["superseded-by"], message: "a record cannot supersede itself" });
+    if (r["review-by"] && r["review-by"] < r.reviewed) ctx.addIssue({ code: "custom", path: ["review-by"], message: "review-by is before reviewed" });
   });
 
 /** A record's source locators, whichever field carries them. */
