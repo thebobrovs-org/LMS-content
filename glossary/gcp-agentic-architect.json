@@ -71,6 +71,18 @@
   "session": {
     "definition": "The record of one conversation between a user and an agent: its messages, the agent's events and its working state. A session service is where an agent stores sessions."
   },
+  "sequential agent": {
+    "definition": "An orchestration pattern (and ADK's SequentialAgent class, deprecated in Python 2.x in favour of Workflow) that runs sub-agents in a fixed order, each able to use the previous one's result."
+  },
+  "parallel agent": {
+    "definition": "An orchestration pattern (and ADK's ParallelAgent class, deprecated in Python 2.x in favour of Workflow) that runs independent sub-agents at the same time and gathers their results; the branches share session state."
+  },
+  "loop agent": {
+    "definition": "An orchestration pattern (and ADK's LoopAgent class, deprecated in Python 2.x in favour of Workflow) that repeats sub-agents until an exit condition is met or an iteration cap is reached."
+  },
+  "graph workflow": {
+    "definition": "Orchestration defined as nodes and edges, with routed branches, fan-out and join, and back-edges for loops; ADK 2.0's Workflow class."
+  },
   "mcp": {
     "definition": "Model Context Protocol: an open standard for offering tools to agents. An MCP server publishes tools with names, descriptions and parameter schemas; an MCP client, such as an agent, lists and calls them."
   },
