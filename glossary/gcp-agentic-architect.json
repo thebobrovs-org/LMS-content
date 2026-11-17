@@ -230,6 +230,9 @@
   "memory bank": {
     "definition": "Agent Platform's managed long-term memory: it extracts facts from conversations with an LLM, consolidates them with what it already holds, keeps them isolated per scope (such as agent and user), and returns the relevant ones in later sessions."
   },
+  "design review": {
+    "definition": "A structured check of a design against its requirements and known failure modes, which finds wrong choices and requirements nothing in the design serves."
+  },
   "semantic governance policy": {
     "definition": "A plain-language rule enforced on Agent Gateway that checks each proposed tool call against the user's request, the conversation and the policy before it runs, and denies a call that violates it (Preview)."
   },
