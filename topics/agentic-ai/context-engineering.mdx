@@ -288,11 +288,12 @@ Media raises two separate problems, with two separate fixes.
   carries them, and requests have a size limit (the Gemini API documents 100 MB
   per request inline, 50 MB for PDFs; check your endpoint's limit). For a large
   file, or one used on many calls, pass a **Cloud Storage URI** (`gs://...`)
-  instead: the request carries a reference, and the bytes are not uploaded
-  again on each call.
+  instead: Agent Platform accepts one directly, and the Gemini Developer API
+  takes it once registered through its Files API. The request then carries a
+  reference, and the bytes are not uploaded again on each call.
 - **Tokens.** A referenced file still costs tokens every time it is in the
   context. The `media_resolution` setting caps how many tokens each image,
-  video frame or PDF page may use. For Gemini 3 images, `low` is 280 tokens,
+  video frame or PDF page may use. For Gemini 3 and later images, `low` is 280 tokens,
   `medium` 560, `high` 1,120 (also the default) and `ultra_high` 2,240.
   Video frames use 70 tokens at low or medium and 280 at high. Lower it when
   the task does not need fine detail, such as classifying a photo, and raise it
