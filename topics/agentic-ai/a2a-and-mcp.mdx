@@ -36,7 +36,7 @@ quiz:
       - "Copy its code into your project and add it as a sub-agent"
       - "Copy its code into your project and wrap it as an AgentTool"
     answer: 0
-    explanation: "Another team owns, deploys and secures the agent, so you call it across that boundary as a peer: A2A, discovered through its agent card. Wrapping a whole agent as an MCP tool hides its multi-step tasks, follow-up questions and progress behind a single function call. Copying its code forks it: you lose the finance team's fixes and take on running their model and tools."
+    explanation: "Another team owns, deploys and secures the agent, so you call it across that boundary as a peer: A2A, discovered through its agent card. Wrapping their agent as a tool on an MCP server you host makes you the owner of something you do not control: you run and secure it, and its interface becomes your tool schema instead of the agent the team publishes. Copying its code forks it: you lose the finance team's fixes and take on running their model and tools."
   - id: mcp-for-inventory
     objective: a2a-vs-mcp
     question: "An agent needs to read stock levels from the warehouse database through one fixed query. Which protocol fits?"
@@ -49,14 +49,14 @@ quiz:
     explanation: "A fixed query with typed inputs and a result is a tool, which is what MCP is for. A2A is for agents that reason and work on tasks of their own; a database query does not need a second agent with its own model. Putting the table in the instruction goes stale and spends tokens on every call."
   - id: a2a-follow-up
     objective: a2a-vs-mcp
-    question: "A partner's travel-booking agent may need several minutes and may stop to ask your agent which fare to choose. Why does this suit A2A rather than an MCP tool call?"
+    question: "A partner company publishes a travel-booking agent. It may need several minutes and may stop to ask your agent which fare to choose. Why is A2A the natural way to call it?"
     choices:
       - "A2A calls are faster than MCP tool calls over the same network"
-      - "A2A tasks have states such as input-required and can stream"
+      - "It is a peer agent another company owns, and A2A's task contract (states such as input-required, streaming) is built for calling one"
       - "A2A lets your agent see the partner agent's tools and prompts"
       - "A2A does not need authentication between organisations"
     answer: 1
-    explanation: "An A2A task moves through states such as working, input-required and completed, so the remote agent can pause to ask a question, stream updates and finish later. A tool call returns one result. A2A is not faster by design. It deliberately keeps the remote agent's tools and prompts opaque, and an A2A server authenticates requests against the requirements its card declares."
+    explanation: "The partner owns the agent and publishes it as an agent, so you call it as a peer through its card, and its A2A task moves through states such as working, input-required and completed while it pauses, streams and finishes later. Current MCP can also defer results and ask for input (experimental tasks, elicitation), so the reason is the peer-agent boundary, not that only A2A can pause. A2A is not faster by design. It deliberately keeps the remote agent's tools and prompts opaque, and an A2A server authenticates requests against the requirements its card declares."
   - id: find-the-card
     objective: agent-card
     question: "Your agent knows only the domain of a partner's A2A agent. Where does it look first to learn the endpoint, skills and required authentication?"
@@ -86,7 +86,7 @@ quiz:
       - "A sub-agent in the same app that takes over by transfer"
       - "A separate agent registered in Gemini Enterprise"
     answer: 2
-    explanation: "Same team, same release, and it should take over the conversation: that is a local sub-agent, reached by transfer. A remote agent adds a network hop, a second deployment and authentication for no ownership benefit. An MCP tool returns one result rather than taking over the conversation. Registering it as a separate agent splits one app in two."
+    explanation: "Same team, same release, and it should take over the conversation: that is a local sub-agent, reached by transfer. A remote agent adds a network hop, a second deployment and authentication for no ownership benefit. An MCP tool returns a result to the caller rather than taking over the conversation. Registering it as a separate agent splits one app in two."
   - id: helper-returns-result
     objective: local-vs-remote
     question: "Your support agent needs a summarising agent from your own codebase whose summary must come back to the support agent, which then keeps talking to the user. Which design fits?"
@@ -119,7 +119,13 @@ process, from code you own. Real systems also cross two other boundaries.
   standardises this.
 
 The A2A project puts it this way. MCP is vertical: it deepens a single agent.
-A2A is horizontal: it connects agents across a boundary. A2A is an open project
+A2A is horizontal: it connects agents across a boundary. The line is about
+what you are calling, not what each protocol can do: current MCP also has
+experimental tasks (deferred results with status tracking, including an
+`input_required` status) and elicitation, where a server asks the user for more
+information through the client. Choose A2A when the other side is an agent that
+someone else owns and publishes as an agent; choose MCP when you are exposing
+or calling tools. A2A is an open project
 under the Linux Foundation, contributed by Google, and its current specification is
 version 1.0.
 
@@ -150,7 +156,7 @@ its model or tools without breaking yours, and keeps its internals private.
 
 <Figure
   src="/media/a2a-vs-mcp.svg"
-  alt="Two ways an agent reaches out. On the left, MCP: a support agent calls tools on MCP servers, such as get_order on an orders database and book_pickup on a carrier API; each call sends typed arguments and gets one result, and the agent can see each tool's name and schema. On the right, A2A: the same support agent reads the fraud-review agent's agent card, then sends it a message; the remote agent, run by the finance team with its own model, tools and state hidden from the caller, works on a task that moves through states such as working, input-required and completed, and returns an artifact."
+  alt="Two ways an agent reaches out. On the left, MCP: a support agent calls tools on MCP servers, such as get_order on an orders database and book_pickup on a carrier API; each call sends typed arguments and gets a result (experimental MCP tasks can defer it), and the agent can see each tool's name and schema. On the right, A2A: the same support agent reads the fraud-review agent's agent card, then sends it a message; the remote agent, run by the finance team with its own model, tools and state hidden from the caller, works on a task that moves through states such as working, input-required and completed, and returns an artifact."
   caption="MCP gives one agent more tools. A2A lets independent agents work together without seeing inside each other."
 />
 
@@ -284,6 +290,8 @@ which document A2A agents (in Preview at the time of writing).
 <Callout type="note">A2A is young and moving fast: agent card field names differ between specification versions, and A2A hosting on Agent Runtime and Cloud Run, and A2A registration in Gemini Enterprise, are in Preview. Check the version each product supports before you rely on a field name.</Callout>
 
 ## Sources
+
+- Model Context Protocol specification 2025-11-25, "Tasks" (experimental) and "Elicitation", modelcontextprotocol.io/specification/2025-11-25/basic/utilities/tasks and /client/elicitation (deferred results with status tracking and an input_required status; servers can request more information from users through the client).
 
 - A2A Project, "A2A Protocol Specification", version 1.0.0, a2a-protocol.org/v1.0.0/specification (agent card, task, message, part, artifact; task states; well-known path /.well-known/agent-card.json; protocol bindings JSON-RPC, gRPC and HTTP+JSON; security schemes; every request authenticated against the declared requirements).
 - A2A Project, "A2A and MCP", a2a-protocol.org/latest/topics/a2a-and-mcp (MCP is vertical, A2A is horizontal; agents partnering versus using capabilities).

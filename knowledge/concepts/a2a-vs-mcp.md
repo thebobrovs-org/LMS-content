@@ -5,6 +5,7 @@ status: proposed
 title: "MCP connects an agent to tools; A2A connects independent agents"
 scope: "Agent integration protocols, as specified in November 2026 (A2A 1.0)"
 sources:
+  - "Model Context Protocol specification 2025-11-25, \"Tasks\" and \"Elicitation\", modelcontextprotocol.io/specification/2025-11-25/basic/utilities/tasks and /client/elicitation (retrieved 2026-11-17; tasks are experimental and support deferred results, status polling and an input_required status; elicitation lets servers request information from users through the client)"
   - "A2A Project, \"A2A and MCP\", a2a-protocol.org/latest/topics/a2a-and-mcp (retrieved 2026-11-17; \"MCP is vertical. It deepens a single agent.\" \"A2A is horizontal. It connects agents across that boundary.\" \"A2A is about agents partnering on tasks; MCP is more about agents using capabilities.\")"
   - "A2A Project, \"A2A Protocol Specification\", version 1.0.0, a2a-protocol.org/v1.0.0/specification (retrieved 2026-11-17; core concepts: agent card, task, message, part, artifact; task states; opaque agents)"
   - "Google, ADK documentation, A2A quickstarts, github.com/google/adk-docs/tree/main/docs/a2a (retrieved 2026-11-17; to_a2a; RemoteA2aAgent)"
@@ -34,6 +35,6 @@ review-by: 2027-05-17
 
 **Concept.** MCP is agent-to-tool: an agent calls a declared function with typed arguments and gets a result. A2A is agent-to-agent: a client sends messages to a remote agent that keeps its own model, tools and state private and works on a stateful task (submitted, working, input-required, completed and other states), returning artifacts. In ADK, a sub-agent or AgentTool runs in your own process; a `RemoteA2aAgent` reaches another service over A2A.
 
-**Why it matters.** Wrapping another team's agent as an MCP tool hides its follow-up questions and long-running work behind one call; calling a plain query over A2A adds a second agent for nothing. Go remote when another team owns, deploys, scales or secures the agent.
+**Why it matters.** The choice is about what you are calling, not capability alone: MCP 2025-11-25 also has experimental tasks (deferred results, status tracking, an input_required status) and elicitation. Wrapping another team's agent as a tool on an MCP server you host makes you own something you do not control; calling a plain query over A2A adds a second agent for nothing. Go remote when another team owns, deploys, scales or secures the agent.
 
 **Limits.** Many systems use both: each agent uses MCP for its tools and A2A to work with other agents.
