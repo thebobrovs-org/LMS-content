@@ -20,6 +20,15 @@
   "agent runtime": {
     "definition": "Agent Platform's managed runtime that deploys, operates and scales agents, used with its Sessions and Memory Bank services (formerly Agent Engine)."
   },
+  "data store": {
+    "definition": "In Gemini Enterprise (and Agent Search), a store of indexed content that an app searches. Each store holds one type of data: structured, unstructured or a third-party source."
+  },
+  "connector": {
+    "definition": "In Gemini Enterprise, the integration that brings content from a source such as Google Drive, Jira or SharePoint into one or more data stores, either by ingesting and syncing it or by federating queries to the source."
+  },
+  "blended search": {
+    "definition": "Connecting several data stores to one Gemini Enterprise app, so a single query searches across all of them while each store keeps its own type."
+  },
   "trajectory": {
     "definition": "The sequence of tool calls (and other intermediate steps) an agent took before it answered. Evaluating it checks the path, not just the final response."
   },
