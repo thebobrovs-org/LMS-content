@@ -230,6 +230,18 @@
   "memory bank": {
     "definition": "Agent Platform's managed long-term memory: it extracts facts from conversations with an LLM, consolidates them with what it already holds, keeps them isolated per scope (such as agent and user), and returns the relevant ones in later sessions."
   },
+  "mcp server": {
+    "definition": "A program that offers tools (and optionally resources and prompts) to an agent over the Model Context Protocol. The agent is the client that lists and calls them."
+  },
+  "skill": {
+    "definition": "A folder of instructions and supporting files, headed by a SKILL.md with a name and description, that a coding agent loads on demand for a kind of task."
+  },
+  "progressive disclosure": {
+    "definition": "Loading a skill in steps: its name and description are always in context, its full instructions load when a task matches, and its other files load only when needed."
+  },
+  "antigravity": {
+    "definition": "Google's agentic development environment, offered as a desktop app, a CLI (agy), IDE extensions and a Python SDK."
+  },
   "generator-critic": {
     "definition": "An agent design pattern (also called reflection) in which one agent drafts and a critic checks the draft against criteria, approving it or returning fixes, in a loop that needs an exit and a cap."
   },
