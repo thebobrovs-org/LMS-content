@@ -161,8 +161,8 @@ keeps the agent to what each user agreed to.
 ### An example: data agents that query as the user
 
 Google's Conversational Analytics API, which answers questions over BigQuery
-and Looker data, shows the rule in practice. When it is built into an agent
-platform, the platform signs the user in with three-legged OAuth and passes the
+and Looker data, shows the rule in practice. When an agent platform reaches it
+through a remote MCP server, the platform signs the user in with three-legged OAuth and passes the
 user's delegated access token with each request. BigQuery queries then run as
 that user, not as a shared service account, so the user's IAM permissions and
 row-level and column-level security policies apply without extra code.
