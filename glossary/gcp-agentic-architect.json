@@ -104,6 +104,18 @@
   "authconfig": {
     "definition": "In ADK, the object that pairs a tool's AuthScheme (how the API expects credentials) with its AuthCredential (the initial information to start the flow)."
   },
+  "model armor": {
+    "definition": "Google Cloud's service that screens prompts and responses, for example for prompt injection and jailbreaks, harmful content, malicious URLs and sensitive data, using templates of filters and confidence thresholds."
+  },
+  "floor setting": {
+    "definition": "A minimum set of Model Armor requirements at organisation, folder or project level. No template can be created or updated to be less strict than the floor."
+  },
+  "sensitive data protection": {
+    "definition": "Google Cloud's service for finding and de-identifying sensitive data. Inside Model Armor, basic mode inspects a fixed set of infoTypes, and advanced mode uses its templates and can de-identify."
+  },
+  "human in the loop": {
+    "definition": "A design where a person must approve an agent's action, such as an irreversible tool call, before it runs."
+  },
   "span": {
     "definition": "One timed operation in a trace, such as a model call or a tool call, nested under the span of the operation that started it. Its length shows where the time went."
   },

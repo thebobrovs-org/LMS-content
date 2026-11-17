@@ -115,7 +115,7 @@ sign-off between each, core first, then one exam section at a time.
 | 5.2 | 200 | `agent-identity-and-access` | Explain what Agent Identity provides over a shared service account. | figure | on staging |
 | 5.3 | 300 | `agent-auth-oauth` | Distinguish OAuth 2.0 (authorisation) from OpenID Connect (authentication). | figure | on staging |
 | 5.4 | 300 | `agent-gateway-and-registry` | Explain what Agent Gateway enforces and observes. | figure | on staging |
-| 5.5 | 400 | `guardrails-model-armor-hitl` | Configure Model Armor templates, floor settings and enforcement. | figure + codelab | plan-approved |
+| 5.5 | 400 | `guardrails-model-armor-hitl` | Configure Model Armor templates, floor settings and enforcement. | figure + codelab | on staging |
 
 ### Core: capstone (comes last)
 *The core track's L400 topic. It sits at the end of the path because it needs every section.*
