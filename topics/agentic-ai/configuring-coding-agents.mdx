@@ -222,10 +222,23 @@ every time Claude Code connects:
 }
 ```
 
-Here `gcp-mcp-headers` is a short script on each developer's `PATH` that prints
-`{"Authorization": "Bearer <token>", "x-goog-user-project": "<project>"}`, with
-the token from `gcloud auth application-default print-access-token`, the same
-Application Default Credentials Antigravity uses. Claude Code has no allowlist field in this
+Here `gcp-mcp-headers` is a short script you write and put on each developer's
+`PATH`. It prints the request headers as JSON, with a token from the same
+Application Default Credentials Antigravity uses:
+
+```bash
+#!/usr/bin/env bash
+# gcp-mcp-headers: request headers for Google Cloud MCP servers
+set -euo pipefail
+token="$(gcloud auth application-default print-access-token)"
+project="$(gcloud config get-value project 2>/dev/null)"
+printf '{"Authorization": "Bearer %s", "x-goog-user-project": "%s"}\n' "$token" "$project"
+```
+
+To check the setup, run `claude mcp list`, which should show `bigquery` as
+connected (approve it first by starting `claude` in the project), then ask the
+agent for something read-only, such as listing the datasets in your project.
+Claude Code has no allowlist field in this
 file, so to keep a tool away from the agent, add a deny rule such as
 `mcp__bigquery__execute_sql` to the permissions in Claude Code's settings; a
 denied tool is removed from the agent's context.
