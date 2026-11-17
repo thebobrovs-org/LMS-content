@@ -1,0 +1,274 @@
+---
+title: "CX Agent Studio: flows, routes and instructions"
+summary: CX Agent Studio steers customer conversations with instructions and hands fixed procedures to flows, the page-by-page state machines of Dialogflow CX. Learn when each fits, predict which route or handler fires, and write structured instructions.
+tags: [agentic-ai, google-cloud, low-code, customer-experience]
+difficulty: intermediate
+estimatedMinutes: 30
+level: 200
+prerequisites: [agentic-ai/google-agent-platform-map]
+objectives:
+  - id: instruction-vs-flow
+    statement: "Choose an instruction-based agent or a flow for a part of a customer conversation."
+  - id: predict-route
+    statement: "Predict which route or event handler fires from the active page and parameters."
+  - id: write-instructions
+    statement: "Write agent instructions with an XML structure, step-by-step task flows and few-shot examples."
+flashcards:
+  - id: route-vs-handler
+    objective: predict-route
+    front: "What is the difference between a transition route and an event handler?"
+    back: "A transition route fires on a matched intent or a true condition and usually moves the conversation to another page. An event handler fires on an event, such as no-match or no-input, and usually replies or reprompts."
+  - id: scope-non-start-page
+    objective: predict-route
+    front: "On a page that is not the flow's start page, which flow-level routes are in scope?"
+    back: "Only the flow's routes that have an intent requirement. Flow-level routes with only a condition are in scope on the start page alone."
+  - id: evaluation-phases
+    objective: predict-route
+    front: "In what order are the in-scope handlers evaluated after a user turn?"
+    back: "First routes with an intent (page, then flow), then routes with only a condition (page, then flow if this is the start page), then event handlers (parameter, page, then flow). A handler with a transition target ends the evaluation."
+  - id: flow-when
+    objective: instruction-vs-flow
+    front: "When does Google recommend a flow over instructions in CX Agent Studio?"
+    back: "For highly deterministic logic: collecting and validating data in a fixed order, or authenticating on session parameters. Open conversation and understanding what the customer wants stay with instruction-based agents."
+  - id: few-shot-when
+    objective: write-instructions
+    front: "When should you add few-shot examples to CX Agent Studio instructions?"
+    back: "Only after clear instructions have failed: to fix a failure the model keeps repeating, to get a strict output format, or to show a subtle decision. Use them sparingly, or the agent copies them too rigidly."
+quiz:
+  - id: balance-route-missing
+    objective: predict-route
+    question: "A flow has a flow-level route with only the condition $session.params.balance_due > 0, leading to the payment page. A customer with a balance is on the Confirm address page, which has no condition routes of its own, and says nothing. What happens?"
+    choices:
+      - "The balance_due route fires, because its condition is true"
+      - "A no-input handler responds, because that route is out of scope"
+      - "The flow goes back to its start page to re-check the condition"
+    answer: 1
+    explanation: "On a page other than the start page, flow-level routes are in scope only if they have an intent requirement, so the condition-only balance_due route isn't evaluated. The customer said nothing, so the no-input event is raised and a no-input handler replies; every flow has one. Nothing sends the conversation back to the start page by itself."
+  - id: intent-before-condition
+    objective: predict-route
+    question: "On the Identify account page, the customer says \"Get me a person, my account is 4471\". That matches the flow's agent.handoff intent route and fills account_id, which makes the page's condition-only route $session.params.account_id != null true. Both have transitions. Which fires?"
+    choices:
+      - "The account_id route, because page routes come before flow routes"
+      - "Both, one after the other, because each requirement is met"
+      - "The agent.handoff route, because intent routes are checked first"
+    answer: 2
+    explanation: "All routes with an intent requirement, page and flow, are evaluated before any route with only a condition, and a handler with a transition target ends the evaluation. So the handoff fires and the account_id route is never reached. Page before flow applies within each phase, not across them, and two handlers both run only when the first has no transition target."
+  - id: second-no-match
+    objective: predict-route
+    question: "The Choose plan page has its own sys.no-match-default handler, which replies without a transition, and so does the flow. The customer's reply matches nothing. Which handler responds?"
+    choices:
+      - "The page's handler, and the flow's isn't called"
+      - "The flow's handler, because flow handlers take priority"
+      - "Both, the page's message first and then the flow's"
+    answer: 0
+    explanation: "Event handlers are evaluated parameter, then page, then flow, and an event is consumed by the first handler that matches it. Having no transition lets evaluation continue, but the no-match event is already taken by the page's handler, so the flow's is not called."
+  - id: card-verification
+    objective: instruction-vs-flow
+    question: "A mobile operator's agent handles SIM swaps: it must collect the account number, then a one-time code sent by text, validate each, and stop after three failed attempts, in that order every time. Everything else customers ask is open-ended. What design fits?"
+    choices:
+      - "Write the SIM swap steps into the agent's instructions"
+      - "A SIM swap flow, called from an instruction-based agent"
+      - "Few-shot examples of SIM swaps in the agent's instructions"
+    answer: 1
+    explanation: "A fixed sequence of collection and validation that must run the same way every time is what Google recommends flows for, and the instruction-based agent hands that part to the flow and takes over again after it. Instructions and examples guide a model; they don't guarantee the order or the retry count."
+  - id: intent-classification
+    objective: instruction-vs-flow
+    question: "A retailer wants its agent to work out whether a customer is asking about an order, a return or a product, then route to the right specialist. Where should that classification live?"
+    choices:
+      - "In a flow with an intent route for each of the three topics"
+      - "In a callback that matches keywords before the model runs"
+      - "In the instruction-based steering agent, using the model"
+    answer: 2
+    explanation: "Google recommends letting the model handle intent classification and using the instruction-based agents as the steering layer that routes between agents and flows. A flow's intent routes handle replies inside a fixed procedure, not the open question of what the customer wants, and callbacks are for fixed, canned replies, not for understanding intent."
+  - id: few-shot-first
+    objective: write-instructions
+    question: "A new agent sometimes gives refund amounts without the currency. What should the team try first?"
+    choices:
+      - "Add a rule under constraints that requires the currency"
+      - "Add two few-shot examples of refunds that state the currency"
+      - "Move refund answers into a flow with a fixed reply"
+    answer: 0
+    explanation: "Google's advice is to fix behaviour with clear instructions first and add few-shot examples only if that fails; examples come after instructions have failed, not before. A flow is for deterministic multi-step logic, not for the wording of one answer."
+status: draft
+updated: "2026-11-17"
+---
+
+## Two ways to steer a customer conversation
+
+**CX Agent Studio**, part of Gemini Enterprise for Customer Experience, builds
+customer-facing agents for chat and voice. It gives you two ways to control what
+the agent does:
+
+- **Instruction-based agents.** You write instructions; the model reads them each
+  turn and decides what to say and which tools or other agents (sub-agents) to use.
+  This handles open conversation well, and it is where working out what the
+  customer wants belongs.
+- **Flows (flow-based agents).** A <Term id="flow">flow</Term> is a state machine
+  built in Dialogflow CX and imported into CX Agent Studio. The conversation moves
+  from page to page by rules you wrote, so the same inputs always take the same
+  path.
+
+An instruction-based agent acts as the steering layer. It hands the conversation to
+a flow when a fixed procedure is needed, passing values in as **session
+parameters** (named values the conversation remembers, such as `balance_due`), and
+takes over again when the flow reaches its end (`END_SESSION`), receiving the
+flow's output parameters. To the agent the flow is a black box: everything goes in
+and out through those parameters.
+
+Google's guidance is to use flows for **highly deterministic logic**: collecting and
+validating data in a fixed order, or authenticating a customer on session
+parameters. Use the model for understanding what the customer wants, and callbacks
+(small pieces of code) for fixed, canned replies.
+
+## Inside a flow: pages, routes and handlers
+
+A flow models one topic, such as taking a payment. Its states are
+<Term id="page">pages</Term>, and exactly one page is current at any moment. Every
+flow has a **start page**, which becomes current when the flow starts.
+
+Each page carries **state handlers**, the rules that decide what happens next:
+
+- A <Term id="transition route">transition route</Term> has an **intent**
+  requirement, a **condition** requirement, or both. An intent is a named category
+  of what a customer means, such as `confirm.yes`, recognised from example phrases;
+  a condition is an expression over parameters, such as
+  `$session.params.balance_due > 0`. A route's **fulfillment** (the reply or
+  actions it runs) can answer the customer, and its **transition target** moves the
+  conversation to another page.
+- An <Term id="event handler">event handler</Term> responds to an event. The common
+  ones are `sys.no-match-default` (the input matched no intent in scope) and
+  `sys.no-input-default` (the customer said nothing). Every flow has no-match and
+  no-input handlers, created with it and impossible to delete, so the agent always
+  has a fallback reply.
+
+Routes and handlers can be attached to a page, or to the flow as a whole.
+
+### Scope: which handlers count right now
+
+Only handlers **in scope** are evaluated:
+
+- the current page's own routes and event handlers;
+- the flow's event handlers;
+- the flow's routes, but with a catch: on the start page all of them are in scope,
+  while on any other page only those with an **intent** requirement are.
+
+That catch is easy to miss. A flow-level route with only a condition
+(`balance_due > 0`, say) acts only while the start page is current. Once the
+customer is on another page, it can be true and still never fire.
+
+### Order: who wins
+
+After a customer turn, the in-scope handlers are evaluated in three phases:
+
+1. **Routes with an intent:** the page's, then the flow's, in the order listed.
+2. **Routes with only a condition:** the page's, then the flow's (start page only).
+3. **Event handlers** for any event raised: those on a parameter the page is
+   collecting from the customer, then the page's, then the flow's.
+
+A handler with a transition target ends the evaluation. One without a target adds
+its reply and evaluation continues. An intent is consumed by the first route that
+matches it, and so is an event; a condition is not consumed, so several condition
+routes can each run if none of them transitions.
+
+Try it below. The flow takes a payment: the flow-level routes are a handoff to a
+person, a balance question, and the condition route `balance_due > 0` that sends
+the customer to Collect amount. It starts on Confirm payment with a balance due and
+an unmatched reply; press Step to walk the handlers in order.
+
+<Simulation id="cx-route-resolver" props={{ page: "confirm", balance: 120, input: "unclear" }} />
+
+The flow's `balance_due` route is true, but it is skipped as out of scope, so the
+no-match event falls to the page's own handler, which asks for yes or no. Ask for
+a person instead and the flow's intent route fires from this page, because intent
+routes stay in scope everywhere. Then switch to the start page with the unmatched
+reply: the condition route wins before any event handler is reached. (In a live
+flow, condition routes are also checked when a page is entered, so with a balance
+due the customer would have left the start page at once; the sim shows the order
+within one turn.)
+
+<Callout type="tip">To predict a turn, write down three things: the current page, the parameter values, and the matched intent or the event raised. Then walk the phases in order and stop at the first handler with a transition.</Callout>
+
+### Choosing what goes in a flow
+
+Card verification is the classic case for a flow: ask for the date of birth, then
+the last four digits, check each against the record, allow two retries, and do it
+the same way every time. A flow guarantees that order and that count. Working out
+why the customer called, answering follow-up questions and choosing the next step
+stay with the instruction-based agent, which calls the verification flow when it
+needs it.
+
+## Writing instructions
+
+Instructions steer the instruction-based agents. You can write them as plain text,
+but Google suggests an XML structure, which can help the model follow them, and
+the console's **Restructure instructions** button converts plain text into it:
+
+- `<role>`: the agent's core job.
+- `<persona>`: its personality, tone and behaviour, with a `<primary_goal>` inside.
+- `<constraints>`: rules it must follow.
+- `<taskflow>`: the conversation as `<subtask>` elements, each a series of `<step>`
+  elements with a `<trigger>` (what starts the step) and an `<action>` (what to do).
+- `<examples>`: few-shot examples.
+
+The task flow is how you give step-by-step guidance: each step says when it applies
+and what to do, so the model works through the task in order rather than guessing.
+In this example, `Card verification` is the verification flow from above, imported
+as a flow-based agent. The handover itself is driven by the description you give the
+flow when you import it, which tells the parent agent when to transfer control.
+
+```xml
+<role>You help customers of Acme Energy pay their bills.</role>
+<persona>
+  <primary_goal>Take a payment or explain the balance, accurately and briefly.</primary_goal>
+  Friendly and plain-spoken. Never pressure a customer to pay.
+</persona>
+<constraints>
+  Always state amounts with the currency.
+  Only quote balances returned by {@TOOL: get_balance}.
+</constraints>
+<taskflow>
+  <subtask name="Payment">
+    <step name="Verify">
+      <trigger>The customer wants to pay.</trigger>
+      <action>Hand over to the Card verification flow.</action>
+    </step>
+    <step name="Take payment">
+      <trigger>Verification succeeded.</trigger>
+      <action>Confirm the amount, then call {@TOOL: take_payment}.</action>
+    </step>
+  </subtask>
+</taskflow>
+```
+
+Instructions reference the agent's resources by name: `{@TOOL: name}` for a tool
+added to the agent, `{@AGENT: name}` for another agent, and a variable's name in
+braces, such as `{customer_name}`, for a value the conversation holds. Google
+recommends writing instructions in English for the best understanding.
+
+<Term id="few-shot example">Few-shot examples</Term> are sample exchanges inside
+`<examples>`, each with a user turn, a model turn and, where a tool is used, the tool
+call and its output. Google's advice is to use them strategically:
+
+- Start with clear instructions, and add examples only if instructions alone fail.
+- Use them for a failure the model keeps repeating, a strict output format, or a
+  decision too subtle for if-then rules.
+- Use few. Too many and the agent overfits, copying the examples instead of
+  reasoning; they show a pattern, they aren't a lookup table.
+
+<Quiz
+  id="taskflow-placement"
+  objective="write-instructions"
+  question="An agent should always read back the payment amount and wait for a yes before calling take_payment. Where does that behaviour belong in the XML instructions?"
+  choices={["In <persona>, as part of how the agent sounds", "As a <taskflow> step before the payment step", "In <examples>, as one sample conversation"]}
+  answer={1}
+  explanation="A step with a trigger and an action is how the task flow gives ordered, step-by-step guidance, so the read-back becomes a step before the payment step. The persona sets tone and goal, not procedure. A single example shows a pattern but doesn't state the behaviour; add one only if the step alone isn't followed."
+/>
+
+## Sources
+
+- Google Cloud, "Professional Agentic Architect exam guide", services.google.com/fh/files/misc/professional_agentic_architect_exam_guide_english.pdf (objective 1.1; retrieved 2026-11-17).
+- Google Cloud, "Flow-based agents", docs.cloud.google.com/gemini-enterprise-cx/cx-agent-studio/flow (importing Dialogflow CX flows; input and output parameters; when to use flows, callbacks and the model; retrieved 2026-11-17).
+- Google Cloud, "Instructions", docs.cloud.google.com/gemini-enterprise-cx/cx-agent-studio/instruction (XML structure, Restructure instructions, few-shot guidance, references, formatting; retrieved 2026-11-17).
+- Google Cloud, Dialogflow CX, "Pages", docs.cloud.google.com/dialogflow/cx/docs/concept/page (pages as states, start page; retrieved 2026-11-17).
+- Google Cloud, Dialogflow CX, "State handlers", docs.cloud.google.com/dialogflow/cx/docs/concept/handler (routes and event handlers, scope, evaluation order, built-in events; updated 2026-11-10, retrieved 2026-11-17).
+- Google Cloud, Dialogflow CX, "Conditions", docs.cloud.google.com/dialogflow/cx/docs/reference/condition (session parameter syntax; retrieved 2026-11-17).
