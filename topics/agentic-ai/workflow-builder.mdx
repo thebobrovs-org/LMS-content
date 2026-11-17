@@ -1,0 +1,288 @@
+---
+title: "Workflow Builder: chat agents and workflows"
+summary: Gemini Enterprise's Workflow Builder builds two kinds of agent without code. A chat agent holds an open-ended conversation; a workflow runs fixed steps from a trigger, with conditions and human approvals. Learn to pick one, configure a workflow, and use versions and run logs to change and debug it.
+tags: [agentic-ai, google-cloud, low-code, gemini-enterprise]
+difficulty: beginner
+estimatedMinutes: 25
+level: 100
+prerequisites: [agentic-ai/google-agent-platform-map]
+objectives:
+  - id: chat-vs-workflow
+    statement: "Choose a chat agent or a workflow for a use case."
+  - id: configure-workflow
+    statement: "Configure a trigger, a Gemini Agent step with instructions, knowledge and connectors, a condition and a human review step."
+  - id: operate-workflow
+    statement: "Use versions and step-by-step run logs to change and debug a workflow."
+flashcards:
+  - id: three-triggers
+    objective: configure-workflow
+    front: "What are the three ways a Workflow Builder workflow can start?"
+    back: "A manual trigger (someone @-mentions the workflow in chat), a schedule trigger (a set frequency and time zone) and an event trigger (a change in a connected app, such as a new email in Gmail)."
+  - id: event-trigger-where
+    objective: configure-workflow
+    front: "Where is a workflow's event trigger set up?"
+    back: "In the trigger settings, by choosing App event, then a connector and its event, plus filters. It is the workflow's starting point, not a step you add on the canvas."
+  - id: step-families
+    objective: configure-workflow
+    front: "Name the main families of workflow steps."
+    back: "Gemini Agent steps (a model acts on instructions, knowledge and connectors); flow control (Condition, Filter, Loop); human in the loop (Request info, Approval); plus MCP steps and existing-agent steps that call tools and agents built elsewhere."
+  - id: approval-placement
+    objective: configure-workflow
+    front: "Where does a human approval step belong in a workflow?"
+    back: "Before the first step that does something hard to undo, such as sending an email, creating an account or changing a record, so a person signs off while there is still nothing to reverse."
+  - id: turn-off-effect
+    objective: operate-workflow
+    front: "What happens when you turn off a live workflow?"
+    back: "Its schedules and event triggers are removed, so no new runs start, for you or anyone it is shared with. Runs already in progress carry on until they finish."
+quiz:
+  - id: expense-routing
+    objective: chat-vs-workflow
+    question: "Finance wants every expense report over 500 dollars, when it arrives, checked against the expense policy and sent to a reviewer before payment. Which should they build?"
+    choices:
+      - "A chat agent that employees ask about their expense reports"
+      - "A workflow that checks each report, then pauses for approval"
+      - "A chat agent with a policy sub-agent for each expense type"
+    answer: 1
+    explanation: "The process has a fixed order, starts from an event, and needs a person to sign off, which is what a workflow guarantees. A chat agent waits for someone to ask and decides its own steps, so nothing makes it check every report or stop for review. Sub-agents add specialists to a conversation, not a guaranteed sequence."
+  - id: benefits-questions
+    objective: chat-vs-workflow
+    question: "HR wants employees to ask anything about benefits, in their own words, ask follow-up questions, and get answers from the benefits handbook. Which should they build?"
+    choices:
+      - "A chat agent with the handbook as its knowledge"
+      - "A workflow with Request info steps for common questions"
+      - "A workflow that answers a question form employees fill in"
+    answer: 0
+    explanation: "Open-ended questions with no fixed steps are what chat agents are for, and the handbook can be the agent's knowledge. A Request info step asks questions set when the step is built, so it can't take questions employees think of. A form-driven workflow forces every question into fixed fields and loses the conversation."
+  - id: drive-trigger
+    objective: configure-workflow
+    question: "A workflow should start whenever a new contract lands in a shared Google Drive folder. How is that set up?"
+    choices:
+      - "Add a Google Drive watch step at the start of the canvas"
+      - "Schedule the workflow hourly and list the folder's newest files"
+      - "Pick App event as the trigger, with Google Drive and a filter"
+    answer: 2
+    explanation: "An event trigger is configured in the trigger settings from a connector's change, here Google Drive, with filters so only the right files start runs. It isn't a step you add on the canvas. A schedule that lists the folder rebuilds by hand what the event trigger already does, and still has to work out which files are new."
+  - id: refund-approval
+    objective: configure-workflow
+    question: "A workflow drafts a refund decision, issues the refund through a connector, then emails the customer. Where should the approval step go?"
+    choices:
+      - "After the email, so the reviewer sees the whole result"
+      - "At the end, as a review of the run log in the Runs tab"
+      - "Between the draft and the step that issues the refund"
+    answer: 2
+    explanation: "The approval belongs before the first step that is hard to undo, which is issuing the refund. A review after the email comes when the money and the message have already gone. A run log shows what happened; it can't stop it."
+  - id: branch-on-json
+    objective: configure-workflow
+    question: "A Gemini Agent step reads each request and a Condition step should send hardware requests one way and software requests another. What makes the branch reliable?"
+    choices:
+      - "Ask in the instructions for a sentence that names the type"
+      - "Give the step a JSON schema output with a field for the type"
+      - "Add a Request info step after it that asks for the type"
+    answer: 1
+    explanation: "A JSON schema makes the step return a named field, so the Condition can test that variable directly, for example type equals hardware. A free-text sentence can be worded many ways, so a contains test can miss. Request info asks a person to do what the model step should have done."
+  - id: entity-not-found
+    objective: operate-workflow
+    question: "A Gemini Agent step that updates Jira issues fails in the run log with ENTITY_NOT_FOUND. Only the connector's Add or update data toggle is on. What is the likely fix?"
+    choices:
+      - "Turn on the connector's search actions as well"
+      - "Add an approval step just before the update step"
+      - "Give the step the Jira project as a knowledge file"
+    answer: 0
+    explanation: "Write actions rely on search actions to find the record they change, so with search off the agent can't resolve the issue and fails with ENTITY_NOT_FOUND. An approval adds a review but doesn't help the agent find the issue, and a knowledge file is reference material, not a live lookup in Jira."
+  - id: bad-update-rollback
+    objective: operate-workflow
+    question: "You updated a live workflow and the new version sends welcome emails to the wrong people. What gets the previous behaviour back fastest?"
+    choices:
+      - "Turn the workflow off and rebuild the old steps by hand"
+      - "Delete the new version so that the old one goes live"
+      - "Restore the old version over the draft, then Update"
+    answer: 2
+    explanation: "Restoring a saved version copies it over the working draft, and Update makes it live again. Turning off only stops new runs, and rebuilding by hand invites new mistakes. Deleting a version doesn't make another one live, can't be undone, and removes the workflow graph from that version's runs, which you need to investigate."
+status: draft
+updated: "2026-11-17"
+---
+
+## Two kinds of agent, no code
+
+<Term id="workflow builder">Workflow Builder</Term> is the low-code tool inside Gemini
+Enterprise for building agents (it was called Agent Designer until it became
+generally available in September 2026). It builds two kinds:
+
+- A **chat agent** holds a conversation. The user drives: they ask, the agent works
+  out how to answer, possibly with sub-agents for specialist tasks. Google describes
+  its responses as mainly non-deterministic. It suits questions and answers, data
+  lookup and personal help.
+- A **workflow** runs a sequence of steps that you lay out on a canvas. Something
+  starts it, the steps run in your order, conditions choose branches, and people can
+  be asked to approve. It suits multi-step processes with a defined order and human
+  sign-off.
+
+In the terms of the first lesson in this path, a chat agent is an agent the user
+leads, and a workflow is a workflow with model calls inside its steps. The test is
+the same: if the path should be fixed and checked, build a workflow; if the user
+should lead an open conversation, build a chat agent.
+
+Both reach business apps through **connectors**: Gemini Enterprise's links to apps
+such as Gmail, Google Drive, Jira and ServiceNow, connected to the Gemini
+Enterprise app as data stores.
+
+## One request, built twice
+
+Take a new-starter request. A manager emails HR: "Maria joins on 3 March as a
+support engineer, please set her up."
+
+**As a chat agent**, you give the agent instructions ("help managers onboard new
+starters: collect the name, role, start date and manager, then raise the IT
+ticket"), and it works with the handbook and the apps connected to your Gemini
+Enterprise app. The manager opens it in Gemini Enterprise and talks it through. It is
+flexible and copes with odd requests, but it decides its own steps each time, so
+nothing guarantees the same checks happen for every new starter, or that the
+details are reviewed as a whole before anything is created.
+
+**As a workflow**, the request starts the process itself and every request goes
+through the same steps:
+
+<Figure
+  src="/media/agentic-workflow-canvas.svg"
+  alt="An annotated workflow canvas for a new-starter request, left to right. 1, Trigger: App event, Gmail, email received, with a subject filter; annotated: the trigger, not a step. 2, Gemini Agent step: extract name, role, start date and manager as JSON; annotated: instructions, knowledge, output format. 3, Condition: is a manager named? The yes branch continues to step 4; the no branch goes to a Gemini Agent step that replies asking for the manager, a write that also needs review, and that run ends. 4, Approval: a reviewer checks the details; annotated: before anything hard to undo. 5, Gemini Agent step: create the IT ticket and send the welcome email, as connector writes; annotated: each write also needs human review. A band underneath reads: the workflow guarantees the order; every request is extracted to a schema, checked, and approved by a person before anything is created for them."
+  caption="The same request as a workflow: a trigger, a Gemini Agent step with structured output, a condition, an approval, then the step that changes things."
+/>
+
+1. **Trigger.** An event trigger watches Gmail for received emails, filtered to the
+   new-starter subject line.
+2. **Gemini Agent step.** Its instructions say to extract the name, role, start date
+   and manager. Its knowledge is the onboarding handbook. Its output format is a
+   **JSON schema**, a list of named fields the output must fill, here those four.
+   Each field becomes a **variable**: a named value later steps can read.
+3. **Condition.** If the manager field is empty, a separate branch replies to the
+   sender asking for one (a connector write, so it needs review too), and that run
+   ends.
+4. **Approval.** The run pauses and a reviewer checks the extracted details as a
+   whole.
+5. **Gemini Agent step with connector actions.** It creates the IT ticket and sends
+   the welcome email.
+
+What the workflow guarantees, and the chat agent doesn't: every request is handled
+the same way, the details are checked against a schema, and nothing is created
+until a person has approved the request as a whole.
+
+## Configuring a workflow
+
+### Triggers
+
+A <Term id="trigger">trigger</Term> starts a workflow, in one of three ways:
+
+- **Manual:** someone types @ and the workflow's name in the Gemini Enterprise chat,
+  and can be asked for input fields.
+- **Schedule:** a frequency (such as daily or weekly) and a time zone. Scheduled runs
+  that affect other people, such as sending email, pause for approval in the chat.
+- **Event:** a change in a connected app: a new email in Gmail, for example, or a
+  change in Google Calendar, Google Drive, ServiceNow or Jira Cloud.
+
+An event trigger is configured as the workflow's trigger, not added as a step on
+the canvas: choose
+**App event**, then the connector, then its event, then filters. Google's advice is
+to always add filters, so that only the emails or files you mean start runs. Event
+triggers work by **polling**, checking the app at intervals, so a run can start 5 to
+10 minutes after the change. They only poll while the workflow is turned on.
+
+<Flashcard id="event-trigger-inline" objective="configure-workflow" front="An event trigger fired 8 minutes after the email arrived. Is something wrong?" back="Probably not. Event triggers poll the connected app, and Google documents a delay of 5 to 10 minutes." />
+
+### Steps
+
+- **<Term id="gemini agent step">Gemini Agent step</Term>.** A model acts on
+  **instructions**, **knowledge** (files, or chosen Drive or OneDrive folders) and
+  **connected apps**. For each connector you turn on search actions, and separately
+  the actions that add or update data. Write actions need the search actions too,
+  because they find the record to change by searching first; without them the run
+  fails with an ENTITY_NOT_FOUND error. Adding or updating data through a connector
+  also requires human review of that write. The **output format** is plain text or a
+  JSON schema, and the output becomes a variable. A JSON field gives later steps an
+  exact value to test; free text can be worded many ways.
+- **Flow control.** **Condition** branches on a variable (equals, contains, greater
+  than, joined with AND or OR). **Filter** keeps only the list items that match.
+  **Loop** runs one or more steps for each item in a list.
+- **Human in the loop.** **Request info** pauses to ask a person questions that you
+  set when you build the step (short answer, date, yes or no and others).
+  **Approval** pauses until a person signs off on what the workflow has produced so
+  far.
+- **Steps that reach outside.** MCP steps call tools on an MCP server, and
+  existing-agent steps run registered ADK or A2A agents built outside Workflow
+  Builder. A later
+  lesson covers when to use them.
+
+<Callout type="warning">Put the approval step before the first step that is hard to undo: sending a message, creating an account, changing a record or moving money. An approval after that step only reviews what has already happened. It also does a different job from the review that connector writes require: the approval looks at the whole request once, before the actions start.</Callout>
+
+### Building by conversation
+
+You can also describe a workflow, or a change to one, in plain language and let the
+designer build it. At the time of writing, Google lists a known issue: it can't add
+approvals, event triggers or filters this way, so add those by hand.
+
+## Operating a workflow
+
+### Versions
+
+When a workflow is ready, you **turn it on**. That version becomes **Live**, and a
+new draft is created for your next edits, so changes never touch the running
+version until you update it. You can also save a version without making it live.
+Before turning a draft on, try it from the **Preview** tab, which runs it as a test
+without waiting for the trigger; for an event trigger, you pick a recent event as
+the sample input.
+
+Version history lists each version with its name and time. Restoring one copies it
+over the current draft, which you then make live with **Update**. Deleting a version
+can't be undone, doesn't make any other version live, and removes the workflow
+graph from that version's runs, so you lose the graph those runs are debugged
+against.
+
+Turning a workflow off removes its schedules and event triggers, so no new runs
+start, for everyone it is shared with. Runs already under way finish.
+
+### Run logs
+
+The **Runs** tab lists every run of the workflow, both the test runs started from
+Preview and the real runs from its trigger. Each run shows its input or trigger, its
+status and when it started. Statuses include **Running**, **Needs Review** (paused
+at a human-in-the-loop step), **Completed** and **Error**, and you can filter by
+them and by date. Opening a run shows its details, including which version ran, and
+Google describes the logs as step-by-step execution traces.
+
+So to debug, find the failed run, see which step failed and with what message, fix
+that step in the draft, test it in Preview, then update the live version. One
+caution from the known issues: event-triggered runs that fail because a quota ran
+out are not retried automatically.
+
+<Quiz
+  id="needs-review-status"
+  objective="operate-workflow"
+  question="An event-triggered run has shown Needs Review in the Runs tab for an hour. What is it most likely doing?"
+  choices={["Retrying a step that failed because a quota ran out", "Paused until a person answers the step it waits at", "Waiting for the event trigger's next poll to resume"]}
+  answer={1}
+  explanation="Needs Review means the run has paused at a human-in-the-loop step, so it waits for a person. Runs that fail on a quota are not retried automatically, so they don't sit retrying. Polling decides when a run starts, not where an existing run waits."
+/>
+
+## Try it
+
+If your organisation's Gemini Enterprise has Workflow Builder turned on, build the
+new-starter workflow above with a filter on your own test subject line and a test
+ServiceNow instance or test inbox, since a test run may perform real actions. Send
+yourself a test email, then in the Preview tab (some pages call it Test) choose
+it with Select input and click Start manually. Then turn it on, send another email, and follow the run in the Runs tab,
+including the pause at the approval.
+
+## Sources
+
+- Google Cloud, "Professional Agentic Architect exam guide", services.google.com/fh/files/misc/professional_agentic_architect_exam_guide_english.pdf (objective 1.1).
+- Google Cloud, "Workflow Builder overview", docs.cloud.google.com/gemini/enterprise/docs/workflow-builder (chat agents and workflows compared; retrieved 2026-11-17).
+- Google Cloud, "Workflows overview", docs.cloud.google.com/gemini/enterprise/docs/workflow-builder/workflows (triggers, step types, Gemini Agent configuration and connector actions, versions, step-by-step execution traces; retrieved 2026-11-17).
+- Google Cloud, "Configure an event trigger", docs.cloud.google.com/gemini/enterprise/docs/workflow-builder/configure-event-trigger (App event, supported connectors, filters, polling delay; retrieved 2026-11-17).
+- Google Cloud, "Flow control steps", docs.cloud.google.com/gemini/enterprise/docs/workflow-builder/flow-control-steps (Condition, Filter, Loop; retrieved 2026-11-17).
+- Google Cloud, "Human-in-the-loop steps", docs.cloud.google.com/gemini/enterprise/docs/workflow-builder/use-hitl-steps (Request info, Approval, Needs Review; retrieved 2026-11-17).
+- Google Cloud, "Use connector actions", docs.cloud.google.com/gemini/enterprise/docs/workflow-builder/use-connector-actions (search and add-or-update actions; writes require human review; retrieved 2026-11-17).
+- Google Cloud, "Turn a workflow on or off", docs.cloud.google.com/gemini/enterprise/docs/workflow-builder/publish-workflows (retrieved 2026-11-17).
+- Google Cloud, "Manage versions", docs.cloud.google.com/gemini/enterprise/docs/workflow-builder/manage-agent-versions (restore overwrites the draft; deleting a version removes its runs' graph; retrieved 2026-11-17).
+- Google Cloud, "Workflow runs", docs.cloud.google.com/gemini/enterprise/docs/workflow-builder/workflow-runs (Runs tab, statuses, filters; retrieved 2026-11-17).
+- Google Cloud, "Known issues", docs.cloud.google.com/gemini/enterprise/docs/workflow-builder/known-issues (conversational designer limits; quota failures not retried; registered ADK and A2A agents only; retrieved 2026-11-17).
+- Google Cloud, "Quotas and limits", docs.cloud.google.com/gemini/enterprise/docs/workflow-builder/quotas-and-limits (schedules; scheduled runs that affect others pause for approval; retrieved 2026-11-17).
+- Google Cloud, "Gemini Enterprise release notes", docs.cloud.google.com/gemini/enterprise/docs/release-notes (3 September 2026: Workflow Builder, formerly Agent Designer, generally available).
