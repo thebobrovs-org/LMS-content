@@ -280,5 +280,26 @@
   },
   "agents cli": {
     "definition": "Google's command-line tool and set of skills that teach a coding agent the agent lifecycle on Google Cloud: scaffold, evaluate, deploy, publish and observe. It is a tool for coding agents, not a coding agent itself."
+  },
+  "generator-critic": {
+    "definition": "An agent design pattern (also called reflection) in which one agent drafts and a critic checks the draft against criteria, approving it or returning fixes, in a loop that needs an exit and a cap."
+  },
+  "plan-then-execute": {
+    "definition": "An agent design pattern in which a planner writes the whole plan first, a gate (a person or a policy check) approves it, and only then do executors carry out the steps."
+  },
+  "design review": {
+    "definition": "A structured check of a design against its requirements and known failure modes, which finds wrong choices and requirements nothing in the design serves."
+  },
+  "semantic governance policy": {
+    "definition": "A plain-language rule enforced on Agent Gateway that checks each proposed tool call against the user's request, the conversation and the policy before it runs, and denies a call that violates it (Preview)."
+  },
+  "confused deputy": {
+    "definition": "A program with broad authority of its own that acts for a less-privileged party, so the program's rights, not the party's, decide what happens; for example an agent with wide data access fetching a record for a user who could not reach it alone."
+  },
+  "hybrid search": {
+    "definition": "Retrieval that runs semantic (vector) search and keyword search together and merges the two ranked lists, so a result can match by meaning or by an exact token such as a product code."
+  },
+  "reciprocal rank fusion": {
+    "definition": "A way to merge ranked lists (RRF): each item scores by the reciprocal of its rank in each list, summed, so scores from different search methods never need to be compared. Agent Retrieval uses it for hybrid search, with a weight that leans toward semantic or keyword results."
   }
 }
