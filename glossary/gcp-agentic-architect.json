@@ -257,6 +257,18 @@
   "skill registry": {
     "definition": "An Agent Platform repository, in Preview, that stores versioned agent skills in a Google Cloud project for agents to search and load. Google plans to make it part of Agent Registry."
   },
+  "terminal sandbox": {
+    "definition": "Operating-system isolation that a coding agent runs its shell commands in, limiting which files they can write and, in Antigravity, blocking network access unless a domain is allowed."
+  },
+  "permission preset": {
+    "definition": "A coding agent setting that decides which actions run without approval, such as Antigravity's Request Review, Default, Auto and Turbo."
+  },
+  "cloud workstations": {
+    "definition": "Google Cloud's managed development environments, each on a dedicated VM in your VPC; a place to run coding agents away from developer laptops."
+  },
+  "gke agent sandbox": {
+    "definition": "Isolated execution of untrusted agent-generated code on GKE: each sandbox is a Pod with its own kernel boundary (gVisor or a microVM), handed out from warm pools, with a controller you install on the cluster."
+  },
   "agents cli": {
     "definition": "Google's command-line tool and set of skills that teach a coding agent the agent lifecycle on Google Cloud: scaffold, evaluate, deploy, publish and observe. It is a tool for coding agents, not a coding agent itself."
   }

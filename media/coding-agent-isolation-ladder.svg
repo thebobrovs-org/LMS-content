@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 470" width="760" height="470" role="img" aria-label="An isolation ladder with four rungs, from least to most isolated. Developer laptop, no sandbox: commands run with every file and credential on the machine. Antigravity terminal sandbox: commands confined to the workspace with no network by default and secrets such as ~/.ssh and .env blocked, but still on the laptop. Cloud Workstations: a dedicated VM per developer in a private cluster, reached through a private gateway, with no public VM IP addresses, a VPC Service Controls perimeter and a minimal service account, which keeps company credentials off laptops. GKE Agent Sandbox: a kernel-isolated Pod per run from a warm pool, with internal traffic and the metadata server blocked, for agent-generated code at scale. A side note says every rung still needs least-privilege credentials and human review before code ships.">
+  <rect width="760" height="470" fill="#ffffff"/>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <g font-family="Inter, system-ui, sans-serif">
+    <text x="380" y="28" text-anchor="middle" font-size="15" font-weight="600" fill="#0f172a">Where a coding agent's code runs: the isolation ladder</text>
+
+    <!-- axis -->
+    <path d="M40,400 L40,64" stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#ar)"/>
+    <text x="30" y="232" text-anchor="middle" font-size="11" fill="#475569" transform="rotate(-90 30 232)">more isolation</text>
+
+    <!-- rung 4 (top) -->
+    <rect x="60" y="56" width="500" height="76" rx="10" fill="#dcfce7" stroke="#16a34a"/>
+    <text x="76" y="80" font-size="13" font-weight="600" fill="#14532d">GKE Agent Sandbox</text>
+    <text x="76" y="100" font-size="11.5" fill="#166534">A kernel-isolated Pod (gVisor or microVM) per run, from a warm pool.</text>
+    <text x="76" y="118" font-size="11.5" fill="#166534">Template Pods block internal ranges and metadata; restrict public egress.</text>
+
+    <!-- rung 3 -->
+    <rect x="60" y="144" width="500" height="76" rx="10" fill="#dbeafe" stroke="#2563eb"/>
+    <text x="76" y="168" font-size="13" font-weight="600" fill="#1e3a8a">Cloud Workstations</text>
+    <text x="76" y="188" font-size="11.5" fill="#1e3a8a">A VM per developer in a private cluster: private gateway, no public VM IPs, VPC-SC.</text>
+    <text x="76" y="206" font-size="11.5" fill="#1e3a8a">Company credentials off laptops; the agent acts as a minimal service account.</text>
+
+    <!-- rung 2 -->
+    <rect x="60" y="232" width="500" height="76" rx="10" fill="#fef3c7" stroke="#b45309"/>
+    <text x="76" y="256" font-size="13" font-weight="600" fill="#78350f">Antigravity terminal sandbox</text>
+    <text x="76" y="276" font-size="11.5" fill="#78350f">Commands confined to the workspace; no network by default; ~/.ssh, .env blocked.</text>
+    <text x="76" y="294" font-size="11.5" fill="#78350f">Still on the laptop, beside whatever credentials it holds.</text>
+
+    <!-- rung 1 (bottom) -->
+    <rect x="60" y="320" width="500" height="76" rx="10" fill="#fee2e2" stroke="#dc2626"/>
+    <text x="76" y="344" font-size="13" font-weight="600" fill="#7f1d1d">Developer laptop, no sandbox</text>
+    <text x="76" y="364" font-size="11.5" fill="#7f1d1d">Commands run with every file and credential on the machine.</text>
+    <text x="76" y="382" font-size="11.5" fill="#7f1d1d">Fine for reading code; risky for running what the agent wrote.</text>
+
+    <!-- scenario labels -->
+    <g font-size="11" fill="#334155">
+      <text x="576" y="90">Agent products running</text>
+      <text x="576" y="106">generated code at scale</text>
+      <text x="576" y="178">Enterprise teams of</text>
+      <text x="576" y="194">developers</text>
+      <text x="576" y="266">One developer: Default,</text>
+      <text x="576" y="282">or Request Review if no sandbox</text>
+      <text x="576" y="354">Avoid with production</text>
+      <text x="576" y="370">credentials present</text>
+    </g>
+
+    <!-- footer band -->
+    <rect x="60" y="414" width="680" height="40" rx="8" fill="#f1f5f9" stroke="#64748b" stroke-dasharray="5 4"/>
+    <text x="400" y="439" text-anchor="middle" font-size="11.5" fill="#334155">Every rung still needs least-privilege credentials, and human review before code ships.</text>
+  </g>
+</svg>
