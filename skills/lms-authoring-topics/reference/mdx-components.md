@@ -14,7 +14,7 @@ Embeds an interactive simulation in a sandboxed iframe.
 
 | Prop | Type | Notes |
 |------|------|-------|
-| `id` | string (required) | Must exist in `content/simulations/registry.json`. |
+| `id` | string (required) | Must be a package in `simulations/packages/<id>/`. |
 | `height` | number | Initial iframe height in px (default 420); the sim resizes itself to fit. |
 | `props` | object | Passed to the sim's `onInit` (see its `sim.config.json` `props`). |
 
@@ -57,7 +57,7 @@ print(len(jax.devices()), "TPU chips")
 
 ## Images: `<Figure>` and Markdown `![alt](src)`
 
-Put image files in **`public/media/…`** and reference them as **`/media/…`**.
+Put image files in **`media/…`** and reference them as **`/media/…`**.
 External URLs work too. Prefer **SVG** for diagrams (crisp, small); give diagrams a
 solid light panel so they read in dark mode.
 
@@ -74,7 +74,7 @@ Use `<Figure>` when you want a caption or a constrained width (`alt` is required
 
 | Prop | Type | Notes |
 |------|------|-------|
-| `src` | string (required) | `/media/…` (a file in `public/media/`) or an absolute URL. |
+| `src` | string (required) | `/media/…` (a file in `media/`) or an absolute URL. |
 | `alt` | string (required) | Describe the content for screen readers — not "image of …". |
 | `caption` | string | Shown under the image. |
 | `credit` | string | Optional attribution, appended to the caption. |

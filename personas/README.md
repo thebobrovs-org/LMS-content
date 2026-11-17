@@ -27,7 +27,7 @@ touches a topic, so content is written by a consistent "expert," not a generalis
   or per subject (e.g. `data-structures.md`) when topics share an expert.
 
 A topic resolves its persona by: exact topic id → else its subject → else the
-`_default` persona.
+`_default` persona (not yet written: a subject without a persona needs one before authoring).
 
 ## What a persona is for
 The persona defines **who is writing**: their expertise, the authoritative

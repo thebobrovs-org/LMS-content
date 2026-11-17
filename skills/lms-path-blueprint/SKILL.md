@@ -64,7 +64,7 @@ topic plans exist and are signed off. The map is complete and agreed first. This
 is what prevents half-built paths and topics that don't connect.
 
 **4. Build loop** — author topics one at a time, foundations-first, each strictly
-to its plan: author → `node pipeline/validate.mjs` → the 4 audit critics
+to its plan: author → `node pipeline/validate.mjs` → the 5 audit critics
 (`pipeline/AUDIT.md`) → review on staging. **Do not start the next topic until the
 current one is signed off.**
 

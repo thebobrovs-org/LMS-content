@@ -1,6 +1,6 @@
 ---
 name: lms-authoring-images
-description: Generate and wire a topic illustration (AI image, e.g. Gemini) in the Hyperstack house style. Use when adding a static diagram/illustration to a lesson alongside or instead of a simulation. Covers the REUSABLE house-style block (palette, rendering, composition, typography — the blue→teal-on-dark brand look), the per-image subject template, the text-rendering caveat, accuracy gate, and how to wire the image into the MDX (public/media + alt text).
+description: Generate and wire a topic illustration (AI image, e.g. Gemini) in the Hyperstack house style. Use when adding a static diagram/illustration to a lesson alongside or instead of a simulation. Covers the REUSABLE house-style block (palette, rendering, composition, typography — the blue→teal-on-dark brand look), the per-image subject template, the text-rendering caveat, accuracy gate, and how to wire the image into the MDX (media/ + alt text).
 ---
 
 # Authoring a topic illustration
@@ -79,7 +79,7 @@ thousands" scale ladder).
 
 ## Wiring it into a lesson
 
-1. Save the chosen file to **`public/media/<topic-or-name>.png`** (or `.webp`).
+1. Save the chosen file to **`media/<topic-or-name>.png`** (or `.webp`).
 2. Embed it in the MDX with descriptive **alt text** (screen-reader + SEO):
    `![A 5-rung ladder from a single TPU chip up to a multi-pod Multislice](/media/from-chip-to-pod.png)`
    or a captioned `<figure>` if the component set supports it.
