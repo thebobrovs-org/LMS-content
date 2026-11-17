@@ -7,6 +7,8 @@ scope: "Tool-using LLM agents; the five-threat grouping and the four layers (ide
 sources:
   - "OWASP GenAI Security Project, LLM01:2025 Prompt Injection, github.com/OWASP/www-project-top-10-for-large-language-model-applications/blob/main/2_0_vulns/LLM01_PromptInjection.md (retrieved 2026-11-17: direct and indirect injection; no fool-proof prevention known; least privilege, human approval for high-risk actions and segregating external content as mitigations)"
   - "OWASP GenAI Security Project, LLM06:2025 Excessive Agency, same repository, 2_0_vulns/LLM06_ExcessiveAgency.md (retrieved 2026-11-17: excessive functionality, permissions and autonomy)"
+  - "Google Cloud, Agent Identity overview, docs.cloud.google.com/iam/docs/agent-identity-overview (retrieved 2026-11-17: a dedicated principal per agent; permissions granted directly to its identifier; audit logs record the agent and the delegating user)"
+  - "OWASP GenAI Security Project, LLM02:2025 Sensitive Information Disclosure and LLM03:2025 Supply Chain, same repository as LLM01 (retrieved 2026-11-17: sensitive data exposed through output; third-party components as a risk)"
   - "Google Cloud, Model Armor overview, docs.cloud.google.com/model-armor/overview (retrieved 2026-11-17: screens prompts and responses, including prompt injection and jailbreak detection and Sensitive Data Protection)"
 touches:
   - agentic-ai/agent-threat-model

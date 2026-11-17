@@ -28,7 +28,7 @@
 <text x="410" y="96" font-size="13" font-weight="700" fill="#1d4ed8">Identity</text>
 <text x="410" y="118" font-size="12" fill="#334155">The call runs as the agent's own identity,</text>
 <text x="410" y="136" font-size="12" fill="#334155">not a shared account, so access can be</text>
-<text x="410" y="154" font-size="12" fill="#334155">granted to it alone and audited. Step 4.</text>
+<text x="410" y="154" font-size="12" fill="#334155">granted to it alone and its calls audited.</text>
 <rect x="396" y="196" width="344" height="104" rx="8" fill="#eff6ff" stroke="#1d4ed8"/>
 <text x="410" y="220" font-size="13" font-weight="700" fill="#1d4ed8">Access control</text>
 <text x="410" y="242" font-size="12" fill="#334155">That identity may read invoices but not send</text>
@@ -37,8 +37,8 @@
 <rect x="396" y="320" width="344" height="104" rx="8" fill="#f5f3ff" stroke="#6d28d9"/>
 <text x="410" y="344" font-size="13" font-weight="700" fill="#6d28d9">Runtime gateway</text>
 <text x="410" y="366" font-size="12" fill="#334155">A policy point on agent traffic allows only</text>
-<text x="410" y="384" font-size="12" fill="#334155">approved tools and destinations, and the</text>
-<text x="410" y="402" font-size="12" fill="#334155">refused call is observed. Acts at step 4.</text>
+<text x="410" y="384" font-size="12" fill="#334155">approved tools and destinations, and its</text>
+<text x="410" y="402" font-size="12" fill="#334155">traffic can be monitored. Acts at step 4.</text>
 <rect x="396" y="444" width="344" height="104" rx="8" fill="#ecfdf5" stroke="#047857"/>
 <text x="410" y="468" font-size="13" font-weight="700" fill="#047857">Guardrails</text>
 <text x="410" y="490" font-size="12" fill="#334155">Model Armor screens the retrieved text for</text>

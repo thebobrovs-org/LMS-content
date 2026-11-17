@@ -111,7 +111,7 @@ sign-off between each, core first, then one exam section at a time.
 
 | ID | Level | Topic (`id`) | One-line objective | Visual / lab | Status |
 |----|-------|--------------|--------------------|--------------|--------|
-| 5.1 | 100 | `agent-threat-model` | Name the main agent threats with an example of each. | figure | plan-approved |
+| 5.1 | 100 | `agent-threat-model` | Name the main agent threats with an example of each. | figure | on staging |
 | 5.2 | 200 | `agent-identity-and-access` | Explain what Agent Identity provides over a shared service account. | figure | plan-approved |
 | 5.3 | 300 | `agent-auth-oauth` | Distinguish OAuth 2.0 (authorisation) from OpenID Connect (authentication). | figure | plan-approved |
 | 5.4 | 300 | `agent-gateway-and-registry` | Explain what Agent Gateway enforces and observes. | figure | plan-approved |
