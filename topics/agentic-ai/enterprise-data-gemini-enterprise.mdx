@@ -142,7 +142,8 @@ Connectors work in one of two ways, and some support both:
 An ingested copy is only as fresh as its last sync. If a policy changes in the
 source at 9:00 and the next incremental sync runs at 11:00, the agent answers from
 the old copy until then, and it sounds just as confident. Incremental syncs pick up
-changes; full syncs, scheduled separately, capture the source's whole state. When
+added or updated content; deletions and identity (ACL) changes wait for a full
+sync, scheduled separately. When
 answers must reflect a change within minutes, shorten the schedule or use a
 federated connector, which asks the source live.
 
@@ -240,7 +241,7 @@ rather than searched like a data store.
 
 - Google Cloud, Professional Agentic Architect exam guide, services.google.com/fh/files/misc/professional_agentic_architect_exam_guide_english.pdf (retrieved 2026-11-17: objective 1.2).
 - Google Cloud, "About apps and data stores", docs.cloud.google.com/gemini/enterprise/docs/apps-data-stores (updated 2026-11-10, retrieved 2026-11-17: apps, data store types, website data stores can't be connected, blended search rules).
-- Google Cloud, "Introduction to connectors and data stores", docs.cloud.google.com/gemini/enterprise/docs/connectors/introduction-to-connectors-and-data-stores (retrieved 2026-11-17: federated and ingestion connectors, incremental sync every 3 hours by default, full syncs, identity sync).
+- Google Cloud, "Introduction to connectors and data stores", docs.cloud.google.com/gemini/enterprise/docs/connectors/introduction-to-connectors-and-data-stores (retrieved 2026-11-17: federated and ingestion connectors, incremental sync every 3 hours by default covering added or updated entity data, not identity data or deletions; full syncs; identity sync).
 - Google Cloud, "Configure IAM policies for apps", docs.cloud.google.com/gemini/enterprise/docs/iam-policy-for-apps (retrieved 2026-11-17: IAM roles grant access to an app; users need a valid licence).
 - Google Cloud, "Prepare data for ingesting", docs.cloud.google.com/gemini/enterprise/docs/connectors/prepare-data (retrieved 2026-11-17: formats and limits, layout parser).
 - Google Cloud, "Configure access controls for custom data sources", docs.cloud.google.com/gemini/enterprise/docs/identity (retrieved 2026-11-17: identity provider, workforce pool, ACL metadata, access control set when the store is created).
