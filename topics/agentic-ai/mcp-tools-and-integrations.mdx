@@ -306,7 +306,8 @@ agents, MCP servers and their tools, and endpoints in your project or organisati
   traffic routed through it.
 - **Discovery:** an ADK agent can look a registered server up and load its
   tools from the registry, instead of hard-coding a URL.
-- **Search:** the registry searches registered agents, MCP servers and skills.
+- **Search:** the registry searches registered agents, A2A skills, standalone
+  skills and MCP servers.
   MCP servers are found by keyword over the server's name and description and
   its tools' names and descriptions. Standalone skills can also be searched
   semantically (`--search-type=semantic`), a mode Google describes as
@@ -314,14 +315,17 @@ agents, MCP servers and their tools, and endpoints in your project or organisati
 
 Search matters because loading every tool does not scale. Google's
 architecture guidance calls the problem <Term id="tool bloat">tool bloat</Term>:
-too many tool definitions in the model's context, which overwhelm it and spend
-tokens on every call. Its fix is progressive disclosure, unlocking tools only
-when they are needed. One form is the **search tool pattern**: the agent gets a
+too many tool definitions in the system prompt, sent with every request. They
+dilute the model's attention, so it picks the wrong tool more often, and they
+add tokens, cost and latency. Google lists several fixes that can be combined:
+simpler tools, smaller toolsets split by task, and progressive disclosure,
+unlocking tools only when they are needed. One form of progressive disclosure
+is the **search tool pattern**: the agent gets a
 single search tool and loads only the relevant tool schema when a task calls
 for it, instead of declaring every tool up front. (Topic 3.8 measures what
 declarations cost per call.)
 
-<Flashcard id="tool-bloat" objective="register-tools" front="What is tool bloat, and what does the search tool pattern do about it?" back="Tool bloat is giving a model too many tool definitions, which overwhelms it and spends tokens on every call. The search tool pattern gives the agent one search tool that loads only the relevant tool schema when a task needs it, instead of declaring every tool up front." />
+<Flashcard id="tool-bloat" objective="register-tools" front="What is tool bloat, and what does the search tool pattern do about it?" back="Tool bloat is putting too many tool definitions in the system prompt, sent with every request: the model picks the wrong tool more often, and every call costs more tokens. The search tool pattern gives the agent one search tool that loads only the relevant tool schema when a task needs it, instead of declaring every tool up front." />
 
 Registration does not host, scale or secure the server for you. It makes the
 server findable and puts its use under policy, which is what lets a security
@@ -332,8 +336,8 @@ team answer "which agents can book pickups?"
 ## Sources
 
 - Google Cloud, "Google Cloud MCP servers overview", docs.cloud.google.com/mcp/overview (remote MCP servers run on the service's infrastructure and offer an HTTP endpoint).
-- Google Cloud, "Search for agents and tools", docs.cloud.google.com/agent-registry/search-agents-and-tools (keyword and prefix search over MCP server and tool names and descriptions; semantic search over SKILL.md for standalone skills, optimised for orchestrator agents).
-- Google Cloud Architecture Center, "Choose your agentic AI architecture components", docs.cloud.google.com/architecture/choose-agentic-ai-architecture-components (tool bloat: too many tool definitions in the system prompt; progressive disclosure; the search tool pattern loads only the relevant tool schema).
+- Google Cloud, "Search for agents and tools", docs.cloud.google.com/agent-registry/search-agents-and-tools (keyword search over MCP server and tool names and descriptions; semantic search over SKILL.md for standalone skills, optimised for orchestrator agents).
+- Google Cloud Architecture Center, "Choose your agentic AI architecture components", docs.cloud.google.com/architecture/choose-agentic-ai-architecture-components (tool bloat: too many tool definitions in the system prompt; mitigations: limit tool complexity, granular toolsets, progressive disclosure; the search tool pattern loads only the relevant tool schema).
 - Google Cloud, "Supported products", docs.cloud.google.com/mcp/supported-products (BigQuery, Cloud SQL, Spanner, GKE, Cloud Storage and others, with their endpoints).
 - Google Cloud, "Access control for MCP servers", docs.cloud.google.com/mcp/access-control (MCP Tool User role, roles/mcp.toolUser, plus the product's roles).
 - Google Cloud, "Restrict MCP tools to read-only", docs.cloud.google.com/mcp/prevent-read-write-tool-use (IAM deny policies on tools not marked read-only).
