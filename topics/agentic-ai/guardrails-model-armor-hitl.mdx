@@ -202,7 +202,12 @@ or supervising system responds:
   for a structured answer such as an approved amount.
 
 While the tool waits, the client sees an `adk_request_confirmation` event and
-returns the decision, much like the consent pause in the OAuth lesson. The
+returns the decision, much like the consent pause in the OAuth lesson.
+The decision arrives as a function response from the client app, matched to the
+paused call's id, and the person gives it in the app's own interface, outside
+the conversation. That is what makes the check trustworthy: an injected
+instruction can make the model say "approved", but it cannot produce the
+client's confirmation, so the tool stays paused until a real person answers. The
 examples here are Python; check the ADK documentation for the feature's status
 in other languages. Confirm
 the irreversible and high-impact calls, not every call: approvers who are
