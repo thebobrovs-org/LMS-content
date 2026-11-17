@@ -160,6 +160,21 @@ These sit on a <Term id="determinism spectrum">determinism spectrum</Term>, and
 real systems mix them: a workflow with one agentic step, or an agent whose risky
 actions pass through a fixed approval step.
 
+### Try it: who picks the next step?
+
+The simulation runs one request, "send order A1234 to my new address", as a
+fixed workflow and as an agent. Predict first: when the order turns out to be
+partly shipped, what does each one do?
+
+Step through the unexpected result in both modes, then switch to the expected
+result and compare the model calls.
+
+<Simulation id="workflow-vs-agent-stepper" />
+
+When the path was known, the workflow reached the same outcome with one model
+call instead of three. When it was not, only the agent adapted, and it did so by
+choosing a step nobody tested in advance.
+
 <Quiz
   id="classify-summariser"
   objective="agent-vs-workflow"

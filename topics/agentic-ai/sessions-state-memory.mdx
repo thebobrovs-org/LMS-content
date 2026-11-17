@@ -189,6 +189,25 @@ it.
   explanation="app: keys are shared by every user and session of the app, so one update reaches everyone. A key with no prefix would live in one session, a user: key would have to be written separately for each user, and a temp: key disappears at the end of the turn."
 />
 
+### Try it: which values survive a new session?
+
+Before you press anything, predict: a tool writes `language = "fr"` once with no
+prefix and once as `user:language`. In a new session for the same user, which
+of the two does the agent still read? And for a different user?
+
+Write both, open a new session, then switch users. Then compare restarts:
+with `DatabaseSessionService`, write a `user:` value and press Restart process.
+Switch the session service to `InMemorySessionService` (which starts the
+exercise again with an empty store), write the same value, and restart again.
+Scope decides who reads a key, but only a persistent service keeps it across a
+restart.
+
+<Simulation id="state-scope-explorer" />
+
+Explain it in one sentence: why is a `temp:` key gone on the very next turn of
+the same session, while a `user:` key reaches a session that did not exist when
+it was written?
+
 ## Memory: what lasts across conversations
 
 A session ends. Some of what the user said is worth keeping: where they work,

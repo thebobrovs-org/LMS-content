@@ -1,0 +1,14 @@
+{
+  "id": "state-scope-explorer",
+  "title": "State scope explorer",
+  "version": "1.0.0",
+  "props": {
+    "service": { "type": "string", "default": "database" }
+  },
+  "checkpoints": [
+    {
+      "id": "observe-user-scope",
+      "hint": "Write language with no prefix and again with user:, then open a new session for the same user: only the user: key is still visible."
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "approval-gate-explorer",
+  "title": "Approval gate explorer",
+  "version": "1.0.0",
+  "props": {
+    "placement": { "type": "string", "default": "before" },
+    "request": { "type": "string", "default": "large" }
+  },
+  "checkpoints": [
+    {
+      "id": "observe-approval-before-side-effect",
+      "hint": "Deny the €400 refund with the approval before the tool, then again with the review after it: only the first leaves the account untouched."
+    }
+  ]
+}

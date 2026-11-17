@@ -1,0 +1,12 @@
+{
+  "id": "context-budget-explorer",
+  "title": "Context budget explorer",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-evidence-survives",
+      "hint": "Cut the late turn to about 21,000 tokens or fewer while all three evalset cases still pass."
+    }
+  ]
+}
