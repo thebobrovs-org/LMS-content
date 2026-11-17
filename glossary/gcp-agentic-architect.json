@@ -1,0 +1,14 @@
+{
+  "agent": {
+    "definition": "A system in which a model decides, in a loop, which actions (tool calls) to take toward a goal, and when it is done."
+  },
+  "tool": {
+    "definition": "A function, API or service an agent can call to read data or take an action. The model asks for the call; the runtime (or, for built-in tools, the provider's service) runs it."
+  },
+  "workflow": {
+    "definition": "Control flow the designer defines in advance (sequences, branches, loops), possibly with model calls inside steps. A model may pick a predefined branch, but it never invents the path."
+  },
+  "determinism spectrum": {
+    "definition": "The range of designs ordered by how much the system decides for itself: a chatbot acts only when the user asks, a workflow follows the designer's path, and an agent directs its own steps. More autonomy buys flexibility and costs predictability."
+  }
+}
