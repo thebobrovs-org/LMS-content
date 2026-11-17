@@ -70,5 +70,14 @@
   },
   "session": {
     "definition": "The record of one conversation between a user and an agent: its messages, the agent's events and its working state. A session service is where an agent stores sessions."
+  },
+  "prompt injection": {
+    "definition": "Input crafted to override an LLM application's instructions. In a direct injection the person using the application writes it; in an indirect one it arrives in content the application reads."
+  },
+  "indirect prompt injection": {
+    "definition": "A prompt injection carried by content an agent reads rather than by the person using it: a web page, a document, an email or a tool's output. It can be invisible to humans."
+  },
+  "excessive agency": {
+    "definition": "An agent holding more than its task needs: more tools, broader permissions or more freedom to act without a check. It decides how much damage a manipulation or a model mistake can do."
   }
 }
