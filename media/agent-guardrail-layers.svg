@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 458" width="760" height="458" role="img" aria-label="Five agent threats and the guardrail layer that addresses each.">
+<rect width="760" height="458" fill="#ffffff"/>
+<g font-family="Inter, system-ui, sans-serif">
+<text x="380.0" y="28" font-size="16" font-weight="600" fill="#0f172a" text-anchor="middle">Threats to a support agent, and the guardrail for each</text>
+<text x="36" y="62" font-size="12" font-weight="700" fill="#475569" text-anchor="start">Threat</text>
+<text x="276" y="62" font-size="12" font-weight="700" fill="#475569" text-anchor="start">Guardrail layer</text>
+<text x="516" y="62" font-size="12" font-weight="700" fill="#475569" text-anchor="start">Mechanism</text>
+<rect x="24" y="72" width="232" height="64" rx="6" fill="#ecfdf5" stroke="#047857"/>
+<rect x="264" y="72" width="232" height="64" rx="6" fill="#ecfdf5" stroke="#047857"/>
+<rect x="504" y="72" width="232" height="64" rx="6" fill="#ecfdf5" stroke="#047857"/>
+<text x="36" y="98" font-size="12" font-weight="400" fill="#0f172a" text-anchor="start">Prompt injection in a message</text>
+<text x="276" y="98" font-size="12" font-weight="600" fill="#0f172a" text-anchor="start">Model Armor</text><text x="276" y="118" font-size="12" font-weight="400" fill="#0f172a" text-anchor="start">on prompts and tool output</text>
+<text x="516" y="98" font-size="12" font-weight="400" fill="#334155" text-anchor="start">prompt injection and jailbreak</text>
+<text x="36" y="118" font-size="12" font-weight="400" fill="#0f172a" text-anchor="start">or a tool's output</text>
+<text x="516" y="118" font-size="12" font-weight="400" fill="#334155" text-anchor="start">detection filter</text>
+<rect x="24" y="146" width="232" height="44" rx="6" fill="#ecfdf5" stroke="#047857"/>
+<rect x="264" y="146" width="232" height="44" rx="6" fill="#ecfdf5" stroke="#047857"/>
+<rect x="504" y="146" width="232" height="44" rx="6" fill="#ecfdf5" stroke="#047857"/>
+<text x="36" y="172" font-size="12" font-weight="400" fill="#0f172a" text-anchor="start">Harmful content in a reply</text>
+<text x="276" y="172" font-size="12" font-weight="600" fill="#0f172a" text-anchor="start">Model Armor on responses</text>
+<text x="516" y="172" font-size="12" font-weight="400" fill="#334155" text-anchor="start">responsible AI filters</text>
+<rect x="24" y="200" width="232" height="64" rx="6" fill="#f5f3ff" stroke="#6d28d9"/>
+<rect x="264" y="200" width="232" height="64" rx="6" fill="#f5f3ff" stroke="#6d28d9"/>
+<rect x="504" y="200" width="232" height="64" rx="6" fill="#f5f3ff" stroke="#6d28d9"/>
+<text x="36" y="226" font-size="12" font-weight="400" fill="#0f172a" text-anchor="start">Card numbers or credentials</text>
+<text x="276" y="226" font-size="12" font-weight="600" fill="#0f172a" text-anchor="start">Sensitive Data Protection</text>
+<text x="516" y="226" font-size="12" font-weight="400" fill="#334155" text-anchor="start">basic: inspect six infoTypes;</text>
+<text x="36" y="246" font-size="12" font-weight="400" fill="#0f172a" text-anchor="start">leaking in or out</text>
+<text x="276" y="246" font-size="12" font-weight="400" fill="#0f172a" text-anchor="start">inside Model Armor</text>
+<text x="516" y="246" font-size="12" font-weight="400" fill="#334155" text-anchor="start">advanced: templates, de-identify</text>
+<rect x="24" y="274" width="232" height="64" rx="6" fill="#fffbeb" stroke="#b45309"/>
+<rect x="264" y="274" width="232" height="64" rx="6" fill="#fffbeb" stroke="#b45309"/>
+<rect x="504" y="274" width="232" height="64" rx="6" fill="#fffbeb" stroke="#b45309"/>
+<text x="36" y="300" font-size="12" font-weight="400" fill="#0f172a" text-anchor="start">An irreversible refund</text>
+<text x="276" y="300" font-size="12" font-weight="600" fill="#0f172a" text-anchor="start">Human confirmation</text>
+<text x="516" y="300" font-size="12" font-weight="400" fill="#334155" text-anchor="start">ADK tool confirmation,</text>
+<text x="36" y="320" font-size="12" font-weight="400" fill="#0f172a" text-anchor="start">issued by mistake</text>
+<text x="276" y="320" font-size="12" font-weight="400" fill="#0f172a" text-anchor="start">before the tool runs</text>
+<text x="516" y="320" font-size="12" font-weight="400" fill="#334155" text-anchor="start">always or above a threshold</text>
+<rect x="24" y="348" width="232" height="64" rx="6" fill="#eff6ff" stroke="#1d4ed8"/>
+<rect x="264" y="348" width="232" height="64" rx="6" fill="#eff6ff" stroke="#1d4ed8"/>
+<rect x="504" y="348" width="232" height="64" rx="6" fill="#eff6ff" stroke="#1d4ed8"/>
+<text x="36" y="374" font-size="12" font-weight="400" fill="#0f172a" text-anchor="start">Retrieval returns data the</text>
+<text x="276" y="374" font-size="12" font-weight="600" fill="#0f172a" text-anchor="start">Act with the user's identity</text>
+<text x="516" y="374" font-size="12" font-weight="400" fill="#334155" text-anchor="start">the data source applies the</text>
+<text x="36" y="394" font-size="12" font-weight="400" fill="#0f172a" text-anchor="start">user may not see</text>
+<text x="276" y="394" font-size="12" font-weight="400" fill="#0f172a" text-anchor="start">when acting for a user</text>
+<text x="516" y="394" font-size="12" font-weight="400" fill="#334155" text-anchor="start">user's own permissions</text>
+<text x="380.0" y="438" font-size="12" font-weight="400" fill="#334155" text-anchor="middle">Each layer catches what another misses. None of them is a line in the system prompt.</text>
+</g></svg>
