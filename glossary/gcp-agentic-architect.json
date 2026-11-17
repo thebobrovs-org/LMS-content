@@ -242,6 +242,24 @@
   "antigravity": {
     "definition": "Google's agentic development environment, offered as a desktop app, a CLI (agy), IDE extensions and a Python SDK."
   },
+  "rule": {
+    "definition": "Persistent guidance for a coding agent in a Markdown file, in its context always or when a trigger such as a file pattern matches. The model reads it and decides; nothing enforces it."
+  },
+  "hook": {
+    "definition": "A command the coding agent's harness runs on a lifecycle event, such as before or after a tool call, whatever the model decides. A hook that runs before a tool call can block it."
+  },
+  "subagent": {
+    "definition": "A delegated agent with its own instructions, context and optionally its own model and tool list, which takes a task from the main agent and returns a result."
+  },
+  "plugin": {
+    "definition": "A versioned package that bundles a coding agent's customisations, such as skills, hooks, subagents and MCP servers (and, in Antigravity, rules), so a team can install and update them together."
+  },
+  "skill registry": {
+    "definition": "An Agent Platform repository, in Preview, that stores versioned agent skills in a Google Cloud project for agents to search and load. Google plans to make it part of Agent Registry."
+  },
+  "agents cli": {
+    "definition": "Google's command-line tool and set of skills that teach a coding agent the agent lifecycle on Google Cloud: scaffold, evaluate, deploy, publish and observe. It is a tool for coding agents, not a coding agent itself."
+  },
   "hybrid search": {
     "definition": "Retrieval that runs semantic (vector) search and keyword search together and merges the two ranked lists, so a result can match by meaning or by an exact token such as a product code."
   },
