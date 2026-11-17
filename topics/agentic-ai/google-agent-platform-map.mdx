@@ -1,0 +1,229 @@
+---
+title: The Google Cloud agent platform map
+summary: Place each in-scope Google Cloud agent product on one map by what it does, from low-code apps down to the runtime, with governance around everything, and translate the names that changed in 2025 and 2026.
+tags: [agentic-ai, google-cloud, architecture]
+difficulty: beginner
+estimatedMinutes: 15
+level: 100
+prerequisites: [agentic-ai/what-is-an-agent]
+objectives:
+  - id: place-product
+    statement: "Place each in-scope product on the platform map by what it does."
+  - id: former-names
+    statement: "Match current product names to their former ones (Vertex AI, Agent Engine, Vertex AI Search, Agent Designer, Vector Search 2.0)."
+flashcards:
+  - id: rename-agent-engine
+    objective: former-names
+    front: "Vertex AI Agent Engine is now called what?"
+    back: "Agent Runtime: the managed runtime that hosts and scales deployed agents."
+  - id: rename-vertex-ai-search
+    objective: former-names
+    front: "Vertex AI Search is now called what?"
+    back: "Agent Search, Google's managed enterprise search and retrieval over your documents. Renamed in April 2026."
+  - id: rename-agent-designer
+    objective: former-names
+    front: "Agent Designer is now called what?"
+    back: "Workflow Builder, the low-code visual tool for building agent workflows in Gemini Enterprise."
+  - id: rename-vector-search-2
+    objective: former-names
+    front: "Vector Search 2.0 is now called what?"
+    back: "Agent Retrieval. The original Vector Search is still a separate product with its own name."
+  - id: rename-vertex-ai
+    objective: former-names
+    front: "What did Vertex AI become for agent work?"
+    back: "Gemini Enterprise Agent Platform (Agent Platform for short): one platform to build, scale, govern and optimise agents."
+  - id: map-shape
+    objective: place-product
+    front: "What is the shape of the Google Cloud agent platform map?"
+    back: "Low-code experiences on top (Gemini Enterprise, Workflow Builder, CX Agent Studio), code and models underneath (ADK, Gemini), then knowledge, run and evaluate layers, with governance (Agent Identity, Gateway, Registry, Model Armor) wrapped around all of them."
+quiz:
+  - id: place-document-search
+    objective: place-product
+    question: "A team wants its agent to answer questions from 40,000 internal PDFs through a managed service over the documents, without building its own indexing. Which product fits?"
+    choices:
+      - "Agent Search"
+      - "Agent Retrieval"
+      - "BigQuery"
+    answer: 0
+    explanation: "Agent Search is the managed search and retrieval product over your documents. Agent Retrieval stores and searches data objects and their embeddings (it can generate the embeddings), but the team would still have to extract the PDFs' content and load it; Agent Search takes in the documents directly. BigQuery is a data warehouse an agent can query, not a document search service."
+  - id: place-managed-runtime
+    objective: place-product
+    question: "An ADK agent is ready to deploy. The team wants managed hosting that scales it and works with Agent Platform's managed sessions, without running containers or clusters themselves. Where should it run?"
+    choices:
+      - "GKE"
+      - "Agent Runtime"
+      - "Workflow Builder"
+    answer: 1
+    explanation: "Agent Runtime is the managed runtime built for deployed agents. GKE also runs agents, but the team would operate the cluster, which is the opposite of what they asked for. Workflow Builder is a low-code authoring tool, not a place to host code."
+  - id: place-low-code
+    objective: place-product
+    question: "Business analysts with no coding experience want to build a multi-step agent workflow inside Gemini Enterprise. Which tool is meant for them?"
+    choices:
+      - "Agent Development Kit (ADK)"
+      - "Agents CLI"
+      - "Workflow Builder"
+    answer: 2
+    explanation: "Workflow Builder is the low-code visual tool in the experience layer. ADK is a code framework, and Agents CLI gives coding agents Google's skills for building and deploying with ADK, so both assume a developer."
+  - id: place-prompt-screening
+    objective: place-product
+    question: "Security requires that every prompt and response is screened for prompt injection and leaks of sensitive data. Which product does this?"
+    choices:
+      - "Model Armor"
+      - "Gen AI evaluation service"
+      - "RAG Engine"
+    answer: 0
+    explanation: "Model Armor screens prompts and responses as traffic flows, so it sits in the governance band. The Gen AI evaluation service scores an agent on a test set before release; it blocks nothing in production. RAG Engine retrieves context, it doesn't inspect it."
+  - id: place-pre-release-eval
+    objective: place-product
+    question: "Before releasing a new agent version, the team wants to measure on a test set whether it still calls the right tools and gives good answers. Which product fits?"
+    choices:
+      - "Agent Registry"
+      - "Gen AI evaluation service"
+      - "Cloud Run"
+    answer: 1
+    explanation: "The Gen AI evaluation service is the evaluate layer: it scores responses and tool-call trajectories against a dataset. Agent Registry catalogues agents and tools, and Cloud Run is a place to run them; neither measures quality."
+  - id: former-agent-engine
+    objective: former-names
+    question: "A 2025 tutorial deploys an agent to Vertex AI Agent Engine. What does the exam guide call that product?"
+    choices:
+      - "Agent Retrieval"
+      - "Agent Registry"
+      - "Agent Runtime"
+    answer: 2
+    explanation: "The exam guide lists Agent Runtime as formerly Agent Engine. Agent Retrieval was Vector Search 2.0, an embedding store, and Agent Registry catalogues agents and tools; neither hosts your deployed agent."
+  - id: former-vertex-ai-search
+    objective: former-names
+    question: "An older doc page tells you to create a Vertex AI Search data store. Which current product is that?"
+    choices:
+      - "Agent Search"
+      - "Agent Retrieval"
+      - "RAG Engine"
+    answer: 0
+    explanation: "Vertex AI Search was renamed Agent Search in April 2026. Agent Retrieval is the new name of Vector Search 2.0, a different product, and RAG Engine was never called Vertex AI Search."
+  - id: former-vector-search-2
+    objective: former-names
+    question: "A design doc from early 2026 stores the product embeddings in Vector Search 2.0. What is that product called now?"
+    choices:
+      - "Agent Search"
+      - "Agent Retrieval"
+      - "RAG Engine"
+    answer: 1
+    explanation: "Vector Search 2.0 is now called Agent Retrieval. Agent Search was Vertex AI Search, a different product, and RAG Engine builds retrieval pipelines rather than being a renamed vector store."
+  - id: place-contact-centre
+    objective: place-product
+    question: "A bank wants an agent that answers callers and chat users about their account balance and card problems. Its customer-experience team will configure it rather than write code. Which product fits?"
+    choices:
+      - "Workflow Builder"
+      - "CX Agent Studio"
+      - "Agent Development Kit (ADK)"
+    answer: 1
+    explanation: "CX Agent Studio builds customer-facing conversational agents, such as a contact centre's. Workflow Builder is Gemini Enterprise's low-code tool for employees' agent workflows, not customer conversations, and ADK means writing the agent in code."
+status: draft
+updated: "2026-11-17"
+---
+
+## Why a map first
+
+Google renamed most of its agent products in 2025 and 2026. Docs, blog posts,
+console screens and old practice questions now use different names for the same
+thing, and a scenario question is only answerable if you know what each product
+is for. This lesson gives you one map. Every later lesson in the path zooms into
+one of its boxes.
+
+Most of the map lives in Gemini Enterprise
+<Term id="Agent Platform">Agent Platform</Term> (Agent Platform for short),
+which Google describes as the evolution of Vertex AI for building, scaling,
+governing and optimising agents. Despite the shared name,
+<Term id="Gemini Enterprise">Gemini Enterprise</Term> is a separate product: the
+app where employees find and use agents.
+
+## The map
+
+Read the map top to bottom, from the people who use agents down to where agents
+run. Governance is not a layer of its own: it wraps all of them.
+
+<Figure
+  src="/media/agentic-platform-map.svg"
+  alt="Six stacked layers with a governance band wrapping them. Experience, low-code for users: Gemini Enterprise, Workflow Builder (was Agent Designer), CX Agent Studio (the evolution of Dialogflow CX). Build, code for developers: ADK, Agents CLI, Antigravity. Models: Gemini models, Model Garden. Knowledge: Agent Search (was Vertex AI Search), RAG Engine, Agent Retrieval (was Vector Search 2.0), MCP servers, and the original Vector Search, over data in BigQuery, Cloud SQL, Firestore, Memorystore for Redis and Cloud Storage. Run: Agent Runtime (was Agent Engine), Cloud Run, GKE. Evaluate: Gen AI evaluation service, Cloud Logging and Trace. Govern, around every layer: Agent Identity, Agent Gateway, Agent Registry with Skill Registry, Model Armor, Sensitive Data Protection."
+  caption="The in-scope products by layer. Italic labels give a former name or predecessor. Names as of November 2026."
+/>
+
+- **Experience (low-code).** **Gemini Enterprise** is where employees discover,
+  create, run and govern agents. Its **Workflow Builder** builds agent workflows
+  visually, without code. **CX Agent Studio** builds customer-facing
+  conversational agents, for example for a contact centre. Google calls it the
+  evolution of Dialogflow CX.
+- **Build (code).** The **Agent Development Kit (ADK)** is Google's open-source,
+  code-first framework for agents. **Agents CLI** gives a coding agent Google's
+  packaged instructions and scripts for building with ADK, evaluating, deploying,
+  observing and publishing. **Antigravity** is Google's agent-first development environment
+  (app, CLI and SDK) for steering coding agents.
+- **Models.** **Gemini models** do the reasoning, and **Model Garden** offers
+  Google, partner and open models.
+- **Knowledge.** **Agent Search** is managed search and retrieval over your
+  documents. **RAG Engine** is a framework for building your own
+  retrieval-augmented pipeline. **Agent Retrieval** and the original **Vector
+  Search** store and search embeddings, the lists of numbers that capture what a
+  passage means, so that similar passages can be found. **MCP (Model Context
+  Protocol) servers** expose Google Cloud services and your own systems as tools.
+  Underneath sit the data stores an agent reads: **BigQuery**, **Cloud SQL**,
+  **Firestore**, **Memorystore for Redis** and **Cloud Storage**.
+- **Run.** <Term id="Agent Runtime">Agent Runtime</Term> is the managed runtime
+  that deploys, operates and scales agents, with Agent Platform's Sessions and
+  Memory Bank services keeping their state. **Cloud Run** runs an agent as a serverless container, and
+  **GKE** gives full control of a Kubernetes cluster.
+- **Evaluate.** The **Gen AI evaluation service** scores answers and tool-call
+  paths (trajectories) against a test set. **Cloud Logging** and **Cloud Trace** show what an
+  agent did in production.
+- **Govern.** **Agent Identity** gives each agent its own identity. **Agent
+  Gateway** is the point where policy on agent traffic is enforced and observed.
+  **Agent Registry** catalogues agents, MCP servers and tools, and **Skill
+  Registry** is being folded into it. **Model Armor** screens prompts and responses for attacks such as
+  prompt injection and for leaks of sensitive data. **Sensitive Data
+  Protection** finds and masks sensitive data.
+
+<Callout type="note">Agents talk to tools over MCP (Model Context Protocol) and to other agents over A2A (Agent2Agent). These are protocols, not products, so they connect the boxes rather than sitting in one. A later lesson compares them.</Callout>
+
+The shape is the thing to remember. Low-code tools sit on top, for people who
+configure agents rather than code them. ADK, the models and the runtime sit
+underneath, for developers. Identity, the gateway and the registry wrap
+everything, because an agent needs governing however it was built.
+
+<Flashcard id="place-agent-gateway" objective="place-product" front="Where does Agent Gateway sit on the map, and why?" back="In the governance band around every layer: it is where policy on agent traffic is enforced and observed, whichever tool built the agent and wherever it runs." />
+
+## Translating the old names
+
+When a source uses an old name, translate it before you reason about it:
+
+| Former name | Current name | When | Source |
+|---|---|---|---|
+| Vertex AI (for agents) | Gemini Enterprise Agent Platform | April 2026 | Google Cloud blog |
+| Vertex AI Agent Engine | Agent Runtime | by April 2026 | Google Cloud blog |
+| Vertex AI Search | Agent Search | April 2026 | release notes |
+| Agent Designer | Workflow Builder | September 2026 (GA) | release notes |
+| Vector Search 2.0 | Agent Retrieval | by May 2026 | product docs |
+
+Renames don't reach every surface at once. When Google renamed Vertex AI Search,
+the console still showed the old name, and the APIs kept their Discovery Engine
+endpoints. So expect old names in code, URLs and screenshots, and trust the
+product's current documentation and the exam guide over an older blog post.
+
+<Quiz
+  id="former-agent-designer"
+  objective="former-names"
+  question="A colleague's notes say to prototype the approval flow in Agent Designer. Which current product do they mean?"
+  choices={["Workflow Builder", "CX Agent Studio", "Antigravity"]}
+  answer={0}
+  explanation="The exam guide lists Workflow Builder as formerly Agent Designer. CX Agent Studio builds customer-facing conversational agents, and Antigravity is a development environment for coding agents."
+/>
+
+## Sources
+
+- Google Cloud, Professional Agentic Architect exam guide, services.google.com/fh/files/misc/professional_agentic_architect_exam_guide_english.pdf (in-scope tools; Agent Runtime formerly Agent Engine; Agent Search formerly Vertex AI Search; Workflow Builder formerly Agent Designer).
+- Google Cloud Blog, "Introducing Gemini Enterprise Agent Platform", 22 April 2026, cloud.google.com/blog/products/ai-machine-learning/introducing-gemini-enterprise-agent-platform (the evolution of Vertex AI; Agent Runtime, Agent Identity, Agent Gateway, Agent Registry).
+- Google Cloud Blog, "I/O 26 news for agent developers on Google Cloud", 19 May 2026, cloud.google.com/blog/topics/developers-practitioners/io26-news-for-agent-developers-on-google-cloud (ADK, Agents CLI, Antigravity; Skill Registry joining Agent Registry).
+- Google Cloud, Gemini Enterprise, cloud.google.com/gemini-enterprise, and Gemini Enterprise release notes, docs.cloud.google.com/gemini/enterprise/docs/release-notes (3 September 2026: Workflow Builder, formerly Agent Designer, generally available).
+- Google Cloud, Agent Retrieval overview, docs.cloud.google.com/vertex-ai/docs/vector-search-2/overview (Agent Retrieval, formerly Vector Search 2.0; Vector Search documented separately).
+- Google Cloud, Agent Search release notes, docs.cloud.google.com/generative-ai-app-builder/docs/release-notes (22 April 2026 rename from Vertex AI Search; console and API names unchanged).
+- Google Cloud, CX Agent Studio documentation, docs.cloud.google.com/gemini-enterprise-cx/cx-agent-studio (the evolution of Dialogflow CX).
+- Google Cloud, Model Armor overview, docs.cloud.google.com/model-armor/overview.

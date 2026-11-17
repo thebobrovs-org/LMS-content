@@ -63,7 +63,7 @@ sign-off between each, core first, then one exam section at a time.
 | ID | Level | Topic (`id`) | One-line objective | Visual / lab | Status |
 |----|-------|--------------|--------------------|--------------|--------|
 | 0.1 | 100 | `what-is-an-agent` | Name the parts of an agent (model, instructions, tools, loop, state) and what each contributes. | figure | published |
-| 0.2 | 100 | `google-agent-platform-map` | Place each in-scope product on the map by what it does. | figure | plan-approved |
+| 0.2 | 100 | `google-agent-platform-map` | Place each in-scope product on the map by what it does. | figure | in review |
 | 0.3 | 200 | `choosing-a-model` | Separate the three axes (size, openness, serving) and say what each trades. | figure | plan-approved |
 | 0.4 | 300 | `low-code-or-code` | Choose low-code, code or a hybrid for a scenario and defend it. | figure | plan-approved |
 
@@ -88,8 +88,8 @@ sign-off between each, core first, then one exam section at a time.
 
 | ID | Level | Topic (`id`) | One-line objective | Visual / lab | Status |
 |----|-------|--------------|--------------------|--------------|--------|
-| 3.1 | 100 | `the-agent-loop` | Trace a multi-step request through each model call and tool call. | **sim `agent-loop-stepper`** | plan-approved |
-| 3.2 | 200 | `adk-agents-and-tools` | Define an LlmAgent with a model, instruction and function tools. | figure + codelab | plan-approved |
+| 3.1 | 100 | `the-agent-loop` | Trace a multi-step request through each model call and tool call. | **sim `agent-loop-stepper`** | on staging |
+| 3.2 | 200 | `adk-agents-and-tools` | Define an LlmAgent with a model, instruction and function tools. | figure + codelab | on staging |
 | 3.3 | 200 | `sessions-state-memory` | Distinguish a session's history and state from long-term memory. | figure | plan-approved |
 | 3.4 | 300 | `rag-pipelines` | Name the RAG stages and the decision at each. | **sim `rag-retrieval-tuner`** | plan-approved |
 | 3.5 | 300 | `mcp-tools-and-integrations` | Choose a managed MCP server, MCP Toolbox or a custom MCP server for a system. | figure | plan-approved |
@@ -102,8 +102,8 @@ sign-off between each, core first, then one exam section at a time.
 | ID | Level | Topic (`id`) | One-line objective | Visual / lab | Status |
 |----|-------|--------------|--------------------|--------------|--------|
 | 4.1 | 100 | `agent-quality-basics` | Name the dimensions of agent quality and an example failure for each. | figure | on staging |
-| 4.2 | 200 | `agent-eval-datasets` | Build a golden dataset with expected trajectories and responses. | figure + codelab | plan-approved |
-| 4.3 | 200 | `deploying-agents` | Choose Agent Runtime, Cloud Run or GKE from requirements. | figure | plan-approved |
+| 4.2 | 200 | `agent-eval-datasets` | Build a golden dataset with expected trajectories and responses. | figure + codelab | on staging |
+| 4.3 | 200 | `deploying-agents` | Choose Agent Runtime, Cloud Run or GKE from requirements. | figure | on staging |
 | 4.4 | 300 | `agent-eval-criteria` | Predict whether a trajectory passes exact, in-order or any-order matching. | **sim `trajectory-match-explorer`** | plan-approved |
 | 4.5 | 400 | `agent-observability-troubleshooting` | Read an agent trace to find slow spans and repeated calls. | figure | plan-approved |
 

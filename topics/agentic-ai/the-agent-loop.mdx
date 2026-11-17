@@ -1,0 +1,230 @@
+---
+title: The agent loop
+summary: Follow one request through every model call and tool call. The model proposes each call, the runtime runs it, and the loop ends on an answer or a stop condition you set.
+tags: [agentic-ai, agents, tools, adk]
+difficulty: beginner
+estimatedMinutes: 20
+level: 100
+prerequisites: [agentic-ai/what-is-an-agent]
+objectives:
+  - id: trace-loop
+    statement: "Trace a multi-step request through each model call and tool call."
+  - id: who-executes
+    statement: "Explain that the model proposes a tool call and the runtime executes it."
+  - id: describe-tools
+    statement: "Write tool names and descriptions the model can choose by."
+  - id: stop-conditions
+    statement: "Name the conditions that end a loop and the symptom when none fires."
+flashcards:
+  - id: who-executes-card
+    objective: who-executes
+    front: In function calling, who executes the tool?
+    back: Your application or the agent runtime (in ADK, the framework). The model only returns a function call, a declared name plus arguments, and reads the result on its next call.
+  - id: declaration-contents
+    objective: describe-tools
+    front: What does a function declaration tell the model?
+    back: The tool's name, a description of what it does and when to use it, and a schema of its parameters (types, which are required). In ADK it is generated from the function's name, docstring and type hints.
+  - id: stop-conditions-card
+    objective: stop-conditions
+    front: What ends an agent loop?
+    back: A final answer (a model response with no function call), a cap on model calls (ADK's max_llm_calls), or an escalation the design defines, such as handing off to a person.
+  - id: runaway-symptom
+    objective: stop-conditions
+    front: What does a loop look like when no stop condition fires in time?
+    back: The same tool called again with near-identical arguments, the same result coming back, tokens and latency rising every turn, and no answer.
+quiz:
+  - id: model-calls-api
+    objective: who-executes
+    question: "A colleague says: 'Once we declare get_invoice, Gemini will call our billing API whenever it needs an invoice.' What actually happens when the model decides it needs one?"
+    choices:
+      - "The model sends an HTTPS request to the billing API with the arguments it chose"
+      - "The Gemini API itself calls the billing API once the function is declared"
+      - "The model returns a function call; the runtime calls billing and returns the result"
+    answer: 2
+    explanation: "The model only proposes the call: a declared name and arguments. Your code or the agent runtime executes it and sends the result back on the next model call. The model opens no connections, and the Gemini API does not run the functions you declare; that is why the runtime's identity, not the model, needs permission to call billing."
+  - id: find-stop-turn
+    objective: stop-conditions
+    question: "A support agent's trace: (1) model calls search_kb('reset 2FA'), runtime returns article #12; (2) model calls search_kb('reset two-factor'), runtime returns article #12; (3) model calls search_kb('2FA reset steps'), runtime returns article #12; (4) and (5) the same again. The run ends when a cap of 40 model calls fires, with no answer. Where should the loop have stopped?"
+    choices:
+      - "After call 1, because a well-built agent calls a search tool only once per run"
+      - "Around call 2 or 3, once the same tool kept returning the same result"
+      - "At call 40, because the cap fired there and stopped the run as designed"
+    answer: 1
+    explanation: "Calling a tool more than once can be legitimate, so call 1 is too early. By the second identical result the loop had stopped making progress, and every further call re-sent a growing history for nothing. A check that escalates after repeated identical results would end it there; a cap in single digits for a lookup like this would at least have limited the damage long before 40. Ending at call 40 is the symptom, not a design: 40 calls and still no answer."
+  - id: vague-tool-names
+    objective: describe-tools
+    question: "An agent has three tools named fetch, lookup and query, each with a one-line description such as 'Gets data.' It often calls the wrong one. What is the most direct fix?"
+    choices:
+      - "Raise the cap on model calls, so the agent can try each tool and keep the one whose result fits"
+      - "Switch to a larger model, which infers each tool's purpose from its arguments and results"
+      - "Rename each tool by action and object, and say what it returns and when to use it"
+    answer: 2
+    explanation: "The declaration is all the model knows about a tool, so the name and description work as a prompt. Clear verb-noun names and descriptions that say when to use each tool fix the cause. A higher cap only buys more wrong guesses, and a larger model still cannot know what an undocumented tool does."
+  - id: cap-too-low
+    objective: trace-loop
+    question: "After you set max model calls to 2, an order-status agent stops before it can answer, every time. Its trace shows two different tools, each called once, the second using the first one's result. What does that tell you?"
+    choices:
+      - "The model is looping, because it never returns a final answer"
+      - "The cap is too low: the two dependent lookups and the answer take three model calls"
+      - "The second tool is badly described, so the model spends its last call choosing it"
+    answer: 1
+    explanation: "Each dependent tool call needs its own model call to propose it, and the answer needs one more after the last result, so this path takes three model calls and a cap of 2 cuts it short. It is not looping: two different tools, each called once, with progress between them, is a healthy trace. Size the cap from the task's longest legitimate path, with headroom. (Independent lookups can be proposed together in one model call, as parallel calls; these could not, because the second needed the first's result.)"
+status: draft
+updated: "2026-11-17"
+---
+
+## Why the loop matters
+
+You are building a support agent on Google Cloud, and a user asks: "Where is order
+A1234, and can I still change the delivery address?" No single tool answers that.
+The agent has to look up the order, use what it finds to look up the shipment, and
+only then reply. Each of those moves is a trip around the **agent loop**.
+
+Many of the hardest production problems with agents are properties of that loop: an
+agent that repeats the same search, a slow tool that stalls every turn, a wrong
+tool chosen because its description was vague, or a bill that grows with each
+turn. You cannot debug what you cannot trace, so this lesson follows one request
+through every step. Along the way you make two design choices: how to describe
+each tool so the model picks the right one, and where the loop must stop.
+
+## One request, step by step
+
+An agent built for <Term id="function calling">function calling</Term> starts
+with a set of <Term id="function declaration">function declarations</Term>: for
+each tool, a name, a description and a schema of its parameters. Then the loop
+runs:
+
+1. **The model is called.** It reads the instruction, the declarations and the
+   conversation so far.
+2. **It proposes a call or answers.** If it needs data, it returns a function
+   call, the name of a declared tool plus arguments, such as
+   `get_order_status(order_id="A1234")`, and its turn ends there. If it has
+   enough, it returns a final answer instead.
+3. **The runtime executes the call.** Your code, or an agent framework such as
+   Google's Agent Development Kit (ADK), runs the real function and gets a result.
+4. **The result is appended.** The runtime adds the call and its result to the
+   conversation and calls the model again, back to step 1.
+
+The model never runs a tool. In the words of Google's function-calling guide:
+"The model doesn't execute the function itself. Extract the name and args and
+execute in your application." That split matters later: whoever executes the
+call holds the credentials, so permissions belong to the runtime's identity, not
+to "the model".
+
+<Callout type="note">The rhythm you just read (decide, act, observe the result, decide again) is often called <Term id="react">ReAct</Term>, after the 2022 paper that interleaved a model's reasoning with actions. A function-calling loop follows the same act-and-observe rhythm, with each act a declared call with typed arguments.</Callout>
+
+<Flashcard id="loop-steps-inline" objective="trace-loop" front="Name the four steps of one trip around the agent loop." back="The model is called with the instruction, declarations and history; it proposes a function call (or answers); the runtime executes the call; the result is appended and the model is called again." />
+
+## Step through it
+
+The simulation runs that order question, and a simpler return-policy question,
+one step at a time. Each **model call** row is a proposal; each **runtime** row
+is an execution. Start with clear tool descriptions and press Step until the
+agent answers, counting the model calls. Then switch to vague descriptions and
+run it again. Finally, set the cap low enough that it fires.
+
+<Simulation id="agent-loop-stepper" height={720} />
+
+What you should see:
+
+- **Two dependent tool calls take three model calls.** The shipment lookup needs
+  the tracking id from the order lookup, so one model call proposes each tool
+  call, and one more reads the last result and answers. (Independent calls can
+  be proposed together in one model call, as parallel calls.) Count model calls, not
+  tool calls, when you size a cap.
+- **Tokens grow every turn.** Each model call re-reads the instruction, the
+  declarations and the whole history. Each model row shows how much context it
+  read: the third call reads far more than the first, though it does the same
+  kind of work.
+- **Vague descriptions cost turns, or the whole run.** With tools named
+  `fetch`, `query` and `lookup`, the model guesses. For the return policy it
+  finds the right tool on the third try; for the order it keeps calling
+  `lookup`, which turns out to be the help search, gets the same article back,
+  and never converges. Only the cap ends it. When a run ends, the panel shows
+  which real tool sat behind each vague name.
+
+## Tool descriptions are prompts
+
+The declaration is the only thing the model knows about a tool. ADK builds it
+from a Python function's name, docstring, parameters and type hints, and its
+documentation calls the docstring critical: say what the tool does, when to use
+it, what each parameter means and what it returns. Name tools by action and
+object (`get_order_status`, not `fetch`), and say when *not* to use one ("not for
+a specific order"). A vague declaration is a prompt that invites wrong guesses,
+and no model, however large, can know what an undocumented tool does.
+
+```python
+def get_order_status(order_id: str) -> dict:
+    """Returns the status and tracking id of one customer order.
+
+    Use when the user gives an order id. Not for general policy questions.
+
+    Args:
+        order_id: The order id, for example "A1234".
+
+    Returns:
+        {"status": "success", "order_status": ..., "tracking_id": ...}
+        or {"status": "error", "error_message": ...}.
+    """
+    ...
+```
+
+<Quiz
+  id="description-is-prompt"
+  objective="describe-tools"
+  question="Where does an ADK agent's model learn what a Python function tool does and when to call it?"
+  choices={["From the function's name, docstring and type hints, which ADK turns into the declaration", "From the function's body, which the model reads before choosing a tool", "From the tool's results in earlier sessions, which ADK keeps as examples"]}
+  answer={0}
+  explanation="ADK inspects the function's signature and docstring to build the declaration the model sees. The model never sees the function's code, and ADK does not turn past results into examples; each call starts from the declarations and history in its context."
+/>
+
+## Every loop needs a stop condition
+
+A loop ends in one of three ways:
+
+- **A final answer.** The model returns text with no function call. This is the
+  normal ending.
+- **A cap.** The runtime refuses to call the model again past a limit, often
+  called the loop's <Term id="max iterations">max iterations</Term>. Here, as in
+  ADK, the cap counts model calls; tool executions are not counted. In ADK, pass
+  `RunConfig(max_llm_calls=...)` to `runner.run_async()`; the documented default
+  is 500 model calls per run, a safety net rather than a design. ADK does not stop
+  quietly at the cap: it raises an error (`LlmCallsLimitExceededError` in
+  Python), so catch it and give the user a fallback or an escalation.
+- **An escalation.** Your design hands the task to a person or another agent
+  instead of continuing, for example after the same tool fails twice.
+
+```python
+from google.adk.agents.run_config import RunConfig
+
+# runner: the ADK Runner for your agent (topic 3.2); the ids name the user and session (3.3).
+# The longest legitimate path is about 4 model calls; allow headroom, not 500.
+config = RunConfig(max_llm_calls=8)
+async for event in runner.run_async(
+    user_id=user_id, session_id=session_id, new_message=message, run_config=config
+):
+    ...
+```
+
+When no stop condition fires in time, the symptom is distinctive: the same tool
+called again and again with near-identical arguments, the same result coming
+back, latency and token use climbing on every turn, and no answer. In a trace,
+the record of every model and tool call in a run (topic 4.5 reads them), it shows
+as the same call repeated with the same result.
+
+Size a cap from the task's longest legitimate path, plus headroom. Set it too
+high and a stuck agent burns hundreds of calls before it stops; set it too low
+and you cut healthy runs short, as a cap of 2 does to the two-lookup order
+question in the simulation. A cap limits the damage; it does not fix the cause.
+When an agent hits its cap, look at why it was not converging: usually a vague
+tool, a tool that returns errors the model cannot act on, or an instruction that
+never says when the task is done.
+
+## Sources
+
+- Google, Gemini API documentation, "Function calling", ai.google.dev/gemini-api/docs/function-calling (declarations; the model does not execute the function, your application does; multiple turns; parallel and compositional calls).
+- Google, Agent Development Kit documentation, "Custom tools", github.com/google/adk-docs/blob/main/docs/tools-custom/index.md (how agents use tools; defining effective tool functions: names, docstrings, return values).
+- Google, Agent Development Kit documentation, "Function tools", github.com/google/adk-docs/blob/main/docs/tools-custom/function-tools.md (the schema is generated from the function's name, docstring, parameters and type hints).
+- Google, Agent Development Kit documentation, "Runtime configuration", github.com/google/adk-docs/blob/main/docs/runtime/runconfig.md (max_llm_calls, default 500 per run).
+- Google, Agent Development Kit documentation, "Runtime event loop", github.com/google/adk-docs/blob/main/docs/runtime/event-loop.md (the Runner orchestrates agents, tools and callbacks).
+- Yao et al. (2022), "ReAct: Synergizing Reasoning and Acting in Language Models", arXiv:2210.03629.

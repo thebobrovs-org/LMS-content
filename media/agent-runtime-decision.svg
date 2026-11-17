@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 400" width="760" height="400" role="img" aria-label="Decision table comparing three places to run an agent. Agent Runtime: managed for agents, with Sessions and Memory Bank built in; least to operate, least control; fits a fast managed launch. Cloud Run: serverless containers that scale to zero; you configure a session service or use a managed one; fits an agent beside other Cloud Run services. GKE: managed Kubernetes, with control of nodes, GPUs and networking; most to operate; fits compliance needs, your own GPUs or an existing cluster.">
+  <rect width="760" height="400" fill="#ffffff"/>
+  <g font-family="Inter, system-ui, sans-serif">
+    <text x="380" y="30" text-anchor="middle" font-size="16" font-weight="600" fill="#0f172a">Where should the agent run?</text>
+    <defs>
+      <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="170" x2="730" y1="56" y2="56">
+        <stop offset="0" stop-color="#2563eb"/>
+        <stop offset="1" stop-color="#10b981"/>
+      </linearGradient>
+    </defs>
+    <line x1="170" y1="56" x2="730" y2="56" stroke="url(#g)" stroke-width="4"/>
+    <g font-size="12" fill="#475569">
+      <text x="170" y="76">Less to operate, less control</text>
+      <text x="730" y="76" text-anchor="end">More control, more to operate</text>
+    </g>
+
+    <g font-size="14" font-weight="600" fill="#0f172a" text-anchor="middle">
+      <text x="263" y="108">Agent Runtime</text>
+      <text x="450" y="108">Cloud Run</text>
+      <text x="637" y="108">GKE</text>
+    </g>
+    <line x1="30" y1="120" x2="730" y2="120" stroke="#cbd5e1"/>
+
+    <g font-size="12" fill="#334155">
+      <text x="40" y="146" font-weight="600" fill="#0f172a">What it is</text>
+      <text x="180" y="146">Managed runtime built</text><text x="180" y="162">for agents</text>
+      <text x="367" y="146">Serverless containers</text><text x="367" y="162">that scale to zero</text>
+      <text x="554" y="146">Managed Kubernetes</text><text x="554" y="162">clusters</text>
+      <line x1="30" y1="176" x2="730" y2="176" stroke="#e2e8f0"/>
+
+      <text x="40" y="202" font-weight="600" fill="#0f172a">Sessions and</text><text x="40" y="218" font-weight="600" fill="#0f172a">memory</text>
+      <text x="180" y="202" fill="#047857">Built in (Sessions,</text><text x="180" y="218" fill="#047857">Memory Bank)</text>
+      <text x="367" y="202">You configure a session</text><text x="367" y="218">service, or use managed</text>
+      <text x="554" y="202">You configure a session</text><text x="554" y="218">service, or use managed</text>
+      <line x1="30" y1="232" x2="730" y2="232" stroke="#e2e8f0"/>
+
+      <text x="40" y="258" font-weight="600" fill="#0f172a">You control</text>
+      <text x="180" y="258">Code, dependencies,</text><text x="180" y="274">scaling settings</text>
+      <text x="367" y="258">The container, server,</text><text x="367" y="274">scaling, billing mode</text>
+      <text x="554" y="258">Nodes, GPUs, networking,</text><text x="554" y="274">the whole platform</text>
+      <line x1="30" y1="288" x2="730" y2="288" stroke="#e2e8f0"/>
+
+      <text x="40" y="314" font-weight="600" fill="#0f172a">Fits when</text>
+      <text x="180" y="314">You want it managed,</text><text x="180" y="330">and live fast</text>
+      <text x="367" y="314">It sits beside other</text><text x="367" y="330">Cloud Run services</text>
+      <text x="554" y="314">Compliance, own GPUs or</text><text x="554" y="330">an existing cluster</text>
+    </g>
+    <rect x="30" y="350" width="700" height="34" rx="8" fill="#eff6ff" stroke="#2563eb"/>
+    <text x="380" y="372" text-anchor="middle" font-size="13" fill="#1e3a8a">They are substitutes: pick the one with the least you must operate that still meets the requirements.</text>
+  </g>
+</svg>

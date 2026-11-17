@@ -11,6 +11,15 @@
   "determinism spectrum": {
     "definition": "The range of designs ordered by how much the system decides for itself: a chatbot acts only when the user asks, a workflow follows the designer's path, and an agent directs its own steps. More autonomy buys flexibility and costs predictability."
   },
+  "gemini enterprise": {
+    "definition": "Google's platform where employees discover, create, run and govern AI agents, including the low-code Workflow Builder."
+  },
+  "agent platform": {
+    "definition": "Gemini Enterprise Agent Platform: Google Cloud's platform to build, scale, govern and optimise agents, announced in April 2026 as the evolution of Vertex AI."
+  },
+  "agent runtime": {
+    "definition": "Agent Platform's managed runtime that deploys, operates and scales agents, used with its Sessions and Memory Bank services (formerly Agent Engine)."
+  },
   "trajectory": {
     "definition": "The sequence of tool calls (and other intermediate steps) an agent took before it answered. Evaluating it checks the path, not just the final response."
   },
@@ -19,5 +28,47 @@
   },
   "online monitoring": {
     "definition": "Measuring a deployed agent's quality on live traffic, through traces, logs and metrics, to catch what the offline dataset missed and what changes after launch."
+  },
+  "golden dataset": {
+    "definition": "A curated, fixed set of inputs with the outputs you would accept (for an agent, the expected tool calls as well as the expected reply), run on every version so results can be compared."
+  },
+  "evalset": {
+    "definition": "An ADK file of eval cases, each a session with its own id and initial state, often multi-turn, used for integration-style evaluation of an agent."
+  },
+  "user simulation": {
+    "definition": "An evaluation method in which a model plays the user, generating each user turn from a starting prompt, a conversation plan and optionally a persona, so branching conversations can be tested."
+  },
+  "function calling": {
+    "definition": "A model capability: given function declarations, the model can return a structured request to call one of them with arguments, instead of text. The application or runtime executes the call and sends the result back."
+  },
+  "function declaration": {
+    "definition": "The name, description and parameter schema that tell a model a tool exists and when to use it. In ADK it is generated from a function's name, docstring and type hints."
+  },
+  "react": {
+    "definition": "Reason and act: a pattern in which a model alternates reasoning steps with actions such as tool calls, each result informing the next step (Yao et al., 2022)."
+  },
+  "max iterations": {
+    "definition": "A cap on how many times an agent loop may run, so a loop that is not converging stops. ADK counts it in model calls per run (max_llm_calls); a LoopAgent's max_iterations is a separate cap on cycles of a workflow loop."
+  },
+  "adk": {
+    "definition": "Agent Development Kit: Google's open-source framework for building agents in code (Python, TypeScript, Go, Java and Kotlin)."
+  },
+  "llmagent": {
+    "definition": "ADK's model-driven agent (alias Agent), configured with a name, model, instruction, tools, optional sub-agents and callbacks."
+  },
+  "agenttool": {
+    "definition": "An ADK wrapper that lets one agent call another like a function tool. The wrapped agent's answer returns to the caller, which keeps control."
+  },
+  "callback": {
+    "definition": "A function ADK runs at a fixed point in the loop: before or after an agent, a model call or a tool call. It can let the step proceed, skip it with its own result, or replace the output."
+  },
+  "min instances": {
+    "definition": "The number of instances a service keeps running even with no traffic, so requests avoid cold starts; you pay for them while they wait."
+  },
+  "container concurrency": {
+    "definition": "The number of requests one instance of a service handles at the same time."
+  },
+  "session": {
+    "definition": "The record of one conversation between a user and an agent: its messages, the agent's events and its working state. A session service is where an agent stores sessions."
   }
 }

@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 554" width="800" height="554" role="img" aria-label="The Google Cloud agent platform map: six stacked layers (experience, build, models, knowledge, run, evaluate) with a govern band wrapping all of them; renamed products show their former names">
+<rect width="800" height="554" fill="#ffffff"/>
+<text x="400.0" y="30" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="16" font-weight="600" fill="#0f172a">The Google Cloud agent platform, by layer</text>
+<rect x="20" y="50" width="620" height="64" rx="10" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="30" y="78" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#0f172a">Experience</text>
+<text x="30" y="96" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#64748b">low-code, for users</text>
+<rect x="146.0" y="60" width="155.3" height="44" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
+<text x="223.7" y="87" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Gemini Enterprise</text>
+<rect x="309.3" y="60" width="155.3" height="44" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
+<text x="387.0" y="78" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Workflow Builder</text>
+<text x="387.0" y="95" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10" font-style="italic" fill="#b45309">was Agent Designer</text>
+<rect x="472.7" y="60" width="155.3" height="44" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
+<text x="550.3" y="78" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">CX Agent Studio</text>
+<text x="550.3" y="95" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10" font-style="italic" fill="#b45309">evolution of Dialogflow CX</text>
+<rect x="20" y="122" width="620" height="64" rx="10" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="30" y="150" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#0f172a">Build</text>
+<text x="30" y="168" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#64748b">code, for developers</text>
+<rect x="146.0" y="132" width="155.3" height="44" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
+<text x="223.7" y="159" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">ADK</text>
+<rect x="309.3" y="132" width="155.3" height="44" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
+<text x="387.0" y="159" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Agents CLI</text>
+<rect x="472.7" y="132" width="155.3" height="44" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
+<text x="550.3" y="159" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Antigravity</text>
+<rect x="20" y="194" width="620" height="64" rx="10" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="30" y="222" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#0f172a">Models</text>
+<text x="30" y="240" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#64748b">what reasons</text>
+<rect x="146.0" y="204" width="237.0" height="44" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
+<text x="264.5" y="231" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Gemini models</text>
+<rect x="391.0" y="204" width="237.0" height="44" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
+<text x="509.5" y="231" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Model Garden</text>
+<rect x="20" y="266" width="620" height="104" rx="10" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="30" y="294" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#0f172a">Knowledge</text>
+<text x="30" y="312" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#64748b">what it grounds on</text>
+<rect x="146.0" y="276" width="116.0" height="44" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
+<text x="204.0" y="294" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Agent Search</text>
+<text x="204.0" y="311" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10" font-style="italic" fill="#b45309">was Vertex AI Search</text>
+<rect x="268.0" y="276" width="116.0" height="44" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
+<text x="326.0" y="303" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">RAG Engine</text>
+<rect x="390.0" y="276" width="116.0" height="44" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
+<text x="448.0" y="294" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Agent Retrieval</text>
+<text x="448.0" y="311" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10" font-style="italic" fill="#b45309">was Vector Search 2.0</text>
+<rect x="512.0" y="276" width="116.0" height="44" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
+<text x="570.0" y="303" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">MCP servers</text>
+<text x="146" y="340" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#475569">Also: Vector Search, the original embedding store</text>
+<text x="146" y="358" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#475569">Data it reads: BigQuery · Cloud SQL · Firestore · Memorystore for Redis · Cloud Storage</text>
+<rect x="20" y="378" width="620" height="64" rx="10" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="30" y="406" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#0f172a">Run</text>
+<text x="30" y="424" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#64748b">where it executes</text>
+<rect x="146.0" y="388" width="155.3" height="44" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
+<text x="223.7" y="406" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Agent Runtime</text>
+<text x="223.7" y="423" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10" font-style="italic" fill="#b45309">was Agent Engine</text>
+<rect x="309.3" y="388" width="155.3" height="44" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
+<text x="387.0" y="415" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Cloud Run</text>
+<rect x="472.7" y="388" width="155.3" height="44" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
+<text x="550.3" y="415" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">GKE</text>
+<rect x="20" y="450" width="620" height="64" rx="10" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="30" y="478" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#0f172a">Evaluate</text>
+<text x="30" y="496" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#64748b">is it any good?</text>
+<rect x="146.0" y="460" width="237.0" height="44" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
+<text x="264.5" y="487" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Gen AI evaluation service</text>
+<rect x="391.0" y="460" width="237.0" height="44" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
+<text x="509.5" y="487" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Cloud Logging + Trace</text>
+<rect x="652" y="50" width="132" height="464" rx="10" fill="#ecfdf5" stroke="#10b981" stroke-width="1.5"/>
+<text x="718.0" y="76" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#065f46">Govern</text>
+<text x="718.0" y="94" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#047857">wraps every layer</text>
+<rect x="662" y="112.0" width="112" height="68.0" rx="8" fill="#ffffff" stroke="#10b981" stroke-width="1.3"/>
+<text x="718.0" y="150.0" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Agent Identity</text>
+<rect x="662" y="190.0" width="112" height="68.0" rx="8" fill="#ffffff" stroke="#10b981" stroke-width="1.3"/>
+<text x="718.0" y="228.0" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Agent Gateway</text>
+<rect x="662" y="268.0" width="112" height="68.0" rx="8" fill="#ffffff" stroke="#10b981" stroke-width="1.3"/>
+<text x="718.0" y="299.0" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Agent Registry</text>
+<text x="718.0" y="315.0" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10.5" fill="#475569">+ Skill Registry</text>
+<rect x="662" y="346.0" width="112" height="68.0" rx="8" fill="#ffffff" stroke="#10b981" stroke-width="1.3"/>
+<text x="718.0" y="384.0" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Model Armor</text>
+<rect x="662" y="424.0" width="112" height="68.0" rx="8" fill="#ffffff" stroke="#10b981" stroke-width="1.3"/>
+<text x="718.0" y="455.0" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Sensitive Data</text>
+<text x="718.0" y="471.0" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Protection</text>
+<text x="20" y="538" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#475569"><tspan font-style="italic" fill="#b45309">Italic</tspan> = former name or predecessor. Names as of November 2026; Agent Platform itself is the evolution of Vertex AI.</text>
+</svg>
