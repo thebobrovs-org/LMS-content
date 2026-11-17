@@ -70,5 +70,17 @@
   },
   "session": {
     "definition": "The record of one conversation between a user and an agent: its messages, the agent's events and its working state. A session service is where an agent stores sessions."
+  },
+  "mcp": {
+    "definition": "Model Context Protocol: an open standard for offering tools to agents. An MCP server publishes tools with names, descriptions and parameter schemas; an MCP client, such as an agent, lists and calls them."
+  },
+  "google cloud mcp servers": {
+    "definition": "Remote MCP servers that run on Google's infrastructure and offer an HTTP endpoint for a Google Cloud service, such as BigQuery or GKE, with access controlled through IAM."
+  },
+  "mcp toolbox for databases": {
+    "definition": "An open-source MCP server that exposes database queries as agent tools, each defined in configuration with a fixed statement and typed parameters."
+  },
+  "agent registry": {
+    "definition": "Google Cloud's catalogue of agents, MCP servers and their tools, and endpoints, used for discovery and for access policies that govern which agents may use them."
   }
 }

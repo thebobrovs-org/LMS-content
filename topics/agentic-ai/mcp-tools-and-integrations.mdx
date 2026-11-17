@@ -1,0 +1,313 @@
+---
+title: Tools and integrations through MCP
+summary: Connect an agent to enterprise systems through the Model Context Protocol. Choose a Google Cloud MCP server, MCP Toolbox for Databases or a custom MCP server, expose only named, parameterised queries, and register what agents may use in Agent Registry.
+tags: [agentic-ai, mcp, tools, integrations]
+difficulty: advanced
+estimatedMinutes: 25
+level: 300
+prerequisites: [agentic-ai/adk-agents-and-tools]
+objectives:
+  - id: choose-integration
+    statement: "Choose a Google Cloud MCP server, MCP Toolbox or a custom MCP server for a system."
+  - id: database-tools
+    statement: "Expose safe, parameterised database queries with MCP Toolbox."
+  - id: register-tools
+    statement: "Register MCP servers in Agent Registry for discovery and governance."
+flashcards:
+  - id: three-integration-routes
+    objective: choose-integration
+    front: Name the three routes for giving an agent tools through MCP, and when each fits.
+    back: "A Google Cloud MCP server when one exists for the service (Google runs it). MCP Toolbox for Databases for named queries against your own database tables (you run the open-source server and write the queries). A custom MCP server for an internal API nothing else covers (you build, run and secure it)."
+  - id: named-queries-card
+    objective: database-tools
+    front: Why give an agent named, parameterised queries instead of a free-form SQL tool?
+    back: "A named query fixes what the agent can read or change; the model only fills in typed parameter values, which are passed as parameters, not pasted into SQL. A free-form SQL tool lets the model (or a prompt injection) run any statement the database account allows."
+  - id: registry-card
+    objective: register-tools
+    front: What does Agent Registry give you for MCP servers?
+    back: "One catalogue of the agents, MCP servers, tools and endpoints in your project or organisation, so agents and teams can discover them, and access policies that bind agent identities to the registered servers they may use."
+quiz:
+  - id: bigquery-route
+    objective: choose-integration
+    question: "A support agent needs to run analytics queries over the company's BigQuery datasets. Google offers a remote MCP server for BigQuery. What is the best route?"
+    choices:
+      - "Connect the agent to the BigQuery remote MCP server"
+      - "Write a custom MCP server that wraps the BigQuery API"
+      - "Export the datasets to Cloud SQL and expose them with MCP Toolbox"
+      - "Run MCP Toolbox for Databases with BigQuery as a source"
+    answer: 0
+    explanation: "When a Google Cloud MCP server exists for the service, use it: Google runs and updates it, and access goes through IAM. A custom wrapper rebuilds what exists and leaves you to run and patch it. Copying data to another database adds a pipeline and a second copy to secure. Toolbox fits named queries against your own tables; for BigQuery a Google-run server already exists and Google maintains it."
+  - id: internal-api-route
+    objective: choose-integration
+    question: "The agent must book pickups through the company's internal carrier API, which no Google service or database covers. How should it reach the API?"
+    choices:
+      - "Through the BigQuery MCP server, after copying the API's data into a table"
+      - "Through MCP Toolbox, with the API added as a data source"
+      - "Through a Google Cloud MCP server for the nearest product"
+      - "Through a custom MCP server built on an MCP SDK"
+    answer: 3
+    explanation: "An internal API with no Google server and no database behind it is the case for a custom MCP server: you build it with an MCP SDK, host it (for example on Cloud Run) and secure it. Copying data into BigQuery cannot book a pickup, which is an action, not a query. MCP Toolbox connects to databases. A Google server for another product cannot call your API."
+  - id: stdio-on-cloud-run
+    objective: choose-integration
+    question: "A team deploys its custom MCP server to Cloud Run, but agents cannot connect to it. The server was written for the stdio transport. What is the cause?"
+    choices:
+      - "Cloud Run needs the server registered in Agent Registry before it accepts requests"
+      - "Cloud Run allows only Google-managed MCP servers, not custom ones"
+      - "Cloud Run hosts MCP servers over streamable HTTP, not stdio"
+      - "Cloud Run rejects requests that carry an IAM identity token"
+    answer: 2
+    explanation: "Stdio works when the client starts the server as a local process. A remote server must speak an HTTP transport, and Cloud Run supports MCP servers that use streamable HTTP but not stdio. Cloud Run hosts custom MCP servers, registration is about discovery and governance rather than accepting requests, and Cloud Run requires an IAM identity on requests by default rather than rejecting one."
+  - id: tool-filter
+    objective: choose-integration
+    question: "An MCP server offers 30 tools, and the agent needs only two read-only ones. How should the agent connect?"
+    choices:
+      - "Load all 30 tools and tell the model which two to use"
+      - "Load the server with a tool filter that lists just the two tools"
+      - "Copy the two tools' code into the agent as function tools"
+      - "Ask the server's owners to delete the other 28 tools"
+    answer: 1
+    explanation: "ADK's McpToolset takes a tool_filter, so the model is only ever offered the two tools it needs: fewer declarations to read, and nothing else to call by mistake or under a prompt injection. An instruction does not remove the other tools. Copying code forks the server and loses its updates. Other agents may need the remaining tools."
+  - id: free-form-sql
+    objective: database-tools
+    question: "A team's agent has one database tool, execute_sql, which takes any SQL string. What should replace it?"
+    choices:
+      - "The same tool, with an instruction never to run UPDATE or DELETE"
+      - "Named tools, each with a fixed statement and typed parameters"
+      - "The same tool, with a regular expression that blocks dangerous words"
+      - "A larger model that writes safer SQL more reliably"
+    answer: 1
+    explanation: "A named, parameterised tool fixes the statement, so the model can only supply values, and those values are bound as parameters rather than spliced into SQL. An instruction or a word filter can be talked around, for example by a prompt injection in retrieved text. A better model still runs whatever SQL it is led to write. MCP Toolbox itself warns that its execute-SQL tools are for developer workflows with a human in the loop, not production agents."
+  - id: customer-scope
+    objective: database-tools
+    question: "An order-lookup tool must return only the signed-in customer's orders, even if the user types another customer's id into the chat. How should the customer id reach the query?"
+    choices:
+      - "As a parameter the model fills in from the conversation"
+      - "From an instruction that tells the model to use the user's own id"
+      - "As an authenticated parameter, filled from the user's verified token"
+      - "From a value the model saved earlier in the conversation"
+    answer: 2
+    explanation: "MCP Toolbox can fill a parameter from a claim in the caller's verified OIDC token, so the model never supplies it and cannot be talked into another customer's id. A model-filled parameter, an instruction or a value the model saved all let the conversation decide whose data is read."
+  - id: auto-registered
+    objective: register-tools
+    question: "A platform team wants every MCP server agents may use listed in Agent Registry. Which servers does it have to register itself?"
+    choices:
+      - "Custom servers and Google Cloud's remote MCP servers alike"
+      - "Google Cloud's remote MCP servers, since custom ones register on first use"
+      - "Custom servers only when an agent first calls them; the registry adds the rest"
+      - "Custom servers that their deployment did not already register"
+    answer: 3
+    explanation: "Google and Google Cloud remote MCP servers are registered automatically. A custom server is registered automatically only in some cases (for example a Cloud Run service deployed with --functional-type=mcp-server); otherwise you register it yourself, for example with gcloud agent-registry services create. The registry does not discover servers just because an agent calls them."
+  - id: registry-purpose
+    objective: register-tools
+    question: "Why register a custom MCP server in Agent Registry once it already runs and agents can reach it?"
+    choices:
+      - "So that it can be discovered and access policies can control which agents use it"
+      - "So that Google hosts it, scales it and applies security patches automatically"
+      - "So that its tool calls run faster through Google's internal network"
+      - "So that its tools no longer need descriptions, since the registry supplies them"
+    answer: 0
+    explanation: "Registration puts the server in one catalogue where teams and agents discover it, and where access policies bind agent principals to the registered resources they may use. It does not move hosting to Google, speed up calls or replace tool descriptions; the model still reads each tool's description."
+updated: "2026-11-17"
+status: draft
+---
+
+## Why agents need integrations
+
+An agent is useful only when it acts on real systems: reading orders, querying
+analytics, booking a pickup. In topic 3.2 each of those was a Python function
+inside the agent. That works for one agent, but every team ends up rewriting the
+same database and API wrappers, each with its own credentials and its own bugs.
+
+The <Term id="mcp">Model Context Protocol (MCP)</Term> is an open standard for
+offering tools to agents. An **MCP server** publishes a set of tools, each with
+a name, a description and a parameter schema; an **MCP client**, such as an ADK
+agent, lists those tools, offers them to the model and calls them when the model
+proposes one. The loop from topic 3.1 does not change: the model proposes, the
+runtime executes, but the execution now happens in the MCP server. Write the
+server once, and any MCP-capable agent can use it.
+
+A server can run as a local process the client starts and talks to over
+standard input and output (the **stdio** transport), or as a remote service the
+client reaches over HTTP (the **streamable HTTP** transport). Agents in
+production use remote servers.
+
+## Three routes, three owners
+
+Take the support agent from topic 3.2 and give it three new capabilities. Access
+on Google Cloud is controlled by IAM (Identity and Access Management), which
+grants identities roles that decide who may call what.
+
+
+| Capability | Route | Who hosts and updates it | Who secures it |
+|---|---|---|---|
+| Query sales analytics in BigQuery | A **Google Cloud MCP server** (BigQuery's) | Google | IAM roles you grant on your project |
+| Look up one customer's order in the orders database | **MCP Toolbox for Databases**, with named queries | You run the open-source server; you write the queries | You: database account, query design, caller authentication |
+| Book a pickup through the internal carrier API | A **custom MCP server** | You build, host and patch it | You, end to end |
+
+<Figure
+  src="/media/mcp-integration-routes.svg"
+  alt="An ADK agent, the MCP client, connects over HTTP to three kinds of MCP server. A Google Cloud MCP server is for a Google Cloud service such as BigQuery, Spanner or GKE: Google hosts and updates it, and it is secured by IAM roles you grant, with an optional read-only deny policy. MCP Toolbox for Databases is for named queries against your own database tables: you run the open-source server and write the queries, and you secure the database account, the fixed queries and the authenticated parameters. A custom MCP server is for an internal API nothing else covers: you build it with an MCP SDK and host it on Cloud Run or GKE, and you secure it end to end. A band underneath shows Agent Registry, where all three are listed for discovery and access policies bind agent identities to them."
+  caption="The further right, the more of the integration your team owns."
+/>
+
+**<Term id="google cloud mcp servers">Google Cloud MCP servers</Term>** are remote MCP servers that run on Google's
+infrastructure and offer an HTTP endpoint for a Google Cloud service, for
+example BigQuery, Cloud SQL, Spanner, GKE or Cloud Storage. You enable the
+product's API, and access goes through IAM: the caller needs the MCP Tool User
+role plus the product's own roles. To keep an agent to read-only tools, an IAM
+deny policy can block every tool that is not marked read-only. When a server
+exists for the service, use it: Google runs and updates it, and you only manage
+access.
+
+**<Term id="mcp toolbox for databases">MCP Toolbox for Databases</Term>** is an
+open-source MCP server that connects agents to databases (AlloyDB, BigQuery,
+Cloud SQL, Spanner, PostgreSQL, MySQL and many more). You describe each tool in
+a configuration file: the source, a fixed SQL statement and its parameters.
+Choose it when the agent needs specific queries against your own tables.
+
+**A custom MCP server** wraps an internal API that nothing else covers. Build it
+with an MCP SDK and host it where agents can reach it over HTTP. Cloud Run
+(Google Cloud's serverless container service) supports MCP servers that use
+streamable HTTP, not stdio, and requires an IAM identity on every request by
+default. A common layout runs the agent on Agent
+Runtime (Google Cloud's managed service for running agents) and the MCP server
+as a separate Cloud Run service.
+
+<Flashcard id="route-order-inline" objective="choose-integration" front="A Google Cloud service already has a remote MCP server. Why use it rather than write your own?" back="Google hosts and updates it; you only manage access, by granting IAM roles. Writing your own rebuilds the same tools and leaves your team to host, secure and patch them." />
+
+## Database tools: named queries, never free-form SQL
+
+The fastest way to connect an agent to a database is one tool that runs any SQL
+the model writes. It is also the most dangerous. The model can read every table
+the database account can, run an `UPDATE` that text it retrieved talked it into,
+(a prompt injection), or return another customer's rows. MCP Toolbox's own execute-SQL tools carry the
+warning that they are for developer workflows with a human in the loop, not
+production agents.
+
+Give the agent **named, parameterised queries** instead: each tool has a fixed
+statement, and the model only supplies typed values, which are bound as query
+parameters, never spliced into the SQL. Here is the order lookup as an MCP
+Toolbox configuration (one YAML document per source, auth service and tool):
+
+```yaml
+kind: source
+name: orders-db
+type: cloud-sql-postgres
+project: my-project
+region: europe-west1
+instance: orders
+database: orders
+user: ${DB_USER}
+password: ${DB_PASSWORD}
+---
+kind: authService
+name: customer-auth
+type: google
+clientId: ${OAUTH_CLIENT_ID}
+---
+kind: tool
+name: get-my-order
+type: postgres-sql
+source: orders-db
+description: Returns the status and tracking id of one of the signed-in customer's orders. Use when the customer gives an order id.
+parameters:
+  - name: order_id
+    type: string
+    description: The order id, for example A1234.
+  - name: customer_id
+    type: string
+    description: The signed-in customer's id.
+    authServices:
+      - name: customer-auth
+        field: sub
+statement: SELECT status, tracking_id FROM orders WHERE order_id = $1 AND customer_id = $2;
+```
+
+Three choices make this safe:
+
+- **A fixed statement.** The agent can run this one `SELECT` and nothing else.
+  Add one named tool per action the agent needs.
+- **An authenticated parameter.** `customer_id` is filled from the caller's
+  verified Google OIDC token (a signed identity token whose `sub` claim is the
+  user's unique id), not by the model. A user who types
+  someone else's id into the chat still gets only their own orders.
+- **Secrets from the environment.** The database user and password come from
+  environment variables (in production, a secret manager), never from the file.
+
+Also give the database account only the privileges the tools need, such as
+read access to the `orders` table.
+
+<Flashcard id="authenticated-parameter" objective="database-tools" front="What is an authenticated parameter in MCP Toolbox?" back="A tool parameter whose value Toolbox fills from a claim in the caller's verified token (for example the user's id), instead of letting the model supply it. The model cannot change whose data the query reads." />
+
+An ADK agent loads these tools from a running Toolbox server, and loads a remote
+MCP server's tools through `McpToolset`:
+
+```python
+from google.adk.agents import LlmAgent
+from google.adk.tools.mcp_tool import McpToolset
+from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPConnectionParams
+from google.adk.tools.toolbox_toolset import ToolboxToolset
+
+orders_tools = ToolboxToolset(
+    server_url="https://toolbox-orders.example.run.app",
+    # get_user_id_token returns the signed-in user's Google ID token,
+    # which Toolbox verifies to fill the authenticated customer_id parameter
+    auth_token_getters={"customer-auth": get_user_id_token},
+)
+
+carrier_tools = McpToolset(
+    connection_params=StreamableHTTPConnectionParams(
+        url="https://carrier-mcp.example.run.app/mcp",  # your custom server on Cloud Run
+    ),
+    tool_filter=["book_pickup", "get_pickup_status"],  # offer the model only these
+)
+
+support_agent = LlmAgent(
+    name="support_agent",
+    model="gemini-flash-latest",
+    instruction="You help customers with their orders and returns.",
+    tools=[orders_tools, carrier_tools],
+)
+```
+
+`tool_filter` limits which of a server's tools the model is offered, so it sees
+only the declarations it needs and cannot call the rest. Because the Cloud Run service requires IAM, the agent's own service identity
+must be allowed to invoke it and must send an identity token with each request;
+the security lessons later in this path cover agent identities.
+
+## Register what agents may use
+
+Once several teams build MCP servers, nobody can see which agents use what.
+<Term id="agent registry">Agent Registry</Term> is the catalogue: it lists the
+agents, MCP servers and their tools, and endpoints in your project or organisation.
+
+- **Google Cloud remote MCP servers are registered automatically.**
+- **Custom servers** register automatically in some cases: a Cloud Run service
+  deployed with `--functional-type=mcp-server`, or a GKE workload with the
+  matching label. Otherwise you register one yourself, with
+  `gcloud agent-registry services create` and a tool spec file that describes
+  its tools. The carrier server, deployed to Cloud Run with that flag, appears
+  in the registry with its two tools and no extra step.
+- **Governance:** access policies bind agent identities to the registered
+  servers they may use, and Agent Gateway enforces them at runtime on agent
+  traffic routed through it.
+- **Discovery:** an ADK agent can look a registered server up and load its
+  tools from the registry, instead of hard-coding a URL.
+
+Registration does not host, scale or secure the server for you. It makes the
+server findable and puts its use under policy, which is what lets a security
+team answer "which agents can book pickups?"
+
+<Callout type="note">MCP and its Google Cloud integrations move quickly: individual MCP servers, Agent Registry features and the MCP Toolbox configuration format have changed during 2026. Check each product's current page and launch stage before you rely on a detail.</Callout>
+
+## Sources
+
+- Google Cloud, "Google Cloud MCP servers overview", docs.cloud.google.com/mcp/overview (remote MCP servers run on the service's infrastructure and offer an HTTP endpoint).
+- Google Cloud, "Supported products", docs.cloud.google.com/mcp/supported-products (BigQuery, Cloud SQL, Spanner, GKE, Cloud Storage and others, with their endpoints).
+- Google Cloud, "Access control for MCP servers", docs.cloud.google.com/mcp/access-control (MCP Tool User role, roles/mcp.toolUser, plus the product's roles).
+- Google Cloud, "Restrict MCP tools to read-only", docs.cloud.google.com/mcp/prevent-read-write-tool-use (IAM deny policies on tools not marked read-only).
+- Google Cloud, "Host MCP servers on Cloud Run", docs.cloud.google.com/run/docs/host-mcp-servers (streamable HTTP supported, stdio not; IAM-authorised requests by default).
+- Google, MCP Toolbox for Databases, github.com/googleapis/mcp-toolbox (open-source MCP server for databases; tool configuration; authenticated parameters; execute-SQL tools are for developer workflows with a human in the loop, not production agents).
+- Google, Agent Development Kit documentation, "MCP tools", github.com/google/adk-docs/blob/main/docs/tools-custom/mcp-tools/index.md (McpToolset, StreamableHTTPConnectionParams, tool_filter).
+- Google, Agent Development Kit documentation, "MCP Toolbox for Databases", github.com/google/adk-docs/blob/main/docs/integrations/mcp-toolbox-for-databases.md (ToolboxToolset).
+- Google Cloud, "Agent Registry overview" and "Register MCP servers", docs.cloud.google.com/agent-registry/overview and docs.cloud.google.com/agent-registry/register-mcp-servers (what the registry catalogues; automatic registration of Google remote MCP servers; manual registration; access policies).
