@@ -115,6 +115,16 @@ quiz:
       - "Laptops with a VPN, so traffic passes through the company network"
     answer: 0
     explanation: "Cloud Workstations gives each developer a dedicated VM in your VPC, which can have no public IP and sit inside a VPC Service Controls perimeter, with a service account you choose. GKE Agent Sandbox suits generated code at scale rather than a developer's working environment, and both laptop options still run the agent on a laptop."
+  - id: refactor-check
+    objective: safe-refactor
+    question: "An agent's refactor of a billing module comes with three edited tests, and the suite passes. What should the reviewer do?"
+    choices:
+      - "Approve it, since the whole suite passes after the change"
+      - "Approve it once a second run of the suite also passes"
+      - "Ask why the tests changed, and rerun the original tests on the new code"
+      - "Ask the agent to add more tests, then approve once they pass"
+    answer: 2
+    explanation: "A refactor must not change behaviour, so its check is the same tests passing before and after. Edited tests may mean behaviour changed and the tests were bent to match, so the original tests are the ones to run. A passing suite proves little when the agent wrote the tests it passes, a second run repeats the same check, and new tests do not restore the old ones."
 updated: "2026-11-17"
 status: draft
 ---
@@ -144,7 +154,9 @@ something gets through.
 Antigravity runs the agent's shell commands in a
 <Term id="terminal sandbox">terminal sandbox</Term>, using each operating
 system's built-in process isolation (kernel namespaces on Linux, Seatbelt on
-macOS, AppContainer on recent Windows 11). Inside it, writes are limited to the
+macOS, AppContainer on recent Windows 11). It runs on the developer's own
+machine, not in a Google-managed environment: there is no virtual machine or
+container image, just a boundary around each command on the laptop. Inside it, writes are limited to the
 workspace, temporary folders, build caches and paths you allow with
 `write_file`, `~/.ssh` and `.env` files are blocked, and "sandboxed commands run
 without network access by default". Domains you allow for `read_url`
@@ -278,9 +290,10 @@ Isolation decides where agent code runs. Review decides what ships. Say a
 scanner flags a vulnerable dependency, and a coding agent on a workstation
 takes the task:
 
-1. **Work on a branch.** The agent upgrades the dependency and fixes what the
-   upgrade breaks, on its own branch, with permissions that cannot push to
-   main.
+1. **Work on a branch, from a reproduction.** Where the flaw can be shown, the
+   agent first writes a test that reproduces it and fails. Then it upgrades the
+   dependency and fixes what the upgrade breaks, on its own branch, with
+   permissions that cannot push to main, until that test passes.
 2. **Test in isolation.** It runs the test suite inside the Antigravity CLI's
    terminal sandbox, turned on with `enableTerminalSandbox` (check that it
    starts: it needs unprivileged user namespaces, which some containers block),
@@ -294,10 +307,18 @@ takes the task:
    anything beyond the dependency bump, such as changed tests, new network
    calls or edited CI files.
 
-The same gates apply to agent refactors and to agents tuning runtime settings,
-such as a JVM heap size or a Cloud Run concurrency limit:
-the agent proposes, tests and scans check, and a person decides. Protect the
-main branch on the server, so no agent credential can skip the gates.
+The same gates apply to every maintenance job: the agent proposes, tests and
+scans check, and a person decides. Protect the main branch on the server, so no
+agent credential can skip the gates. What changes from job to job is the check
+that proves the work is done:
+
+| Job | The check | What it proves |
+|---|---|---|
+| Patch a bug or vulnerability | A reproduction test first: it fails before the fix and passes after | The fix addresses the actual flaw, not a guess at it |
+| Refactor | The existing tests pass before and after, unchanged | Behaviour stayed the same; edited tests are a reason to look closer |
+| Optimise, such as a JVM heap size or a Cloud Run concurrency limit | Measure, change, then measure again under the same load | The change helped; without a baseline, "faster" is a guess |
+
+<Flashcard id="maintenance-checks" objective="safe-refactor" front="What check proves each agent maintenance job: a patch, a refactor, an optimisation?" back="Patch: a reproduction test that fails before the fix and passes after. Refactor: the existing tests pass before and after, unchanged. Optimisation: measure, change, then measure again under the same load." />
 
 <Callout type="note">File names, presets and features in this lesson are as documented in November 2026; coding-agent security settings change often, so check the current documentation before relying on a default.</Callout>
 
@@ -305,7 +326,7 @@ main branch on the server, so no agent credential can skip the gates.
 
 - Agent-generated code is untrusted until reviewed and tested; isolate where it
   runs and keep production credentials out.
-- Antigravity's terminal sandbox confines commands on the laptop with no network
+- Antigravity's terminal sandbox confines commands on the developer's own machine, with no network
   by default; presets decide what runs without asking, and rules resolve deny
   before ask before allow, so an ask rule guards risky commands such as a push. The CLI's sandbox is off until you turn it on.
 - Cloud Workstations gives each developer a managed VM in your VPC; its service
@@ -315,11 +336,13 @@ main branch on the server, so no agent credential can skip the gates.
   a warm pool; for Pods from a template it blocks internal traffic and the
   metadata server, but allows public egress unless you restrict it.
 - Ship agent patches through a branch, CI tests and scans, and human review,
-  with the main branch protected.
+  with the main branch protected. Prove a patch with a reproduction test, a
+  refactor with unchanged tests passing before and after, and an optimisation
+  by measuring before and after.
 
 ## Sources
 
-- Antigravity documentation, "Sandbox" and "Permissions", antigravity.google/docs (terminal sandbox enabled by default in the app; Linux namespaces, macOS Seatbelt, Windows AppContainer; "Sandboxed commands run without network access by default"; read_url domains as the outbound allowlist; ~/.ssh and .env blocked; presets Request Review, Default, Auto, Turbo; Default selected by default, Request Review if the sandbox is unavailable; Auto not available for business or enterprise accounts; rules as action(target), Deny > Ask > Allow; legacy business and enterprise presets Default, Full machine and Turbo mode do not turn the sandbox on).
+- Antigravity documentation, "Sandbox" and "Permissions", antigravity.google/docs/sandbox/ and antigravity.google/docs (terminal sandbox enabled by default in the app; built on native operating system primitives, with no virtual machines or Docker images; Linux namespaces, macOS Seatbelt, Windows AppContainer; "Sandboxed commands run without network access by default"; read_url domains as the outbound allowlist; ~/.ssh and .env blocked; presets Request Review, Default, Auto, Turbo; Default selected by default, Request Review if the sandbox is unavailable; Auto not available for business or enterprise accounts; rules as action(target), Deny > Ask > Allow; legacy business and enterprise presets Default, Full machine and Turbo mode do not turn the sandbox on).
 - Antigravity CLI documentation, settings and flags, antigravity.google/docs (enableTerminalSandbox default false; agy --sandbox; toolPermission request-review by default, proceed-in-sandbox).
 - Antigravity documentation, "Enterprise", antigravity.google/docs/enterprise (keep Default or Request Review enabled).
 - Google Cloud, "About Agent Sandbox on GKE", docs.cloud.google.com/kubernetes-engine/docs/concepts/machine-learning/agent-sandbox, and its quickstart (gVisor or microVMs; Sandbox, SandboxTemplate, SandboxWarmPool, SandboxClaim; warm sandboxes in less than one second; user-installed controller; default-deny network policy for Pods from a SandboxTemplate, with public internet egress allowed and the metadata server blocked; automountServiceAccountToken false; Agent Substrate recommended for most agent workloads).
