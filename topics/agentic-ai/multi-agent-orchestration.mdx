@@ -272,16 +272,22 @@ taking turns. It needs two ways to stop:
   bounded automatically either: count attempts in state and route out at the
   cap.
 
-Here is the review loop as a graph, with both stops in the router:
+Here is the review loop as a graph, with both stops in the router. The router
+accepts only an exact verdict: a substring test such as `"APPROVED" in
+node_input` would also match "NOT APPROVED" and send a rejected note. Treat
+anything that is not exactly `APPROVED`, including a malformed reply, as a
+rejection.
 
 ```python
 from google.adk import Context, Event, Workflow
 
 MAX_ATTEMPTS = 3
 
+# The reviewer's instruction says: reply with exactly APPROVED, or REJECTED: <reason>.
 def review_router(ctx: Context, node_input: str):
     attempts = ctx.state.get("attempts", 0) + 1
-    if "APPROVED" in node_input:
+    verdict = node_input.strip().upper()
+    if verdict == "APPROVED":                  # exact match; anything else is a rejection
         return Event(route="DONE", state={"attempts": attempts})      # exit condition
     if attempts >= MAX_ATTEMPTS:
         return Event(route="GIVE_UP", state={"attempts": attempts})   # cap
