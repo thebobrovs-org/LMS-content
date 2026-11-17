@@ -264,6 +264,22 @@ call and its output. Google's advice is to use them strategically:
   explanation="A step with a trigger and an action is how the task flow gives ordered, step-by-step guidance, so the read-back becomes a step before the payment step. The persona sets tone and goal, not procedure. A single example shows a pattern but doesn't state the behaviour; add one only if the step alone isn't followed."
 />
 
+## Test the agent, and let Gemini find issues
+
+CX Agent Studio tests an agent with test cases of three kinds: **golden** cases
+replay an ideal conversation as a regression check, **scenario** cases
+simulate conversations from a user goal, and **simulation** cases give a
+simulated user an ordered list of goals. An evaluation run plays them and scores
+the results.
+
+To get help with failures, select test cases, choose **Run selected**, and tick
+**Find issues with AI**. After the run, AI-based suggestions appear on the
+results page, along with a downloadable loss report that summarises how the
+agent performed and where to improve it; Ask Gemini opens a helper that starts
+from that report. Google recommends a run count of 3 or more for useful
+suggestions. The feature is in Preview and, at the time of writing, supports
+agent applications with a single agent.
+
 ## Sources
 
 - Google Cloud, "Professional Agentic Architect exam guide", services.google.com/fh/files/misc/professional_agentic_architect_exam_guide_english.pdf (objective 1.1; retrieved 2026-11-17).
@@ -272,3 +288,4 @@ call and its output. Google's advice is to use them strategically:
 - Google Cloud, Dialogflow CX, "Pages", docs.cloud.google.com/dialogflow/cx/docs/concept/page (pages as states, start page; retrieved 2026-11-17).
 - Google Cloud, Dialogflow CX, "State handlers", docs.cloud.google.com/dialogflow/cx/docs/concept/handler (routes and event handlers, scope, evaluation order, built-in events; updated 2026-11-10, retrieved 2026-11-17).
 - Google Cloud, Dialogflow CX, "Conditions", docs.cloud.google.com/dialogflow/cx/docs/reference/condition (session parameter syntax; retrieved 2026-11-17).
+- Google Cloud, "Evaluation" (CX Agent Studio), docs.cloud.google.com/gemini-enterprise-cx/cx-agent-studio/evaluation (retrieved 2026-11-17: golden, scenario and simulation test cases; "Find issues with AI" in Preview, single-agent applications only, a run count of 3 or more recommended, suggested fixes and a downloadable loss report).
