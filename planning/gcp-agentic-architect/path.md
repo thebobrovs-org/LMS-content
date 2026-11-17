@@ -62,7 +62,7 @@ sign-off between each, core first, then one exam section at a time.
 
 | ID | Level | Topic (`id`) | One-line objective | Visual / lab | Status |
 |----|-------|--------------|--------------------|--------------|--------|
-| 0.1 | 100 | `what-is-an-agent` | Name the parts of an agent (model, instructions, tools, loop, state) and what each contributes. | figure | plan-approved |
+| 0.1 | 100 | `what-is-an-agent` | Name the parts of an agent (model, instructions, tools, loop, state) and what each contributes. | figure | on staging |
 | 0.2 | 100 | `google-agent-platform-map` | Place each in-scope product on the map by what it does. | figure | plan-approved |
 | 0.3 | 200 | `choosing-a-model` | Separate the three axes (size, openness, serving) and say what each trades. | figure | plan-approved |
 | 0.4 | 300 | `low-code-or-code` | Choose low-code, code or a hybrid for a scenario and defend it. | figure | plan-approved |
