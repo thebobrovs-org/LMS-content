@@ -1,0 +1,355 @@
+---
+title: "Customising coding agents: rules, hooks, skills, subagents and plugins"
+summary: Pick the right customisation for each team requirement. Rules and skills guide the agent, hooks run on every matching event, subagents give a focused role its own context, and plugins and Skill Registry share the result across a team or an organisation.
+tags: [agentic-ai, coding-agents, hooks, skills, plugins]
+difficulty: intermediate
+estimatedMinutes: 25
+level: 200
+prerequisites: [agentic-ai/configuring-coding-agents]
+objectives:
+  - id: pick-mechanism
+    statement: "Choose a rule, hook, skill, subagent or plugin for a requirement."
+  - id: enforce-vs-guide
+    statement: "Explain why a hook enforces a requirement and a rule only guides the agent."
+  - id: share-customizations
+    statement: "Package customisations as a plugin and share skills through Skill Registry."
+flashcards:
+  - id: rule-guarantee
+    objective: enforce-vs-guide
+    front: What does a rule guarantee?
+    back: "That the guidance is in the agent's context: always, when its trigger matches, or, for a rule the model decides on, as a description it can expand. It does not guarantee the agent follows it: the model reads a rule and decides, so a rule can be skipped, misread or crowded out by other instructions."
+  - id: hook-guarantee
+    objective: enforce-vs-guide
+    front: What does a hook guarantee?
+    back: "That the agent harness runs it on every matching event, whatever the model decides. A PreToolUse hook can block a tool call before it runs; a PostToolUse hook runs after the tool and cannot undo it."
+  - id: skill-guarantee
+    objective: enforce-vs-guide
+    front: What does a skill guarantee?
+    back: "Only that its description is in context and its body loads when a task matches or you invoke it. Once loaded it guides like a rule, so the model still decides whether to follow it."
+  - id: subagent-guarantee
+    objective: pick-mechanism
+    front: What does a subagent's own context give the main session?
+    back: "The subagent starts without the parent's conversation, does its work in its own context, and returns only a result, so the main session's context stays free. A subagent can also have its own model and a narrower tool list, so a read-only reviewer cannot edit files."
+  - id: plugin-vs-registry
+    objective: share-customizations
+    front: When do you use a plugin, and when Skill Registry?
+    back: "A plugin puts a coding agent's customisations (skills, hooks, subagents and MCP servers, and in Antigravity rules) into one versioned package that developers install. Skill Registry, in Preview on Agent Platform, stores versioned skills in a Google Cloud project for the agents you build to search and load, for example through ADK's SkillToolset."
+quiz:
+  - id: lint-every-edit
+    objective: enforce-vs-guide
+    question: "A team requires every Python file the agent edits to be formatted with black. Which customisation makes the formatter run after every edit the agent makes with its edit tools, whatever the model decides?"
+    choices:
+      - "A rule in AGENTS.md or CLAUDE.md saying to run black after every edit"
+      - "A skill whose description says to use it whenever a Python file changes"
+      - "A PostToolUse hook on the edit tools that runs black on the edited file"
+      - "A formatter subagent whose instructions say to format every changed file"
+    answer: 2
+    explanation: "A hook is run by the agent harness on every matching event, so black runs after every edit whatever the model decides. The rule, the skill and the subagent all depend on the model choosing to act: it can forget the rule, not match the skill, or not delegate. Keep the same check in CI, because a hook runs only on one developer's machine."
+  - id: rule-ignored
+    objective: enforce-vs-guide
+    question: "A rule in the instructions file says never to push to main. One afternoon the agent pushes to main anyway. What best explains this, and what would prevent it?"
+    choices:
+      - "Rules are context the model may not follow; a hook that checks commands before they run could deny it"
+      - "The rule file was too long; splitting it into shorter files would stop the model overlooking it"
+      - "The rule was in GEMINI.md instead of AGENTS.md, which the agent reads first and obeys"
+      - "The rule needed a glob trigger on .git/, so that it loads whenever git runs"
+    answer: 0
+    explanation: "A rule is guidance the model reads and decides about, so it can be skipped, wherever it lives and however it is scoped. A hook that runs before the command executes can return deny for the commands it recognises, whatever the model intended; because command matching can be bypassed (an alias, a refspec), pair it with a protected branch on the server. Shorter, scoped rules are followed more reliably but are never binding."
+  - id: pick-subagent
+    objective: pick-mechanism
+    question: "A security review reads hundreds of files, and the team does not want all that output filling the main session's context. Which mechanism fits?"
+    choices:
+      - "A rule with an always-on trigger that lists the review steps"
+      - "A PostToolUse hook that runs the review after every file edit"
+      - "A plugin that installs the review checklist for every developer"
+      - "A subagent that runs the review in its own context and returns findings"
+    answer: 3
+    explanation: "A subagent starts without the parent's conversation, does the reading in its own context, and returns only its result, so the main session keeps its context for the task. An always-on rule adds the steps to every turn, a hook after every edit would run far too often, and a plugin is how you ship the subagent, not where it runs."
+  - id: glob-rule
+    objective: pick-mechanism
+    question: "The team has conventions that apply only to database migration files under migrations/. The agent should see them when it works on those files and not otherwise. What do you add?"
+    choices:
+      - "An always-on rule, so the conventions are never missed"
+      - "A rule scoped to migrations/ (a glob trigger, or a paths field)"
+      - "A PreToolUse hook that prints the conventions before every tool call"
+      - "A plugin containing only the conventions as a single rule file"
+    answer: 1
+    explanation: "A rule scoped by file pattern loads only when the agent works on matching files: a glob trigger in Antigravity's .agents/rules/, a paths field in Claude Code's .claude/rules/. An always-on rule spends context on every task, a hook before every tool call is noise, and a plugin only packages the rule."
+  - id: pick-skill
+    objective: pick-mechanism
+    question: "A release procedure with eight steps and a helper script is needed a few times a month. The team wants the agent to have it for release tasks without spending context on every other task. What do you add?"
+    choices:
+      - "An always-on rule in AGENTS.md that lists all eight release steps"
+      - "A PreToolUse hook that prints the steps before each command"
+      - "A skill for releases, with the helper script in its folder"
+      - "A release subagent that runs the helper script when asked"
+    answer: 2
+    explanation: "Know-how for one kind of task is what a skill packages: only its description is in context until a release task matches, and the script lives in the skill's folder. An always-on rule spends context on every task, and a hook would print the steps far too often. A subagent that runs the script has the script but not the eight-step procedure as know-how the agent loads on demand."
+  - id: share-plugin
+    objective: share-customizations
+    question: "A platform team has built two skills, a lint hook, a reviewer subagent and an MCP server configuration, and wants 40 developers to install and update them together. What should it build?"
+    choices:
+      - "A long AGENTS.md that describes every customisation"
+      - "A Skill Registry entry for each of the five pieces"
+      - "A plugin that bundles all five into one versioned package"
+      - "A subagent that sets up the other pieces on first use"
+    answer: 2
+    explanation: "A plugin bundles skills, hooks, subagents and MCP servers into one versioned unit that developers install from a marketplace and update together. Skill Registry stores skills only, not hooks or MCP configuration, and Google does not document coding agents reading it natively. A long instructions file describes but installs nothing, and a subagent is not a distribution mechanism."
+  - id: plugin-or-registry
+    objective: share-customizations
+    question: "A team deploys ADK agents that should load a shared set of approved skills, and separately wants the same skills in developers' Claude Code sessions. What fits each?"
+    choices:
+      - "Skill Registry for both the ADK agents and the Claude Code sessions"
+      - "Skill Registry for the ADK agents, and a plugin for the Claude Code sessions"
+      - "A plugin for both the ADK agents and the Claude Code sessions"
+      - "An always-on rule containing the skills, for both kinds of agent"
+    answer: 1
+    explanation: "ADK agents can search and load skills from Skill Registry through ADK's SkillToolset. Google does not document coding agents such as Claude Code reading Skill Registry, so a plugin is how the same skills reach developers' sessions. A coding-agent plugin does not install into a deployed ADK agent, and pasting skills into an always-on rule loses the on-demand loading that makes skills cheap."
+  - id: pre-vs-post
+    objective: enforce-vs-guide
+    question: "A team wants the agent never to read files named .env. Which hook event should check the tool call?"
+    choices:
+      - "PostToolUse on the read tool, returning an error"
+      - "Stop"
+      - "SessionStart"
+      - "PreToolUse on the read tool, returning deny"
+    answer: 3
+    explanation: "Only a hook that runs before the tool call can stop it: a PreToolUse hook returns deny and the read tool call never runs. PostToolUse runs after the read has happened, when the contents are already in the model's context. Stop and SessionStart do not see individual tool calls."
+  - id: readonly-reviewer
+    objective: pick-mechanism
+    question: "A reviewer subagent must never edit files, even if a file it reads tells it to. What makes that hold?"
+    choices:
+      - "Limiting the subagent's tool list to read and search tools"
+      - "Writing never edit files in the subagent's instructions"
+      - "Giving the subagent a more capable model than the main agent"
+      - "Adding a rule to AGENTS.md that reviewers only read"
+    answer: 0
+    explanation: "A tool the subagent does not have is a tool it cannot call, so a list of read and search tools makes editing impossible. Instructions and rules are guidance that text in a file the subagent reads can talk the model out of, and a stronger model is still a model deciding."
+updated: "2026-11-17"
+status: draft
+---
+
+## Each mechanism comes with a different guarantee
+
+Topic 2.1 (Configuring coding agents) gave a coding agent tools through MCP and
+know-how through skills. Teams soon want more: house conventions followed,
+checks that always run, focused helpers, and a way to give all of it to every
+developer. Coding agents offer five mechanisms for this, and the difference
+that matters is what each one **guarantees**.
+
+| Mechanism | What it is | When it acts | What it guarantees |
+|---|---|---|---|
+| <Term id="rule">Rule</Term> | Guidance in a Markdown file | In context always, or when its trigger matches | The agent sees it, not that it obeys |
+| <Term id="hook">Hook</Term> | A command the agent's program runs | On every matching event, such as before a tool call | It runs, whatever the model decides |
+| <Term id="skill">Skill</Term> | A folder of know-how headed by `SKILL.md` | When a task matches its description | It loads when matched, then guides |
+| <Term id="subagent">Subagent</Term> | A delegated agent with its own instructions | When the agent delegates a task to it | Its own context, model and tool list |
+| <Term id="plugin">Plugin</Term> | A package of the others | When a developer installs it | Everyone gets the same versioned set |
+
+The rest of this lesson works through each row. In short, if something must
+happen every time, use a hook; if it is guidance, use a rule or a skill.
+
+## Rules guide, and the model decides
+
+A rule is persistent guidance in the agent's context. In Claude Code, `CLAUDE.md`
+is always loaded, and files in `.claude/rules/` can take a `paths` field so they
+load only when the agent works on matching files. In Antigravity, `AGENTS.md` or
+`GEMINI.md` is always on, and each file in `.agents/rules/` takes a `trigger`:
+
+| Trigger | When the rule is in context |
+|---|---|
+| `always_on` | On every turn |
+| `glob` | When the agent works on files matching its pattern |
+| `model_decision` | Its description is always there; the model reads the rest when it judges the rule relevant |
+| `manual` | When you @-mention it in the app |
+
+Scope rules so they appear only where they apply. A convention for migration
+files belongs in a rule scoped to `migrations/`, not in the always-on file
+where it spends context on every task.
+
+What a rule cannot do is enforce. Claude Code's documentation says so directly:
+its instruction files are "context, not enforced configuration". The model reads
+a rule and decides what to do. A long, vague or conflicting rule is followed less
+reliably, and text the agent reads in a file or web page can talk it out of one.
+
+## Skills load on demand, then guide
+
+A skill, from topic 2.1, loads only when a task matches its description or you
+invoke it. Once loaded, it is guidance like a rule, so a skill that describes a
+lint procedure still leaves the model to decide whether to follow it. Use a
+skill for know-how that some tasks need, such as a release procedure with a
+helper script, and a rule for conventions that apply always or to certain files.
+
+## Hooks run every time
+
+A hook is a command that the **agent harness** (the program around the model
+that runs tools and manages the session) executes on a lifecycle event, a fixed
+moment in the session. The model does not decide whether a hook runs. Both
+products offer these core events:
+
+- `SessionStart`, when a session begins.
+- `PreToolUse`, before a tool call runs. The hook can **block** the call.
+- `PostToolUse`, after a tool call (in Claude Code, only after one that
+  succeeds). The tool has already run, so the hook can only act afterwards; in
+  Claude Code it can also report back to the model.
+- `Stop`, when the agent finishes its turn.
+
+Take one requirement: every TypeScript file the agent edits must pass the
+linter. In Claude Code, a `PostToolUse` hook in the project's
+`.claude/settings.json` does it. The command reads the edited file's path and,
+for `.ts` or `.tsx` files, runs ESLint, exiting with code 2 if it fails:
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path'); case \"$f\" in *.ts|*.tsx) npx eslint \"$f\" >&2 || exit 2;; esac"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+The hook receives the tool call as JSON on standard input (the command needs
+`jq`, and ESLint installed in the project). Exit code 2, rather than any other
+failure code, tells Claude Code to show the hook's error output to the model,
+which then fixes the file. The matcher covers the Edit and Write tools; a file
+the agent rewrites with a shell command does not trigger it.
+
+To stop an action rather than react to it, use `PreToolUse`. A hook on file
+reads that sees a path ending in `.env` returns a decision of deny, as JSON on
+standard output, and that read never happens (a shell command such as
+`cat .env` needs its own check, or a permission deny rule). In Claude Code, a deny from a
+`PreToolUse` hook holds in every permission mode, including modes set to run
+tools without asking for approval. Antigravity's hooks live in
+`.agents/hooks.json`, with a different file layout but the same idea: a
+`PreToolUse` hook gets the call as JSON and can return `deny`, which "hard
+blocks execution immediately", or decisions such as `ask` or `allow`. By
+default a hook that crashes or times out does not block: Claude Code lets the
+call go ahead unless the hook is set to block on failure, and Antigravity
+reports the error and carries on. Write a policy hook so that it denies
+explicitly.
+
+Matching command text is easy to get around: a hook that looks for
+`git push --force` misses `-f`, a `+` refspec or an alias. For a hard rule on
+commands, pair the hook with a permission deny rule or a server-side protection
+such as a protected branch.
+
+## Subagents give a focused role its own context
+
+A subagent is a delegated agent with its own instructions. Its key property is
+context isolation: a custom subagent starts without the parent's conversation,
+does its work in its own context, and returns only a result. A security review
+that reads hundreds of files leaves the main session with a list of findings
+instead of hundreds of file listings.
+
+Both products define subagents as Markdown files whose frontmatter names the
+subagent and describes when to use it, and whose body is its system prompt:
+`.claude/agents/<name>.md` in Claude Code, `.agents/agents/<name>.md` in
+Antigravity. The frontmatter can also set a model and a tool list. In Claude
+Code:
+
+```markdown
+---
+name: security-reviewer
+description: Reviews changed code for security issues. Use before a pull request is opened.
+tools: Read, Grep, Glob
+model: inherit
+---
+
+You review code for injection, secrets in source, unsafe deserialisation and
+missing authorisation checks. Report each finding with file, line and a fix.
+Do not change any files.
+```
+
+Antigravity uses the same shape, but `tools` is a YAML list of its own tool
+names (such as `view_file` and `grep_search`), and `model` takes `inherit`,
+`flash` or `pro`.
+
+The tool list is where a subagent's guarantee comes from. This reviewer has only
+read and search tools, so it cannot edit a file even if a file it reads tells it
+to. The last line of the body is guidance; the tool list is enforcement.
+
+## One requirement, five ways
+
+Put the mechanisms side by side on the requirement from the hooks section: every
+edited TypeScript file passes the linter.
+
+<Figure
+  src="/media/coding-agent-customization-guarantees.svg"
+  alt="A table with one requirement, every edited TypeScript file passes the linter, tried with five mechanisms. Rule saying always run the linter: the model may skip it, so not guaranteed. Skill with a lint procedure: loads only if the task matches its description, so not guaranteed. Reviewer subagent: runs only when the agent delegates to it, so not guaranteed. Plugin: ships whichever mechanism it contains, so it guarantees only what that mechanism does. PostToolUse hook on edits: the harness runs it after every edit, so guaranteed. A footer says a hook covers one developer's machine and the agent's edit tools, so CI is still the final check before merge."
+  caption="Only the hook makes the check happen on every edit."
+/>
+
+A hook enforces on one developer's machine, in one agent, for the edits its
+matcher covers. A developer can edit files by hand or turn the hook off, so keep
+the same check in CI as the final gate before merge.
+
+## Share customisations with plugins and Skill Registry
+
+A plugin packages customisations so a team installs and updates them together.
+
+- **Antigravity:** a plugin bundles skills, MCP servers, subagents, rules and
+  hooks "into a single versioned unit", described by a `plugin.json`. Developers
+  install one from the official marketplace with
+  `agy plugin install <name>@antigravity-plugins-official`, from a GitHub URL or
+  from a local path. `agy plugin import` converts plugins from other agents,
+  including Claude Code.
+- **Claude Code:** a plugin is a directory with a manifest at
+  `.claude-plugin/plugin.json` and skills, subagents, hooks and MCP servers
+  (instructions go in a skill, not a rules file). Teams publish plugins in a
+  marketplace, a catalogue that is often a Git repository, which developers add
+  once with `/plugin marketplace add` and then install from with
+  `/plugin install <plugin>@<marketplace>`.
+
+A plugin adds no guarantee of its own. It ships the mechanisms inside it, each
+with the guarantee it already had.
+
+<Term id="skill registry">Skill Registry</Term> shares skills at the platform
+level. It is a Gemini Enterprise Agent Platform feature in public Preview. You
+upload a skill as a zip that contains its `SKILL.md` (with YAML frontmatter;
+keeping it at the top of the archive is a sensible layout), and the registry stores it
+in your Google Cloud project, keeping each revision as a fixed version. Agents
+reach it through the Managed Agents API, the Agent Platform SDK and ADK (the
+Agent Development Kit), whose SkillToolset gives an agent tools to search the
+registry and load a skill.
+
+So use a plugin to put skills into developers' coding agents, and Skill Registry
+for skills that the agents you build and deploy should load. Google's
+documentation does not describe Antigravity or Claude Code reading Skill
+Registry natively.
+
+<Callout type="note">File names, events and features in this lesson are as documented in November 2026. Skill Registry was announced in public Preview in May 2026, and its terms can change. Google has said it will become part of Agent Registry, which already documents registering standalone skills. The rule of thumb carries over: hooks enforce, rules and skills guide.</Callout>
+
+## Recap
+
+- A rule puts guidance in context, always or when its trigger matches; the model
+  decides whether to follow it. Scope rules to the files they apply to.
+- A skill loads when a task matches, then guides like a rule.
+- A hook is run by the agent harness on every matching event. A `PreToolUse`
+  hook can block a tool call; a `PostToolUse` hook runs after it and cannot undo
+  it. Keep the same checks in CI.
+- A subagent works in its own context and returns a result; its tool list is
+  what enforces its limits.
+- A plugin ships a coding agent's skills, hooks, subagents and MCP servers (and,
+  in Antigravity, rules) as one versioned package. Skill Registry, in Preview,
+  stores versioned skills on Agent Platform for the agents you build.
+
+## Sources
+
+- Antigravity documentation, "Rules", antigravity.google/docs/rules (AGENTS.md and GEMINI.md always on; .agents/rules/*.md with trigger always_on, model_decision, glob or manual; 24,000 bytes per file; 20,000-token budget shared by global and always-on rules; manual rules are mentioned in the app, not the CLI).
+- Antigravity documentation, "Hooks", antigravity.google/docs/hooks (.agents/hooks.json and ~/.gemini/config/hooks.json; events SessionStart, PreToolUse, PostToolUse, PreInvocation, PostInvocation, Stop; JSON on stdin and stdout; PreToolUse decisions allow, auto_approve, deny "hard blocks execution immediately", ask, force_ask, deny_unless_prior_grant; PostToolUse fires after a tool completes and returns an empty object). Antigravity changelog v2.12.0: a failing hook no longer ends the session.
+- Antigravity documentation, "Subagents", antigravity.google/docs/subagents (.agents/agents/ with one Markdown file per subagent; frontmatter name, description, tools, model (inherit, flash or pro), commandExecutionPolicy, mcpServers, skills; tools is a list of Antigravity tool names; a subagent does not inherit the parent's conversation history).
+- Antigravity documentation, "Plugins", antigravity.google/docs/plugins (bundle skills, MCP servers, agents, rules and hooks into a single versioned unit; plugin.json; agy plugin install; agy plugin import from Gemini CLI extensions and Claude Code plugins).
+- Claude Code documentation, "How Claude remembers your project", code.claude.com/docs/en/memory (CLAUDE.md and rules are "context, not enforced configuration"; .claude/rules/ with paths frontmatter; use a PreToolUse hook to block an action).
+- Claude Code documentation, "Automate workflows with hooks" and "Hooks reference", code.claude.com/docs/en/hooks-guide and code.claude.com/docs/en/hooks (deterministic control; PostToolUse with an Edit|Write matcher in .claude/settings.json; exit code 2 blocks PreToolUse and shows stderr to Claude for PostToolUse; a PreToolUse deny holds in every permission mode; for command patterns, the hooks reference recommends the permission system for a hard allow or deny).
+- Claude Code documentation, "Create custom subagents", code.claude.com/docs/en/sub-agents (own context window; .claude/agents/; frontmatter name, description, tools, model).
+- Claude Code documentation, "Create plugins" and "Discover and install plugins", code.claude.com/docs/en/plugins and code.claude.com/docs/en/discover-plugins (.claude-plugin/plugin.json; skills, agents, hooks, MCP servers; Claude Code does not load a CLAUDE.md at the plugin root, so instructions go in a skill; /plugin marketplace add; /plugin install plugin@marketplace).
+- Google Cloud, "Skill Registry overview", docs.cloud.google.com/gemini-enterprise-agent-platform/build/skill-registry (repository for managing agent skills; versioned revisions; zip containing a SKILL.md file with YAML frontmatter is validated on upload; standalone skills can be managed within Agent Registry).
+- Google Cloud Blog, "I/O 26 news for agent developers on Google Cloud", 19 May 2026, cloud.google.com/blog/topics/developers-practitioners/io26-news-for-agent-developers-on-google-cloud (Skill Registry public preview; accessible via the Managed Agents API, Agent Platform SDK and ADK via SkillToolset; will be part of Agent Registry).
