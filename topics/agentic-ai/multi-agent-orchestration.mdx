@@ -177,14 +177,17 @@ removal.
 
 The table above says how agents are wired. A design pattern says what job each
 agent does inside that wiring. Google's exam guide asks you to apply agent
-design patterns without naming any; the three below are this path's framing,
-the ones that come up most often in agent design writing.
+design patterns without naming any, so the three below are this path's
+framing. Google's architecture guide to agent design patterns uses its own
+names: it calls generator–critic **review and critique** (or iterative
+refinement), and has no planning pattern; its nearest are hierarchical task
+decomposition and human-in-the-loop, which together cover plan-then-execute.
 
 | Design pattern | How it works | Built with | Use it when |
 |---|---|---|---|
 | <Term id="react">ReAct</Term> (topic 3.1) | One agent decides, acts, observes the result and decides again | A single `LlmAgent` with tools | The steps depend on what each tool returns |
 | <Term id="generator-critic">Generator–critic</Term> (reflection) | A generator drafts; a critic checks the draft against criteria and either approves it or sends back what to fix | A loop: a `LoopAgent` with a writer, a critic and an exit (`exit_loop`), or a graph back-edge, plus a cap | Quality can be checked against stated criteria, and a second pass is worth the extra calls |
-| <Term id="plan-then-execute">Plan-then-execute</Term> | A planner writes the whole plan first; a gate approves it; then executors carry out the steps | A planner agent, an approval gate (a person or a policy check, for example through ADK tool confirmation, topic 5.5), then a workflow or executor agents | The work is long or costly, or takes actions that are hard to undo, so the plan is worth checking before anything runs |
+| <Term id="plan-then-execute">Plan-then-execute</Term> | A planner writes the whole plan first; a gate approves it; then executors carry out the steps | A planner agent, an approval gate (a person or a policy check), then a workflow or executor agents. ADK has no plan-approval feature as such: put tool confirmation (topic 5.5) on the tool that starts execution, so the run pauses with the plan until someone approves | The work is long or costly, or takes actions that are hard to undo, so the plan is worth checking before anything runs |
 
 Generator–critic is the loop in this lesson's last section, so it needs the
 same exit and cap. In plan-then-execute the gate sits between planning and
@@ -335,6 +338,7 @@ the loop has already spent its budget.
 - Google, Agent Development Kit documentation, "Loop agents", github.com/google/adk-docs/blob/main/docs/agents/workflow-agents/loop-agents.md (max_iterations defaults to None in Python; escalate via tool_context.actions.escalate; the exit_loop tool).
 - Google, Agent Development Kit documentation, "Graph workflows" and "Routes", github.com/google/adk-docs/blob/main/docs/graphs/index.md and docs/graphs/routes.md (Workflow with edges; routed edges; JoinNode fan-out and join; loops as back-edges, a cycle must contain a routed edge and is not bounded automatically).
 - Google, Agent Development Kit documentation, "Data handling", github.com/google/adk-docs/blob/main/docs/graphs/data-handling.md (state across nodes; instruction placeholders read session state; output_key).
+- Google Cloud, "Choose a design pattern for your agentic AI system", docs.cloud.google.com/architecture/choose-design-pattern-agentic-ai-system (ReAct, loop, review and critique, iterative refinement, coordinator, hierarchical task decomposition, human-in-the-loop).
 - Google Cloud, Professional Cloud Agentic AI Architect exam guide (asks candidates to apply agent design patterns; it names none, so the three in this lesson are the path's framing).
 - Google, Agent Development Kit documentation, "Tool confirmation", github.com/google/adk-docs/blob/main/docs/tools-custom/confirmation.md (require_confirmation pauses a tool until a person or system responds).
 - Google, Agent Development Kit, adk-python source, src/google/adk/agents/sequential_agent.py (SequentialAgent is deprecated in favour of Workflow).
