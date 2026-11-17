@@ -14,7 +14,7 @@ objectives:
   - id: pick-tooling
     statement: "Choose ADK evaluation, the Gen AI evaluation service or a custom metric for an evaluation need."
   - id: continuous-eval
-    statement: "Design continuous evaluation across a CI gate before release and online monitoring after it."
+    statement: "Design continuous evaluation across a CI gate before release, scheduled runs and online monitoring after release."
 flashcards:
   - id: three-match-modes
     objective: trajectory-modes
@@ -34,7 +34,7 @@ flashcards:
     back: "CI: the evalset on every change, with reference-based checks (trajectory match, response match) and judged checks, failing the build on a regression. Online: sampled live traffic scored with reference-free checks (rubrics, groundedness, safety), plus latency, cost and errors. Failures found online become new eval cases."
   - id: efficiency-criteria
     objective: pick-criterion
-    front: "What do ADK's efficiency criteria (tool_call_count_v1, inference_call_count_v1, token_usage_v1, invocation_duration_v1) tell you?"
+    front: "What do ADK's efficiency criteria report, and how do you use them?"
     back: "How many tool and model calls, tokens and seconds each case took. They are always on and informational, never pass or fail a case, so you compare them between runs: a jump signals a loop or a bloated context."
   - id: scheduled-runs
     objective: continuous-eval
@@ -261,14 +261,14 @@ it, and failures flow from production back into the evalset.
 <Figure
   src="/media/agent-continuous-evaluation.svg"
   alt="The continuous evaluation loop. Step 1: a change (a new prompt, model, tool or code) is committed. Step 2: the CI gate runs the evalset offline with trajectory match, rubrics and safety; a failure blocks the release. Step 3: the agent is deployed to production. Step 4: online monitoring samples live traces and scores them with reference-free checks, and watches latency, cost and errors. Step 5: failures found in production become new eval cases, which feed back into the CI gate's evalset. The evalset grows with every failure found, so the next change is tested against it."
-  caption="Reference-based checks run in CI, where expected answers exist. Live traffic has no reference, so online checks are reference-free."
+  caption="Reference-based checks run in CI, where expected answers exist. Live traffic has no reference, so online checks are reference-free. Scheduled runs, described below, replay the CI evalset without a change and are left out of the figure."
 />
 
 - **The CI gate** runs the evalset on every change: a new prompt, a model
   version, a tool. Reference-based checks (trajectory and response match) and
   judged checks both run here, and a regression fails the build before users see
   it.
-- **A scheduled run** repeats the evalset daily or weekly even when nothing
+- **A scheduled run** repeats the evalset on a schedule, for example daily or weekly, even when nothing
   was committed. The documents an agent retrieves, the APIs behind its tools
   and the users' wording all change without a commit, and a falling score on an
   unchanged agent is how that drift shows up.
@@ -294,7 +294,7 @@ it, and failures flow from production back into the evalset.
 
 ## Sources
 
-- Google, Agent Development Kit documentation, "Evaluation criteria", github.com/google/adk-docs/blob/main/docs/evaluate/criteria.md (retrieved 2026-11-17: tool_trajectory_avg_score with EXACT, IN_ORDER and ANY_ORDER, EXACT by default, per-invocation scores of 1.0 or 0.0 averaged over the case; response_match_score is ROUGE-1; judged criteria sample the judge model several times and take a majority vote; rubric_based_tool_use_quality_v1 for tool-use rules written in words, including prescribed workflows and call order; safety_v1 delegates to the Agent Platform Eval SDK).
+- Google, Agent Development Kit documentation, "Evaluation criteria", github.com/google/adk-docs/blob/main/docs/evaluate/criteria.md (retrieved 2026-11-17: tool_trajectory_avg_score with EXACT, IN_ORDER and ANY_ORDER, EXACT by default, per-invocation scores of 1.0 or 0.0 averaged over the case; response_match_score is ROUGE-1; judged criteria sample the judge model several times and take a majority vote; rubric_based_tool_use_quality_v1 for tool-use rules written in words, including prescribed workflows and call order; safety_v1 delegates to the Agent Platform Eval SDK; the efficiency criteria tool_call_count_v1, inference_call_count_v1, token_usage_v1 and invocation_duration_v1 are always on, never pass or fail a case, report INFORMATIONAL, and a threshold set on one is rejected).
 - Google, adk-python source, src/google/adk/evaluation/trajectory_evaluator.py (retrieved 2026-11-17: a call matches when its name and arguments are equal unless the ignore_args option is set; the three match algorithms).
 - Google, Agent Development Kit documentation, "Custom metrics", github.com/google/adk-docs/blob/main/docs/evaluate/custom_metrics.md (retrieved 2026-11-17: a custom metric is a Python function over the actual and expected invocations that returns an EvaluationResult).
 - Google Cloud, "Gen AI evaluation service overview" and "Determine evaluation metrics", docs.cloud.google.com/gemini-enterprise-agent-platform/models/evaluation-overview and …/determine-eval (retrieved 2026-11-17 from the pages' descriptions: test-driven evaluation and adaptive rubrics; rubric-based, computation-based and custom function metrics).
