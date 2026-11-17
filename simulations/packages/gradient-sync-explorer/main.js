@@ -58,6 +58,20 @@ function chartSVG() {
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="speedup versus device count: actual curve flattens below the ideal linear line as communication dominates">${g}</svg>`;
 }
 
+function buildControls() {
+  $("controls").innerHTML =
+    `<div class="sl"><label for="c-p">Model size <b id="c-p-val"></b></label><input type="range" id="c-p" min="1" max="70" step="1" value="${pB}"></div>` +
+    `<div class="sl"><label for="c-n">Devices (ring) <b id="c-n-val"></b></label><input type="range" id="c-n" min="0" max="${DEV.length - 1}" step="1" value="${nIdx}"></div>` +
+    `<div class="sl"><label for="c-b">Interconnect bandwidth <b id="c-b-val"></b></label><select id="c-b">${Object.keys(BW).map((k) => `<option value="${k}" ${+k === bw ? "selected" : ""}>${BW[k]}</option>`).join("")}</select></div>` +
+    `<div class="sl"><label for="c-c">Compute / step (1 device) <b id="c-c-val"></b></label><input type="range" id="c-c" min="100" max="4000" step="100" value="${compute1}"></div>` +
+    `<div class="sl toggle"><label for="c-o" style="display:block">Overlap comm<br><span style="font-weight:400;color:var(--muted)">hide sync behind compute</span></label><span class="sw"><input type="checkbox" id="c-o" ${overlap ? "checked" : ""}><span class="tr"></span><span class="kn"></span></span></div>`;
+  $("c-p").addEventListener("input", (e) => { pB = +e.target.value; interacted = true; sim.event("set", { pB }); render(); });
+  $("c-n").addEventListener("input", (e) => { nIdx = +e.target.value; interacted = true; sim.event("set", { n: DEV[nIdx] }); render(); });
+  $("c-b").addEventListener("change", (e) => { bw = +e.target.value; interacted = true; render(); });
+  $("c-c").addEventListener("input", (e) => { compute1 = +e.target.value; interacted = true; render(); });
+  $("c-o").addEventListener("change", (e) => { overlap = e.target.checked; interacted = true; render(); });
+}
+
 function render() {
   const n = DEV[nIdx];
   const r = calc(n);
@@ -65,12 +79,13 @@ function render() {
   const eff = r.stepMs > 0 ? (r.computeMs / r.stepMs) * (overlap ? 1 : 1) : 0; // fraction of step doing compute
   const scalingEff = (compute1 / n) / r.stepMs * 100;                          // vs perfect linear scaling
 
-  $("controls").innerHTML =
-    `<div class="sl"><label for="c-p">Model size <b>${pB}B params</b></label><input type="range" id="c-p" min="1" max="70" step="1" value="${pB}"></div>` +
-    `<div class="sl"><label for="c-n">Devices (ring) <b>${n}</b></label><input type="range" id="c-n" min="0" max="${DEV.length - 1}" step="1" value="${nIdx}"></div>` +
-    `<div class="sl"><label for="c-b">Interconnect bandwidth <b>${bw} GB/s</b></label><select id="c-b">${Object.keys(BW).map((k) => `<option value="${k}" ${+k === bw ? "selected" : ""}>${BW[k]}</option>`).join("")}</select></div>` +
-    `<div class="sl"><label for="c-c">Compute / step (1 device) <b>${compute1} ms</b></label><input type="range" id="c-c" min="100" max="4000" step="100" value="${compute1}"></div>` +
-    `<div class="sl toggle"><label for="c-o" style="display:block">Overlap comm<br><span style="font-weight:400;color:var(--muted)">hide sync behind compute</span></label><span class="sw"><input type="checkbox" id="c-o" ${overlap ? "checked" : ""}><span class="tr"></span><span class="kn"></span></span></div>`;
+  // The controls are written once and then only their labels change, so a slider, the select or the checkbox
+  // a keyboard user is on stays the same element and keeps focus (LMS-content#135, as #59 and #122 did).
+  if (!$("c-p")) buildControls();
+  $("c-p-val").textContent = `${pB}B params`;
+  $("c-n-val").textContent = String(n);
+  $("c-b-val").textContent = `${bw} GB/s`;
+  $("c-c-val").textContent = `${compute1} ms`;
 
   $("cards").innerHTML =
     `<div class="card"><div class="k">Gradient payload</div><div class="v">${r.payloadGB.toFixed(0)} GB</div></div>` +
@@ -93,11 +108,6 @@ function render() {
 
   if (commBound && interacted && !observed) { observed = true; sim.checkpoint("observe-comm-bound"); }
 
-  $("c-p").addEventListener("input", (e) => { pB = +e.target.value; interacted = true; sim.event("set", { pB }); render(); });
-  $("c-n").addEventListener("input", (e) => { nIdx = +e.target.value; interacted = true; sim.event("set", { n: DEV[nIdx] }); render(); });
-  $("c-b").addEventListener("change", (e) => { bw = +e.target.value; interacted = true; render(); });
-  $("c-c").addEventListener("input", (e) => { compute1 = +e.target.value; interacted = true; render(); });
-  $("c-o").addEventListener("change", (e) => { overlap = e.target.checked; interacted = true; render(); });
   reportSize();
 }
 

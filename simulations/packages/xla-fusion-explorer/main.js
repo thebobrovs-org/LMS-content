@@ -81,10 +81,25 @@ const inspectorData = {
 
 function updateInspector(key, isXla) {
   const d = inspectorData[key];
-  inspectorContent.innerHTML =
-    `<div class="inspector-code" tabindex="0" role="region" aria-label="The code for this stage (scrollable)">${d.code}</div>` +
-    `<div class="inspector-explain ${isXla ? "xla-h4" : ""}"><h4>${d.title}</h4><p>${d.desc}</p></div>`;
+  // The code region is written once and then only its contents change, so a keyboard user scrolling it keeps focus
+  // while the stages advance (LMS-content#135).
+  if (!$("inspector-code")) {
+    inspectorContent.innerHTML =
+      `<div class="inspector-code" id="inspector-code" tabindex="0" role="region" aria-label="The code for this stage (scrollable)"></div>` +
+      `<div class="inspector-explain" id="inspector-explain"></div>`;
+  }
+  $("inspector-code").innerHTML = d.code;
+  const explain = $("inspector-explain");
+  explain.className = "inspector-explain" + (isXla ? " xla-h4" : "");
+  explain.innerHTML = `<h4>${d.title}</h4><p>${d.desc}</p>`;
   reportSize();
+}
+
+// A button that is busy is marked aria-disabled rather than disabled: a disabled button loses focus, so a keyboard
+// user who pressed it would be dropped to the page (LMS-content#135). Each handler ignores presses while busy.
+function setBusy(btn, busy) {
+  if (busy) btn.setAttribute("aria-disabled", "true");
+  else btn.removeAttribute("aria-disabled");
 }
 
 // --- Advance the compile pipeline to stage n (1..4) ---
@@ -106,7 +121,11 @@ function applyStage(n) {
     const fc = $("fused-col");
     fc.classList.remove("locked");
     if (!REDUCE) fc.classList.add("highlight-pulse");
+    // Compiling is done, so Step and Auto-compile switch off; whichever had focus hands it to Execute, the next thing to do.
+    const fromCompile = document.activeElement === btnStep || document.activeElement === btnAuto;
     btnRun.disabled = false; jitDone = true; btnStep.disabled = true; btnAuto.disabled = true;
+    setBusy(btnStep, false); setBusy(btnAuto, false);
+    if (fromCompile) btnRun.focus();
     btnStep.textContent = "Compiled ✓";
     note.innerHTML = "<b>Compiled.</b> XLA traced the graph and fused the ops. Press <b>Execute</b> to race the unfused baseline against the XLA-fused kernel.";
     sim.event("jit-completed", {});
@@ -124,7 +143,7 @@ async function stepJit() {
 
 async function autoJit() {
   if (jitDone || isAuto || isStepAnimating) return;
-  isAuto = true; btnStep.disabled = true; btnAuto.disabled = true; btnReset.disabled = true;
+  isAuto = true; setBusy(btnStep, true); setBusy(btnAuto, true); btnReset.disabled = true;
   inspectorPanel.classList.add("visible");
   while (jitStep < 4) { applyStage(jitStep + 1); if (jitStep < 4) await delay(1500); }
   isAuto = false; btnReset.disabled = false;
@@ -232,7 +251,7 @@ async function runFused() {
 
 async function runRace() {
   if (isRunning || !jitDone) return;
-  isRunning = true; btnRun.disabled = true; btnReset.disabled = true;
+  isRunning = true; setBusy(btnRun, true); btnReset.disabled = true;
   resetRace();
   note.innerHTML = "<i>Racing the two pipelines…</i>";
   sim.event("race-started", {});
@@ -244,7 +263,7 @@ async function runRace() {
     await Promise.all([runUnfused(), runFused()]);
   }
   note.innerHTML = "<b>Done.</b> Same layer, same FLOPs — the fused kernel keeps intermediates in VMEM: <b>9 → 3</b> HBM round-trips, intensity <b>60 → 179</b> FLOP/byte, past the v5p ridge (165). The layer flips from <b>memory-bound</b> to <b>compute-bound</b>.";
-  isRunning = false; btnRun.disabled = false; btnReset.disabled = false;
+  isRunning = false; setBusy(btnRun, false); btnReset.disabled = false;
   if (!observedRace) { observedRace = true; sim.checkpoint("observe-fusion"); }
   sim.event("race-complete", { unfusedTrips: UNFUSED_TRIPS, fusedTrips: FUSED_TRIPS });
   reportSize();
