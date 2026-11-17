@@ -1,0 +1,216 @@
+---
+title: Observing and troubleshooting agents in production
+summary: Agents fail in their own ways. They loop, wait on slow tools, drift and hallucinate. Read a trace to find which failure you have, match each symptom to the signal that confirms it, and choose the fix that addresses the cause.
+tags: [agentic-ai, agents, observability, operations]
+difficulty: advanced
+estimatedMinutes: 30
+level: 400
+prerequisites: [agentic-ai/agent-quality-basics]
+objectives:
+  - id: read-trace
+    statement: "Read an agent trace to find slow spans and repeated calls."
+  - id: diagnose
+    statement: "Map a symptom (latency, a reasoning loop, drift, errors, hallucination, cost) to its likely cause and the signal that confirms it."
+  - id: optimize
+    statement: "Choose a fix that addresses the cause of latency, loops, drift or cost."
+flashcards:
+  - id: span-definition
+    objective: read-trace
+    front: What is a span in an agent trace?
+    back: "One timed operation, such as a model call (generate_content) or a tool call (execute_tool), nested in the span tree under the span for the whole agent turn (invoke_agent). Its length shows where the time went."
+  - id: loop-signal
+    objective: diagnose
+    front: What signal in a trace shows a reasoning loop?
+    back: "The same tool called again and again, often with the same arguments, each followed by another model call, with no new information between them. The tool-call and model-call counts per turn rise too."
+  - id: drift-signal
+    objective: diagnose
+    front: How do you detect drift in a deployed agent?
+    back: "By scoring answers: quality scores on a sample of live responses falling over time, and new failures when the offline evaluation dataset is re-run after a model, prompt or data change. Uptime and error-rate checks stay green while quality drifts."
+  - id: loop-fixes
+    objective: optimize
+    front: How do you fix a reasoning loop?
+    back: "Give the model what it needs to stop: a clearer tool description and output (say what an empty result means), instructions on when to stop, and a hard cap on model calls per run as a safety net. Raising a timeout only lets the loop run longer."
+quiz:
+  - id: find-the-slow-span
+    objective: read-trace
+    question: "A 9-second turn has these child spans: three model calls of 0.8 s each, lookup_customer at 0.3 s, and get_invoice_pdf at 6.2 s. Where should you look first to cut latency?"
+    choices:
+      - "The model calls, because there are three of them"
+      - "get_invoice_pdf, because it takes most of the turn"
+      - "lookup_customer, because it runs first"
+    answer: 1
+    explanation: "The trace shows where the time went: get_invoice_pdf is 6.2 of 9 seconds. The three model calls add up to 2.4 seconds, so removing one saves 0.8 s, against 6.2 s in the tool. The order of spans says nothing about their cost."
+  - id: loop-timeout-trap
+    objective: optimize
+    question: "Traces show an agent calling check_availability eight times with the same arguments, until the request times out. A teammate proposes raising the timeout from 30 to 90 seconds. What is wrong with that?"
+    choices:
+      - "Nothing: the agent needs more time to finish its checks"
+      - "It lets the loop run longer without fixing why it repeats"
+      - "Raise it, and also add retries on check_availability"
+    answer: 1
+    explanation: "The same call with the same arguments returns the same result, so more time buys more repeats, more tokens and a later failure; retries only add more identical calls. Fix the cause: make the tool's output say clearly what it means (for example, 'no availability' as an explicit result), tell the model when to stop, and cap model calls per run."
+  - id: drift-not-uptime
+    objective: diagnose
+    question: "After a model version upgrade, support tickets say an agent's answers got worse. Which signal confirms the complaints?"
+    choices:
+      - "Quality scores on sampled live responses, before and after"
+      - "Traces of the slowest turns since the upgrade"
+      - "Token usage per turn, before and after"
+    answer: 0
+    explanation: "Only a signal that scores answers shows a change in quality: scores on a sample of live responses, or the offline evaluation dataset re-run on both versions. Slow traces show where time went, and token usage shows cost; a model can get worse while staying just as fast and cheap."
+  - id: hallucination-signal
+    objective: diagnose
+    question: "A user reports that the agent quoted a cancellation fee that does not exist. What do you check in the trace first?"
+    choices:
+      - "The length of the final model span"
+      - "The number of instances running at the time"
+      - "Whether any tool or retrieval span returned that fee"
+    answer: 2
+    explanation: "A trace records what each tool returned. If no span returned the fee, the model made it up: a grounding failure, which you fix with better retrieval, instructions to answer only from tool results, and a groundedness check in evaluation. If a tool returned it, the bad data is upstream. Span length and instance count do not bear on it."
+  - id: cost-fix
+    objective: optimize
+    question: "Token usage per turn has doubled since last month while quality is flat. Traces show each model call now carries the whole conversation history, which has grown long. Which fix addresses the cause?"
+    choices:
+      - "Run the agent on more servers so turns finish sooner"
+      - "Switch to a larger model so it needs fewer turns"
+      - "Trim or summarise the history sent to the model"
+    answer: 2
+    explanation: "Tokens are spent on what the model is sent, and here that is a long history. Sending less (trimming, summarising, storing durable facts outside the conversation) cuts the token bill. More servers change compute, not tokens, and a larger model usually costs more per token."
+status: draft
+updated: "2026-11-17"
+---
+
+## You cannot fix what you cannot see
+
+A user complains that the travel agent took almost fourteen seconds to move a flight.
+Your uptime dashboard is green, and the error rate is flat. Nothing in the usual
+service metrics says what went wrong, because the failure is inside the agent's
+loop: what it asked the model, which tools it called, how many times and how
+long each took.
+
+Agents fail in ways ordinary services do not. They **loop**, calling the same
+tool again and again. They wait on a **slow tool**. They <Term id="drift">drift</Term>, getting
+worse as the model, the prompts or the data change. They **hallucinate**,
+stating things no tool returned. And they **cost** more than expected, because
+every turn of the loop sends tokens. Each of these leaves a different mark, and
+you find it in a trace.
+
+## Traces, metrics and logs
+
+When telemetry is enabled, ADK records three kinds, using the OpenTelemetry
+conventions for generative AI, and can export them to Google Cloud (Cloud Trace,
+Cloud Monitoring and Cloud Logging) or to any OpenTelemetry backend. (Support varies by
+language: Python emits all three; Kotlin emits traces and metrics but no log
+records; the metrics docs do not cover Go.)
+
+- A **trace** follows one request. It is a tree of
+  <Term id="span">spans</Term>: an `invoke_agent` span for the whole turn, with
+  child spans for each model call (`generate_content`) and each tool call
+  (`execute_tool`). The length of each span shows where the time went.
+- **Metrics** aggregate across many requests: turn duration, tool duration per
+  tool, model calls and tool calls per turn, and token usage per model call.
+  They show trends and outliers that a single trace cannot.
+- **Logs** record what happened in detail. By default ADK leaves prompt content
+  out of its logs, for security; you can turn content capture on (for logs, and
+  optionally for spans) when you need it, at the cost of storing what users said.
+
+Use metrics to see that something changed, traces to see where in the loop, and
+logs for the detail.
+
+## Reading a trace
+
+Here is the trace of that slow turn.
+
+<Figure
+  src="/media/agent-trace-waterfall.svg"
+  alt="Trace waterfall of one agent turn that takes 13.6 seconds against a 4 second target. The user asked to move a Tuesday flight to Friday. Under the invoke_agent root span: a model call of 0.9 seconds, then search_flights for 0.4 seconds, a model call of 0.8 seconds, and the same pattern three more times (the last model call 0.9 seconds), so search_flights runs four times with the same arguments. This is marked A, a reasoning loop with no progress. A dashed marker on the root span shows the 4 second target. Then get_fare_rules runs for 6.6 seconds, marked B, a slow tool taking 6.6 of the 13.6 seconds. A final model call of 1.2 seconds answers."
+  caption="Two problems in one turn: a loop of identical searches (A) and one slow downstream tool (B)."
+/>
+
+Read it in two passes.
+
+1. **Find the longest spans.** `get_fare_rules` takes 6.6 of the 13.6 seconds.
+   That is a slow downstream API, not the agent's reasoning. Making the model
+   faster would barely move the total.
+2. **Look for repeats.** `search_flights` runs four times with the same
+   arguments, each followed by a model call. The model is not learning anything
+   new between calls: it is a <Term id="reasoning loop">reasoning loop</Term>.
+   The three repeat searches and the model calls that re-issued them add about
+   3.6 seconds and three extra model calls.
+
+Each finding has its own fix, below. Neither shows up in an uptime check.
+
+<Quiz
+  id="trace-which-problem"
+  objective="read-trace"
+  question="In a trace, an agent calls get_weather(city='Lyon') five times in a row, and each call takes 0.2 s. What is the problem?"
+  choices={["A slow tool, because five calls add up", "A reasoning loop, because the same call repeats with no new information", "Nothing, because each call is fast"]}
+  answer={1}
+  explanation="Identical calls with identical arguments return the same result, so the repetition is the agent failing to make progress. Each call is fast, which is why a slow-tool view misses it; the signal is the repeat."
+/>
+
+## Symptom, signal, fix
+
+| Symptom | Likely cause | Signal that confirms it | Fix |
+|---|---|---|---|
+| **Slow turns** | A slow tool or downstream API; too many model calls | Long `execute_tool` spans; tool-duration metrics by tool; model calls per turn | Speed up or cache the tool, call independent tools in parallel, use a faster model for simple steps |
+| **Reasoning loop** | The model cannot tell it is done: an unclear tool result, a vague goal | The same call repeated with the same arguments; high tool-call and model-call counts per turn | Clear tool descriptions and outputs, instructions on when to stop, and a cap on model calls per run |
+| **Drift** | A new model version, a changed prompt or tool, changed data or users | Falling quality scores on sampled live responses; new failures when the offline dataset is re-run on a new version | Scoring live responses, re-running the offline dataset on every change, pinned model versions, and failures fed back into the dataset |
+| **Errors** | A failing tool, quota limits, bad permissions | Error type on spans; error-rate metrics by tool and model; logs | Fix the tool or permission, handle errors, retry with backoff where safe |
+| **Hallucination** | Weak retrieval, or a model answering beyond its tool results | A claim no tool or retrieval span returned | Better retrieval, instructions to answer from tool results, a groundedness check |
+| **Rising cost** | Long context, extra turns, a larger model than needed | Token usage per model call and per turn; model calls per turn | Trim or summarise history, cut loops, a smaller model where it is good enough |
+
+Two rules sit behind this table.
+
+**A timeout is not a loop fix.** If the agent repeats the same call, more time
+buys more repeats, more tokens and a later failure. Fix why it repeats: make the
+tool's result unambiguous (an empty search should say "no flights found", not
+return nothing), tell the model when to stop, and keep a hard cap as a safety
+net. ADK's `RunConfig` has `max_llm_calls`, which caps the model calls in one
+run (500 by default), so a runaway loop ends instead of running up a bill.
+
+**Drift needs evaluation, not uptime checks.** A drifting agent stays up and
+fast; only its answers get worse. You catch it by scoring answers, not by
+checking that the service responds. Two habits do that. First, score a sample of
+live responses with the quality checks from the agent quality lesson (correct,
+grounded, safe), so a fall in quality shows up as a falling score. Second,
+re-run your offline evaluation dataset on every model, prompt or tool change,
+so a change that breaks known cases is caught before release. A pinned model
+version keeps the model from changing under you between evaluations.
+
+<Flashcard id="cap-is-a-net" objective="optimize" front="Why keep a cap on model calls per run if you have fixed the tool descriptions?" back="As a safety net. Better descriptions and stop instructions remove the cause you found; a cap ends any loop you did not foresee before it runs up latency and cost." />
+
+## Fixing the slow turn
+
+Back to the trace. Two fixes, one for each finding:
+
+- **The loop (A).** The traces show `search_flights` returning an empty list
+  when no Friday flight matches the fare class, and the model searching again
+  in the hope of a different answer. Change the tool to return an explicit
+  result ("no flights match; try another fare class or date") and add an
+  instruction to ask the user when a search finds nothing. Keep the run cap.
+- **The slow tool (B).** `get_fare_rules` calls a slow partner API. Fare rules
+  change rarely, so cache them for each fare class, and fetch them in parallel
+  with the search rather than after it (instruct the model to request both
+  tools in one response, or have the search tool fetch the rules itself).
+
+Then confirm the fix: re-run the offline evaluation dataset (a new case for "no matching
+flights" belongs there now), and watch the tool-duration and calls-per-turn
+metrics after release.
+
+## Recap
+
+- Trace every model and tool call. A trace shows where the time went and what
+  repeated; metrics show trends; logs give detail.
+- Read a trace in two passes: the longest spans, then repeated calls.
+- Fix loops with clearer tool results, stop instructions and a call cap, not a
+  longer timeout.
+- Catch drift by scoring answers, live and offline; uptime checks stay green
+  while quality falls.
+
+## Sources
+
+- Google, Agent Development Kit documentation, "Agent activity traces", github.com/google/adk-docs/blob/main/docs/observability/traces.md (retrieved 2026-11-17: OpenTelemetry GenAI conventions; invoke_agent, execute_tool and generate_content spans; export to Cloud Trace).
+- Google, Agent Development Kit documentation, "Agent activity metrics", github.com/google/adk-docs/blob/main/docs/observability/metrics.md (retrieved 2026-11-17: agent and tool duration, inference and tool calls per invocation, token usage per model call).
+- Google, Agent Development Kit documentation, "Agent activity logging", github.com/google/adk-docs/blob/main/docs/observability/logging.md (retrieved 2026-11-17: prompt content is elided by default for security and can be captured on request).
+- Google, Agent Development Kit documentation, "Runtime configuration", github.com/google/adk-docs/blob/main/docs/runtime/runconfig.md (retrieved 2026-11-17: max_llm_calls caps the total number of LLM calls per run, default 500).

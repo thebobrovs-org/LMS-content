@@ -1,0 +1,281 @@
+---
+title: Choosing evaluation criteria for agents
+summary: Pick the check that can actually see the failure you care about. Predict what exact, in-order and any-order trajectory matching accept, use model-judged criteria only where there is no single right answer, and run evaluation in CI and in production.
+tags: [agentic-ai, agents, evaluation, adk]
+difficulty: advanced
+estimatedMinutes: 35
+level: 300
+prerequisites: [agentic-ai/agent-eval-datasets]
+objectives:
+  - id: trajectory-modes
+    statement: "Predict whether an actual trajectory passes exact, in-order or any-order matching against an expected one."
+  - id: pick-criterion
+    statement: "Choose a deterministic or a model-judged criterion for what must be checked, and say what neither can see."
+  - id: pick-tooling
+    statement: "Choose ADK evaluation, the Gen AI evaluation service or a custom metric for an evaluation need."
+  - id: continuous-eval
+    statement: "Design continuous evaluation across a CI gate before release and online monitoring after it."
+flashcards:
+  - id: three-match-modes
+    objective: trajectory-modes
+    front: What does each trajectory match mode accept?
+    back: "EXACT: the same calls (name and arguments), in the same order, with nothing extra. IN_ORDER: every expected call, in order, with extra calls allowed between them. ANY_ORDER: every expected call, in any order, with extra calls allowed."
+  - id: deterministic-vs-judged
+    objective: pick-criterion
+    front: When do you use a deterministic criterion, and when a model-judged one?
+    back: "Deterministic (trajectory match, ROUGE-1) when there is one right answer you can write down, such as which tools must run and in what order: it is exact and repeatable. Model-judged (semantic match, rubrics, groundedness, safety) for qualities with no single right answer, such as tone or whether a reply means the same as the reference."
+  - id: what-no-criterion-sees
+    objective: pick-criterion
+    front: Why can't a trajectory match or an LLM judge tell you under whose identity a tool ran?
+    back: "Neither sees it. The trajectory records tool names and arguments, and a judge reads only what it is given. The identity a call ran as is in the tool's logs or the trace, so you assert it there."
+  - id: ci-and-online
+    objective: continuous-eval
+    front: What runs in the CI gate, and what in online monitoring?
+    back: "CI: the evalset on every change, with reference-based checks (trajectory match, response match) and judged checks, failing the build on a regression. Online: sampled live traffic scored with reference-free checks (rubrics, groundedness, safety), plus latency, cost and errors. Failures found online become new eval cases."
+quiz:
+  - id: harmless-reorder-mode
+    objective: trajectory-modes
+    question: "A research agent must call search_docs and search_tickets before it answers, and the order between them does not matter. Sometimes it also calls get_user first. Which match mode passes these runs and still fails a run that skips a search?"
+    choices:
+      - "EXACT, because it compares every call"
+      - "IN_ORDER, because it allows extra calls"
+      - "ANY_ORDER, because it allows any order and extra calls"
+    answer: 2
+    explanation: "Both searches must appear, but in either order, and extra calls are fine: that is ANY_ORDER. EXACT fails any run with get_user or a swapped order. IN_ORDER allows the extra call but fails whenever the searches come in the other order. All three still fail a run with a search missing."
+  - id: order-sensitive-mode
+    objective: trajectory-modes
+    question: "A refund agent must call check_policy before issue_refund. Read-only lookups before, between or after them are acceptable, and every run in the eval set issues at most one refund. Which mode should the eval use?"
+    choices:
+      - "IN_ORDER, because it requires the expected calls in order but allows extra calls"
+      - "ANY_ORDER, because the lookups can appear anywhere"
+      - "EXACT, because order matters"
+    answer: 0
+    explanation: "IN_ORDER enforces the order of the expected calls and tolerates the extra lookups. ANY_ORDER would also pass a run that refunds before checking the policy, which is the failure you care about. EXACT enforces order too, but fails every run that adds a harmless lookup, so the eval would raise false alarms. The one-refund condition matters: IN_ORDER only looks for the expected calls as an ordered subsequence, so it would also pass a run with an extra refund, before or after the expected ones."
+  - id: predict-exact
+    objective: trajectory-modes
+    question: "Expected: get_order(1182), check_policy(1182), issue_refund(1182, 60). Actual: get_order(1182), check_policy(1182), issue_refund(1182, 600). Which modes pass?"
+    choices:
+      - "IN_ORDER and ANY_ORDER, because all three tools were called in order"
+      - "None of them, because one call has different arguments"
+      - "All three, because the tool names match exactly"
+    answer: 1
+    explanation: "By default, a call matches only when its name and its arguments are equal. issue_refund(1182, 600) is not the expected issue_refund(1182, 60), so every mode is missing that expected call and fails. This is how trajectory matching catches a wrong amount, not just a wrong tool."
+  - id: llm-judge-trap
+    objective: pick-criterion
+    question: "A team must check in evaluation that refunds over $100 go through request_approval before issue_refund. They plan to ask an LLM judge, 'Did the agent follow the approval process?' What is the better check?"
+    choices:
+      - "Keep the judge, but sample it more times per case"
+      - "A trajectory match that requires request_approval before issue_refund"
+      - "A response match against a reference that mentions the approval"
+    answer: 1
+    explanation: "Which tools ran, and in what order, is recorded in the trajectory and has one right answer, so a deterministic match checks it exactly and the same way every run. A judge gives a model's opinion, which can be wrong even with a majority vote. A reply that mentions approval says nothing about whether approval actually happened."
+  - id: rubric-for-tone
+    objective: pick-criterion
+    question: "Support leads want replies to be empathetic and to avoid jargon. There is no single reference reply. Which criterion fits?"
+    choices:
+      - "A rubric-based final response criterion with yes/no rubrics for empathy and jargon"
+      - "response_match_score against one example reply"
+      - "An exact trajectory match"
+    answer: 0
+    explanation: "Tone has no single right answer, so a model judge applying your rubrics is the right tool. ROUGE-1 against one example rewards copying its words, not empathy. A trajectory match checks tool calls, not how the reply reads."
+  - id: identity-not-in-trajectory
+    objective: pick-criterion
+    question: "Policy says the update_payroll tool must always run under the payroll agent's own identity, never a shared service account. How do you check this in evaluation?"
+    choices:
+      - "An exact trajectory match on update_payroll's arguments"
+      - "An LLM judge asked whether the agent used the right identity"
+      - "An assertion on the identity each call ran as, read from the tool's logs or the trace"
+    answer: 2
+    explanation: "The trajectory records the tool and its arguments, not the identity behind the call, and a judge can only read what it is given. The identity is recorded where the call was authorised and executed, so assert it there. A later lesson covers agent identity itself."
+  - id: choose-gen-ai-eval
+    objective: pick-tooling
+    question: "A team runs adk eval in CI. They now want managed, rubric-based metrics for reply quality, without writing and maintaining every rubric and judge themselves. What should they add?"
+    choices:
+      - "More EXACT trajectory cases in the evalset"
+      - "The Gen AI evaluation service and its managed rubric-based metrics"
+      - "A custom Python metric for every quality they care about"
+    answer: 1
+    explanation: "The Gen AI evaluation service offers managed rubric-based metrics, so you do not write and maintain a judge for each quality yourself. More trajectory cases check tool calls, not reply quality. Writing a custom metric for each quality is the opposite of managed, though custom metrics remain the right tool for checks only your domain defines."
+  - id: refund-cap-metric
+    objective: pick-tooling
+    question: "A business rule says a refund must never exceed the order total. The amount is in the issue_refund call's arguments, and the reply may not mention it. Which check fits best?"
+    choices:
+      - "A custom metric that reads the refund call and compares the amount with the order total"
+      - "A rubric-based judge asked whether the refund looks reasonable"
+      - "response_match_score against a reference reply"
+    answer: 0
+    explanation: "The rule is exact and only your domain defines it, so a custom metric, a function over the agent's invocations, checks it the same way every run. A judge gives an opinion on a rule that has one right answer. response_match_score compares words in the reply, which may not mention the amount at all."
+  - id: ci-gate-placement
+    objective: continuous-eval
+    question: "Where does an exact trajectory match against a golden dataset belong in continuous evaluation?"
+    choices:
+      - "In online monitoring, scoring a sample of live traffic"
+      - "Nowhere, because online monitoring replaces it"
+      - "In the CI gate, run on every change before release"
+    answer: 2
+    explanation: "A trajectory match compares against an expected trajectory, which exists only for your dataset's cases. Live traffic has no reference, so online monitoring uses reference-free checks. The match runs in CI on every change and blocks a release that breaks a known path."
+status: draft
+updated: "2026-11-17"
+---
+
+## The check decides what you can see
+
+The last lesson built a golden dataset: cases with expected trajectories and
+expected replies. This lesson's refund path adds a policy check between the
+lookup and the refund. Now you choose how to score those cases. This choice matters more
+than it looks. Each criterion can see some failures and is blind to others, and
+an eval that passes because it measured the wrong thing is worse than no eval at
+all, because people trust it.
+
+So start every choice with one question: **what must be true, and which check can
+actually see it?**
+
+## Three ways to match a trajectory
+
+ADK's `tool_trajectory_avg_score` compares the tool calls the agent made with the
+expected ones, turn by turn. By default, a call matches only when its **name
+and its arguments** are equal (the criterion's `ignore_args` option compares
+names only). Then one of three <Term id="tool trajectory match">match
+modes</Term> decides whether the turn passes:
+
+- **EXACT** (the default): the same calls in the same order, with nothing extra
+  and nothing missing.
+- **IN_ORDER**: every expected call appears in order, and extra calls may appear
+  between them.
+- **ANY_ORDER**: every expected call appears, in any order, and extra calls are
+  allowed.
+
+Each turn scores 1.0 or 0.0, and the case's score is the average across its
+turns. Try the modes on a refund agent whose expected path is look up the order,
+check the policy, then refund:
+
+<Simulation id="trajectory-match-explorer" height={700} />
+
+Five things stand out:
+
+- **An extra, harmless lookup** fails EXACT but passes IN_ORDER and ANY_ORDER.
+  EXACT is strict enough to flag every deviation, including the ones you do not
+  care about.
+- **A harmless swap** of the two lookups fails IN_ORDER as well as EXACT. Only
+  ANY_ORDER passes a reorder, harmless or not.
+- **Refund first** passes ANY_ORDER. If the order of two calls is the point, as
+  "check the policy before you refund" is, ANY_ORDER cannot see the failure.
+- **A wrong argument** (a $600 refund instead of $60) fails every mode, because
+  that call no longer matches the expected one.
+- **An extra refund** after the expected calls passes IN_ORDER and ANY_ORDER.
+  Both modes allow extra calls whatever those calls do, so an extra $600 refund
+  passes, and so does a refund before the check that is followed by the full
+  expected sequence. IN_ORDER checks that the expected calls appear in order,
+  not that every refund follows a policy check.
+
+So choose the loosest mode that still fails the runs you care about: EXACT for a
+fixed, side-effecting sequence; IN_ORDER when order matters but extra read-only
+calls are fine; ANY_ORDER when only the presence of each call matters. For a
+rule about every call of a tool, such as "every refund follows a policy check",
+add a separate deterministic check over all the calls in the run, or use EXACT
+with the full expected sequence.
+
+<Flashcard id="refund-first-anyorder" objective="trajectory-modes" front="An agent refunds once, before it checks the policy, though both calls are expected in the opposite order. Which mode still passes it?" back="ANY_ORDER, because it ignores order. IN_ORDER and EXACT both fail it." />
+
+## Deterministic or model-judged
+
+ADK's criteria fall into two families.
+
+| | Deterministic | Model-judged |
+|---|---|---|
+| **Examples** | `tool_trajectory_avg_score`, `response_match_score` (ROUGE-1 word overlap) | `final_response_match_v2` (does the reply mean the same as the reference), rubric-based criteria, `hallucinations_v1`, `safety_v1` |
+| **How it scores** | Compares with a reference by fixed rules | An LLM judge rates the output (most of ADK's judged criteria sample the judge several times and take a majority vote) |
+| **Strength** | Exact and repeatable: the same run always gets the same score | Handles answers with no single right form: meaning, tone, groundedness |
+| **Weakness** | Brittle where many answers are right | A model's opinion: can be wrong, costs model calls, needs a judge model |
+
+The rule follows: **if there is one right answer you can write down, check it
+deterministically.** Which tools ran, in what order and with what arguments is
+recorded in the trajectory, so a trajectory match checks it exactly. Use a model
+judge for qualities where there is no single right answer: whether a reply means
+the same as the reference, whether it is empathetic, whether its claims are
+supported by the tool results.
+
+<Callout type="warning">A common trap: "use an LLM judge to check which tools ran, in what order". ADK does offer a rubric-based tool-use criterion that judges tool use against rules you write in words, order rules included. It earns its place when you cannot write the expected trajectory down, for example when arguments vary from run to run. But when a hard rule such as "approval before refund" can be written as an expected trajectory, a judge gives you a probabilistic opinion; a trajectory match gives you a fact.</Callout>
+
+Some things neither family can see. The trajectory records tool names and
+arguments, and a judge reads only what it is given, so **neither tells you under
+whose identity a call ran.** If policy says a tool must run as the agent's own
+identity, assert that from where the call was authorised and executed: the tool's
+audit logs or the trace. For example, the evalset passes, but the trace shows
+`update_payroll` ran as a shared service account rather than the agent's own
+identity, so the identity assertion fails. A later lesson covers agent identity
+itself.
+
+<Quiz
+  id="judge-or-match"
+  objective="pick-criterion"
+  question="Which requirement is a model-judged criterion the right tool for?"
+  choices={["get_order must be called before issue_refund", "The reply must not contradict what get_order returned", "issue_refund must be called with amount=60"]}
+  answer={1}
+  explanation="Whether a reply contradicts the tool output is a groundedness question with no fixed reference text, so a judged criterion such as hallucinations_v1 fits. Call order and argument values have one right answer recorded in the trajectory, so a trajectory match checks them exactly."
+/>
+
+## ADK eval, the Gen AI evaluation service or a custom metric
+
+Three tools cover most needs:
+
+- **ADK evaluation** (`adk eval`, `pytest`, the web UI) runs your evalsets
+  locally or in CI, with the built-in criteria above. It is where trajectory
+  matching and response matching live, and it is the natural CI gate.
+- The <Term id="gen ai evaluation service">Gen AI evaluation service</Term> is
+  the managed evaluation in Gemini Enterprise Agent Platform, Google Cloud's
+  platform for building and running models and agents. It offers
+  rubric-based, computation-based and custom function metrics, and Google
+  describes **adaptive rubrics**, generated for each prompt. ADK's `safety_v1` criterion calls it to score. Reach for it when
+  you want managed quality metrics at scale rather than rubrics you write and
+  maintain yourself.
+- A **custom metric** is your own function. In ADK, a custom metric is a Python
+  function that receives the agent's invocations (and the expected ones) and
+  returns a score. Use one for a check only your domain defines, such as "the
+  refund amount never exceeds the order total".
+
+They combine. A typical setup runs ADK evaluation in CI with trajectory and
+response checks, a few custom metrics for business rules, and managed rubric
+metrics for reply quality.
+
+## Continuous evaluation
+
+Evaluation is not a one-off before launch. It runs at two points, and failures
+flow from the second back to the first.
+
+<Figure
+  src="/media/agent-continuous-evaluation.svg"
+  alt="The continuous evaluation loop. Step 1: a change (a new prompt, model, tool or code) is committed. Step 2: the CI gate runs the evalset offline with trajectory match, rubrics and safety; a failure blocks the release. Step 3: the agent is deployed to production. Step 4: online monitoring samples live traces and scores them with reference-free checks, and watches latency, cost and errors. Step 5: failures found in production become new eval cases, which feed back into the CI gate's evalset. The evalset grows with every failure found, so the next change is tested against it."
+  caption="Reference-based checks run in CI, where expected answers exist. Live traffic has no reference, so online checks are reference-free."
+/>
+
+- **The CI gate** runs the evalset on every change: a new prompt, a model
+  version, a tool. Reference-based checks (trajectory and response match) and
+  judged checks both run here, and a regression fails the build before users see
+  it.
+- **Online monitoring** scores a sample of live traces after release. Live
+  traffic has no expected trajectory or reply, so it uses reference-free checks
+  (rubrics, groundedness, safety) alongside latency, cost and error rates.
+- **The loop closes** when a failure found online becomes a new case in the
+  evalset, so the CI gate tests every later change against it.
+
+<Flashcard id="why-reference-free-online" objective="continuous-eval" front="Why do online monitors use reference-free checks?" back="Live traffic has no expected trajectory or reference reply to compare with. Rubrics, groundedness and safety can score a trace on its own; trajectory and response matching need a reference, so they run in CI on the golden dataset." />
+
+## Recap
+
+- By default, a call matches only with the same name and arguments. EXACT allows nothing
+  extra, IN_ORDER allows extra calls between, and ANY_ORDER also ignores order.
+  Choose the loosest mode that still fails the runs you care about.
+- Check what has one right answer (which tools, what order, what arguments)
+  deterministically; use model judges for meaning, tone and groundedness.
+- Neither a trajectory match nor a judge sees the identity behind a call; assert
+  it from logs or traces.
+- Run reference-based checks in a CI gate and reference-free checks online, and
+  turn production failures into new cases.
+
+## Sources
+
+- Google, Agent Development Kit documentation, "Evaluation criteria", github.com/google/adk-docs/blob/main/docs/evaluate/criteria.md (retrieved 2026-11-17: tool_trajectory_avg_score with EXACT, IN_ORDER and ANY_ORDER, EXACT by default, per-invocation scores of 1.0 or 0.0 averaged over the case; response_match_score is ROUGE-1; judged criteria sample the judge model several times and take a majority vote; rubric_based_tool_use_quality_v1 for tool-use rules written in words, including prescribed workflows and call order; safety_v1 delegates to the Agent Platform Eval SDK).
+- Google, adk-python source, src/google/adk/evaluation/trajectory_evaluator.py (retrieved 2026-11-17: a call matches when its name and arguments are equal unless the ignore_args option is set; the three match algorithms).
+- Google, Agent Development Kit documentation, "Custom metrics", github.com/google/adk-docs/blob/main/docs/evaluate/custom_metrics.md (retrieved 2026-11-17: a custom metric is a Python function over the actual and expected invocations that returns an EvaluationResult).
+- Google Cloud, "Gen AI evaluation service overview" and "Determine evaluation metrics", docs.cloud.google.com/gemini-enterprise-agent-platform/models/evaluation-overview and …/determine-eval (retrieved 2026-11-17 from the pages' descriptions: test-driven evaluation and adaptive rubrics; rubric-based, computation-based and custom function metrics).

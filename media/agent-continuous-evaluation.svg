@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 320" width="760" height="320" role="img" aria-label="The continuous evaluation loop. A change (prompt, model, tool or code) is committed. In CI, the evalset runs with deterministic checks (trajectory match) and model-judged checks (rubrics, groundedness, safety); a failure blocks the release. The agent is deployed. Online monitoring samples live traces and scores them with reference-free checks, and watches latency, cost and errors. Failures found in production become new eval cases, which feed back into the evalset for the next change.">
+  <rect width="760" height="320" fill="#ffffff"/>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <g font-family="Inter, system-ui, sans-serif">
+    <text x="380" y="30" text-anchor="middle" font-size="16" font-weight="600" fill="#0f172a">Continuous evaluation: before release and after it</text>
+
+    <g font-size="12" fill="#334155">
+      <rect x="20" y="70" width="150" height="110" rx="12" fill="#f8fafc" stroke="#94a3b8"/>
+      <text x="95" y="96" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">1. Change</text>
+      <text x="34" y="122">New prompt, model,</text>
+      <text x="34" y="138">tool or code is</text>
+      <text x="34" y="154">committed</text>
+
+      <rect x="200" y="70" width="170" height="110" rx="12" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="285" y="96" text-anchor="middle" font-size="13" font-weight="600" fill="#1e3a8a">2. CI gate (offline)</text>
+      <text x="214" y="122">Evalset runs:</text>
+      <text x="214" y="138">trajectory match,</text>
+      <text x="214" y="154">rubrics, safety</text>
+      <text x="214" y="170" fill="#b91c1c" font-weight="600">Fail blocks release</text>
+
+      <rect x="400" y="70" width="150" height="110" rx="12" fill="#f8fafc" stroke="#94a3b8"/>
+      <text x="475" y="96" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">3. Deploy</text>
+      <text x="414" y="122">Release to</text>
+      <text x="414" y="138">production</text>
+
+      <rect x="580" y="70" width="160" height="110" rx="12" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/>
+      <text x="660" y="96" text-anchor="middle" font-size="13" font-weight="600" fill="#065f46">4. Online monitoring</text>
+      <text x="594" y="122">Sample live traces;</text>
+      <text x="594" y="138">reference-free checks;</text>
+      <text x="594" y="154">latency, cost, errors</text>
+    </g>
+    <g stroke="#475569" stroke-width="1.5" fill="none">
+      <line x1="170" y1="125" x2="196" y2="125" marker-end="url(#ar)"/>
+      <line x1="370" y1="125" x2="396" y2="125" marker-end="url(#ar)"/>
+      <line x1="550" y1="125" x2="576" y2="125" marker-end="url(#ar)"/>
+      <path d="M660,180 L660,250 L285,250 L285,184" marker-end="url(#ar)"/>
+    </g>
+    <rect x="345" y="232" width="250" height="36" rx="8" fill="#fffbeb" stroke="#d97706"/>
+    <text x="470" y="255" text-anchor="middle" font-size="12" fill="#92400e" font-weight="600">5. Failures become new eval cases</text>
+    <text x="380" y="298" text-anchor="middle" font-size="12" fill="#475569">The evalset grows with every failure found, so the next change is tested against it.</text>
+  </g>
+</svg>
