@@ -91,6 +91,15 @@ quiz:
       - "Add ACL metadata to each ticket and mark the store access-controlled"
     answer: 1
     explanation: "Permission filtering is only as good as the ACLs a connector can see, and connectors have documented gaps: in Jira, attachments on private comments don't inherit the comment's restrictions. So check the limits and test as a user who should be denied. Trusting the mapping alone misses such gaps, and ACL metadata you add yourself is for data you import from Cloud Storage or BigQuery, not for connector stores."
+  - id: policy-updated-this-morning
+    objective: app-store-connector
+    question: "HR updated the leave policy in Confluence at 9:00. At 10:00 the agent still quotes the old policy, though a test user can open the new page in Confluence. The Confluence connector ingests with default settings. What explains it?"
+    choices:
+      - "The new page's ACLs block the test user"
+      - "The copy hasn't synced since the change"
+      - "Blended search ranked an old page higher"
+    answer: 1
+    explanation: "An ingestion connector answers from its copy, which picks up changes at the next sync, every three hours by default, so a change made an hour ago may not be there yet. The user can open the page in Confluence, so ACLs aren't hiding it, and ranking can't return text that isn't in the index. Shorten the sync schedule or use federation where freshness matters."
   - id: video-question
     objective: multimodal
     question: "A field engineer wants to ask the Gemini Enterprise assistant about a 3-minute MP4 clip of a faulty pump. What is the simplest route?"
@@ -130,6 +139,13 @@ Connectors work in one of two ways, and some support both:
   by default with an incremental sync every three hours. Search quality is usually
   better, at the cost of storage and sync time.
 
+An ingested copy is only as fresh as its last sync. If a policy changes in the
+source at 9:00 and the next incremental sync runs at 11:00, the agent answers from
+the old copy until then, and it sounds just as confident. Incremental syncs pick up
+changes; full syncs, scheduled separately, capture the source's whole state. When
+answers must reflect a change within minutes, shorten the schedule or use a
+federated connector, which asks the source live.
+
 ## Choosing the store type
 
 | Source | Data store type |
@@ -168,7 +184,9 @@ everything at once or filter to one store. A few rules apply:
 ## Permission-aware retrieval
 
 The rule that matters most: **an agent must never widen what a user can read.**
-Gemini Enterprise filters results per user, which needs two things:
+Two layers of control are involved. IAM roles on the project and the app, with a
+user licence, decide who may use the app at all. Inside the app, Gemini Enterprise
+filters results per user, which needs two things:
 
 - **Who is asking.** Gemini Enterprise uses your identity provider (IdP) to
   identify the person searching. If you connect that provider through a workforce
@@ -222,7 +240,8 @@ rather than searched like a data store.
 
 - Google Cloud, Professional Agentic Architect exam guide, services.google.com/fh/files/misc/professional_agentic_architect_exam_guide_english.pdf (retrieved 2026-11-17: objective 1.2).
 - Google Cloud, "About apps and data stores", docs.cloud.google.com/gemini/enterprise/docs/apps-data-stores (updated 2026-11-10, retrieved 2026-11-17: apps, data store types, website data stores can't be connected, blended search rules).
-- Google Cloud, "Introduction to connectors and data stores", docs.cloud.google.com/gemini/enterprise/docs/connectors/introduction-to-connectors-and-data-stores (retrieved 2026-11-17: federated and ingestion connectors, sync schedule, identity sync).
+- Google Cloud, "Introduction to connectors and data stores", docs.cloud.google.com/gemini/enterprise/docs/connectors/introduction-to-connectors-and-data-stores (retrieved 2026-11-17: federated and ingestion connectors, incremental sync every 3 hours by default, full syncs, identity sync).
+- Google Cloud, "Configure IAM policies for apps", docs.cloud.google.com/gemini/enterprise/docs/iam-policy-for-apps (retrieved 2026-11-17: IAM roles grant access to an app; users need a valid licence).
 - Google Cloud, "Prepare data for ingesting", docs.cloud.google.com/gemini/enterprise/docs/connectors/prepare-data (retrieved 2026-11-17: formats and limits, layout parser).
 - Google Cloud, "Configure access controls for custom data sources", docs.cloud.google.com/gemini/enterprise/docs/identity (retrieved 2026-11-17: identity provider, workforce pool, ACL metadata, access control set when the store is created).
 - Google Cloud, "Jira Cloud", docs.cloud.google.com/gemini/enterprise/docs/connectors/jira-cloud (retrieved 2026-11-17: permission mapping, private-comment attachments).
