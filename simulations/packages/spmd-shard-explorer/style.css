@@ -29,8 +29,8 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .
 .seg-btn.on { background: var(--primary); color: var(--primary-contrast); }
 .btn-row { display: flex; gap: 8px; }
 .btn-run { font: inherit; padding: 8px 18px; border-radius: 8px; border: none; background: var(--primary); color: var(--primary-contrast); font-weight: 700; cursor: pointer; transition: filter .2s; font-size: 14px; }
-.btn-run:hover:not(:disabled) { filter: brightness(.92); }
-.btn-run:disabled { opacity: .5; cursor: not-allowed; }
+.btn-run:hover:not(:disabled):not([aria-disabled="true"]) { filter: brightness(.92); }
+.btn-run:disabled, .btn-run[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }
 .btn-ghost { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--fg); font-weight: 700; cursor: pointer; font-size: 14px; }
 .btn-ghost:hover:not(:disabled) { background: color-mix(in srgb, var(--fg) 5%, transparent); }
 .btn-ghost:disabled { opacity: .5; cursor: not-allowed; }

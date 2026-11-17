@@ -117,8 +117,14 @@ function addHistory(statusLabel, badgeClass) {
   renderHistory();
 }
 
+// Deploy and Abort take each other's place. When the one a keyboard user pressed is hidden, the other takes focus,
+// so focus never falls to the page (LMS-content#135). Which had focus is read before anything is hidden: a hidden
+// button loses focus as soon as the browser next updates styles.
+const hasFocus = (btn) => document.activeElement === btn;
+
 function startJob() {
   if (state.status !== "IDLE") return;
+  const fromDeploy = hasFocus(btnDeploy);
   state.progress = 0; state.cost = 0; state.preemptions = 0;
   state.queueWait = MODE_CONFIG[state.mode].queueTicks;
   state.status = state.queueWait > 0 ? "QUEUED" : "RUNNING";
@@ -137,15 +143,18 @@ function startJob() {
   }
   state.timer = setInterval(tick, 50);
   updateUI();
+  if (fromDeploy) btnStop.focus();
   if (!observed && window.sim) { observed = true; sim.checkpoint("observe-capacity"); }
 }
 
 function stopJob() {
+  const fromStop = hasFocus(btnStop);
   clearInterval(state.timer);
   addHistory("Aborted", "bg-danger");
   state.status = "IDLE";
   log("Run aborted by user.", "warn");
   updateUI();
+  if (fromStop) btnDeploy.focus();
 }
 
 function triggerPreemption() {
@@ -165,6 +174,7 @@ function triggerPreemption() {
 }
 
 function tick() {
+  const fromStop = hasFocus(btnStop);
   const config = MODE_CONFIG[state.mode];
   const slice = SLICE_CONFIG[state.slice];
   const costPerTick = (slice.baseCostHour / 3600) * config.multiplier * 0.5;
@@ -197,6 +207,7 @@ function tick() {
     }
   }
   updateUI();
+  if (state.status === "IDLE" && fromStop) btnDeploy.focus(); // the run finished while Abort had focus
 }
 
 window.sim = typeof createSim !== "undefined"

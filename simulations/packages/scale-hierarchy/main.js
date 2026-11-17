@@ -84,7 +84,30 @@ function setLevel(n) {
   updateDataState();
 }
 
+/**
+ * The focused control, as a selector for its replacement, so that it takes focus again after a render writes the
+ * controls anew (LMS-content#135, as tpu-vm-anatomy does, #130); null when focus is elsewhere.
+ */
+function focusedControl() {
+  const el = document.activeElement;
+  if (!el || !app.contains(el)) return null;
+  for (const attr of ["data-i", "data-act"]) {
+    const value = el.getAttribute(attr);
+    if (value !== null) return `[${attr}="${value}"]`;
+  }
+  return el.id ? `#${el.id}` : null;
+}
+/** Focus the control again after a render; when it's now disabled (the last step's Next, the first step's Prev), the other step button. */
+function restoreFocus(sel) {
+  if (!sel) return;
+  const same = app.querySelector(sel);
+  const other = app.querySelector(sel === '[data-act="next"]' ? '[data-act="prev"]' : '[data-act="next"]');
+  const target = same && !same.disabled ? same : other;
+  if (target && !target.disabled) target.focus();
+}
+
 function renderUI() {
+  const focused = focusedControl();
   const lvl = LEVELS[i];
   const isDCN = lvl.id === "multislice";
   const netClass = isDCN ? "net-dcn" : lvl.net === "OPTICAL ICI" ? "net-optical" : "net-copper";
@@ -123,6 +146,7 @@ function renderUI() {
   canvas = document.getElementById("c");
   ctx = canvas.getContext("2d");
   canvas.addEventListener("pointerdown", (e) => { isDragging = true; lastX = e.clientX; lastY = e.clientY; nudge(); });
+  restoreFocus(focused);
   resizeCanvas();
   reportSize();
   nudge(); // a new view: draw it, and restart the idle timer

@@ -27,11 +27,11 @@ body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, syst
 .btn-run.compile { background: var(--compile); color: var(--primary-contrast); box-shadow: 0 4px 12px color-mix(in srgb, var(--compile) 40%, transparent); }
 .btn-run.execute { background: var(--primary); color: var(--primary-contrast); box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 40%, transparent); }
 .btn-run.secondary { background: transparent; color: var(--fg); border: 2px solid var(--border); box-shadow: none; padding: 10px 16px; }
-.btn-run.secondary:hover:not(:disabled) { background: color-mix(in srgb, var(--fg) 5%, transparent); border-color: var(--muted); }
+.btn-run.secondary:hover:not(:disabled):not([aria-disabled="true"]) { background: color-mix(in srgb, var(--fg) 5%, transparent); border-color: var(--muted); }
 .btn-run.compile.secondary { color: var(--compile); border-color: var(--compile); }
-.btn-run.compile.secondary:hover:not(:disabled) { background: color-mix(in srgb, var(--compile) 10%, transparent); }
-.btn-run:hover:not(:disabled) { filter: brightness(.92); transform: translateY(-1px); }
-.btn-run:disabled { background: var(--surface); color: var(--muted); box-shadow: none; transform: none; cursor: not-allowed; border: 1px solid var(--border); }
+.btn-run.compile.secondary:hover:not(:disabled):not([aria-disabled="true"]) { background: color-mix(in srgb, var(--compile) 10%, transparent); }
+.btn-run:hover:not(:disabled):not([aria-disabled="true"]) { filter: brightness(.92); transform: translateY(-1px); }
+.btn-run:disabled, .btn-run[aria-disabled="true"] { background: var(--surface); color: var(--muted); box-shadow: none; transform: none; cursor: not-allowed; border: 1px solid var(--border); }
 
 /* Compile pipeline */
 .compile-stage { display: flex; justify-content: space-between; align-items: center; background: var(--inset); padding: 16px 20px; border-radius: 14px; border: 1px solid var(--border); margin-bottom: 16px; gap: 8px; }
