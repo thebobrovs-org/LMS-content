@@ -195,9 +195,12 @@ Before you press anything, predict: a tool writes `language = "fr"` once with no
 prefix and once as `user:language`. In a new session for the same user, which
 of the two does the agent still read? And for a different user?
 
-Write both, open a new session, then switch users. Then switch the session
-service to `InMemorySessionService` and restart the process: scope decides who
-reads a key, but only a persistent service keeps it across a restart.
+Write both, open a new session, then switch users. Then compare restarts:
+with `DatabaseSessionService`, write a `user:` value and press Restart process.
+Switch the session service to `InMemorySessionService` (which starts the
+exercise again with an empty store), write the same value, and restart again.
+Scope decides who reads a key, but only a persistent service keeps it across a
+restart.
 
 <Simulation id="state-scope-explorer" />
 

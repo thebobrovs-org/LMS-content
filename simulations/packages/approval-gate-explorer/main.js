@@ -76,7 +76,7 @@ function plan() {
       out.push({ stage: "gate", kind: "gate", who: "Runtime", html: `<span class="mono">${esc(how)}</span>. The tool pauses <strong>before it runs</strong>; the client receives an <span class="mono">adk_request_confirmation</span> event.` });
       out.push({ stage: "gate", kind: denied ? "stop" : "ok", who: "Approver", html: denied ? "Denies the refund." : "Approves the refund." });
       if (denied) {
-        out.push({ stage: "tool", kind: "tool", who: "Runtime", html: `<span class="mono">issue_refund</span> never runs. The model receives <span class="mono">{"error": "This tool call is rejected."}</span>` });
+        out.push({ stage: "gate", kind: "tool", who: "Runtime", html: `<span class="mono">issue_refund</span> never runs. The model receives <span class="mono">{"error": "This tool call is rejected."}</span>` });
         reply(`I couldn't issue that refund: it was declined in review. A colleague will contact you about the ${r.item}.`);
       } else {
         run();

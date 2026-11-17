@@ -256,7 +256,12 @@ function build() {
   els.write.addEventListener("click", () => { write(); render(); });
   els.user.addEventListener("change", () => { switchUser(els.user.value); render(); });
   els.session.addEventListener("change", () => { openSession(els.session.value); render(); });
-  els.service.addEventListener("change", () => { service = els.service.value; resetAll(); render(); });
+  els.service.addEventListener("change", () => {
+    service = els.service.value;
+    resetAll();
+    say(`Switched to ${SERVICES[service]}. The exercise starts again with an empty store: write a value before you restart.`);
+    render();
+  });
   els.turn.addEventListener("click", () => { nextTurn(); render(); });
   els.restart.addEventListener("click", () => { restart(); render(); });
   els.reset.addEventListener("click", () => { resetAll(); render(); });
