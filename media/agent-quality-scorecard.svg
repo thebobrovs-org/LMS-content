@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 420" width="760" height="420" role="img" aria-label="One refund agent run scored on six quality dimensions. The final response, grounding, safety, latency and cost pass. The trajectory fails because the agent called issue_refund for 240 dollars without the manager approval step its policy requires. Overall the run fails.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 420" width="760" height="420" role="img" aria-label="One refund agent run scored on six quality dimensions. The final response, grounding and safety pass; latency (1.2 seconds against a 2 second target) and cost (800 tokens against a 1,000-token budget) pass. The trajectory fails because the agent called issue_refund for 240 dollars without the manager approval step its policy requires. Overall the run fails.">
   <rect width="760" height="420" fill="#ffffff"/>
   <g font-family="Inter, system-ui, sans-serif">
     <text x="380" y="30" text-anchor="middle" font-size="16" font-weight="600" fill="#0f172a">One run, six dimensions</text>
@@ -42,11 +42,11 @@
       <text x="650" y="286" fill="#047857" font-weight="600">Pass</text>
 
       <text x="46" y="318" fill="#0f172a">Latency</text>
-      <text x="230" y="318" fill="#475569">One turn, two tool calls, well within the target</text>
+      <text x="230" y="318" fill="#475569">1.2 s for the turn, against a 2 s target</text>
       <text x="650" y="318" fill="#047857" font-weight="600">Pass</text>
 
       <text x="46" y="350" fill="#0f172a">Cost</text>
-      <text x="230" y="350" fill="#475569">Few model calls and tokens</text>
+      <text x="230" y="350" fill="#475569">800 tokens, against a 1,000-token budget</text>
       <text x="650" y="350" fill="#047857" font-weight="600">Pass</text>
       <line x1="30" y1="362" x2="730" y2="362" stroke="#cbd5e1"/>
     </g>

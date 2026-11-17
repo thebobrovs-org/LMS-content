@@ -125,7 +125,7 @@ Here is one run of a refund agent, scored on all six dimensions.
 
 <Figure
   src="/media/agent-quality-scorecard.svg"
-  alt="One refund agent run scored on six quality dimensions. The user asks for a refund of order 1182, and the policy says refunds over 100 dollars need a manager's approval. The agent calls get_order, then issue_refund for 240 dollars, then replies that the refund has been issued. Final response, grounding, safety, latency and cost pass. Trajectory fails because the agent skipped the approval step. Overall the run fails, and a check on the final response alone would have passed it."
+  alt="One refund agent run scored on six quality dimensions. The user asks for a refund of order 1182, and the policy says refunds over 100 dollars need a manager's approval. The agent calls get_order, then issue_refund for 240 dollars, then replies that the refund has been issued. Final response, grounding and safety pass. Latency passes at 1.2 seconds against a 2 second target, and cost at 800 tokens against a 1,000-token budget (illustrative targets the team set). Trajectory fails because the agent skipped the approval step. Overall the run fails, and a check on the final response alone would have passed it."
   caption="The reply is correct and grounded, and the run is fast and cheap. It still fails, because the path broke the refund policy."
 />
 
