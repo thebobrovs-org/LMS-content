@@ -129,9 +129,9 @@ present certificates) and MCP security. For each call it can:
 1. **Know the caller**, from the agent's identity.
 2. **Apply access policy**: is this target approved in the registry, and may
    this agent call it? Policies name targets by their resource names.
-3. **Screen content**, where Model Armor templates are configured on the
-   gateway (the documentation describes them for ingress traffic). The next
-   lesson covers Model Armor itself.
+3. **Screen content**, with Model Armor templates configured on the gateway.
+   They can screen traffic into the agent and traffic out of it, to MCP
+   servers, models and other agents, within limits the next lesson covers.
 4. **Record what happened**, so the traffic can be monitored.
 
 Because it is on the path, the gateway gives you one place to enforce rules and
@@ -176,3 +176,4 @@ gateway is not covered, so routing is part of the design.
 
 - Google Cloud, "Agent Registry identity and identifiers", docs.cloud.google.com/agent-registry/identity-and-identifiers (last updated 2026-11-10, retrieved 2026-11-17: assigns identifiers and identities to registered agents, MCP servers, endpoints and skills "so that you can discover capabilities, enforce access policies, and route runtime traffic"; registry URNs `urn:agent:` and `urn:mcp:`, which "can't be used in IAM policy bindings, authorization headers, or Agent Gateway route rules"; resource names for policies; a managed workload identity in SPIFFE format for agents on Google Cloud).
 - Google Cloud, "Agent Gateway overview", docs.cloud.google.com/gemini-enterprise-agent-platform/govern/gateways/agent-gateway-overview (retrieved 2026-11-17: "Centralize access policies, mTLS, and Model Context Protocol (MCP) security"; configuring Model Armor on a gateway; monitoring gateway traffic).
+- Google Cloud, "Model Armor integration with Agent Gateway", docs.cloud.google.com/model-armor/model-armor-agent-gateway-integration (last updated 2026-11-10, retrieved 2026-11-17: protects "the incoming requests from the client to the agent" and "the outgoing requests from the agent to the external system", with their responses; egress covers MCP servers, external LLMs and other agents).
