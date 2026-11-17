@@ -247,6 +247,8 @@ from google.adk.agents import LlmAgent
 from google.adk.tools.mcp_tool import McpToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPConnectionParams
 from google.adk.tools.toolbox_toolset import ToolboxToolset
+import google.auth.transport.requests
+from google.oauth2 import id_token
 
 orders_tools = ToolboxToolset(
     server_url="https://toolbox-orders.example.run.app",
@@ -255,10 +257,17 @@ orders_tools = ToolboxToolset(
     auth_token_getters={"customer-auth": get_user_id_token},
 )
 
+CARRIER_URL = "https://carrier-mcp.example.run.app"  # your custom server on Cloud Run
+
+def carrier_auth_headers(ctx):
+    # The agent's own service identity proves itself to Cloud Run: a fresh
+    # ID token for the service's URL (its audience), on every new MCP session.
+    token = id_token.fetch_id_token(google.auth.transport.requests.Request(), CARRIER_URL)
+    return {"Authorization": f"Bearer {token}"}
+
 carrier_tools = McpToolset(
-    connection_params=StreamableHTTPConnectionParams(
-        url="https://carrier-mcp.example.run.app/mcp",  # your custom server on Cloud Run
-    ),
+    connection_params=StreamableHTTPConnectionParams(url=f"{CARRIER_URL}/mcp"),
+    header_provider=carrier_auth_headers,
     tool_filter=["book_pickup", "get_pickup_status"],  # offer the model only these
 )
 
@@ -271,9 +280,13 @@ support_agent = LlmAgent(
 ```
 
 `tool_filter` limits which of a server's tools the model is offered, so it sees
-only the declarations it needs and cannot call the rest. Because the Cloud Run service requires IAM, the agent's own service identity
-must be allowed to invoke it and must send an identity token with each request;
-the security lessons later in this path cover agent identities.
+only the declarations it needs and cannot call the rest. It is not access
+control: because the Cloud Run service requires IAM, the agent's own service
+identity must be allowed to invoke it (the invoker role) and must also send an
+identity token with each request, which is what `carrier_auth_headers` does. The
+role alone attaches no token. This is a different boundary from
+`get_user_id_token` above, which carries the end user's identity to Toolbox. The
+security lessons later in this path cover agent identities.
 
 ## Register what agents may use
 
@@ -306,7 +319,7 @@ team answer "which agents can book pickups?"
 - Google Cloud, "Supported products", docs.cloud.google.com/mcp/supported-products (BigQuery, Cloud SQL, Spanner, GKE, Cloud Storage and others, with their endpoints).
 - Google Cloud, "Access control for MCP servers", docs.cloud.google.com/mcp/access-control (MCP Tool User role, roles/mcp.toolUser, plus the product's roles).
 - Google Cloud, "Restrict MCP tools to read-only", docs.cloud.google.com/mcp/prevent-read-write-tool-use (IAM deny policies on tools not marked read-only).
-- Google Cloud, "Host MCP servers on Cloud Run", docs.cloud.google.com/run/docs/host-mcp-servers (streamable HTTP supported, stdio not; IAM-authorised requests by default).
+- Google Cloud, "Host MCP servers on Cloud Run", docs.cloud.google.com/run/docs/host-mcp-servers (streamable HTTP supported, stdio not; IAM-authorised requests by default; clients send an ID token for the service, section "Authentication").
 - Google, MCP Toolbox for Databases, github.com/googleapis/mcp-toolbox (open-source MCP server for databases; tool configuration; authenticated parameters; execute-SQL tools are for developer workflows with a human in the loop, not production agents).
 - Google, Agent Development Kit documentation, "MCP tools", github.com/google/adk-docs/blob/main/docs/tools-custom/mcp-tools/index.md (McpToolset, StreamableHTTPConnectionParams, tool_filter).
 - Google, Agent Development Kit documentation, "MCP Toolbox for Databases", github.com/google/adk-docs/blob/main/docs/integrations/mcp-toolbox-for-databases.md (ToolboxToolset).
