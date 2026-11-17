@@ -21,7 +21,7 @@ flashcards:
   - id: workstation-protects
     objective: choose-sandbox
     front: What does running a coding agent on Cloud Workstations protect?
-    back: "The developer's laptop and its credentials: the agent runs on a dedicated VM per workstation, inside your VPC, which can have no public IP and sit in a VPC Service Controls perimeter. The agent still acts with the workstation's service account and any credentials saved on it, so those must be minimal."
+    back: "The developer's laptop and its credentials: the agent runs on a dedicated VM per workstation, inside your VPC, which, in a private cluster with VMs that have no public IP, is not reachable from the internet and can sit in a VPC Service Controls perimeter. The agent still acts with the workstation's service account and any credentials saved on it, so those must be minimal."
   - id: gke-agent-sandbox-protects
     objective: choose-sandbox
     front: What does GKE Agent Sandbox protect?
@@ -109,12 +109,12 @@ quiz:
     objective: choose-sandbox
     question: "An enterprise team's coding agents must not run on laptops, and the environment they run in must not be reachable from outside the company network. What fits best?"
     choices:
-      - "Cloud Workstations in your VPC, with private addresses only"
+      - "Cloud Workstations in a private cluster, reached over VPN"
       - "GKE Agent Sandbox, one sandbox per developer, kept all day"
       - "Laptops with the terminal sandbox and the Request Review preset"
       - "Laptops with a VPN, so traffic passes through the company network"
     answer: 0
-    explanation: "Cloud Workstations gives each developer a dedicated VM in your VPC, which can have no public IP and sit inside a VPC Service Controls perimeter, with a service account you choose. GKE Agent Sandbox suits generated code at scale rather than a developer's working environment, and both laptop options still run the agent on a laptop."
+    explanation: "Cloud Workstations gives each developer a dedicated VM in your VPC. A private cluster (a private gateway, reached through a Private Service Connect endpoint) is what keeps clients outside the company network out: company devices connect over Cloud VPN or Interconnect, and VMs without public IP addresses close the other way in. Turning off VM public IPs alone does not make the access gateway private. GKE Agent Sandbox suits generated code at scale rather than a developer's working environment, and both laptop options still run the agent on a laptop."
   - id: refactor-check
     objective: safe-refactor
     question: "An agent's refactor of a billing module comes with three edited tests, and the suite passes. What should the reviewer do?"
@@ -211,11 +211,21 @@ whatever access it was given.
 
 <Term id="cloud workstations">Cloud Workstations</Term> moves the developer's
 environment, and the coding agent with it, off the laptop. Each workstation
-runs on its own VM inside your VPC. Google's security guidance is to disable
-public IP addresses, put workstations in a VPC Service Controls perimeter (a
-boundary that stops data in Google APIs such as Cloud Storage or BigQuery being
-reached from, or copied to, projects outside it), and keep each workstation
-single-user.
+runs on its own VM inside your VPC. To keep the environment off the internet,
+two settings work together, and neither replaces the other:
+
+- **A private cluster.** Choose a **private gateway** when you create the
+  workstation cluster, so its endpoint has only an internal address. Developers
+  reach it through a Private Service Connect endpoint in your VPC, with a
+  private DNS record for the cluster, and from the company network over Cloud
+  VPN or Cloud Interconnect.
+- **No public IPs on the VMs**, set in the workstation configuration. Without
+  it, the VMs get public addresses even in a private cluster.
+
+Google's security guidance adds a VPC Service Controls perimeter (a boundary
+that stops data in Google APIs such as Cloud Storage or BigQuery being reached
+from, or copied to, projects outside it), which requires a private cluster, and
+keeping each workstation single-user.
 
 For coding agents, Google documents an agent-optimised setup: a workstation can
 suspend when idle and keep its memory, processes and terminal sessions, and
@@ -272,7 +282,7 @@ identity.
 
 <Figure
   src="/media/coding-agent-isolation-ladder.svg"
-  alt="An isolation ladder with four rungs, from least to most isolated. Developer laptop, no sandbox: commands run with every file and credential on the machine. Antigravity terminal sandbox: commands confined to the workspace with no network by default and secrets such as ~/.ssh and .env blocked, but still on the laptop. Cloud Workstations: a dedicated VM per developer in your VPC, with no public IP, a VPC Service Controls perimeter and a minimal service account, which keeps company credentials off laptops. GKE Agent Sandbox: a kernel-isolated Pod per run from a warm pool, with internal traffic and the metadata server blocked, for agent-generated code at scale. A side note says every rung still needs least-privilege credentials and human review before code ships."
+  alt="An isolation ladder with four rungs, from least to most isolated. Developer laptop, no sandbox: commands run with every file and credential on the machine. Antigravity terminal sandbox: commands confined to the workspace with no network by default and secrets such as ~/.ssh and .env blocked, but still on the laptop. Cloud Workstations: a dedicated VM per developer in a private cluster, reached through a private gateway, with no public VM IP addresses, a VPC Service Controls perimeter and a minimal service account, which keeps company credentials off laptops. GKE Agent Sandbox: a kernel-isolated Pod per run from a warm pool, with internal traffic and the metadata server blocked, for agent-generated code at scale. A side note says every rung still needs least-privilege credentials and human review before code ships."
   caption="Each rung isolates more, and none replaces least privilege and review."
 />
 
@@ -281,7 +291,7 @@ identity.
 | Scenario | Isolation | Keep out |
 |---|---|---|
 | One developer using a coding agent on a laptop | Terminal sandbox with the Default preset, or Request Review where the sandbox is unavailable | Production credentials on the laptop |
-| An enterprise team of developers using coding agents | Cloud Workstations with no public IP, a perimeter and a minimal service account | Company credentials on laptops; production roles on the workstation |
+| An enterprise team of developers using coding agents | Cloud Workstations in a private cluster with no public VM IPs, a perimeter and a minimal service account | Company credentials on laptops; production roles on the workstation |
 | An agent product running generated code for many users | GKE Agent Sandbox, a sandbox per run from a warm pool, with egress restricted | Cloud credentials and the metadata server inside sandboxes |
 
 ## Patch a vulnerability with review gates
@@ -349,6 +359,7 @@ that proves the work is done:
 - Google Cloud Blog, GKE Agent Sandbox general availability, May 2026 ("GKE Agent Sandbox is now generally available"; Agent Substrate as a new open-source project).
 - Kubernetes SIGs, agent-sandbox README, github.com/kubernetes-sigs/agent-sandbox (the open-source project and its resources).
 - Google Cloud, "Agent-optimized development", docs.cloud.google.com/workstations/docs/agent-optimized-development (suspend on idle keeping memory and processes; keep-alive hooks for Claude Code and Antigravity CLI).
+- Google Cloud, "Configure VPC Service Controls and private clusters", docs.cloud.google.com/workstations/docs/configure-vpc-service-controls-private-clusters (a private cluster's control plane has only an internal IP; clients connect through a Private Service Connect endpoint and private DNS, and off-network machines through Cloud VPN or Cloud Interconnect; turn off public IP addresses in the workstation configuration separately; public clusters cannot be created in a VPC service perimeter).
 - Google Cloud, Cloud Workstations security best practices, service accounts and authentication pages, docs.cloud.google.com/workstations/docs (dedicated VM per workstation; disable public IPs; VPC Service Controls; attach a service account, otherwise the default workstation service account; saved gcloud credentials persist; keep workstations single-user).
 - Google Cloud, "AI security and safety" for MCP, docs.cloud.google.com/mcp/ai-security-safety (create an agent identity; principle of least privilege; deny policy on read-write tool access to production resources).
 - Google Cloud, "Use IAM securely", docs.cloud.google.com/iam/docs/using-iam-securely (avoid basic roles in production; grant Owner only when nearly universal access is required).
