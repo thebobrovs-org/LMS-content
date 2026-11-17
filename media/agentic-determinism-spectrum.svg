@@ -14,8 +14,8 @@
   </defs>
   <line x1="60" y1="70" x2="700" y2="70" stroke="url(#g)" stroke-width="4" marker-end="url(#arrow)"/>
   <g font-family="Inter, system-ui, sans-serif" font-size="12" fill="#475569">
-    <text x="60" y="94">More predictable, easier to test</text>
-    <text x="700" y="94" text-anchor="end">More flexible, more autonomous</text>
+    <text x="60" y="94">Less system autonomy</text>
+    <text x="700" y="94" text-anchor="end">More system autonomy</text>
   </g>
 
   <!-- three cards -->

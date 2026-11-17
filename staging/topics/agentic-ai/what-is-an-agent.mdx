@@ -30,56 +30,65 @@ quiz:
     objective: agent-vs-workflow
     question: "Every invoice goes through the same steps: extract the fields with Gemini, check them against the purchase order in code, then route to a person for approval. What is this system?"
     choices:
-      - An agent, because it calls Gemini
-      - A workflow, because the designer fixed the steps and their order
-      - An agent, because Gemini decides which fields to extract
+      - "An agent, because it calls Gemini at run time"
+      - "A workflow, because the designer fixed every step"
+      - "A chatbot, because a person approves each invoice"
     answer: 1
-    explanation: The path never changes and no model chooses what happens next, so it is a workflow with a model call inside one step. Calling an LLM does not make a system an agent, and a model choosing its output (which fields) is not the same as choosing the next step.
+    explanation: "The path never changes and no model chooses what happens next, so it is a workflow with a model call inside one step. Calling an LLM does not make a system an agent. A person approving at the end is a fixed step the designer placed in the path, not a user steering a conversation, so it is not a chatbot."
   - id: classify-it-troubleshooter
     objective: agent-vs-workflow
-    question: "An IT helper investigates users' problems. The issues are new and varied, so no one can write a decision tree for them in advance. The helper must choose which checks to run (logs, device lookup, runbooks, opening a ticket) based on what each check finds. Which design fits?"
+    question: "An IT helper investigates users' problems. The issues are new and varied, so no one can write a decision tree for them in advance. To solve each one it may read logs, look up the device, search runbooks or open a ticket, and the order differs from case to case. Which design fits?"
     choices:
-      - An agent, because the next step depends on what each step finds
-      - A workflow with a branch for each known problem type
-      - A chatbot that answers the user's question without taking actions
+      - "An agent, because the model must direct the investigation"
+      - "A workflow with a branch for each known problem type"
+      - "A chatbot that answers the user's question and takes no actions"
     answer: 0
-    explanation: The path cannot be designed in advance, which is exactly where an agent earns its cost. A workflow with branches is still the designer's path. It handles the cases someone foresaw and wrote conditions for. Here the issues are open-ended, so the model has to direct the investigation itself, choosing each next check from what the last one found.
+    explanation: "The path cannot be designed in advance, which is exactly where an agent earns its cost. A workflow with branches is still the designer's path, and it handles only the cases someone foresaw and wrote conditions for. A chatbot cannot run checks or open tickets on its own. Here the model has to direct the investigation itself, choosing each next check from what the last one found."
   - id: classify-hr-faq
     objective: agent-vs-workflow
-    question: "An HR assistant answers employees' policy questions one message at a time. It takes no actions in any system, and the employee decides what to ask next. What is it?"
+    question: "An HR assistant answers employees' policy questions. Each reply is a single answer drawn from the policy documents. It changes nothing in any system, and whatever happens next is up to the employee. What is it?"
     choices:
-      - A chatbot, because the user directs each next step and it only answers
-      - A workflow, because its answers follow the policy documents
-      - An agent, because Gemini reasons about each question
+      - "A chatbot, because it replies and then waits for the user"
+      - "A workflow, because its answers follow the policy documents"
+      - "An agent, because Gemini reasons about each question"
     answer: 0
-    explanation: The user controls the path and the system only answers, so it is a chatbot. Drawing answers from fixed documents does not make it a designer-laid-out workflow, and reasoning inside one reply is not the same as directing a sequence of steps and tool calls.
+    explanation: "The user controls the path and the system only answers, so it is a chatbot. Drawing answers from fixed documents does not make it a designer-laid-out workflow, and reasoning inside one reply is not the same as directing a sequence of steps and tool calls."
   - id: autonomy-tradeoff
     objective: autonomy-cost
     question: "You replace a fixed workflow with an agent that picks its own steps. What do you give up?"
     choices:
-      - Nothing, as long as you still check that the final answer is correct
-      - Nothing, if a restrictive system prompt lists the allowed steps
-      - Some predictability and testability, so you need more evaluation and guardrails
-    answer: 2
-    explanation: Autonomy buys flexibility at the price of predictability, latency, cost and testing effort. Checking only the final answer misses a wrong or unsafe path that happened to end well, and a prompt that lists steps is guidance the model can drift from, not an enforced limit. That is why evaluation and security matter more as autonomy grows.
+      - "Answer quality, because agents are less accurate than workflows"
+      - "Some predictability, so you need path-level evals and guardrails"
+      - "Tool use, because an agent can call tools only inside a workflow"
+    answer: 1
+    explanation: "Autonomy buys flexibility at the price of predictability, latency, cost and testing effort, so you must check the path the agent took, not just its answer. Agents are not inherently less accurate; on open-ended tasks they can do better than a fixed path. And calling tools is what agents do, in a loop the model directs, with no workflow step required."
   - id: name-missing-part
     objective: define-agent
     question: "A team gives a model good instructions and a clear goal, and it writes excellent plans for resetting a user's password. But nothing ever changes in the identity system. Which part of an agent is missing?"
     choices:
-      - Tools the model can call to act on the identity system
-      - A larger model with better reasoning
-      - Longer-term memory of earlier conversations
+      - "Tools it can call to make changes"
+      - "A larger model with better reasoning"
+      - "Longer-term memory of earlier chats"
     answer: 0
-    explanation: Without tools, a model can only produce text. Tools are how an agent reads data and acts; the runtime executes the calls the model asks for.
+    explanation: "Without tools, a model can only produce text. A better model or more memory still only produces text, so nothing executes a change. Tools are how an agent reads data and acts, and the runtime executes the calls the model asks for."
+  - id: who-runs-the-tool
+    objective: define-agent
+    question: "In an agent's loop, the model decides to call a get_order_status tool. What executes that call?"
+    choices:
+      - "The model, as part of its own reasoning step"
+      - "The tool's API, which the model connects to directly"
+      - "The runtime or your code, which returns the result to the model"
+    answer: 2
+    explanation: "The model only proposes the call: it outputs the tool name and arguments. The runtime (the agent framework or your code) executes it and feeds the result back. The model neither runs code inside its reasoning nor opens network connections to APIs."
   - id: autonomy-risk
     objective: autonomy-cost
-    question: "An agent that can issue refunds is about to launch. Which concern grows because it can act, not just answer?"
+    question: "An agent that can issue refunds must never refund more than $100 without a manager's approval. Which design actually enforces that limit?"
     choices:
-      - A strong final-answer quality eval is enough to make it safe
-      - A wrong action does real damage, so it needs narrow permissions
-      - A system prompt saying never refund over $100 fully controls its actions
-    answer: 1
-    explanation: An agent that can act can act wrongly, and the damage is real. A final-answer eval does not show which actions it took on the way, and a rule in the prompt is not a guardrail, because the model can be wrong or manipulated into ignoring it. Narrow permissions and enforced controls (such as a refund limit in the tool and human approval before large refunds) limit what a mistake or an attack can do.
+      - "The system prompt says never to refund over $100 without a manager"
+      - "A final-answer eval checks that replies mention the $100 policy"
+      - "The refund tool rejects amounts over $100 unless a manager approved"
+    answer: 2
+    explanation: "Only a check outside the model enforces the limit. A rule in the prompt is guidance the model can get wrong or be manipulated into ignoring, so it is not a guardrail. A final-answer eval runs on test cases before launch and looks at what the agent said, not at the actions it took in production."
 status: draft
 updated: "2026-11-17"
 ---
@@ -101,7 +110,9 @@ The tool-using <Term id="agent">agents</Term> this path studies have four core
 parts, plus state. Google's Agent Development Kit (ADK) names the first three as
 an agent's basic components, with tools optional: an ADK agent needs only a model
 and instructions, but without tools it can only produce text, never read live data
-or act.
+or act. ADK's agent class is a building block, not a verdict: a tool-less ADK
+agent that answers whatever the user asks behaves as a chatbot in this lesson's
+terms.
 
 - **A model** that reads the situation and reasons about what to do.
 - **Instructions** that set the goal, the persona and the limits.
@@ -115,7 +126,7 @@ or act.
 Around these four, **state** (the conversation so far, and longer-term memory) lets
 each turn build on the last.
 
-<Callout type="note">The model never runs a tool itself. It asks for a call, and your code or the agent runtime executes it. A later topic, the agent loop, follows one request through this cycle.</Callout>
+<Callout type="note">The model never runs a tool itself. It asks for a call, and your code, the agent runtime or the provider's tool service executes it. A later topic, the agent loop, follows one request through this cycle.</Callout>
 
 <Flashcard id="agent-loop-inline" objective="define-agent" front="In an agent's loop, who executes a tool call?" back="The runtime or your code. The model only proposes the call and reads the result." />
 
@@ -125,8 +136,8 @@ The defining question is **who controls the path**: who decides what happens nex
 
 <Figure
   src="/media/agentic-determinism-spectrum.svg"
-  alt="A left-to-right spectrum from chatbot to workflow to agent. Chatbot: the user decides; answers each message and acts only when asked; simple and low risk, but the user directs each next step. Workflow: the designer decides; paths laid out in advance, with models filling steps or picking branches; predictable and testable but breaks when the path cannot be known ahead. Agent: the model decides; directs its own steps and tool calls in a loop; handles open-ended tasks but is less predictable and needs evals and guardrails."
-  caption="The determinism spectrum: moving right buys flexibility and costs predictability."
+  alt="A left-to-right spectrum of system autonomy, from chatbot to workflow to agent. Chatbot: the user decides; answers each message and acts only when asked; simple and low risk, but the user directs each next step. Workflow: the designer decides; paths laid out in advance, with models filling steps or picking branches; predictable and testable but breaks when the path cannot be known ahead. Agent: the model decides; directs its own steps and tool calls in a loop; handles open-ended tasks but is less predictable and needs evals and guardrails."
+  caption="The determinism spectrum: moving right, the system decides more for itself, which buys flexibility and costs predictability in what it does."
 />
 
 - A **chatbot** answers each message. It acts only when the user asks, and the
@@ -136,7 +147,10 @@ The defining question is **who controls the path**: who decides what happens nex
   reply, and a model may even pick between branches the designer defined, but it
   never invents the path. That makes it predictable and easy to test. A single
   model call is simpler still, and often enough.
-- An **agent** lets the model direct its own steps at run time. It can handle a
+- An **agent** lets the model direct its own steps at run time. Where a
+  workflow's router makes one choice among branches the designer wired, an agent
+  chooses again and again in a loop, each choice informed by the last result. It
+  can handle a
   task whose path you cannot know ahead of time, such as investigating a problem
   where each finding decides the next check.
 
@@ -152,19 +166,23 @@ actions pass through a fixed approval step.
   question="A feature sends each support ticket to Gemini with the prompt 'summarise this in three bullets' and shows the result. What is it?"
   choices={["An agent, because it calls Gemini", "A single model call, not an agent", "A chatbot, because it writes natural language"]}
   answer={1}
-  explanation="Nothing chooses a next step: one fixed call, one output. It needs good prompting, not agent machinery."
+  explanation="Nothing chooses a next step: one fixed call, one output. It needs good prompting, not agent machinery. It is not a chatbot either, because there is no conversation: the user never directs a next step."
 />
 
 ## What autonomy costs
 
-Each step to the right on the spectrum buys flexibility and costs something:
+Each step to the right on the spectrum, above all from workflow to agent, hands
+the system more control of what it does. That buys flexibility and costs
+something:
 
 - **Predictability.** The same input can take a different path on a different day.
 - **Testing effort.** You must check the path the agent took, not just its final
   answer.
 - **Latency and cost.** More model turns mean more time and more tokens.
 - **Risk.** An agent that can act can act wrongly, and errors can compound over
-  many turns, so it needs narrow permissions and guardrails.
+  many turns, so it needs narrow permissions and guardrails. A limit written in
+  the prompt is only guidance the model can ignore or be manipulated past, so
+  enforce it in the tool or with an approval step.
 
 So the rule is simple: **use the least autonomy that solves the task.** Start
 with a single model call or a workflow, and give the model control of the next
@@ -176,5 +194,6 @@ ship.
 ## Sources
 
 - Google, Agent Development Kit documentation, "Agents", github.com/google/adk-docs/blob/main/docs/agents/index.md (an agent's basic components: a model, task instructions and optionally tools; ADK's broader meaning of workflow).
+- Google, Agent Development Kit documentation, "Workflows", github.com/google/adk-docs/blob/main/docs/workflows/index.md (any application with more than one agent or executable node is a workflow; collaborative workflows where one agent coordinates sub-agents).
 - Google Cloud, "What is an AI agent?", cloud.google.com/discover/what-are-ai-agents (agents vs assistants vs bots).
 - Anthropic, "Building effective agents", anthropic.com/engineering/building-effective-agents (workflows use predefined code paths, agents direct their own process; start with the simplest solution; agentic systems trade latency and cost for task performance, with the potential for compounding errors).

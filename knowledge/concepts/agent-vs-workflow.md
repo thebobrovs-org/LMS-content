@@ -7,6 +7,7 @@ scope: "Choosing an architecture for an LLM-powered task, using workflow in Anth
 sources:
   - "Anthropic, \"Building effective agents\", anthropic.com/engineering/building-effective-agents (workflows: predefined code paths; agents: the model directs its own process; start with the simplest solution)"
   - "ADK documentation, \"Agents\", section \"Grow from single agent to workflows\", github.com/google/adk-docs/blob/main/docs/agents/index.md (mixing deterministic and non-deterministic tasks)"
+  - "ADK documentation, \"Workflows\", github.com/google/adk-docs/blob/main/docs/workflows/index.md (any application with more than one agent or executable node is a workflow; collaborative workflows with a coordinating agent)"
   - "Google Cloud, \"What is an AI agent?\", cloud.google.com/discover/what-are-ai-agents (AI agents vs AI assistants vs bots)"
 tags: [agents, architecture]
 terms: [workflow, chatbot, determinism, autonomy]

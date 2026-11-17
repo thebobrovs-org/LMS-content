@@ -9,6 +9,6 @@
     "definition": "Control flow the designer defines in advance (sequences, branches, loops), possibly with model calls inside steps. A model may pick a predefined branch, but it never invents the path."
   },
   "determinism spectrum": {
-    "definition": "The range from fully scripted flows, where the designer decides every step, to autonomous agents, where the model does."
+    "definition": "The range of designs ordered by how much the system decides for itself: a chatbot acts only when the user asks, a workflow follows the designer's path, and an agent directs its own steps. More autonomy buys flexibility and costs predictability."
   }
 }
