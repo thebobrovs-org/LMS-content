@@ -241,6 +241,22 @@ Matching command text is easy to get around: a hook that looks for
 commands, pair the hook with a permission deny rule or a server-side protection
 such as a protected branch.
 
+If you build your own agent on the Antigravity SDK (topic 2.1), its hooks are
+grouped by what they may do rather than named after events:
+
+| SDK hook type | Can it change data? | Can it block? | Use it for |
+|---|---|---|---|
+| **Inspect** | No, read-only | No; runs without delaying the agent | Logging and monitoring, such as `PostToolCallHook` |
+| **Decide** | No (a tool-call allow may sanitise the arguments) | Yes: it returns allow or deny | Policy and permission checks, such as `PreToolCallDecideHook` |
+| **Transform** | Yes, and returns the modified data | Yes: if it fails, the step fails closed | Sanitising data and recovering from errors, such as `OnToolErrorHook` |
+
+On a tool call, Decide hooks run first and Inspect hooks after the tool has
+run. The checks happen before the action and the logging records what
+actually ran. The Antigravity app's own `hooks.json` still uses event names
+such as `PreToolUse`.
+
+<Flashcard id="sdk-hook-types" objective="pick-mechanism" front="In the Antigravity SDK, what can Inspect, Decide and Transform hooks each do?" back="Inspect: read-only and non-blocking, for logging and monitoring. Decide: read-only gating that returns allow or deny, for policy checks. Transform: modifies the data and returns it, and fails closed if it fails, for sanitising data or recovering from errors." />
+
 ## Subagents give a focused role its own context
 
 A subagent is a delegated agent with its own instructions. Its key property is
@@ -343,6 +359,7 @@ Registry natively.
 
 ## Sources
 
+- Google, Antigravity SDK for Python, "Antigravity Hook Architecture", github.com/google-antigravity/antigravity-sdk-python/blob/main/google/antigravity/hooks/README.md (Inspect hooks read-only and non-blocking; Decide hooks return allow or deny; Transform hooks modify data and fail closed; decisions run before the tool, inspections after).
 - Antigravity documentation, "Rules", antigravity.google/docs/rules (AGENTS.md and GEMINI.md always on; .agents/rules/*.md with trigger always_on, model_decision, glob or manual; 24,000 bytes per file; 20,000-token budget shared by global and always-on rules; manual rules are mentioned in the app, not the CLI).
 - Antigravity documentation, "Hooks", antigravity.google/docs/hooks (.agents/hooks.json and ~/.gemini/config/hooks.json; events SessionStart, PreToolUse, PostToolUse, PreInvocation, PostInvocation, Stop; JSON on stdin and stdout; PreToolUse decisions allow, auto_approve, deny "hard blocks execution immediately", ask, force_ask, deny_unless_prior_grant; PostToolUse fires after a tool completes and returns an empty object). Antigravity changelog v2.12.0: a failing hook no longer ends the session.
 - Antigravity documentation, "Subagents", antigravity.google/docs/subagents (.agents/agents/ with one Markdown file per subagent; frontmatter name, description, tools, model (inherit, flash or pro), commandExecutionPolicy, mcpServers, skills; tools is a list of Antigravity tool names; a subagent does not inherit the parent's conversation history).
