@@ -126,7 +126,7 @@ A coding agent does those steps itself:
 4. **Verify**: run the tests, the linter or the build, read the result and go
    round again until the check passes.
 
-Verification is the step that matters most, because it is how the agent finds
+Verification makes the biggest difference, because it is how the agent finds
 its own mistakes, and the step a chat assistant leaves to you.
 
 <Flashcard id="chat-vs-coding-agent" front="What does a coding agent do that a chat assistant does not?" back="It works the loop itself: it reads the code, plans the change, edits the files and verifies the result by running tests or a build, going round again until the check passes. A chat assistant only suggests code in text, and you run and check it." />
@@ -152,8 +152,8 @@ holds the few facts it needs on every task.
 | Follow a procedure for one kind of task | A skill | Review a query's cost with the team's checklist |
 | Always know a short fact about the project | The instructions file | "Tests run with `npm test`" |
 
-Antigravity comes in three surfaces, and the choice depends on who drives the
-agent and where:
+Antigravity has three main surfaces besides its editor integrations, and the
+choice depends on who drives the agent and where:
 
 | Surface | What it is | Choose it when |
 |---|---|---|
@@ -161,8 +161,8 @@ agent and where:
 | Antigravity CLI (`agy`) | A terminal client that opens an interactive session in the current folder | You work in a terminal, or want the agent beside your other command-line tools |
 | Antigravity SDK | A Python SDK (`pip install google-antigravity`) for building your own agents on Antigravity and Gemini | You are building a product or automation around the agent, not using it yourself |
 
-Antigravity also offers editor extensions (for VS Code, JetBrains and others)
-for developers who want to stay in their own editor.
+Antigravity also offers a standalone Antigravity IDE and editor extensions (for
+VS Code, JetBrains and others) for developers who want to stay in an editor.
 
 <Flashcard id="antigravity-surfaces" front="When do you choose the Antigravity App, the CLI or the SDK?" back="The App, the desktop application, for interactive work on a project. The CLI (agy) for working in a terminal. The SDK, a Python library, for building your own agent or automation on Antigravity rather than using it yourself." />
 
@@ -364,7 +364,7 @@ opts in, Claude models.
 ## Sources
 
 - Antigravity documentation, "MCP", antigravity.google/docs/mcp (workspace .agents/mcp_config.json and global ~/.gemini/config/mcp_config.json; serverUrl for Streamable HTTP; authProviderType google_credentials attaches ADC; enabledTools allowlist hides all other tools; disabledTools; unconfigured MCP tools run in Ask mode).
-- Antigravity documentation, "Get started", antigravity.google/docs/getting-started (surfaces: the Antigravity App, a desktop application; the Antigravity CLI, agy, a terminal client; editor extensions).
+- Antigravity documentation, "Get started", antigravity.google/docs/getting-started (surfaces: the Antigravity App, a desktop application; the Antigravity CLI, agy, a terminal client; the SDK; the Antigravity IDE and editor extensions).
 - Antigravity documentation, "SDK overview", antigravity.google/docs/sdk/overview (a Python SDK for building autonomous agents powered by Antigravity and Gemini; pip install google-antigravity).
 - Antigravity documentation, "Skills", antigravity.google/docs/skills (a skill is a folder with SKILL.md; description is what the agent sees when deciding whether to apply it; on every turn the agent sees names and descriptions and reads the full SKILL.md when relevant; workspace .agents/skills/).
 - Antigravity documentation, "Enterprise", antigravity.google/docs/enterprise (business account and Continue with Google Cloud; telemetry and model interactions logged to the licence's Google Cloud project; Google Cloud Terms of Service; VPC Service Controls; Claude Sonnet 5.5 and Opus 5.5 with administrator opt-in).
