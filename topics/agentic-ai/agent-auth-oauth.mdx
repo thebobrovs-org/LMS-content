@@ -1,0 +1,252 @@
+---
+title: Authenticating agent tool calls with OAuth 2.0
+summary: Every tool call that reaches a protected API runs on someone's authority, either the agent's own or a user's. Tell OAuth from OpenID Connect, choose two-legged or three-legged OAuth for a tool, and handle ADK's pause for user consent.
+tags: [agentic-ai, agents, security, oauth, adk]
+difficulty: advanced
+estimatedMinutes: 35
+level: 300
+prerequisites: [agentic-ai/agent-identity-and-access, agentic-ai/adk-agents-and-tools]
+objectives:
+  - id: oauth-vs-oidc
+    statement: "Distinguish OAuth 2.0 (authorisation) from OpenID Connect (authentication)."
+  - id: 2lo-vs-3lo
+    statement: "Choose 2-legged or 3-legged OAuth for a tool call."
+  - id: adk-auth
+    statement: "Configure ADK tool authentication and handle the consent pause and resume."
+flashcards:
+  - id: oauth-vs-oidc-card
+    objective: oauth-vs-oidc
+    front: What does OAuth 2.0 do, and what does OpenID Connect add?
+    back: "OAuth 2.0 authorises: it gives a client an access token for limited access to an API. OpenID Connect is an identity layer on top of OAuth 2.0: it adds an ID token that says who the user is and how they signed in."
+  - id: 2lo-vs-3lo-card
+    objective: 2lo-vs-3lo
+    front: When do you use two-legged and when three-legged OAuth for a tool?
+    back: "Two-legged (client credentials) when the agent acts as itself, on resources it controls. Three-legged (authorisation code with user consent) when it acts on a user's data, with that user's permission."
+  - id: adk-pause-resume
+    objective: adk-auth
+    front: What happens in ADK when a tool needs a user's consent and has no token?
+    back: "The agent pauses and emits an adk_request_credential event. The client app sends the user to the consent page, then returns the auth response. ADK exchanges the code for a token and retries the tool call."
+  - id: password-never-seen
+    objective: adk-auth
+    front: Does an ADK agent ever see the user's password in a three-legged flow?
+    back: "No. The user signs in only at the authorisation server. The agent gets an access token limited to the scopes the user approved."
+  - id: auth-scheme-credential
+    objective: adk-auth
+    front: In ADK, what do AuthScheme and AuthCredential each describe?
+    back: "AuthScheme describes how the API expects credentials, such as an OAuth 2.0 bearer token or an API key. AuthCredential holds the initial information to start the flow, such as the app's OAuth client ID and secret. An AuthConfig pairs the two."
+quiz:
+  - id: calendar-3lo
+    objective: 2lo-vs-3lo
+    question: "An assistant agent reads each user's Google Calendar to suggest meeting times. Which OAuth flow should its calendar tool use?"
+    choices:
+      - "Three-legged, so each user consents and the tool reads only that user's calendar"
+      - "Two-legged, with one client secret that can read all calendars in the company"
+      - "No OAuth: pass each user's password to the tool so it can sign in for them"
+    answer: 0
+    explanation: "The data belongs to the user, so the tool should act on the user's authority, with their consent: three-legged OAuth. One credential that reads every calendar is excessive agency, and handing passwords to a tool defeats the point of OAuth, where the user signs in only at the authorisation server."
+  - id: own-bucket-2lo
+    objective: 2lo-vs-3lo
+    question: "A nightly agent writes a summary report into a bucket that the agent's own project owns. No user is involved. Which flow fits?"
+    choices:
+      - "Three-legged, with an administrator consenting once on behalf of everyone"
+      - "Two-legged: the agent authenticates as itself to reach its own resource"
+      - "OpenID Connect, so the bucket knows which user the report belongs to"
+    answer: 1
+    explanation: "The agent acts on a resource it controls, with no user in the loop, which is what the two-legged pattern is for; on Google Cloud the agent's own identity with a narrow role plays that part. A consent screen needs a user to act for, and OpenID Connect proves a user's identity, which is not needed here."
+  - id: oidc-for-identity
+    objective: oauth-vs-oidc
+    question: "Before a support agent shows order history, the app must know which customer is signed in. Which standard provides that, and how?"
+    choices:
+      - "OAuth 2.0 alone, through the access token's scopes"
+      - "OpenID Connect, through an ID token about the user's sign-in"
+      - "Client credentials, through the agent's own service identity"
+    answer: 1
+    explanation: "Knowing who the user is means authentication, which OpenID Connect adds on top of OAuth 2.0 with an ID token containing claims about the user's sign-in. An access token authorises calls to an API; it is not meant to tell the client who the user is. Client credentials identify the agent, not the customer."
+  - id: what-pauses
+    objective: adk-auth
+    question: "A three-legged tool runs for a user who has not consented yet. What does ADK do?"
+    choices:
+      - "It fails the tool call and asks the model to try a different tool instead"
+      - "It asks the model to collect the user's username and password in the chat"
+      - "It pauses and emits adk_request_credential so the client app can get consent"
+    answer: 2
+    explanation: "ADK pauses execution and signals the client app with an adk_request_credential event. The app sends the user to the authorisation server, returns the auth response, and ADK exchanges it for a token and retries the original tool call. The agent never asks for a password."
+  - id: client-side-step
+    objective: adk-auth
+    question: "After the user approves access, the provider redirects to your app's redirect URI with an authorisation code. What must the app do next?"
+    choices:
+      - "Send the auth response back to ADK as the response to adk_request_credential"
+      - "Exchange the code in the client app and put the token in the chat context"
+      - "Store the code in the agent's instructions so every later run can reuse it"
+    answer: 0
+    explanation: "The app captures the callback URL and sends it back as the function response to the adk_request_credential call. ADK then exchanges the code for tokens and retries the tool. Putting a token in the chat context or a code in instructions exposes it to the model and to logs, and skips the exchange ADK does for the tool."
+  - id: managed-auth
+    objective: adk-auth
+    question: "A team is about to write its own service to store OAuth client secrets and refresh tokens for twenty tools. What does ADK's documentation recommend for production instead?"
+    choices:
+      - "Keep tokens in session state with the in-memory session service in production"
+      - "An authentication manager service, such as Agent Identity's auth manager"
+      - "A local .env file deployed with the agent's container image to production"
+    answer: 1
+    explanation: "ADK recommends an authentication manager service that stores keys and secrets and acquires, manages and stores tokens for you; Agent Identity's auth manager integrates with ADK (in Preview at the time of writing). In-memory session state is lost when an instance restarts and is not encrypted storage, and a .env file is for local development only."
+status: draft
+updated: "2026-11-17"
+---
+
+## Whose authority does this call use?
+
+The last lesson gave the agent its own identity and narrow roles on Google
+Cloud. But many tools call APIs outside your project, or reach data that
+belongs to a user: their calendar, their mailbox, their files. For every such
+call, the architect decides **whose authority it uses**: the agent's own, or a
+user's who agreed to it.
+
+That decision is made with OAuth 2.0.
+
+## OAuth authorises; OpenID Connect identifies
+
+<Term id="oauth 2.0">OAuth 2.0</Term> is an authorisation framework. It lets an
+application obtain limited access to an HTTP service, either on behalf of a
+resource owner (a user who approves it) or on its own behalf. The application
+gets an **access token**: a credential for specific protected resources, with
+specific **scopes**, that it presents on each call. The user's password is not
+part of it.
+
+<Term id="openid connect">OpenID Connect</Term> (OIDC) is an identity layer on
+top of OAuth 2.0. It adds an **ID token**, which carries claims about how the
+user signed in. Use it when the application must know **who** the user is.
+
+| | OAuth 2.0 | OpenID Connect |
+|---|---|---|
+| Answers | What may this client access? | Who is the user? |
+| Main token | Access token, sent to the API | ID token, read by the client |
+| Typical agent use | A tool calling an API | An app knowing which customer is signed in |
+
+One Google Cloud exception: a private Cloud Run service or function behind IAM
+expects an ID token whose audience is the service URL, not an access token. ADK
+tools can be configured to send one.
+
+<Flashcard id="access-vs-id-token" objective="oauth-vs-oidc" front="Which token goes to an API, and which tells the app who signed in?" back="The access token goes to an API to authorise the call. The ID token, from OpenID Connect, tells the client app who the user is." />
+
+## Two legs or three
+
+<Figure
+  src="/media/agent-oauth-2lo-3lo.svg"
+  alt="Two sequence diagrams. Top, two-legged OAuth, where the agent acts as itself: 1, the agent built with ADK sends its own client credentials to the authorisation server; 2, the server returns an access token; 3, the agent calls the API with the token; 4, the API returns the agent's own resources. Bottom, three-legged OAuth, where the agent acts for a user with consent: 1, the agent pauses and sends adk_request_credential to the agent client app; 2, the app opens the consent page for the user; 3, the user signs in and consents at the authorisation server, the only place the password goes; 4, the server redirects to the client app with an authorisation code; 5, the app sends the auth response back to the agent; 6, the agent exchanges the code for a token at the authorisation server; 7, the server returns an access token with the user's scopes; 8, the agent retries the tool call to the API with the token."
+  caption="Two-legged OAuth uses the agent's own authority; three-legged uses a user's, with their consent."
+/>
+
+**Two-legged OAuth (2LO)** and **three-legged OAuth (3LO)** are common
+shorthand, used in Google's documentation, for two OAuth grants.
+
+**Two-legged OAuth (2LO)** uses the **client credentials** grant. The agent
+authenticates as itself, with no user involved, and gets a token for resources
+under its own control. Use it when the agent acts as itself: writing to its own
+bucket, calling an internal API on its own behalf. On Google Cloud, the agent's
+own identity with a narrow role usually plays this part.
+
+**Three-legged OAuth (3LO)** uses the **authorisation code** grant with user
+consent. The third leg is the user. The user signs in at the authorisation
+server and approves specific scopes; the application receives a code and
+exchanges it for a token that acts for that user. Because the user
+authenticates only with the authorisation server, their credentials are never
+shared with the application, or with the agent. Use it when the agent touches a
+user's data.
+
+The rule: **3LO when the agent acts on a user's data with their consent; 2LO
+when it acts as itself.** Using one powerful credential to read every user's
+data is the excessive agency from the threat model lesson. Three-legged OAuth
+keeps the agent to what each user agreed to.
+
+<Quiz
+  id="mailbox-flow"
+  objective="2lo-vs-3lo"
+  question="An agent drafts replies in each employee's own mailbox. Which flow keeps it to what each employee agreed to?"
+  choices={["Two-legged, with one company-wide mailbox credential", "Three-legged, with each employee consenting to scopes", "OpenID Connect, with an ID token for each employee"]}
+  answer={1}
+  explanation="Each mailbox belongs to its employee, so the agent should act on that employee's authority, with their consent: three-legged. A company-wide credential reaches every mailbox, and an ID token proves who someone is but authorises no mailbox access."
+/>
+
+## Tool authentication in ADK
+
+ADK describes a tool's authentication with two objects:
+
+- **AuthScheme**: how the API expects credentials, such as an OAuth 2.0 bearer
+  token, an API key or OpenID Connect. ADK supports the same scheme types as
+  OpenAPI 3.0.
+- **AuthCredential**: the initial information to start the flow, with a type
+  such as `OAUTH2`, `OPEN_ID_CONNECT`, `SERVICE_ACCOUNT` or `API_KEY`. For
+  OAuth that is your application's client ID, client secret and scopes.
+
+An <Term id="authconfig">AuthConfig</Term> pairs the two for one tool or a
+whole toolset. ADK then tries to exchange the credential for a token before the
+tool calls the API. For two-legged OAuth or a service account, that exchange
+needs no person. For three-legged OAuth, it needs the user, so the agent
+pauses.
+
+### The consent pause and resume
+
+<Steps>
+<Step id="auth-step-declare" title="The tool declares how it authenticates">
+The tool or toolset carries an AuthScheme and an AuthCredential (an
+AuthConfig), for example OAuth 2.0 with your app's client ID, secret and the
+scopes it needs.
+</Step>
+<Step id="auth-step-request" title="The first call finds no token and requests one">
+The session holds no valid credential for this user yet, so ADK pauses the run
+and emits an `adk_request_credential` event to your client app, carrying the
+AuthConfig and its authorisation URL.
+</Step>
+<Step id="auth-step-consent" title="The client app sends the user to consent">
+Your app appends its registered redirect URI to the authorisation URL and opens
+it. The user signs in at the provider and approves the scopes. The provider
+redirects back with an authorisation code.
+</Step>
+<Step id="auth-step-return" title="The client app returns the auth response">
+Your app captures the callback URL and sends it back to ADK as the function
+response to `adk_request_credential`.
+</Step>
+<Step id="auth-step-resume" title="ADK exchanges the code and retries the tool">
+ADK exchanges the code for an access token (and possibly a refresh token),
+makes it available to the tool, and automatically retries the original call.
+The agent answers with the real result.
+</Step>
+</Steps>
+
+Two points matter for the architecture. The **agent never sees the user's
+password**: it receives a token limited to the approved scopes. And the
+**client app owns the consent step**: a chat window alone cannot complete it,
+so the app must handle the event and a redirect URI.
+
+### Where tokens and secrets live
+
+Tokens and client secrets are credentials, so treat them like the agent's
+other secrets. ADK's documentation recommends an **authentication manager**
+service in production: one that stores keys and secrets and acquires, manages
+and stores OAuth tokens for you. Agent Identity's auth manager integrates with
+ADK this way (in Preview at the time of writing). If you manage tokens
+yourself, store them encrypted against an authenticated user, and keep secrets
+in a secrets manager, not in code, prompts or a `.env` file outside local
+development.
+
+<Callout type="warning">A common trap: "the user can just give the agent their password". Then the agent holds a credential that does everything the user can do, until the password changes, and the model has seen it. Three-legged OAuth gives it a token for only the scopes the user approved, which the user can usually revoke at the provider.</Callout>
+
+## Recap
+
+- OAuth 2.0 authorises access with tokens; OpenID Connect adds an ID token that
+  says who the user is.
+- Two-legged (client credentials): the agent acts as itself. Three-legged
+  (authorisation code with consent): the agent acts for a user, on that user's
+  data.
+- In ADK, an AuthConfig pairs an AuthScheme and an AuthCredential. A
+  three-legged tool pauses with `adk_request_credential`, the client app gets
+  consent, and ADK exchanges the code and retries the call. The agent never
+  sees a password.
+- Keep tokens and secrets in an authentication manager or a secrets manager.
+
+## Sources
+
+- IETF, RFC 6749, "The OAuth 2.0 Authorization Framework", rfc-editor.org/rfc/rfc6749 (retrieved 2026-11-17: the abstract, "obtain limited access to an HTTP service, either on behalf of a resource owner … or … on its own behalf"; section 1.3.1, "the resource owner's credentials are never shared with the client"; section 1.3.4, client credentials for resources under the client's control; section 1.4, access tokens; section 3.3, access token scope).
+- OpenID Foundation, "OpenID Connect Core 1.0 incorporating errata set 2", openid.net/specs/openid-connect-core-1_0.html (retrieved 2026-11-17: "a simple identity layer on top of the OAuth 2.0 protocol"; the ID Token "contains Claims about the Authentication of an End-User").
+- Google, Agent Development Kit documentation, "Authenticating with tools", github.com/google/adk-docs/blob/main/docs/tools-custom/authentication.md (retrieved 2026-11-17: authentication manager services recommended for production; AuthScheme, AuthCredential and credential types; OAuth 2.0 authorisation code and client credentials examples; AuthConfig at toolset level; the adk_request_credential pause, redirect, auth response and automatic retry).
+- Google, Agent Development Kit documentation, "Agent Identity Auth Manager for ADK", github.com/google/adk-docs/blob/main/docs/integrations/agent-identity.md (retrieved 2026-11-17: Google-managed lifecycle of auth credentials; Preview release).
