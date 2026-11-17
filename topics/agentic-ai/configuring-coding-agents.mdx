@@ -1,0 +1,376 @@
+---
+title: Configuring coding agents with MCP and skills
+summary: Give a coding agent the tools it needs through an MCP server, limited to the tools the task calls for, and the know-how it needs through a skill that loads only when relevant, then run it against your own Google Cloud project, with Claude Code on Agent Platform or with Antigravity.
+tags: [agentic-ai, coding-agents, mcp, skills]
+difficulty: beginner
+estimatedMinutes: 25
+level: 100
+prerequisites: [agentic-ai/google-agent-platform-map]
+objectives:
+  - id: configure-mcp
+    statement: "Choose between an MCP server, a skill and the instructions file, then add an MCP server to a coding agent and scope the tools it exposes."
+  - id: author-skill
+    statement: "Structure a skill so the agent loads it only when relevant (progressive disclosure)."
+  - id: run-on-gcp
+    statement: "Run Claude Code through Agent Platform or Antigravity in an enterprise Google Cloud project."
+flashcards:
+  - id: mcp-vs-skill
+    objective: configure-mcp
+    front: What does an MCP server give a coding agent, and what does a skill give it?
+    back: "An MCP server gives it tools: actions it can call, such as querying BigQuery. A skill gives it know-how: instructions and supporting files for a kind of task, such as how your team reviews query costs."
+  - id: progressive-disclosure-card
+    objective: author-skill
+    front: How does a coding agent load a skill?
+    back: "In steps. Every skill's name and description (except manual-only ones) sit in the context on every turn. The agent reads the full SKILL.md only when a task matches the description (or you invoke it by name), and reads the skill's other files only if the body points to them. Scripts are meant to be run rather than read, so normally only their output enters the context."
+  - id: claude-on-agent-platform
+    objective: run-on-gcp
+    front: What does Claude Code need to run through Agent Platform in your Google Cloud project?
+    back: "The Agent Platform API (aiplatform.googleapis.com) enabled, access to the Claude models in Model Garden, Google credentials with the roles/aiplatform.user role, and Claude Code pointed at the project: CLAUDE_CODE_USE_VERTEX=1, CLOUD_ML_REGION and ANTHROPIC_VERTEX_PROJECT_ID, or the login wizard."
+quiz:
+  - id: mcp-or-skill-query
+    objective: configure-mcp
+    question: "Developers want their coding agent to look up table schemas in the team's BigQuery datasets while it writes queries. Which mechanism gives the agent that ability?"
+    choices:
+      - "An MCP server that exposes BigQuery's metadata tools"
+      - "A skill that describes the datasets and their tables"
+      - "A line in the project instructions file listing the table names"
+      - "A larger context window, so the agent can hold every schema"
+    answer: 0
+    explanation: "Looking up a schema is an action against a live system, so it needs a tool, and MCP is how a coding agent gets tools. A skill or an instructions file holds text the agent reads; it goes stale as tables change and cannot query anything. A larger window still has nothing to call."
+  - id: mcp-or-skill-review
+    objective: configure-mcp
+    question: "Your team has a six-step checklist for reviewing a BigQuery query's cost before it ships, with a page of examples. The agent should follow it whenever someone asks for a cost review. What do you add?"
+    choices:
+      - "An MCP server with a tool that returns the checklist when called"
+      - "The whole checklist and its examples in the project instructions file"
+      - "A skill whose description says when it applies, holding the checklist"
+      - "A line in the instructions file pointing to the checklist on a wiki"
+    answer: 2
+    explanation: "A procedure the agent should follow for one kind of task is know-how, which is what a skill packages. Its description sits in context on every turn, and the checklist loads only when a cost review comes up. In the instructions file the page of examples would load on every turn, relevant or not. Wrapping text in an MCP tool adds a server for no gain, and a pointer to a wiki gives the agent nothing it can read."
+  - id: too-many-tools
+    objective: configure-mcp
+    question: "A team connects its coding agent to the BigQuery MCP server for read-only schema lookups and leaves every tool enabled, including execute_sql, which can change data. What is the main problem?"
+    choices:
+      - "The agent needs the BigQuery Data Editor role before any tool can run"
+      - "The agent runs slower, because the server checks each enabled tool"
+      - "BigQuery bills for each enabled tool on every request the agent makes"
+      - "The agent can call a tool that changes data, which the task never needed"
+    answer: 3
+    explanation: "Every exposed tool is something the model can call, by mistake or because a prompt in a file or web page told it to. A read-only task needs only read-only tools, so allow just those: enabledTools in Antigravity, a deny rule in Claude Code, and IAM permissions on the Google Cloud side. BigQuery does not bill for enabled tools, and the server does not check them per request; the cost of extra tools is risk and a longer list for the model to choose from. Read-only tools run with BigQuery Data Viewer and Job User; Data Editor is not needed."
+  - id: allowlist-field
+    objective: configure-mcp
+    question: "In Antigravity's mcp_config.json, which setting limits a server to the three tools you list and hides the rest?"
+    choices:
+      - "disabled: true"
+      - "enabledTools, with the three tool names"
+      - "disabledTools, with the three tool names"
+      - "serverUrl, pointed at a different endpoint"
+    answer: 1
+    explanation: "enabledTools is an allowlist: when it is set, every other tool on the server is hidden from the agent. disabledTools hides the tools you list, the opposite of what you want. disabled switches off the whole server, and serverUrl sets where the server is."
+  - id: description-matters
+    objective: author-skill
+    question: "A skill's SKILL.md has a detailed, correct body and frontmatter with only a name and a description, but the agent never uses it unless someone types its name. What is the most likely cause?"
+    choices:
+      - "The description is vague, so the agent cannot tell which tasks it fits"
+      - "The body is too long, so the agent stops reading before the steps"
+      - "Skills load only when someone invokes them by name, by design"
+      - "The skill folder has a scripts directory, which blocks auto-loading"
+    answer: 0
+    explanation: "The description is the only part the agent sees before it decides to read the body, so it has to say what the skill does and when to use it. A long body is fine because it loads only when used. Agents do load skills on their own when the description matches, and a scripts folder does not stop that."
+  - id: reference-files
+    objective: author-skill
+    question: "A skill's instructions are short, but they rely on a 40-page reference of pricing rules. Where should the reference go?"
+    choices:
+      - "Inline in the SKILL.md body, so the agent has it whenever the skill loads"
+      - "Into the description, so the agent always has the rules at hand"
+      - "Into the project instructions file, next to the team's other facts"
+      - "Into a separate file in the skill folder that SKILL.md points to"
+    answer: 3
+    explanation: "A supporting file loads only when the body tells the agent it needs it, so the 40 pages cost nothing on other tasks. In the body, all 40 pages would load on every cost review, even those that never need the pricing rules. In the description or the instructions file they would sit in context on every turn."
+  - id: vertex-project-env
+    objective: run-on-gcp
+    question: "A developer has enabled the Agent Platform API, has access to Claude in Model Garden and has the roles/aiplatform.user role, but Claude Code still calls Anthropic's API directly. What is missing?"
+    choices:
+      - "The BigQuery MCP server, added to the project's .mcp.json"
+      - "A skill that tells Claude Code to send requests to Google Cloud"
+      - "Claude Code's own configuration that routes it to Agent Platform"
+      - "The roles/mcp.toolUser role, granted on the same project"
+    answer: 2
+    explanation: "The Google Cloud side is ready, but Claude Code only routes through Agent Platform when it is configured to, by the environment variables (CLAUDE_CODE_USE_VERTEX=1, CLOUD_ML_REGION and ANTHROPIC_VERTEX_PROJECT_ID) or by the login wizard. MCP servers, skills and the MCP Tool User role are about tools, not about where the model runs."
+  - id: antigravity-enterprise
+    objective: run-on-gcp
+    question: "An enterprise wants its developers' Antigravity sessions to run under its Google Cloud terms, with model interactions logged in its own project. How should developers sign in?"
+    choices:
+      - "With a business account, linked to the Google Cloud project that holds the company's licence"
+      - "With a personal Google account, then choosing a Claude model in Antigravity's settings"
+      - "With a business account, but without linking it to any Google Cloud project"
+      - "With a personal Google account, with the company's AGENTS.md committed to the repository"
+    answer: 0
+    explanation: "The business-account sign-in through Google Cloud ties a session to a project and licence, so it runs under the Google Cloud Terms of Service and logs model interactions to that project. Without the linked project, sessions are not under the company's terms or logged there, whatever the account. A personal account is outside the company's project, and choosing a model changes nothing about terms or logging."
+updated: "2026-11-17"
+status: draft
+---
+
+## Context and tools decide what a coding agent can do
+
+A coding agent is an agent whose job is software work: it reads your code,
+runs commands, edits files and calls tools, in a loop, until the task is done.
+
+That loop is what separates it from a chat assistant. A chat assistant answers
+in text: it suggests code, and you copy it, run it and report back what broke.
+A coding agent does those steps itself:
+
+1. **Read** the code, tests and docs the task touches.
+2. **Plan** the change.
+3. **Change** the files.
+4. **Verify**: run the tests, the linter or the build, read the result and go
+   round again until the check passes.
+
+Verification makes the biggest difference, because it is how the agent finds
+its own mistakes, and the step a chat assistant leaves to you.
+
+<Flashcard id="chat-vs-coding-agent" front="What does a coding agent do that a chat assistant does not?" back="It works the loop itself: it reads the code, plans the change, edits the files and verifies the result by running tests or a build, going round again until the check passes. A chat assistant only suggests code in text, and you run and check it." />
+
+Two things decide how useful and how safe a coding agent is.
+
+- **Context.** Without your team's conventions and procedures, the agent
+  guesses. With them, it does the work your way.
+- **Tools.** Without the right tools, it cannot reach your systems. With too
+  many, it can do things the task never needed, some of them damaging.
+
+Coding agents such as <Term id="antigravity">Antigravity</Term> (Google's
+agentic development environment) and Claude Code (Anthropic's) handle both the
+same way. An **<Term id="mcp server">MCP (Model Context Protocol) server</Term>**
+gives the agent tools.
+A **<Term id="skill">skill</Term>** gives it know-how. A project instructions
+file (`AGENTS.md` or `GEMINI.md` in Antigravity, `CLAUDE.md` in Claude Code)
+holds the few facts it needs on every task.
+
+| You want the agent to | Use | Example |
+|---|---|---|
+| Call a live system | An MCP server | Look up a BigQuery table's schema |
+| Follow a procedure for one kind of task | A skill | Review a query's cost with the team's checklist |
+| Always know a short fact about the project | The instructions file | "Tests run with `npm test`" |
+
+Antigravity has three main surfaces besides its editor integrations, and the
+choice depends on who drives the agent and where:
+
+| Surface | What it is | Choose it when |
+|---|---|---|
+| Antigravity App | The desktop application, where you hand tasks to agents and review their work | A developer works interactively on a project |
+| Antigravity CLI (`agy`) | A terminal client that opens an interactive session in the current folder | You work in a terminal, or want the agent beside your other command-line tools |
+| Antigravity SDK | A Python SDK (`pip install google-antigravity`) for building your own agents on Antigravity and Gemini | You are building a product or automation around the agent, not using it yourself |
+
+Antigravity also offers a standalone Antigravity IDE and editor extensions (for
+VS Code, JetBrains and others) for developers who want to stay in an editor.
+
+<Flashcard id="antigravity-surfaces" front="When do you choose the Antigravity App, the CLI or the SDK?" back="The App, the desktop application, for interactive work on a project. The CLI (agy) for working in a terminal. The SDK, a Python library, for building your own agent or automation on Antigravity rather than using it yourself." />
+
+<Flashcard id="mcp-skill-instructions" objective="configure-mcp" front="Which mechanism fits: calling a live system, following a procedure for one kind of task, or a short fact the agent needs on every task?" back="Calling a live system: an MCP server. A procedure for one kind of task: a skill. A short fact needed on every task: the project instructions file." />
+
+## Add an MCP server, with only the tools the task needs
+
+The **Model Context Protocol (<Term id="mcp">MCP</Term>)** is an open standard
+for offering tools to agents. An MCP server publishes tools, each with a name,
+a description and typed parameters; the coding agent is the client that lists
+and calls them. Google Cloud runs remote
+<Term id="google cloud mcp servers">MCP servers</Term> for its own services. The
+one for BigQuery is at `https://bigquery.googleapis.com/mcp`, and its tools
+include `list_dataset_ids`, `get_table_info`, `execute_sql_readonly` and
+`execute_sql`, the one tool that can change data.
+
+Say the team wants the agent to look up schemas while it writes queries. In
+Antigravity, a workspace's MCP servers go in `.agents/mcp_config.json`, which
+you can commit so the whole team gets them:
+
+```json
+{
+  "mcpServers": {
+    "bigquery": {
+      "serverUrl": "https://bigquery.googleapis.com/mcp",
+      "authProviderType": "google_credentials",
+      "enabledTools": ["list_dataset_ids", "get_table_info", "execute_sql_readonly"]
+    }
+  }
+}
+```
+
+- `serverUrl` points at a server over the web (Streamable HTTP, MCP's standard
+  way to reach a remote server).
+- `authProviderType: "google_credentials"` attaches your Application Default
+  Credentials (ADC: the Google sign-in that
+  `gcloud auth application-default login` saves on your machine, so tools can
+  act as you).
+- `enabledTools` is an allowlist: every other tool on the server, including
+  `execute_sql`, is hidden from the agent.
+
+In Claude Code, a project's MCP servers go in `.mcp.json` at the project root,
+which you commit to share them, and Claude Code asks each developer to approve
+them before first use. Google's MCP servers accept a bearer token, so a
+`headersHelper` command can fetch one from each developer's own gcloud sign-in
+every time Claude Code connects:
+
+```json
+{
+  "mcpServers": {
+    "bigquery": {
+      "type": "http",
+      "url": "https://bigquery.googleapis.com/mcp",
+      "headersHelper": "gcp-mcp-headers"
+    }
+  }
+}
+```
+
+Here `gcp-mcp-headers` is a short script you write and put on each developer's
+`PATH`. It prints the request headers as JSON, with a token from the same
+Application Default Credentials Antigravity uses:
+
+```bash
+#!/usr/bin/env bash
+# gcp-mcp-headers: request headers for Google Cloud MCP servers
+set -euo pipefail
+token="$(gcloud auth application-default print-access-token)"
+project="$(gcloud config get-value project 2>/dev/null)"
+printf '{"Authorization": "Bearer %s", "x-goog-user-project": "%s"}\n' "$token" "$project"
+```
+
+To check the setup, run `claude mcp list`, which should show `bigquery` as
+connected (approve it first by starting `claude` in the project), then ask the
+agent for something read-only, such as listing the datasets in your project.
+Claude Code has no allowlist field in this
+file, so to keep a tool away from the agent, add a deny rule such as
+`mcp__bigquery__execute_sql` to the permissions in Claude Code's settings; a
+denied tool is removed from the agent's context.
+
+The caller also needs permission on the Google Cloud side, through Identity and
+Access Management (IAM), Google Cloud's system of roles and permissions: the MCP
+Tool User role (`roles/mcp.toolUser`) to call a Google Cloud MCP server's tools,
+plus the product's own roles, such as BigQuery Data Viewer and BigQuery Job
+User. With only those two BigQuery roles, even `execute_sql` cannot change data.
+Roles add up, though: a developer who also holds Editor or BigQuery Data Editor
+can still change data through it.
+Hiding a tool in the agent is a convenience; IAM is what the server enforces.
+
+Expose the fewest tools the task needs. Every tool is a way in for an attacker:
+the agent can call it by mistake, or because text it read in a file or web page
+told it to. Every tool is also one more option the model has to weigh before it
+picks the right one.
+
+## Write a skill that loads only when relevant
+
+A skill is a folder with a `SKILL.md` file. Its frontmatter (a short YAML
+header between `---` lines, as in the example below) holds a `name` and a
+`description`; its body holds the instructions. Antigravity reads
+workspace skills from `.agents/skills/`, and Claude Code from `.claude/skills/`;
+both follow the same `SKILL.md` format.
+
+```text
+bigquery-cost-review/
+├── SKILL.md            # name, description, then the checklist
+├── pricing-rules.md    # long reference, read only when the checklist says so
+└── scripts/
+    └── dry_run.sh      # runs a dry run and prints the bytes the query would scan
+```
+
+```markdown
+---
+name: bigquery-cost-review
+description: Reviews a BigQuery query's cost before it ships. Use when the user asks for a cost review, or when a query reads a large table.
+---
+
+1. Run scripts/dry_run.sh on the query and report the bytes it would scan.
+2. Check that the query reads only the columns and dates it needs.
+3. If the scan is over 1 TB, apply the limits in pricing-rules.md.
+...
+```
+
+The agent loads a skill in steps, which is called **<Term id="progressive disclosure">progressive disclosure</Term>**:
+
+1. **Every turn:** the name and description of every skill (unless it is set
+   to manual-only) are in the agent's
+   <Term id="context window">context window</Term>, the text the model sees on
+   each turn, so the agent knows what it could use.
+2. **When a task matches the description**, or someone types `/bigquery-cost-review`,
+   the agent reads the full `SKILL.md`.
+3. **Only if the body points to them**, it reads the other files, such as
+   `pricing-rules.md`. Scripts are meant to be run rather than read, so
+   normally only their output enters the context.
+
+<Figure
+  src="/media/coding-agent-context-loading.svg"
+  alt="Two panels. In context on every turn: the project instructions file (AGENTS.md, GEMINI.md or CLAUDE.md); the skill listing, which holds each skill's name and description, for example bigquery-cost-review and release-notes; and the MCP tools the agent may call, for example list_dataset_ids, get_table_info and execute_sql_readonly from a BigQuery server. Loaded only when relevant: a skill's SKILL.md body, read when the task matches its description or you type its slash command; reference files in the skill folder, read only if the body points to them; and scripts in the skill folder, which the agent runs so that only their output enters the context. A note says a skill costs a line of context until used, every exposed MCP tool is something the model can call so a server should be limited to the tools the task needs, and some agents load only tool names up front and fetch full schemas when needed."
+  caption="What is always in context, and what loads only when a task needs it."
+/>
+
+So a team can keep dozens of skills at little cost (the listing has a budget,
+so keep descriptions short), as long as each description says plainly what the
+skill does and when to use it. A vague description is the
+usual reason a good skill never gets used.
+
+## Run the agent against your Google Cloud project
+
+Enterprises want coding-agent traffic to run under their own cloud account,
+terms, billing and controls. Both agents in this lesson can do that.
+
+**Claude Code through Agent Platform.** Claude models are offered in Agent
+Platform's Model Garden, so Claude Code can call them in your project instead
+of Anthropic's API:
+
+1. Enable the Agent Platform API: `gcloud services enable aiplatform.googleapis.com`.
+2. Request access to the Claude models you want in Model Garden.
+3. Give developers the `roles/aiplatform.user` role, which allows model calls.
+   A dedicated project keeps cost tracking and access simple.
+4. Point Claude Code at the project, with the login wizard (choose
+   **Google Vertex AI**; Vertex AI is Agent Platform's former name, which Claude
+   Code's settings still use) or with environment variables:
+
+```bash
+export CLAUDE_CODE_USE_VERTEX=1
+export CLOUD_ML_REGION=global
+export ANTHROPIC_VERTEX_PROJECT_ID=my-project
+```
+
+`CLOUD_ML_REGION` is the region that serves the model; `global` lets Google
+choose, though some models need a regional endpoint, so check Model Garden.
+
+Claude Code authenticates with standard Google credentials, such as Application
+Default Credentials. For a team rollout, pin specific model versions in
+Claude Code's settings, so everyone moves to a new model when you choose.
+
+**Antigravity with a business account.** Developers sign in with a business
+account and choose **Continue with Google Cloud**, then pick the Google Cloud
+project linked to the company's licence. Sessions then run under the Google
+Cloud Terms of Service, and model interactions are logged to that project. On
+the enterprise tier Antigravity offers Gemini models and, if an administrator
+opts in, Claude models.
+
+<Callout type="note">Coding-agent products change quickly: file names, settings and model lists in this lesson are as documented in November 2026. The ideas (tools through MCP, know-how through skills, the fewest tools the task needs) carry over.</Callout>
+
+## Recap
+
+- An MCP server gives a coding agent tools; a skill gives it know-how; the
+  project instructions file holds the few facts needed on every task.
+- Expose only the tools the task needs: `enabledTools` in Antigravity, a deny
+  rule in Claude Code, and IAM roles on the Google Cloud side, which is what the
+  server enforces.
+- A skill loads in steps: its name and description on every turn, `SKILL.md`
+  when a task matches, other files only when the body points to them. A clear
+  description is what gets it used.
+- Claude Code runs through Agent Platform once the API, model access, the
+  `roles/aiplatform.user` role and its Vertex settings are in place; Antigravity
+  runs under your Google Cloud terms with a business-account sign-in.
+
+## Sources
+
+- Antigravity documentation, "MCP", antigravity.google/docs/mcp (workspace .agents/mcp_config.json and global ~/.gemini/config/mcp_config.json; serverUrl for Streamable HTTP; authProviderType google_credentials attaches ADC; enabledTools allowlist hides all other tools; disabledTools; unconfigured MCP tools run in Ask mode).
+- Antigravity documentation, "Get started", antigravity.google/docs/getting-started (surfaces: the Antigravity App, a desktop application; the Antigravity CLI, agy, a terminal client; the SDK; the Antigravity IDE and editor extensions).
+- Antigravity documentation, "SDK overview", antigravity.google/docs/sdk/overview (a Python SDK for building autonomous agents powered by Antigravity and Gemini; pip install google-antigravity).
+- Antigravity documentation, "Skills", antigravity.google/docs/skills (a skill is a folder with SKILL.md; description is what the agent sees when deciding whether to apply it; on every turn the agent sees names and descriptions and reads the full SKILL.md when relevant; workspace .agents/skills/).
+- Antigravity documentation, "Enterprise", antigravity.google/docs/enterprise (business account and Continue with Google Cloud; telemetry and model interactions logged to the licence's Google Cloud project; Google Cloud Terms of Service; VPC Service Controls; Claude Sonnet 5.5 and Opus 5.5 with administrator opt-in).
+- Claude Code documentation, "Connect Claude Code to tools via MCP", code.claude.com/docs/en/mcp (project scope in .mcp.json with an approval prompt; headersHelper runs a command at each connection and uses its JSON output as request headers, and an Authorization header from it replaces OAuth for that server).
+- Claude Code documentation, "Configure permissions", code.claude.com/docs/en/permissions (mcp__server__tool rules; a denied tool is removed from Claude's context).
+- Claude Code documentation, "Extend Claude with skills", code.claude.com/docs/en/skills (SKILL.md with name and description; descriptions in context, full content loads when invoked; supporting files loaded when needed, scripts executed, not loaded; .claude/skills/; Agent Skills open standard).
+- Claude Code documentation, "Claude Code on Google Cloud's Agent Platform", code.claude.com/docs/en/google-vertex-ai (enable aiplatform.googleapis.com; request Claude model access in Model Garden; roles/aiplatform.user; CLAUDE_CODE_USE_VERTEX, CLOUD_ML_REGION, ANTHROPIC_VERTEX_PROJECT_ID; pin model versions).
+- Google Cloud, "Configure MCP in an AI application", docs.cloud.google.com/mcp/configure-mcp-ai-application (roles/mcp.toolUser; authentication with ADC, an OAuth client or an OAuth 2.0 bearer token; examples use gcloud auth application-default print-access-token with an x-goog-user-project header).
+- Google Cloud, "Use the BigQuery MCP server", docs.cloud.google.com/bigquery/docs/use-bigquery-mcp (endpoint bigquery.googleapis.com/mcp; tools; execute_sql is the only tool that is not read-only; BigQuery roles).
