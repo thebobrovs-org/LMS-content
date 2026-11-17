@@ -1,0 +1,328 @@
+---
+title: "RAG pipelines: retrieve, rerank and ground"
+summary: Trace how a retrieval-augmented agent turns documents into an answer, tune chunk size, top-k and reranking, diagnose a grounded but wrong answer, and choose between Agent Search, RAG Engine and Vector Search.
+tags: [agentic-ai, rag, retrieval, grounding]
+difficulty: advanced
+estimatedMinutes: 35
+level: 300
+prerequisites: [agentic-ai/adk-agents-and-tools]
+objectives:
+  - id: rag-stages
+    statement: "Name the RAG stages and the decision at each."
+  - id: tune-retrieval
+    statement: "Predict how chunk size, top-k and reranking change what the model sees."
+  - id: choose-backend
+    statement: "Choose Agent Search, RAG Engine or Vector Search (Agent Retrieval) for a scenario."
+  - id: grounded-but-wrong
+    statement: "Diagnose a grounded but wrong answer and fix it at the data layer."
+flashcards:
+  - id: rag-stages-card
+    objective: rag-stages
+    front: Name the six stages of a RAG pipeline in order.
+    back: "Ingest (load and parse the documents), chunk (split them), embed (turn each chunk into a vector), index (store the vectors), retrieve (find the chunks closest to the query, optionally rerank them) and generate (the model answers from those chunks)."
+  - id: what-reranking-does
+    objective: tune-retrieval
+    front: What does a reranker do, and why does it beat simply raising top-k?
+    back: "It rescores a wider set of retrieved candidates with a stronger relevance model and keeps only the best few. Raising top-k alone passes more chunks, and more noise, to the model."
+  - id: grounded-but-wrong-card
+    objective: grounded-but-wrong
+    front: An agent quotes a real document accurately, but the answer is wrong. Where is the fault, and where is the fix?
+    back: "In the data: the retrieved source is outdated or superseded. Fix it at the data layer (remove or mark superseded documents, add metadata such as status or effective date, filter on it), not in the prompt."
+  - id: backend-order
+    objective: choose-backend
+    front: In what order should you consider Agent Search, RAG Engine and Vector Search (Agent Retrieval)?
+    back: "Agent Search first (out-of-the-box RAG). RAG Engine when you need to configure the pipeline (chunking, embedding model, vector database, reranking). Vector Search or Agent Retrieval when you need direct control of how vectors are stored and queried."
+quiz:
+  - id: stale-policy-fix
+    objective: grounded-but-wrong
+    question: "An HR agent tells employees the daily travel allowance from the 2023 policy, quoting it word for word. The 2025 policy is in the same corpus. What is the best fix?"
+    choices:
+      - "Add \"always prefer the newest policy\" to the agent's instruction"
+      - "Raise top-k so the 2025 policy also reaches the model"
+      - "Mark superseded policies in metadata and filter retrieval to current ones"
+      - "Switch the agent to a larger Gemini model that reasons better about dates"
+    answer: 2
+    explanation: "The model answered faithfully from what retrieval gave it, so the fault is in the data. Marking superseded documents (or removing them) and filtering on that metadata stops the old policy from reaching the model at all. An instruction does not stop the old chunk from being retrieved, and only works if the model can tell which chunk is newer. A higher top-k can bring both versions in, and the model may still follow the higher-ranked old one. A larger model reads the same wrong source."
+  - id: diagnose-grounded-wrong
+    objective: grounded-but-wrong
+    question: "A support agent gives a wrong refund amount. Which observation shows the problem is in retrieval and data rather than the model inventing facts?"
+    choices:
+      - "The answer quotes a passage that exists in a superseded FAQ in the corpus"
+      - "The answer contains a number that appears in no document in the corpus"
+      - "The answer is wrong only when the user phrases the question informally"
+      - "The answer cites no sources even though citations are turned on"
+    answer: 0
+    explanation: "A wrong answer that faithfully quotes a real, outdated document is grounded but wrong: retrieval delivered the wrong source. A number found in no document points to the model making it up. Sensitivity to phrasing points to query or retrieval tuning, not stale data. Missing citations point to the generation or configuration step."
+  - id: topk-noise
+    objective: tune-retrieval
+    question: "To stop missed answers, a team raised top-k from 3 to 20. Answers got worse and cost more. What should they do instead?"
+    choices:
+      - "Raise top-k further, to 50, so the right chunk is never left out"
+      - "Retrieve a wider candidate set, rerank it, and pass only the best few"
+      - "Lower top-k to 1, so the model reads only the closest chunk"
+      - "Move all the documents into the agent's instruction instead"
+    answer: 1
+    explanation: "Twenty chunks fill the context with near-misses that compete with the right one and cost tokens on every call. A reranker scores the wider candidate set with a stronger relevance model, so the few chunks the model reads are the most relevant. More chunks add more noise. A top-k of 1 drops anything ranked second, such as an exception. Documents in the instruction cost tokens on every call and do not scale."
+  - id: chunk-too-large
+    objective: tune-retrieval
+    question: "A corpus is indexed with one chunk per whole document. Retrieval finds the right document, but answers are vague and each call reads thousands of tokens. What change helps most?"
+    choices:
+      - "Turn on reranking, so the right document ranks first"
+      - "Raise top-k, so more of each document reaches the model"
+      - "Lower the embedding dimension, so each whole document fits in one vector"
+      - "Use smaller chunks, so the matching passage is retrieved on its own"
+    answer: 3
+    explanation: "A whole-document chunk mixes the one relevant passage with everything else, which blurs its embedding and fills the context with text the answer does not need. Smaller chunks let the matching passage score well and arrive alone. Reranking reorders the same oversized chunks. More of each document makes the cost worse. The embedding dimension does not change what each chunk contains."
+  - id: exception-missed
+    objective: tune-retrieval
+    question: "With small chunks, an agent answers \"30 days\" correctly but never mentions that final-sale items cannot be returned, a rule stated in the next sentence of the same policy. Which change targets the cause?"
+    choices:
+      - "Add chunk overlap, so the rule and its exception share a chunk"
+      - "Turn off reranking, so chunks keep their original vector-similarity order"
+      - "Add a metadata filter that keeps only documents marked current"
+      - "Tell the agent to list any exceptions to a rule when it answers"
+    answer: 0
+    explanation: "Chunking split the exception into its own chunk, which ranks too low to reach the model. Overlap (or a larger chunk) keeps the rule and its exception in one chunk (a reranker can also lift the exception chunk). Turning reranking off does not bring the exception back. The filter is already satisfied, since both sentences are in the current policy. An instruction cannot list an exception the model never saw."
+  - id: stage-for-scans
+    objective: rag-stages
+    question: "Half of a company's contracts are scanned PDFs. Questions about them return nothing relevant, while typed documents work. Which stage should you look at first?"
+    choices:
+      - "Retrieval, by raising top-k for contract questions"
+      - "Generation, by asking the model to read scanned text more carefully"
+      - "Ingestion, where documents are parsed and their text extracted"
+      - "Indexing, by moving the vectors to a different vector database"
+    answer: 2
+    explanation: "If text is never extracted from the scans (for example by OCR or a layout parser), there is nothing to chunk, embed or retrieve, so every later stage works on empty content. A higher top-k searches the same empty chunks. The model never sees the scans. A different vector database stores the same missing text."
+  - id: stage-for-status
+    objective: rag-stages
+    question: "To keep superseded policies out of answers, retrieval must filter on a status field for each chunk. At which stage is that field stored with each chunk so retrieval can filter on it?"
+    choices:
+      - "Generate, where the model reads each chunk's status"
+      - "Index, where vectors are stored with their metadata"
+      - "Chunk, where documents are split into passages"
+      - "Retrieve, where the question is matched to vectors"
+    answer: 1
+    explanation: "Retrieval can only filter on metadata that was stored with the vectors, so the status field is attached when chunks are indexed (captured at ingestion and stored alongside each vector). Retrieval applies the filter but cannot add a field that was never stored. Chunking only splits text. By generation the stale chunk has already reached the model."
+  - id: backend-intranet
+    objective: choose-backend
+    question: "A company wants an assistant that answers questions from its intranet site and internal documents, with citations, within weeks. It has no ML team and no special retrieval needs. Which backend fits?"
+    choices:
+      - "Vector Search, with embeddings the team generates and manages"
+      - "Agent Search, which runs the whole retrieval pipeline and cites sources"
+      - "RAG Engine, with a hand-tuned chunk size and a chosen vector database"
+      - "A custom index built on Cloud Storage and a scheduled embedding job"
+    answer: 1
+    explanation: "Agent Search is Google's out-of-the-box RAG system: it handles parsing, chunking, embedding and indexing, and its generated summaries come with citations. With no special needs and no ML team, the managed option comes first. RAG Engine and Vector Search add control this team does not need, and a custom index adds the most work of all."
+  - id: backend-custom-embeddings
+    objective: choose-backend
+    question: "A research team has its own embedding model tuned for chemistry, and needs to control exactly how vectors are stored and queried. Which backend fits?"
+    choices:
+      - "Agent Search, with the team's own embeddings supplied to it"
+      - "RAG Engine, with its default managed vector database"
+      - "Vector Search or Agent Retrieval, as a managed vector index"
+      - "A long-context Gemini model with all the papers passed in the prompt"
+    answer: 2
+    explanation: "Direct control of how vectors are stored and queried is the case for a vector database you query yourself: Vector Search, or Agent Retrieval (formerly Vector Search 2.0), both of which accept your own embeddings. Agent Search accepts custom embeddings but not control of how vectors are stored and queried. RAG Engine's managed database suits its own pipeline rather than full control of vectors and queries. Passing every paper in the prompt skips retrieval and costs the whole corpus on every call."
+  - id: backend-rag-engine
+    objective: choose-backend
+    question: "A team wants Google to run ingestion and retrieval, but must set its own chunk size and keep its vectors in the Pinecone index it already pays for. Which backend fits?"
+    choices:
+      - "Agent Search, which runs ingestion and retrieval end to end"
+      - "Vector Search, with a custom ingestion job"
+      - "A custom index on Cloud Storage with a scheduled embedding job"
+      - "RAG Engine, with Pinecone as its vector database"
+    answer: 3
+    explanation: "RAG Engine is the managed pipeline you configure: it lets you set chunking, pick the embedding model and choose the vector database, including Pinecone or Weaviate. Agent Search does not let you keep your own vector store. Vector Search means building ingestion yourself. A custom index means building and running the whole pipeline yourself."
+updated: "2026-11-17"
+status: draft
+---
+
+## Why retrieval decides the answer
+
+<Term id="rag">Retrieval-augmented generation (RAG)</Term> gives a model
+content it was never trained on: before the model answers, the system finds the
+most relevant passages in your documents (the corpus) and places them in the model's
+context. In an agent, retrieval is usually one tool (topic 3.2): the model
+proposes a search, the runtime runs it, and the passages come back as the tool
+result.
+
+The model can only be as right as what it reads. If retrieval misses the
+passage that holds the answer, the best model in the world answers "I don't
+know" or guesses. If retrieval delivers an outdated passage, the model faithfully
+repeats it. Retrieval quality caps answer quality, so most RAG problems are
+fixed in the pipeline, not in the prompt.
+
+## The six stages, and the decision at each
+
+Retrieval finds passages by meaning, not by keywords. Each chunk and each
+question is turned into a vector, and closeness between two vectors is a
+similarity score: chunks that mean nearly the same thing as the question score
+high, even when they share no words with it.
+
+| Stage | What happens | The decision you make |
+|---|---|---|
+| **Ingest** | Load the documents and extract their text, including from scans and tables | Which sources, how to parse them, how often to refresh |
+| **Chunk** | Split each document into passages | Chunk size and overlap |
+| **Embed** | Turn each chunk into an <Term id="embedding">embedding</Term>, a vector that represents its meaning | Which embedding model |
+| **Index** | Store the vectors, with metadata such as source and date, so they can be searched fast | Which vector database, which metadata |
+| **Retrieve** | Embed the question, find the chunks whose vectors are closest, optionally rerank them, keep the <Term id="top-k">top-k</Term> | How many to keep, whether to rerank, what to filter on |
+| **Generate** | The model answers from the retrieved chunks, ideally citing them | How to instruct and cite |
+
+The first four stages run ahead of time, when documents are added or change.
+The last two run on every question.
+
+## Three knobs that decide what the model sees
+
+**Chunk size.** Small chunks match a question precisely but can cut a rule off
+from its exception. Large chunks keep context together but mix in unrelated
+text, which weakens the match and spends tokens. RAG Engine, for example,
+defaults to 1,024-token chunks with a 256-token overlap, so neighbouring chunks
+share text across the cut.
+
+<Flashcard id="chunk-size-tradeoff" objective="tune-retrieval" front="What do small and large chunks each risk?" back="Small chunks can split a rule from its exception, so part of the answer never reaches the model. Large chunks mix the relevant passage with unrelated text, which blurs the match and costs more tokens per call." />
+
+**Top-k.** How many retrieved chunks reach the model. Too few and the answer
+can miss a second relevant chunk. Too many and near-misses crowd the context,
+compete with the right chunk and cost tokens on every call.
+
+**Reranking.** Vector similarity is fast but rough. A
+<Term id="reranking">reranker</Term> takes a wider set of candidates (say, the
+top 20) and rescores each one against the question with a stronger relevance
+model, so the few chunks that reach the model are the most relevant ones. RAG
+Engine offers two: the ranking API, a dedicated reranker that responds in under
+100 ms, and an LLM reranker that asks Gemini to judge relevance and takes one to
+two seconds. Reranking measures relevance, not truth: an outdated passage that
+answers the question exactly still ranks first.
+
+## Try it: a stale policy in the corpus
+
+The simulation asks one question, "How many days do I have to return an item?",
+over a small corpus that holds two versions of the same policy: a 2024 FAQ (60
+days, now superseded) and the current 2026 policy (30 days, with a final-sale
+exception). Change the chunk size, top-k and reranking, and switch on a metadata filter
+that keeps only documents marked current. Watch which chunks reach the model
+and what it answers. An answer drawn from the retrieved chunks is called
+**grounded**; the question is whether grounded also means right.
+
+<Simulation id="rag-retrieval-tuner" height={760} />
+
+What you should see:
+
+- **The default answer is grounded but wrong.** With medium chunks and a top-k
+  of 3, both versions are already in the context, but the 2024 FAQ ranks first:
+  it repeats the question's own words. The model follows the higher-ranked
+  chunk, cites it faithfully and says 60 days.
+- **Reranking does not save you.** The old FAQ answers the question just as
+  directly as the new policy, so a reranker keeps it on top.
+- **More chunks do not save you either.** Raising top-k adds chunks and tokens
+  to every call, but the old FAQ still ranks first.
+- **The metadata filter fixes it.** Keep only current documents and the 2026
+  policy answers: 30 days, except final-sale items.
+- **Chunk size matters after the fix.** With small chunks, the final-sale rule
+  sits in its own chunk and can miss the top-k, so the answer is right but
+  incomplete. Reranking lifts that chunk back in.
+
+<Quiz
+  id="reranker-latency"
+  objective="tune-retrieval"
+  question="A voice agent must reply within a second, and its retrieval often ranks a near-miss above the right chunk. Which change fits?"
+  choices={["Add the LLM reranker, which asks Gemini to judge each chunk", "Raise top-k from 3 to 15, so the right chunk makes the cut", "Add the ranking API reranker over a wider candidate set", "Switch to a larger Gemini model, so it ignores the near-miss"]}
+  answer={2}
+  explanation="The ranking API rescores candidates in under 100 ms, which fits a one-second budget. The LLM reranker takes one to two seconds on its own. A top-k of 15 adds noise and tokens without fixing the order. A larger model still reads the near-miss first, and adds latency."
+/>
+
+## Grounded but wrong
+
+A **grounded** answer is one the model drew from retrieved sources rather than
+from its training. Grounded is not the same as correct. When the source is
+stale, superseded or simply wrong, a faithful model repeats it, often with a
+citation that makes the error look trustworthy.
+
+Recognise it by the pattern: the answer quotes a passage that really exists in
+your corpus, and that passage is out of date. An answer with facts that appear
+in no document is a different failure, a model inventing content.
+
+Fix it where it starts, in the data:
+
+1. **Remove or archive superseded documents**, and make re-ingestion part of
+   publishing a new version.
+2. **Add metadata** such as `status` (current or superseded),
+   `effective_date` or `region` when documents are ingested, and store it with
+   each vector when they are indexed.
+3. **Filter retrieval on that metadata**, so only current documents are
+   searched. RAG Engine's metadata filter is in Preview at the time of
+   writing: v1beta1 API only, not in serverless mode, and it needs a metadata
+   schema on the corpus.
+
+An instruction such as "prefer the newest document" is a weak patch: the model
+can only follow it if both versions are retrieved and each chunk shows its
+date, and it does nothing to stop retrieval from feeding the old one.
+
+## Choosing a backend
+
+Google Cloud offers three backends, from most managed to most control.
+
+<Figure
+  src="/media/rag-backend-chooser.svg"
+  alt="Three retrieval backends side by side, from most managed to most control. Agent Search manages every stage end to end: ingest and parse, chunk, embed, index and retrieve, as out-of-the-box RAG with answers that carry citations. RAG Engine manages ingestion; you set chunk size and overlap, pick the embedding model, pick the vector database and set top-k and the reranker. Vector Search provides a managed vector index only; you build ingestion, chunking and embeddings with your own model, and you build the query and ranking."
+  caption="Start from the left, and move right only for control you need."
+/>
+
+- **Agent Search** (formerly Vertex AI Search) is an out-of-the-box RAG
+  system. It handles parsing, chunking, embedding and indexing over your
+  websites and documents, and its generated summaries come with citations and
+  links. Start here.
+- **<Term id="rag engine">RAG Engine</Term>** is <Term id="agent platform">Agent Platform</Term>'s managed RAG
+  pipeline, built around a corpus you import files into. You configure the
+  pipeline: chunk size and overlap, the embedding model, the vector database
+  (its managed default, Vector Search, Feature Store, or third-party vector
+  databases such as Pinecone or Weaviate), top-k and reranking.
+- **Vector Search** is a vector database you query directly. You supply the
+  embeddings and build ingestion, chunking and ranking yourself. **Agent
+  Retrieval** (formerly Vector Search 2.0) sits a little closer to managed: it
+  stores your documents with their vectors, can generate the embeddings with
+  built-in models or take yours, and offers reranking, while you still prepare
+  and chunk the documents you load and write the query. Choose either when you need direct control of how
+  vectors are stored and queried; custom embeddings alone are not a reason,
+  since Agent Search accepts them too.
+
+Each step to the right buys control and costs engineering time. Move right only
+for a need the option to its left cannot meet.
+
+A retrieval call to RAG Engine with a reranker looks like this (Python, Vertex
+AI SDK):
+
+```python
+from vertexai import rag
+
+config = rag.RagRetrievalConfig(
+    top_k=10,  # candidates to rerank; all ten come back in reranked order
+    ranking=rag.Ranking(
+        rank_service=rag.RankService(model_name="semantic-ranker-default@latest"),
+    ),
+)
+
+response = rag.retrieval_query(
+    rag_resources=[rag.RagResource(rag_corpus=corpus_name)],  # your corpus's resource name
+    text="How many days do I have to return an item?",
+    rag_retrieval_config=config,
+)
+```
+
+Pass only the first few reranked chunks to the model.
+
+In an agent, the same retrieval sits behind a tool, so the model decides when
+to search and the runtime runs it.
+
+<Callout type="warning">Product names in this area changed in 2026: Vertex AI Search was renamed Agent Search on 22 April, Vector Search 2.0 was called Agent Retrieval by mid-May, and RAG Engine now runs on Gemini Enterprise Agent Platform. Some current pages, older documentation and practice questions still use the former names.</Callout>
+
+## Sources
+
+- Google Cloud, "RAG Engine overview", docs.cloud.google.com/gemini-enterprise-agent-platform/build/rag-engine/rag-overview (stages: ingestion, transformation, embedding, indexing, retrieval, generation).
+- Google Cloud, "Fine-tune RAG transformations", docs.cloud.google.com/gemini-enterprise-agent-platform/build/rag-engine/fine-tune-rag-transformations (chunk_size default 1,024 tokens; chunk_overlap default 256 tokens).
+- Google Cloud, "Retrieval and ranking", docs.cloud.google.com/gemini-enterprise-agent-platform/build/rag-engine/retrieval-and-ranking (ranking API under 100 ms; LLM reranker, one to two seconds, Gemini models; RagRetrievalConfig with top_k and Ranking).
+- Google Cloud, "Use metadata search", docs.cloud.google.com/gemini-enterprise-agent-platform/build/rag-engine/use-metadata-search (metadata_filter on retrieval).
+- Google Cloud, "Vector database choices in RAG Engine", docs.cloud.google.com/gemini-enterprise-agent-platform/build/rag-engine/vector-db-choices (RagManagedDb default, Vector Search, Feature Store, Weaviate, Pinecone).
+- Google Cloud, "Agent Search", cloud.google.com/products/gemini-enterprise-agent-platform/agent-search (formerly Vertex AI Search; out-of-the-box RAG system; citations and links; Vector Search for direct control of a vector database).
+- Google Cloud, "Agent Retrieval (formerly Vector Search 2.0) overview", docs.cloud.google.com/vertex-ai/docs/vector-search-2/overview (documents stored with vectors; embeddings generated by built-in models or supplied).
+- Google Cloud, "Agent Retrieval reranking", docs.cloud.google.com/gemini-enterprise-agent-platform/build/vector-search-2/query-search/reranking (VertexRanker for semantic reranking).
