@@ -61,7 +61,7 @@ Then the body: the claim in one sentence and its limits; the concept and its wor
 ## Status changes
 
 - A record is born `proposed`, by a PR like any content change. Anyone, including an agent, may propose.
-- It becomes **`approved` only through a PR that carries Codex's technical-accuracy verdict on the record** (the content review path, `pipeline/AUDIT.md`): the source locators are opened and the scope checked. An agent's confidence is not a review.
+- It becomes **`approved` only through a PR that carries the review agent's technical-accuracy verdict on the record (currently agy)** (the content review path, `pipeline/AUDIT.md`): the source locators are opened and the scope checked. An agent's confidence is not a review.
 - It moves to `disputed` when a critic or a learner shows it wrong, with the issue named as above, and to `superseded` when a newer record replaces it (`superseded-by`).
 
 ## The index

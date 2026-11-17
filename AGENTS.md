@@ -44,8 +44,8 @@ The learner app (LMS) fetches this repo at build time.
   - keep them keyboard-operable;
   - don't run animation loops while idle or hidden.
 - **Checkpoint ids are stable.** Renaming one silently erases the progress learners already made.
-- **Knowledge records are reviewed like content** (`knowledge/README.md`): a record becomes `approved` only through a PR with Codex's technical-accuracy verdict; every `touches` reference resolves against the curriculum; a `disputed` record a published lesson depends on names the open issue; a `question` record carries no person; `knowledge/index.json` is generated (`pipeline/knowledge-index.mjs`), never edited.
-- **Accuracy:** hardware and ML-systems numbers cite a primary source in the PR. Codex reviews technical accuracy.
+- **Knowledge records are reviewed like content** (`knowledge/README.md`): a record becomes `approved` only through a PR with the review agent's technical-accuracy verdict (currently agy, posted as the required review status); every `touches` reference resolves against the curriculum; a `disputed` record a published lesson depends on names the open issue; a `question` record carries no person; `knowledge/index.json` is generated (`pipeline/knowledge-index.mjs`), never edited.
+- **Accuracy:** hardware and ML-systems numbers cite a primary source in the PR. The review agent (currently agy) reviews technical accuracy.
 
 ## `risk:high` paths
 
