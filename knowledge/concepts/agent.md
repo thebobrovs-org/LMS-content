@@ -2,8 +2,8 @@
 id: concept/agent
 type: concept
 status: proposed
-title: "An agent is a model that directs its own steps, in a loop, with tools"
-scope: "LLM-based agents as Google Cloud and ADK describe them; not classical reinforcement-learning agents"
+title: "An agent is a model that directs its own steps in a loop; tool-using agents also act through tools"
+scope: "LLM-based agents as Google Cloud and ADK describe them. The four-part model (model, instructions, tools, loop) describes the tool-using agents this path studies; ADK itself requires only a model and instructions, with tools optional. Not classical reinforcement-learning agents"
 sources:
   - "ADK documentation, \"Agents\", github.com/google/adk-docs/blob/main/docs/agents/index.md (an LlmAgent's basic components: a model, task instructions and optionally tools)"
   - "Google Cloud, \"What is an AI agent?\", cloud.google.com/discover/what-are-ai-agents (last updated 2026-04-02; definition, and agent vs assistant vs bot table)"
