@@ -24,7 +24,7 @@ Update your row in your own PR. Statuses: `open` → `concept` → `building` �
 | B03 | Pack the backpack, keep the gems (redesign of `context-budget-explorer`) | context-engineering | building | claude | |
 | B04 | Rails or a driver (redesign of `workflow-vs-agent-stepper`) | what-is-an-agent | building | claude | |
 | B05 | Media by reference | context-engineering | open | | |
-| B06 | Grounded but wrong: retrieval precision and recall (upgrade of `rag-retrieval-tuner`) | rag-pipelines | open | | |
+| B06 | Grounded but wrong: retrieval precision and recall (upgrade of `rag-retrieval-tuner`) | rag-pipelines | concept | agy | |
 | B07 | Least privilege and the access boundary | agent-identity-and-access | open | | |
 | B08 | Whose authority: the 3-legged OAuth pause | agent-auth-oauth | open | | |
 | B09 | Hook pipeline | customizing-coding-agents | open | | |
