@@ -20,21 +20,6 @@
   "agent runtime": {
     "definition": "Agent Platform's managed runtime that deploys, operates and scales agents, used with its Sessions and Memory Bank services (formerly Agent Engine)."
   },
-  "flow": {
-    "definition": "In Dialogflow CX and CX Agent Studio, a group of pages that models one conversation topic as a state machine."
-  },
-  "page": {
-    "definition": "A state in a Dialogflow CX flow, with its own routes, parameters and event handlers; exactly one page is current at a time."
-  },
-  "transition route": {
-    "definition": "A Dialogflow CX rule with an intent requirement, a condition requirement or both, which can reply and move the conversation to another page."
-  },
-  "event handler": {
-    "definition": "A Dialogflow CX rule that responds to an event, such as no-match or no-input, usually by replying or reprompting."
-  },
-  "few-shot example": {
-    "definition": "A sample exchange included in an agent's instructions to show the model the behaviour or format you want."
-  },
   "trajectory": {
     "definition": "The sequence of tool calls (and other intermediate steps) an agent took before it answered. Evaluating it checks the path, not just the final response."
   },
@@ -85,6 +70,33 @@
   },
   "session": {
     "definition": "The record of one conversation between a user and an agent: its messages, the agent's events and its working state. A session service is where an agent stores sessions."
+  },
+  "slm": {
+    "definition": "Small language model: fewer parameters than a large model, so lower cost and latency per request, but a narrower range of tasks it handles well."
+  },
+  "maas": {
+    "definition": "Model as a service: a model called through a managed API endpoint, pay-as-you-go by default (reserved capacity is an option), with no serving infrastructure to run."
+  },
+  "model garden": {
+    "definition": "Google Cloud's catalogue of Google, partner and open models, with the serving options each one offers (managed endpoints or self-deployment)."
+  },
+  "self-deployed model": {
+    "definition": "A model whose weights you deploy to an endpoint or cluster you control (for example Gemma on an Agent Platform endpoint or GKE), paying for that compute while it runs."
+  },
+  "flow": {
+    "definition": "In Dialogflow CX and CX Agent Studio, a group of pages that models one conversation topic as a state machine."
+  },
+  "page": {
+    "definition": "A state in a Dialogflow CX flow, with its own routes, parameters and event handlers; exactly one page is current at a time."
+  },
+  "transition route": {
+    "definition": "A Dialogflow CX rule with an intent requirement, a condition requirement or both, which can reply and move the conversation to another page."
+  },
+  "event handler": {
+    "definition": "A Dialogflow CX rule that responds to an event, such as no-match or no-input, usually by replying or reprompting."
+  },
+  "few-shot example": {
+    "definition": "A sample exchange included in an agent's instructions to show the model the behaviour or format you want."
   },
   "workflow builder": {
     "definition": "The low-code tool in Gemini Enterprise for building chat agents and workflows without code (formerly Agent Designer)."
