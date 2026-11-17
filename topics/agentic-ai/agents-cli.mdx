@@ -168,11 +168,12 @@ a development project:
    responses to a dataset and grades them against the chosen metrics, some
    scored by an LLM acting as judge. Failures send the coding agent back to
    step 3.
-   The dataset lives in `tests/eval/datasets/` (for example
-   `basic-dataset.json`) in Agent Platform's evaluation dataset format, not
-   ADK's evalset format: Agents CLI no longer reads `*.evalset.json` files, so
-   a project that has them migrates first. `agents-cli scaffold upgrade`
-   detects them and converts them.
+   In a Python project the dataset lives in `tests/eval/datasets/` (for
+   example `basic-dataset.json`) in the GenAI Eval SDK's `EvaluationDataset`
+   format, not ADK's evalset format: the eval commands no longer read
+   `*.evalset.json` files, so a project that has them migrates first.
+   `agents-cli scaffold upgrade` detects and converts them, leaving the old
+   folder in place; check the result before deleting it.
 5. **Deploy and publish.** The coding agent shows the developer the result of
    `agents-cli deploy --dry-run`, and once the developer approves, runs
    `agents-cli deploy`, which reads the target from the manifest.
