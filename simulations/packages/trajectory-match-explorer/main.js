@@ -22,6 +22,7 @@ const PRESETS = [
   { id: "early", label: "Refund first", calls: ["refund", "order", "policy"] },
   { id: "missing", label: "Skipped check", calls: ["order", "refund"] },
   { id: "amount", label: "Wrong amount", calls: ["order", "policy", "refundBig"] },
+  { id: "extraRefund", label: "Extra refund", calls: ["order", "policy", "refund", "refundBig"] },
 ];
 const ADDABLE = ["order", "policy", "refund", "refundBig", "faq"];
 

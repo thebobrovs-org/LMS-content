@@ -44,13 +44,13 @@ quiz:
     explanation: "Both searches must appear, but in either order, and extra calls are fine: that is ANY_ORDER. EXACT fails any run with get_user or a swapped order. IN_ORDER allows the extra call but fails whenever the searches come in the other order. All three still fail a run with a search missing."
   - id: order-sensitive-mode
     objective: trajectory-modes
-    question: "A refund agent must call check_policy before issue_refund. Read-only lookups before, between or after them are acceptable. Which mode should the eval use?"
+    question: "A refund agent must call check_policy before issue_refund. Read-only lookups before, between or after them are acceptable, and every run in the eval set issues at most one refund. Which mode should the eval use?"
     choices:
       - "IN_ORDER, because it requires the expected calls in order but allows extra calls"
       - "ANY_ORDER, because the lookups can appear anywhere"
       - "EXACT, because order matters"
     answer: 0
-    explanation: "IN_ORDER enforces the order of the expected calls and tolerates the extra lookups. ANY_ORDER would also pass a run that refunds before checking the policy, which is the failure you care about. EXACT enforces order too, but fails every run that adds a harmless lookup, so the eval would raise false alarms."
+    explanation: "IN_ORDER enforces the order of the expected calls and tolerates the extra lookups. ANY_ORDER would also pass a run that refunds before checking the policy, which is the failure you care about. EXACT enforces order too, but fails every run that adds a harmless lookup, so the eval would raise false alarms. The one-refund condition matters: IN_ORDER only looks for the expected calls as an ordered subsequence, so it would also pass a run with an extra refund, before or after the expected ones."
   - id: predict-exact
     objective: trajectory-modes
     question: "Expected: get_order(1182), check_policy(1182), issue_refund(1182, 60). Actual: get_order(1182), check_policy(1182), issue_refund(1182, 600). Which modes pass?"
@@ -149,9 +149,9 @@ Each turn scores 1.0 or 0.0, and the case's score is the average across its
 turns. Try the modes on a refund agent whose expected path is look up the order,
 check the policy, then refund:
 
-<Simulation id="trajectory-match-explorer" height={640} />
+<Simulation id="trajectory-match-explorer" height={700} />
 
-Four things stand out:
+Five things stand out:
 
 - **An extra, harmless lookup** fails EXACT but passes IN_ORDER and ANY_ORDER.
   EXACT is strict enough to flag every deviation, including the ones you do not
@@ -162,10 +162,18 @@ Four things stand out:
   "check the policy before you refund" is, ANY_ORDER cannot see the failure.
 - **A wrong argument** (a $600 refund instead of $60) fails every mode, because
   that call no longer matches the expected one.
+- **An extra refund** after the expected calls passes IN_ORDER and ANY_ORDER.
+  Both modes allow extra calls whatever those calls do, so an extra $600 refund
+  passes, and so does a refund before the check that is followed by the full
+  expected sequence. IN_ORDER checks that the expected calls appear in order,
+  not that every refund follows a policy check.
 
 So choose the loosest mode that still fails the runs you care about: EXACT for a
 fixed, side-effecting sequence; IN_ORDER when order matters but extra read-only
-calls are fine; ANY_ORDER when only the presence of each call matters.
+calls are fine; ANY_ORDER when only the presence of each call matters. For a
+rule about every call of a tool, such as "every refund follows a policy check",
+add a separate deterministic check over all the calls in the run, or use EXACT
+with the full expected sequence.
 
 <Flashcard id="refund-first-anyorder" objective="trajectory-modes" front="An agent refunds before it checks the policy, though both calls are expected in the opposite order. Which mode still passes it?" back="ANY_ORDER, because it ignores order. IN_ORDER and EXACT both fail it." />
 
