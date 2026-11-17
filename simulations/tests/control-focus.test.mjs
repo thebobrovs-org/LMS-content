@@ -444,6 +444,7 @@ const CASES = {
   "spmd-shard-explorer": [
     { press: "#btn-run", focus: "#btn-run", same: true, then: [10000, "#btn-run"], why: "Run stays focused through the step and after it" },
     { setup: ["#btn-run"], wait: 10000, press: "#btn-reset", focus: "#btn-run", why: "Reset switches itself off; Run takes focus" },
+    { press: '[data-spec="model"]', focus: '[data-spec="model"]', same: true, why: "PartitionSpec segment button keeps focus when selected" },
   ],
   "tensor-rank-explorer": ["0", "1", "2", "3"].map((n) => ({ press: `[data-r="${n}"]`, focus: `[data-r="${n}"]`, same: true })),
   "tpu-evolution-timeline": [
@@ -451,6 +452,7 @@ const CASES = {
     { press: '[data-act="next"]', focus: '[data-act="next"]' },
     { setup: ['[data-i="3"]'], press: '[data-act="prev"]', focus: '[data-act="prev"]' },
     { setup: ['[data-i="3"]'], press: '[data-act="reset"]', focus: '[data-act="reset"]' },
+    { setup: ['[data-i="7"]'], press: '[data-act="reset"]', focus: '[data-act="reset"]', why: "Reset from last generation restores gen 0 and keeps focus" },
     { setup: ['[data-i="6"]'], press: '[data-act="next"]', focus: '[data-act="prev"]', why: "Next gen switches off at the last generation; Prev takes focus" },
     { setup: ['[data-i="1"]'], press: '[data-act="prev"]', focus: '[data-act="next"]', why: "Prev switches off at the first generation; Next gen takes focus" },
   ],
@@ -459,6 +461,7 @@ const CASES = {
     { setup: ["#btn-step", "#btn-step", "#btn-step"], press: "#btn-step", focus: "#btn-run", why: "the last Step compiles and switches off; Execute takes focus" },
     { press: "#btn-auto-jit", focus: "#btn-auto-jit", same: true, then: [6000, "#btn-run"], why: "Auto-compile keeps focus while it runs, then hands it to Execute" },
     { setup: ["#btn-auto-jit"], wait: 6000, press: "#btn-run", focus: "#btn-run", same: true, then: [10000, "#btn-run"], why: "Execute stays focused through the race" },
+    { setup: ["#btn-auto-jit"], wait: 6000, press: "#btn-reset", focus: "#btn-reset", same: true, why: "Reset keeps focus after restoring initial compile state" },
     { setup: ["#btn-step"], press: "#btn-auto-jit", focusOnly: "#inspector-content [tabindex]", at: 3000, focus: "#inspector-content [tabindex]", same: true, why: "the code region keeps focus while Auto-compile advances the stages" },
   ],
 };
