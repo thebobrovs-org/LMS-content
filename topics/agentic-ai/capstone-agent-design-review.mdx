@@ -142,7 +142,11 @@ configure chunking, embeddings or reranking yourself.
 For R2, the orders database is reached through MCP Toolbox for Databases with
 one named, parameterised query, `get_orders_for_customer`, never a free-form
 SQL tool. Its customer id comes from session state that the web app writes when
-the customer signs in, not from the model. For R3, `issue_refund` is a function
+the customer signs in, not from the model: the agent wraps the Toolbox tool so
+the wrapper reads the id from state and binds it, and the model never sees that
+parameter. The MCP lesson's authenticated parameters fill such a value from a
+verified Google sign-in token; these customers sign in to the website, not to
+Google, so the binding is done in the agent's code. For R3, `issue_refund` is a function
 tool that calls the payments API.
 
 </Step>
@@ -169,8 +173,9 @@ Memory Bank.
 For R5, an evalset records the expected tool calls as well as the answer. It
 includes edge cases (a refund of exactly $200), adversarial ones (a pasted
 instruction to refund someone else's order) and cases for R4. Trajectory
-matching with `IN_ORDER` checks that the order lookup comes before every refund,
-while still allowing extra calls in between. CI runs the evalset on every change
+matching with `IN_ORDER` checks that the expected lookup comes before the
+expected refund, while allowing extra calls. An extra, unexpected refund would
+still pass, so the adversarial cases also assert that no refund happens. CI runs the evalset on every change
 and fails the build on a regression. After launch, sampled live traffic is
 scored with reference-free checks, and every failure found becomes a new case.
 
@@ -196,12 +201,16 @@ the step on tools.
 </Step>
 <Step id="capstone-guardrails" title="Gateway and guardrails: control the traffic, screen the text, gate the refund">
 
-For R7, the agent and its MCP server are registered in Agent Registry, and its
-calls to the MCP server and the payments API go through Agent Gateway, where access policies decide which targets
-the agent may call and every call is recorded. A Model Armor template screens
+For R7, the agent and its MCP server are registered in Agent Registry, and the
+agent is bound to Agent Gateway, so all its outbound traffic passes through it:
+the model, Agent Search, sessions, the MCP server and the payments API. Access
+policies allow exactly those targets, and every call is recorded. A Model Armor template screens
 prompts and responses for prompt injection, and its Sensitive Data Protection
 filter covers the card numbers in R4. Start with inspect only to tune it, then
 switch to inspect and block before launch, under an organisation floor setting.
+Blocking stops content from going further but does not redact what was already
+received, so R4 also calls for advanced Sensitive Data Protection, which can
+de-identify card numbers as well as detect them.
 For R3, the refund limit lives in code, as the next section explains.
 
 </Step>
@@ -209,7 +218,7 @@ For R3, the refund limit lives in code, as the next section explains.
 
 <Figure
   src="/media/capstone-reference-architecture.svg"
-  alt="Reference architecture for the Northwind Outdoor support agent. A customer signs in on the website, which sets the customer id in session state and sends the chat to the agent. The agent, an ADK LlmAgent on Agent Runtime with persistent sessions and its own agent identity, calls a managed Gemini model and searches the policy pages in Agent Search. Its calls to the MCP server and the payments API pass through Agent Gateway, which applies access policies and records each call: MCP Toolbox with the parameterised query get_orders_for_customer on Cloud SQL, and issue_refund on the payments API, which sends refunds over 200 dollars to the support leads' approval queue. Model Armor screens prompts and responses for prompt injection and card numbers. Agent Registry lists the agent and its MCP server. Below, an evalset runs in CI on every change, and sampled live traffic is scored online; failures become new eval cases. Each element is labelled with the requirement it serves, R1 to R7."
+  alt="Reference architecture for the Northwind Outdoor support agent. A customer signs in on the website, which sets the customer id in session state and sends the chat to the agent. The agent, an ADK LlmAgent on Agent Runtime with persistent sessions and its own agent identity, is bound to Agent Gateway, so all its outbound calls pass through the gateway, which allows only listed targets and records each call: a managed Gemini model, Agent Search over the policy pages, MCP Toolbox with the parameterised query get_orders_for_customer on Cloud SQL, and issue_refund on the payments API, which sends refunds over 200 dollars to the support leads' approval queue. Model Armor screens prompts and responses for prompt injection and detects and de-identifies card numbers. Agent Registry lists the agent and its MCP server. Below, an evalset runs in CI on every change, and sampled live traffic is scored online; failures become new eval cases. Each element is labelled with the requirement it serves, R1 to R7."
   caption="Every box answers a numbered requirement. A box with no requirement next to it would be the first thing to question."
 />
 
@@ -305,4 +314,7 @@ question.
 - Google Cloud, "Professional Agentic Architect exam guide", services.google.com/fh/files/misc/professional_agentic_architect_exam_guide_english.pdf (the five exam sections this design covers; retrieved 2026-11-17).
 - Google Skills, "Professional Agentic Architect" learning path, www.skills.google/paths/4525 (labs).
 - Google, Agent Development Kit documentation, "Get action confirmation for ADK Tools", github.com/google/adk-docs/blob/main/docs/tools-custom/confirmation.md (retrieved 2026-11-17: require_confirmation with a confirmation function such as an amount threshold; DatabaseSessionService and VertexAiSessionService not supported).
+- Google Cloud, "Deploy an agent with Agent Gateway" (Agent Runtime), docs.cloud.google.com/gemini-enterprise-agent-platform/scale/runtime/agent-gateway-runtime-deploy (retrieved 2026-11-17: binding an agent routes its outbound traffic, including platform calls such as the Sessions API, through the gateway; egress endpoints must be allowed).
+- Google, Agent Development Kit documentation, "MCP Toolbox for Databases", adk.dev/integrations/mcp-toolbox-for-databases (retrieved 2026-11-17: authenticated parameters bind tool inputs to values from OIDC tokens; bound parameters are hidden from the model).
+- Google Cloud, "Model Armor overview", docs.cloud.google.com/model-armor/overview (retrieved 2026-11-17: basic Sensitive Data Protection detects credit card numbers; advanced configuration supports inspection and de-identification).
 - The other facts in this lesson are taught, with their sources, in the earlier lessons of this path: low-code or code, choosing a model, RAG pipelines, MCP tools and integrations, multi-agent orchestration, sessions, state and memory, evaluation criteria, deploying agents, agent identity, OAuth, Agent Gateway and Registry, and guardrails.
