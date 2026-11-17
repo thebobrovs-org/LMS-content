@@ -71,7 +71,7 @@ sign-off between each, core first, then one exam section at a time.
 
 | ID | Level | Topic (`id`) | One-line objective | Visual / lab | Status |
 |----|-------|--------------|--------------------|--------------|--------|
-| 1.1 | 100 | `workflow-builder` | Choose a chat agent or a workflow for a use case. | figure + codelab | plan-approved |
+| 1.1 | 100 | `workflow-builder` | Choose a chat agent or a workflow for a use case. | figure + codelab | in review |
 | 1.2 | 200 | `cx-agent-studio-flows` | Choose an instruction-based or flow-based agent for a use case. | **sim `cx-route-resolver`** | plan-approved |
 | 1.3 | 200 | `enterprise-data-gemini-enterprise` | Explain the roles of an app, a data store and a connector. | figure | plan-approved |
 

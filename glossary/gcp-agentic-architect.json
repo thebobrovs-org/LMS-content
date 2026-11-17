@@ -20,6 +20,15 @@
   "agent runtime": {
     "definition": "Agent Platform's managed runtime that deploys, operates and scales agents, used with its Sessions and Memory Bank services (formerly Agent Engine)."
   },
+  "workflow builder": {
+    "definition": "The low-code tool in Gemini Enterprise for building chat agents and workflows without code (formerly Agent Designer)."
+  },
+  "trigger": {
+    "definition": "What starts a Workflow Builder workflow: manual (an @-mention in chat), a schedule, or an event in a connected app."
+  },
+  "gemini agent step": {
+    "definition": "A Workflow Builder workflow step in which a model acts on instructions, knowledge and connectors, and returns text or JSON for later steps."
+  },
   "trajectory": {
     "definition": "The sequence of tool calls (and other intermediate steps) an agent took before it answered. Evaluating it checks the path, not just the final response."
   },
