@@ -219,10 +219,15 @@ thresholds, is committed, a nightly job with the `agents-cli` command installed
 runs from the project folder:
 
 ```bash
+set -euo pipefail                            # stop at the first command that fails
 agents-cli install --locked                  # project dependencies; fail if the lock file is out of date
-agents-cli eval run                          # exits 1 and stops the job on a missed threshold
+agents-cli eval run                          # exits 1 on a missed threshold, so the deploy never runs
 agents-cli deploy --project my-staging-project
 ```
+
+The first line matters: a plain Bash script carries on after a failed command,
+so without `set -e` (or chaining the commands with `&&`) the deploy would run
+even after the evaluation failed.
 
 The runner also needs credentials: a Google Cloud identity for the deploy (for
 example a service account through workload identity federation), and a Gemini
