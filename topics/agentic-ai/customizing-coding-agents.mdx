@@ -313,7 +313,8 @@ with the guarantee it already had.
 
 <Term id="skill registry">Skill Registry</Term> shares skills at the platform
 level. It is a Gemini Enterprise Agent Platform feature in public Preview. You
-upload a skill as a zip with `SKILL.md` at the root, and the registry stores it
+upload a skill as a zip that contains its `SKILL.md` (with YAML frontmatter;
+keeping it at the top of the archive is a sensible layout), and the registry stores it
 in your Google Cloud project, keeping each revision as a fixed version. Agents
 reach it through the Managed Agents API, the Agent Platform SDK and ADK (the
 Agent Development Kit), whose SkillToolset gives an agent tools to search the
@@ -350,5 +351,5 @@ Registry natively.
 - Claude Code documentation, "Automate workflows with hooks" and "Hooks reference", code.claude.com/docs/en/hooks-guide and code.claude.com/docs/en/hooks (deterministic control; PostToolUse with an Edit|Write matcher in .claude/settings.json; exit code 2 blocks PreToolUse and shows stderr to Claude for PostToolUse; a PreToolUse deny holds in every permission mode; for command patterns, the hooks reference recommends the permission system for a hard allow or deny).
 - Claude Code documentation, "Create custom subagents", code.claude.com/docs/en/sub-agents (own context window; .claude/agents/; frontmatter name, description, tools, model).
 - Claude Code documentation, "Create plugins" and "Discover and install plugins", code.claude.com/docs/en/plugins and code.claude.com/docs/en/discover-plugins (.claude-plugin/plugin.json; skills, agents, hooks, MCP servers; Claude Code does not load a CLAUDE.md at the plugin root, so instructions go in a skill; /plugin marketplace add; /plugin install plugin@marketplace).
-- Google Cloud, "Skill Registry overview", docs.cloud.google.com/gemini-enterprise-agent-platform/build/skill-registry (repository for managing agent skills; versioned revisions; zip with SKILL.md at the root; standalone skills can be managed within Agent Registry).
+- Google Cloud, "Skill Registry overview", docs.cloud.google.com/gemini-enterprise-agent-platform/build/skill-registry (repository for managing agent skills; versioned revisions; zip containing a SKILL.md file with YAML frontmatter is validated on upload; standalone skills can be managed within Agent Registry).
 - Google Cloud Blog, "I/O 26 news for agent developers on Google Cloud", 19 May 2026, cloud.google.com/blog/topics/developers-practitioners/io26-news-for-agent-developers-on-google-cloud (Skill Registry public preview; accessible via the Managed Agents API, Agent Platform SDK and ADK via SkillToolset; will be part of Agent Registry).
