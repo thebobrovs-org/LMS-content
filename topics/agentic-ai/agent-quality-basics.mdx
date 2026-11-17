@@ -31,7 +31,7 @@ flashcards:
     front: "An agent's reply answers the question correctly but includes another customer's address. Which dimension fails?"
     back: "Safety. A final response can be correct and still be outside policy, so safety is judged separately from correctness. A policy like this one usually needs a rubric-based or custom check, because a generic harmful-content check does not know your data rules."
 quiz:
-  - id: unauthorised-refund-verdict
+  - id: unverified-delete-verdict
     objective: right-answer-wrong-way
     question: "An account agent must call verify_identity before it deletes an account. In a test run it calls delete_account without verifying, then replies 'Your account has been deleted.' The reply matches the reference answer word for word. Should the run pass?"
     choices:
@@ -162,7 +162,7 @@ got better or worse. In ADK, these datasets are test files and evalsets, and a
 later lesson shows how to build one.
 
 <Term id="online monitoring">Online monitoring</Term> measures the deployed agent
-on live traffic. ADK records each run as a trace (the record of one run), with a
+on live traffic. With tracing enabled, ADK records each run as a trace (the record of one run), with a
 span (one timed step) for each model call and tool call, and can export traces to Cloud Trace; logs and metrics sit
 alongside. Monitoring catches what the dataset missed:
 

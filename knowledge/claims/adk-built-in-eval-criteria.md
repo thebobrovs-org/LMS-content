@@ -24,4 +24,4 @@ review-by: 2027-02-15
 
 **Efficiency criteria.** `tool_call_count_v1`, `inference_call_count_v1`, `token_usage_v1` and `invocation_duration_v1` are reported for every eval without configuration. They report a value but never pass or fail an eval case.
 
-**Limits.** Some criteria (response quality, safety, multi-turn quality) call the Gen AI evaluation service. Names and defaults are product facts with version suffixes; this record is reviewed every 90 days.
+**Limits.** Some criteria (response quality, safety, multi-turn quality) call Google Cloud's Gen AI evaluation service (the docs name it the Vertex Gen AI Evaluation Service API and, for `safety_v1`, the Agent Platform Eval SDK). Names and defaults are product facts with version suffixes; this record is reviewed every 90 days.
