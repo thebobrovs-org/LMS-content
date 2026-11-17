@@ -1,0 +1,16 @@
+{
+  "id": "agent-loop-stepper",
+  "title": "Agent loop stepper",
+  "version": "1.0.0",
+  "props": {
+    "request": { "type": "string", "default": "order" },
+    "descriptions": { "type": "string", "default": "clear" },
+    "cap": { "type": "number", "default": 6 }
+  },
+  "checkpoints": [
+    {
+      "id": "observe-loop-cap",
+      "hint": "Run a request until the max model calls cap stops the loop before the agent answers (try vague tool descriptions)."
+    }
+  ]
+}

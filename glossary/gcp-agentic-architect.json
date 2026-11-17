@@ -37,5 +37,17 @@
   },
   "user simulation": {
     "definition": "An evaluation method in which a model plays the user, generating each user turn from a starting prompt, a conversation plan and optionally a persona, so branching conversations can be tested."
+  },
+  "function calling": {
+    "definition": "A model capability: given function declarations, the model can return a structured request to call one of them with arguments, instead of text. The application or runtime executes the call and sends the result back."
+  },
+  "function declaration": {
+    "definition": "The name, description and parameter schema that tell a model a tool exists and when to use it. In ADK it is generated from a function's name, docstring and type hints."
+  },
+  "react": {
+    "definition": "Reason and act: a pattern in which a model alternates reasoning steps with actions such as tool calls, each result informing the next step (Yao et al., 2022)."
+  },
+  "max iterations": {
+    "definition": "A cap on how many times an agent loop may run, so a loop that is not converging stops. ADK counts it in model calls per run (max_llm_calls); a LoopAgent's max_iterations is a separate cap on cycles of a workflow loop."
   }
 }

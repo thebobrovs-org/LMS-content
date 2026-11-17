@@ -88,7 +88,7 @@ sign-off between each, core first, then one exam section at a time.
 
 | ID | Level | Topic (`id`) | One-line objective | Visual / lab | Status |
 |----|-------|--------------|--------------------|--------------|--------|
-| 3.1 | 100 | `the-agent-loop` | Trace a multi-step request through each model call and tool call. | **sim `agent-loop-stepper`** | plan-approved |
+| 3.1 | 100 | `the-agent-loop` | Trace a multi-step request through each model call and tool call. | **sim `agent-loop-stepper`** | on staging |
 | 3.2 | 200 | `adk-agents-and-tools` | Define an LlmAgent with a model, instruction and function tools. | figure + codelab | plan-approved |
 | 3.3 | 200 | `sessions-state-memory` | Distinguish a session's history and state from long-term memory. | figure | plan-approved |
 | 3.4 | 300 | `rag-pipelines` | Name the RAG stages and the decision at each. | **sim `rag-retrieval-tuner`** | plan-approved |
