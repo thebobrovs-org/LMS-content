@@ -1,0 +1,14 @@
+{
+  "agent": {
+    "definition": "A system in which a model decides, in a loop, which actions (tool calls) to take toward a goal, and when it is done."
+  },
+  "tool": {
+    "definition": "A function, API or service an agent can call to read data or take an action. The model asks for the call; the runtime runs it."
+  },
+  "workflow": {
+    "definition": "A fixed sequence of steps, possibly with model calls inside, whose order the designer set in advance."
+  },
+  "determinism spectrum": {
+    "definition": "The range from fully scripted flows, where the designer decides every step, to autonomous agents, where the model does."
+  }
+}

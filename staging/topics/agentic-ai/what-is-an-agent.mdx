@@ -1,0 +1,166 @@
+---
+title: What makes something an agent
+summary: An agent is a model that chooses its own next action, in a loop, with tools. Tell it apart from a chatbot and a fixed workflow, and use the least autonomy that solves the task.
+tags: [agentic-ai, agents, architecture]
+difficulty: beginner
+estimatedMinutes: 15
+level: 100
+objectives:
+  - id: define-agent
+    statement: "Name the four core parts of an agent (model, instructions, tools, loop), plus the state around them, and what each contributes."
+  - id: agent-vs-workflow
+    statement: "Classify a use case as a chatbot, a deterministic workflow or an agent, and justify the choice."
+  - id: autonomy-cost
+    statement: "Explain what autonomy costs in predictability, evaluation effort and risk."
+flashcards:
+  - id: agent-parts
+    objective: define-agent
+    front: What are the parts of an LLM agent?
+    back: A model that reasons, instructions that set its goal and limits, tools it can call, and a loop in which the model picks the next call and sees the result. State carries what it learned between turns.
+  - id: agent-defining-trait
+    objective: agent-vs-workflow
+    front: What makes a system an agent rather than a workflow?
+    back: Who controls the path. In a workflow the designer laid out the paths in advance (a model may fill a step or pick a predefined branch); in an agent the model directs its own steps and tool use at run time.
+  - id: least-autonomy
+    objective: autonomy-cost
+    front: How much autonomy should you give an LLM system?
+    back: The least that solves the task. Use a workflow when the steps are known and an agent only where the path cannot be known in advance.
+quiz:
+  - id: classify-invoice-pipeline
+    objective: agent-vs-workflow
+    question: "Every invoice goes through the same steps: extract the fields with Gemini, check them against the purchase order in code, then route to a person for approval. What is this system?"
+    choices:
+      - An agent, because it calls Gemini
+      - A workflow, because the designer fixed the steps and their order
+      - An agent, because Gemini decides which fields to extract
+    answer: 1
+    explanation: The path never changes and no model chooses what happens next, so it is a workflow with a model call inside one step. Calling an LLM does not make a system an agent, and a model choosing its output (which fields) is not the same as choosing the next step.
+  - id: classify-it-troubleshooter
+    objective: agent-vs-workflow
+    question: "An IT helper must investigate a user's problem. Depending on what it finds, it may check logs, look up the device, read a runbook or open a ticket, in any order. Which design fits?"
+    choices:
+      - An agent, because the next step depends on what each step finds
+      - A workflow with a branch for each known problem type
+      - A chatbot that answers the user's question without taking actions
+    answer: 0
+    explanation: The path cannot be known in advance, which is exactly where an agent earns its cost. A branching workflow only handles the cases its designer foresaw, and here each finding decides the next check.
+  - id: autonomy-tradeoff
+    objective: autonomy-cost
+    question: "You replace a fixed workflow with an agent that picks its own steps. What do you give up?"
+    choices:
+      - Nothing important, as long as the system prompt is well written
+      - Tool access, because an agent can call only one tool per task
+      - Some predictability and testability, so you need more evaluation and guardrails
+    answer: 2
+    explanation: Autonomy buys flexibility at the price of predictability, latency, cost and testing effort. A prompt cannot make an agent's path predictable, and agents can call many tools across many turns. That is why evaluation and security matter more as autonomy grows.
+  - id: name-missing-part
+    objective: define-agent
+    question: "A team gives a model good instructions and a clear goal, and it writes excellent plans for resetting a user's password. But nothing ever changes in the identity system. Which part of an agent is missing?"
+    choices:
+      - Tools the model can call to act on the identity system
+      - A larger model with better reasoning
+      - Longer-term memory of earlier conversations
+    answer: 0
+    explanation: Without tools, a model can only produce text. Tools are how an agent reads data and acts; the runtime executes the calls the model asks for.
+  - id: autonomy-risk
+    objective: autonomy-cost
+    question: "An agent that can issue refunds is about to launch. Which concern grows because it can act, not just answer?"
+    choices:
+      - Its replies will be longer than a chatbot's
+      - A wrong action does real damage, so it needs narrow permissions
+      - Its replies will be harder for customers to read
+    answer: 1
+    explanation: An agent that can act can act wrongly, and the damage is real. Narrow permissions and guardrails (such as human approval before refunds) limit what a mistake or an attack can do.
+status: draft
+updated: "2026-11-17"
+---
+
+## Not everything with an LLM is an agent
+
+Teams call almost any feature that uses a large language model an "agent". That
+label matters: an agent needs evaluation, identity and guardrails that a
+summariser does not, and a task that a simple workflow handles well becomes
+slower, costlier and harder to test when you make it an agent. Many of the
+architecture choices in this path start with one question: **does this task need
+an agent at all?**
+
+## The parts of an agent
+
+An <Term id="agent">agent</Term> has four core parts, plus state. Google's Agent
+Development Kit (ADK) names the first three as an agent's basic components.
+
+- **A model** that reads the situation and reasons about what to do.
+- **Instructions** that set the goal, the persona and the limits.
+- **<Term id="tool">Tools</Term>** that let it read data or act: functions,
+  APIs, databases, even other agents.
+- **A loop.** The model picks the next tool call, the runtime (your code or the
+  agent framework) runs it, the
+  result comes back, and the model decides again, until it can answer or a stop
+  condition ends the loop.
+
+Around these four, **state** (the conversation so far, and longer-term memory) lets
+each turn build on the last.
+
+<Callout type="note">The model never runs a tool itself. It asks for a call, and your code or the agent runtime executes it. A later topic, the agent loop, follows one request through this cycle.</Callout>
+
+<Flashcard id="agent-loop-inline" objective="define-agent" front="In an agent's loop, who executes a tool call?" back="The runtime or your code. The model only proposes the call and reads the result." />
+
+## Chatbot, workflow or agent
+
+The defining question is **who controls the path**: who decides what happens next.
+
+<Figure
+  src="/media/agentic-determinism-spectrum.svg"
+  alt="A left-to-right spectrum from chatbot to workflow to agent. Chatbot: the user decides; answers each message and acts only when asked; simple and low risk but cannot finish a task. Workflow: the designer decides; paths laid out in advance, with models filling steps or picking branches; predictable and testable but breaks when the path cannot be known ahead. Agent: the model decides; directs its own steps and tool calls in a loop; handles open-ended tasks but is less predictable and needs evals and guardrails."
+  caption="The determinism spectrum: moving right buys flexibility and costs predictability."
+/>
+
+- A **chatbot** answers each message. It acts only when the user asks, and the
+  user decides every next step.
+- A <Term id="workflow">workflow</Term> runs steps the designer laid out in
+  advance. A step can call a model, for example to extract fields or draft a
+  reply, and a model may even pick between branches the designer defined, but it
+  never invents the path. That makes it predictable and easy to test. A single
+  model call is simpler still, and often enough.
+- An **agent** lets the model direct its own steps at run time. It can handle a
+  task whose path you cannot know ahead of time, such as investigating a problem
+  where each finding decides the next check.
+
+<Callout type="note">ADK uses "workflow" more broadly: any application with more than one agent or executable node, including agents that route between themselves. This lesson uses the narrower sense above, where the designer controls the path.</Callout>
+
+These sit on a <Term id="determinism spectrum">determinism spectrum</Term>, and
+real systems mix them: a workflow with one agentic step, or an agent whose risky
+actions pass through a fixed approval step.
+
+<Quiz
+  id="classify-summariser"
+  objective="agent-vs-workflow"
+  question="A feature sends each support ticket to Gemini with the prompt 'summarise this in three bullets' and shows the result. What is it?"
+  choices={["An agent, because it calls Gemini", "A single model call, not an agent", "A chatbot, because it writes natural language"]}
+  answer={1}
+  explanation="Nothing chooses a next step: one fixed call, one output. It needs good prompting, not agent machinery."
+/>
+
+## What autonomy costs
+
+Each step to the right on the spectrum buys flexibility and costs something:
+
+- **Predictability.** The same input can take a different path on a different day.
+- **Testing effort.** You must check the path the agent took, not just its final
+  answer.
+- **Latency and cost.** More model turns mean more time and more tokens.
+- **Risk.** An agent that can act can act wrongly, and errors can compound over
+  many turns, so it needs narrow permissions and guardrails.
+
+So the rule is simple: **use the least autonomy that solves the task.** Start
+with a single model call or a workflow, and give the model control of the next
+step only where the path really cannot be known in advance. The rest of this
+path teaches the tools for each choice: low-code workflows and agents, agents
+built in code, and the evaluation and security layers that make autonomy safe to
+ship.
+
+## Sources
+
+- Google, Agent Development Kit documentation, "Agents", github.com/google/adk-docs/blob/main/docs/agents/index.md (an agent's basic components: a model, task instructions and optionally tools; ADK's broader meaning of workflow).
+- Google Cloud, "What is an AI agent?", cloud.google.com/discover/what-are-ai-agents (agents vs assistants vs bots).
+- Anthropic, "Building effective agents", anthropic.com/engineering/building-effective-agents (workflows use predefined code paths, agents direct their own process; start with the simplest solution; agentic systems trade latency and cost for task performance, with the potential for compounding errors).
