@@ -77,6 +77,9 @@
     "vector-basis-explorer": [
       "math-infra/what-is-a-tensor"
     ],
+    "workflow-vs-agent-stepper": [
+      "agentic-ai/what-is-an-agent"
+    ],
     "xla-fusion-explorer": [
       "ml-systems/jax-xla-stack"
     ]
