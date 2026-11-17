@@ -1,0 +1,252 @@
+---
+title: "Connecting enterprise data to Gemini Enterprise"
+summary: A Gemini Enterprise app searches the data stores connected to it, and connectors keep data from Drive, Jira and other sources in those stores. Learn which store fits which source, how blended search spans them, how results stay within each user's permissions, and how images, video and audio enter the picture.
+tags: [agentic-ai, google-cloud, low-code, gemini-enterprise, retrieval]
+difficulty: intermediate
+estimatedMinutes: 20
+level: 200
+prerequisites: [agentic-ai/google-agent-platform-map]
+objectives:
+  - id: app-store-connector
+    statement: "Explain the roles of an app, a data store and a connector."
+  - id: choose-store-type
+    statement: "Choose a structured, unstructured or third-party data store for a source, and recognise when a website needs Agent Search instead."
+  - id: secure-retrieval
+    statement: "Keep retrieval permission-aware so users see only what they may see."
+  - id: multimodal
+    statement: "Describe how images, video and audio enter a Gemini Enterprise workflow."
+flashcards:
+  - id: app-store-connector-roles
+    objective: app-store-connector
+    front: "In Gemini Enterprise, what are an app, a data store and a connector?"
+    back: "The app is what users query: it serves search results, actions and agents. A data store holds the content the app searches. A connector brings content from a source such as Drive or Jira into Gemini Enterprise, as one or more data stores."
+  - id: store-types
+    objective: choose-store-type
+    front: "What kinds of data store can a Gemini Enterprise app search?"
+    back: "Structured (rows from BigQuery, or JSON in Cloud Storage or sent through the API), unstructured (documents such as PDF, HTML and text from Cloud Storage, BigQuery or Google Drive), and third-party connector stores, which Google treats as structured. Website data stores can't be connected to Gemini Enterprise search and assistant apps."
+  - id: federated-vs-ingestion
+    objective: app-store-connector
+    front: "What is the difference between a federated connector and an ingestion connector?"
+    back: "Federation sends each query to the source system and returns its live results, with no copy in Gemini Enterprise's index. Ingestion copies the content into Gemini Enterprise's index and keeps it in sync, which usually gives better search quality at the cost of storage and sync time."
+  - id: acl-rule
+    objective: secure-retrieval
+    front: "What permission rule must an agent's retrieval follow?"
+    back: "It must never widen what a user can read. Results are filtered to the documents that user may see in the source, which needs the source's access lists (ACLs) and the user's identity, from your identity provider."
+  - id: upload-types
+    objective: multimodal
+    front: "Which media can users upload to the Gemini Enterprise assistant in a chat?"
+    back: "Documents (PDF, Office files, text and others), images (PNG, JPEG), video (MP4) and audio (MP3), within per-file size limits and a combined limit per chat session."
+quiz:
+  - id: product-catalogue
+    objective: choose-store-type
+    question: "A retailer wants employees to search its product catalogue, which lives as a table in BigQuery with a row per product. What should the app search?"
+    choices:
+      - "A third-party connector store for BigQuery"
+      - "An unstructured data store imported from BigQuery"
+      - "A structured data store imported from BigQuery"
+    answer: 2
+    explanation: "Rows in a table are structured data, so a structured data store imports them directly and keeps each field. Unstructured stores are for documents, which BigQuery can also hold, but a product table isn't documents. Third-party connector stores bring in apps such as Jira or Salesforce, not BigQuery."
+  - id: public-site
+    objective: choose-store-type
+    question: "Marketing wants an agent in Gemini Enterprise to answer from the company's public website. An engineer proposes adding a website data store to the Gemini Enterprise app. What is the problem?"
+    choices:
+      - "Website stores need the site's domain verified first"
+      - "Website data stores can't be connected to these apps"
+      - "Website stores must be blended with a structured store"
+    answer: 1
+    explanation: "Website data stores can't be connected to Gemini Enterprise search and assistant apps. Website search, including domain verification for generative answers, belongs to Agent Search; for Gemini Enterprise, bring the content in another way, such as documents in Cloud Storage. Blended search is an option for combining stores, never a requirement."
+  - id: one-query-many-stores
+    objective: app-store-connector
+    question: "Support staff want one search box that returns answers from Jira tickets, the Confluence knowledge base and product manuals in Cloud Storage. How is that set up?"
+    choices:
+      - "Three apps, one per source, searched in turn"
+      - "One app searching all three data stores"
+      - "One data store holding all three sources"
+    answer: 1
+    explanation: "Blended search is one app with several data stores connected, searched together, and users can still filter to one store. Separate apps make users search three times. A data store holds only one type of data, so the three sources stay separate stores."
+  - id: source-must-not-copy
+    objective: app-store-connector
+    question: "A bank's compliance team lets Gemini Enterprise search its case-management system, and lets authorised users see query results, but forbids keeping a copy of its content in Gemini Enterprise's index. Which connector mode fits?"
+    choices:
+      - "A synced copy, refreshed every three hours"
+      - "An ingested store marked as access-controlled"
+      - "Federated search, sending each query to the source"
+    answer: 2
+    explanation: "A federated connector sends each query to the source system and returns its live results, so no copy is kept in Gemini Enterprise's index, at the cost of possibly lower search quality. Ingestion copies content into Gemini Enterprise's index whatever the sync schedule, and access control limits who sees the copy but doesn't stop the copying."
+  - id: leaked-document
+    objective: secure-retrieval
+    question: "Contracts were imported from Cloud Storage into an unstructured data store. A sales rep now finds a legal-only contract in search results. What is the most likely cause?"
+    choices:
+      - "The store was set up without ACL information"
+      - "The rep's licence is for a different edition"
+      - "Blended search skips each store's permissions"
+    answer: 0
+    explanation: "For documents you import yourself, permissions come from ACL metadata on each document, in a store marked as access-controlled when it was created. Without that, nothing limits who sees the contract, and the fix is to recreate the store with ACLs. The edition changes features such as blended search limits, not who may read a document, and nothing documented says blended search drops a store's permissions."
+  - id: jira-before-launch
+    objective: secure-retrieval
+    question: "An HR team wants its Jira project, including files attached to tickets and comments, searchable in Gemini Enterprise. The Jira connector maps Jira's permissions. What should happen before launch?"
+    choices:
+      - "Nothing more, since the connector maps Jira's permissions"
+      - "Check the connector's documented limits and test as a denied user"
+      - "Add ACL metadata to each ticket and mark the store access-controlled"
+    answer: 1
+    explanation: "Permission filtering is only as good as the ACLs a connector can see, and connectors have documented gaps: in Jira, attachments on private comments don't inherit the comment's restrictions. So check the limits and test as a user who should be denied. Trusting the mapping alone misses such gaps, and ACL metadata you add yourself is for data you import from Cloud Storage or BigQuery, not for connector stores."
+  - id: policy-updated-this-morning
+    objective: app-store-connector
+    question: "HR edited the leave-policy page in Confluence at 9:00. At 10:00 the agent still quotes the old wording, though a test user sees the edit in Confluence. The Confluence connector ingests with default settings. What explains it?"
+    choices:
+      - "Confluence's ACLs hide the edit from the agent"
+      - "The copy hasn't synced since the change"
+      - "Blended search ranked another page higher"
+    answer: 1
+    explanation: "An ingestion connector answers from its copy, which picks up changes at the next sync, every three hours by default, so a change made an hour ago may not be there yet. The test user sees the edit, so ACLs aren't hiding it, and the page was edited in place, so no other page outranks it: ranking can't return text that isn't in the index. Shorten the sync schedule or use federation where freshness matters."
+  - id: video-question
+    objective: multimodal
+    question: "A field engineer wants to ask the Gemini Enterprise assistant about a 3-minute MP4 clip of a faulty pump. What is the simplest route?"
+    choices:
+      - "Upload the clip in the chat and ask about it"
+      - "Index the clip in an unstructured data store first"
+      - "Convert the clip to frames and upload them as a PDF"
+    answer: 0
+    explanation: "The assistant analyses files uploaded to a chat, including MP4 video up to 200 MB, so the engineer can upload the clip and ask. Google's data store documentation lists document formats, not video. Converting to a PDF adds a step the chat doesn't need, since it accepts MP4 directly."
+status: draft
+updated: "2026-11-17"
+---
+
+## Data is what makes the agent useful
+
+An agent can only answer from what it can reach, and it is only safe if it reaches
+no more than the person asking could. In Gemini Enterprise both depend on three
+pieces, and scenario questions turn on keeping them apart.
+
+## Apps, data stores and connectors
+
+- An **app** is what users work with: Google describes it as providing search
+  results, actions and agents to end users. (In the API it is called an engine.)
+- A <Term id="data store">data store</Term> holds the content an app searches. A
+  store holds one type of data, and apps and stores are many-to-many: one app can
+  search several stores, and a store can serve several apps.
+- A <Term id="connector">connector</Term> brings content from a source into
+  Gemini Enterprise, as one or more data stores (often one per kind of item, such
+  as issues and comments). Google's docs also call third-party stores "data
+  connectors"; don't let the name blur the two roles.
+
+Connectors work in one of two ways, and some support both:
+
+- **Federated:** each query is sent to the source system, which returns live
+  results. Nothing is copied into Gemini Enterprise's index (the results
+  themselves still reach the user), but search quality can be lower.
+- **Ingestion:** content is copied into Gemini Enterprise's index and kept in sync,
+  by default with an incremental sync every three hours. Search quality is usually
+  better, at the cost of storage and sync time.
+
+An ingested copy is only as fresh as its last sync. If a policy changes in the
+source at 9:00 and the next incremental sync runs at 11:00, the agent answers from
+the old copy until then, and it sounds just as confident. Incremental syncs pick up
+added or updated content; deletions and identity (ACL) changes wait for a full
+sync, scheduled separately. When
+answers must reflect a change within minutes, shorten the schedule or use a
+federated connector, which asks the source live.
+
+## Choosing the store type
+
+| Source | Data store type |
+|---|---|
+| Rows in a BigQuery table, or JSON records | **Structured**: imported from BigQuery or Cloud Storage, or sent through the API |
+| Documents (PDF with embedded text, HTML, text; Word and PowerPoint in Preview) | **Unstructured**: imported from Cloud Storage or BigQuery, or synced from Google Drive |
+| Jira, Confluence, SharePoint, Salesforce, Slack and similar apps | **Third-party connector**: Google treats this data as structured |
+| A public website | Not a Gemini Enterprise store: website data stores can't be connected to its search and assistant apps |
+
+The last row is a common trap. Website search, with domain verification for
+generative answers, is a feature of **Agent Search**, Google's managed enterprise
+search and retrieval service (formerly Vertex AI Search). Agent Search and Gemini
+Enterprise use the same underlying API (Discovery Engine), but a Gemini Enterprise
+app doesn't take a website data store. To use a site's content there, bring it in
+another way, such as exported documents in Cloud Storage.
+
+## Blended search
+
+<Term id="blended search">Blended search</Term> connects several data stores to one
+app, so a single query searches across sources and types of data. Users can search
+everything at once or filter to one store. A few rules apply:
+
+- Every store keeps its own type.
+- Unstructured data imported through BigQuery can't take part.
+- If one store uses a customer-managed encryption key (CMEK, a key you manage
+  yourself), all the others must use the same configuration.
+- Blended search is rate-limited in the Standard and Frontline editions; unlimited
+  blended search needs the Plus edition.
+
+<Figure
+  src="/media/agentic-gemini-enterprise-data.svg"
+  alt="A Gemini Enterprise app connected to three data stores: a Google Drive connector (unstructured documents), a BigQuery table (structured rows) and a Jira connector (third-party, ingested, with an incremental sync every 3 hours). A query from a user signed in through the identity provider (IdP) fans out across all three stores in blended search. Before results reach the user, a permission filter keeps only documents that user may read, using the source's access lists (ACLs, or ACL metadata you add on import) and the user's identity. A website data store sits to the side, marked with a red cross, with the note: can't be connected here; site search is Agent Search."
+  caption="One app, three data stores, one blended query, and a permission filter before anything reaches the user."
+/>
+
+## Permission-aware retrieval
+
+The rule that matters most: **an agent must never widen what a user can read.**
+Two layers of control are involved. Who may use the app at all is decided by IAM
+roles on the project and the app, plus a Gemini Enterprise licence for each user. Inside the app, Gemini Enterprise
+filters results per user, which needs two things:
+
+- **Who is asking.** Gemini Enterprise uses your identity provider (IdP) to
+  identify the person searching. If you connect that provider through a workforce
+  identity pool (Google Cloud's way of letting users from an external identity
+  provider sign in), you name the pool in Gemini Enterprise.
+- **Who may read each document.** For connector stores, the connector brings the
+  source's permissions along: the Jira connector, for example, maps Jira's
+  permissions so only authorised users can search what it ingested, and an identity
+  sync records which users belong to which groups. For data you import yourself
+  from Cloud Storage or BigQuery, you add access lists (ACLs) to each document,
+  naming the users and groups who may read it, and mark the store as
+  access-controlled when you create it (this can't be added later).
+
+Two ways this goes wrong in practice: importing your own documents without ACLs,
+so nothing limits who sees them; and trusting a connector past its documented
+limits, such as Jira attachments on private comments, which don't inherit the
+comment's restrictions. Check the connector's documented limits before you index
+sensitive sources.
+
+<Callout type="warning">Permission filtering is only as good as the ACLs behind it. Before an agent goes live on a new source, test it as a user who should not see a sensitive document, and confirm the document never appears.</Callout>
+
+## Images, video and audio
+
+Multimodal content enters in two main ways:
+
+- **In the conversation.** Users can upload files to the Gemini Enterprise
+  assistant (its chat interface) and ask about them: documents (PDF, Office files,
+  text, code), images (PNG and JPEG, up to 30 MB), video (MP4, up to 200 MB) and
+  audio (MP3, up to 200 MB), with a combined limit per chat session of 800,000
+  tokens (the units a model counts its input in). They can also chat with files
+  stored in connected Drive, SharePoint and Box.
+- **In the data store.** Unstructured stores are for documents (Google mentions
+  images too). A layout parser can read text inside images in PDFs, such as
+  infographics, but the documented import formats are documents, not video or
+  audio files.
+
+A Workflow Builder agent can also carry files as knowledge. These are loaded
+straight into the model's context on every turn, up to a combined 800,000 tokens,
+rather than searched like a data store.
+
+<Quiz
+  id="drive-vs-upload"
+  objective="multimodal"
+  question="A team wants every employee's agent to find answers across 40,000 policy PDFs, but one manager only wants to ask about a single chart image today. Which pairing fits?"
+  choices={["Data store for the PDFs; chat upload for the image", "Agent knowledge files for the PDFs; chat upload for the image", "Chat uploads of the PDFs in batches, and of the image"]}
+  answer={0}
+  explanation="A large, shared document set belongs in a data store that the app searches, and a one-off image is simplest as a chat upload. Agent knowledge files and chat uploads both go into the model's context, capped at 800,000 tokens, so 40,000 PDFs won't fit either way, and chat uploads stay in one person's chat session, so they can't serve every employee's agent."
+/>
+
+## Sources
+
+- Google Cloud, Professional Agentic Architect exam guide, services.google.com/fh/files/misc/professional_agentic_architect_exam_guide_english.pdf (retrieved 2026-11-17: objective 1.2).
+- Google Cloud, "About apps and data stores", docs.cloud.google.com/gemini/enterprise/docs/apps-data-stores (updated 2026-11-10, retrieved 2026-11-17: apps, data store types, website data stores can't be connected, blended search rules).
+- Google Cloud, "Introduction to connectors and data stores", docs.cloud.google.com/gemini/enterprise/docs/connectors/introduction-to-connectors-and-data-stores (retrieved 2026-11-17: federated and ingestion connectors, incremental sync every 3 hours by default covering added or updated entity data, not identity data or deletions; full syncs; identity sync).
+- Google Cloud, "Configure IAM policies for apps", docs.cloud.google.com/gemini/enterprise/docs/iam-policy-for-apps (retrieved 2026-11-17: IAM roles grant access to an app; users need a valid licence).
+- Google Cloud, "Prepare data for ingesting", docs.cloud.google.com/gemini/enterprise/docs/connectors/prepare-data (retrieved 2026-11-17: formats and limits, layout parser).
+- Google Cloud, "Configure access controls for custom data sources", docs.cloud.google.com/gemini/enterprise/docs/identity (retrieved 2026-11-17: identity provider, workforce pool, ACL metadata, access control set when the store is created).
+- Google Cloud, "Jira Cloud", docs.cloud.google.com/gemini/enterprise/docs/connectors/jira-cloud (retrieved 2026-11-17: permission mapping, private-comment attachments).
+- Google Cloud, "Chat with the assistant", docs.cloud.google.com/gemini/enterprise/docs/assistant-chat (retrieved 2026-11-17: file uploads and limits).
+- Google Cloud, "Create a chat agent", docs.cloud.google.com/gemini/enterprise/docs/workflow-builder/create-chat-agent (retrieved 2026-11-17: knowledge files loaded into context).
+- Google Cloud, Agent Search documentation, docs.cloud.google.com/generative-ai-app-builder/docs (retrieved 2026-11-17: formerly Vertex AI Search; Discovery Engine API shared with Gemini Enterprise).

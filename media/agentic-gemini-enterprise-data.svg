@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 470" width="800" height="470" role="img" aria-label="A Gemini Enterprise app searching three data stores, with a permission filter before results reach the user">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker></defs>
+<rect width="800" height="470" fill="#ffffff"/>
+<text x="400" y="28" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="16" font-weight="600" fill="#0f172a">One app, three data stores, one permission filter</text>
+<rect x="16" y="52" width="170" height="64" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+<text x="101" y="78" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">A user's query</text>
+<text x="101" y="97" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="400" fill="#334155">signed in through your IdP</text>
+<polyline points="186,84 229,84" fill="none" stroke="#475569" stroke-width="1.6" marker-end="url(#ah)"/>
+<rect x="230" y="52" width="330" height="64" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+<text x="395" y="78" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">Gemini Enterprise app</text>
+<text x="395" y="97" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="400" fill="#334155">blended search across every connected store</text>
+<rect x="590" y="52" width="194" height="64" rx="10" fill="#fef2f2" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="687" y="76" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#64748b">Website data store</text>
+<text x="687" y="94" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="400" fill="#64748b">can't be connected here;</text>
+<text x="687" y="108" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="400" fill="#64748b">site search is Agent Search</text>
+<circle cx="600" cy="56" r="10" fill="#dc2626"/><path d="M595,51 L605,61 M605,51 L595,61" stroke="#ffffff" stroke-width="2"/>
+<polyline points="395,116 395,140 136.0,140 136.0,165" fill="none" stroke="#475569" stroke-width="1.6" marker-end="url(#ah)"/>
+<rect x="16" y="166" width="240" height="78" rx="10" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/>
+<text x="136.0" y="190" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">Google Drive connector</text>
+<text x="136.0" y="211" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">unstructured: documents</text>
+<text x="136.0" y="228" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">synced from Drive</text>
+<polyline points="136.0,244 136.0,289" fill="none" stroke="#475569" stroke-width="1.6" marker-end="url(#ah)"/>
+<polyline points="395,116 395,140 400.0,140 400.0,165" fill="none" stroke="#475569" stroke-width="1.6" marker-end="url(#ah)"/>
+<rect x="280" y="166" width="240" height="78" rx="10" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/>
+<text x="400.0" y="190" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">BigQuery table</text>
+<text x="400.0" y="211" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">structured: one row</text>
+<text x="400.0" y="228" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">per record</text>
+<polyline points="400.0,244 400.0,289" fill="none" stroke="#475569" stroke-width="1.6" marker-end="url(#ah)"/>
+<polyline points="395,116 395,140 664.0,140 664.0,165" fill="none" stroke="#475569" stroke-width="1.6" marker-end="url(#ah)"/>
+<rect x="544" y="166" width="240" height="78" rx="10" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/>
+<text x="664.0" y="190" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">Jira connector</text>
+<text x="664.0" y="211" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">third-party, ingested;</text>
+<text x="664.0" y="228" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">incremental sync every 3 h</text>
+<polyline points="664.0,244 664.0,289" fill="none" stroke="#475569" stroke-width="1.6" marker-end="url(#ah)"/>
+<rect x="16" y="290" width="768" height="70" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+<text x="400" y="316" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#92400e">Permission filter: keep only what this user may read</text>
+<text x="400" y="338" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#92400e">source access lists (ACLs, or ACL metadata you add on import) + the user's identity</text>
+<polyline points="400,360 400,389" fill="none" stroke="#475569" stroke-width="1.6" marker-end="url(#ah)"/>
+<rect x="230" y="390" width="340" height="56" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+<text x="400" y="413" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">Results and answers</text>
+<text x="400" y="432" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="400" fill="#334155">never wider than the user's own access</text>
+</svg>
