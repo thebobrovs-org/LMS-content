@@ -125,6 +125,14 @@ Compared with a shared service account, an agent identity:
   keys, and its access tokens are bound to the agent's certificate, which is
   designed to stop a stolen token being reused elsewhere.
 
+Context-Aware Access enforces that binding by default. The agent reaches Google
+Cloud APIs and Agent Gateway over mTLS (mutual TLS, where both sides present
+certificates) with certificate-bound tokens. Agent Gateway terminates mTLS, so
+beyond it the binding is carried by DPoP (Demonstrating Proof-of-Possession, RFC
+9449): proofs signed with the agent's private key, which Context-Aware Access
+checks. Google's words for the result: compromised tokens are useless outside
+their intended, trusted runtimes.
+
 ## Step 2: grant only what the tools need
 
 An identity of its own does nothing for the blast radius if it holds a broad
@@ -193,5 +201,6 @@ holds only if every policy that applies allows only finance.
 ## Sources
 
 - Google Cloud, "Agent Identity overview", docs.cloud.google.com/iam/docs/agent-identity-overview (retrieved 2026-11-17: a cryptographic identity per agent based on the SPIFFE standard; X.509 certificates auto-provisioned and managed on the agent; access tokens bound to the agent's certificates to prevent token theft; "not shared by multiple workloads by default, can't be impersonated, and don't allow developers to generate long-lived service account keys"; audit logs record the agent and the delegating user; permissions granted directly to the agent's identifier; supported by Agent Runtime, Gemini Enterprise, Cloud Run and GKE).
+- Google Cloud, "Context-Aware Access for agents", docs.cloud.google.com/access-context-manager/docs/caa-agent-security (retrieved 2026-11-17: certificate-bound workload access tokens; mTLS to Google Cloud APIs and Agent Gateway; DPoP per RFC 9449 beyond the gateway; "compromised tokens are useless outside of their intended, trusted runtimes").
 - Google Cloud, "Principal Access Boundary policies", docs.cloud.google.com/iam/docs/principal-access-boundary-policies (retrieved 2026-11-17: PAB policies "let you define the resources that principals can access"; they "can only block or not block access—they can't grant access"; by default principals are eligible to access any resource; an ineligible principal's access is limited "regardless of the roles they've been granted"; only supported permissions are blocked; when several policies apply to a principal, the principal is eligible for the resources any of them allows, per the "Principal access boundary policy evaluation" section).
 - OWASP GenAI Security Project, "LLM06:2025 Excessive Agency", github.com/OWASP/www-project-top-10-for-large-language-model-applications/blob/main/2_0_vulns/LLM06_ExcessiveAgency.md (retrieved 2026-11-17: minimise extension permissions).
