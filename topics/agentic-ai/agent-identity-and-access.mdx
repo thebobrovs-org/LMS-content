@@ -125,13 +125,14 @@ Compared with a shared service account, an agent identity:
   keys, and its access tokens are bound to the agent's certificate, which is
   designed to stop a stolen token being reused elsewhere.
 
-Context-Aware Access enforces that binding by default. The agent reaches Google
+For agents governed by Agent Gateway, Context-Aware Access enforces that binding
+by default. The agent reaches Google
 Cloud APIs and Agent Gateway over mTLS (mutual TLS, where both sides present
 certificates) with certificate-bound tokens. Agent Gateway terminates mTLS, so
 beyond it the binding is carried by DPoP (Demonstrating Proof-of-Possession, RFC
 9449): proofs signed with the agent's private key, which Context-Aware Access
-checks. Google's words for the result: compromised tokens are useless outside
-their intended, trusted runtimes.
+checks. Google's words for the result: "compromised tokens are useless outside
+of their intended, trusted runtimes."
 
 ## Step 2: grant only what the tools need
 
