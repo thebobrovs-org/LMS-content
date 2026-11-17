@@ -1,0 +1,220 @@
+---
+title: "Guardrails: Model Armor, data protection and human in the loop"
+summary: Defend an agent in layers. Screen prompts and responses with Model Armor, protect sensitive data with Sensitive Data Protection, require a person to confirm irreversible tool calls, and act with the user's own permissions so retrieval never returns more than the user could see.
+tags: [agentic-ai, agents, security, guardrails]
+difficulty: advanced
+estimatedMinutes: 30
+level: 400
+prerequisites: [agentic-ai/agent-auth-oauth, agentic-ai/agent-gateway-and-registry]
+objectives:
+  - id: model-armor
+    statement: "Configure Model Armor templates, floor settings and enforcement."
+  - id: sdp
+    statement: "Choose basic or advanced Sensitive Data Protection."
+  - id: hitl
+    statement: "Require human confirmation for irreversible tool calls with ADK."
+  - id: identity-propagation
+    statement: "Propagate user identity so retrieval respects the user's permissions."
+flashcards:
+  - id: template-vs-floor
+    objective: model-armor
+    front: What is the difference between a Model Armor template and a floor setting?
+    back: "A template is a set of filters and confidence thresholds that decides how prompts and responses are screened. A floor setting, at organisation, folder or project level, is the minimum every template must meet: you cannot create or update a template less strict than the floor."
+  - id: enforcement-modes
+    objective: model-armor
+    front: What do Model Armor's two enforcement types do?
+    back: "Inspect only: detect and log violations to Cloud Logging, without stopping the request or response. Inspect and block: log the event and also stop the offending content from proceeding."
+  - id: basic-vs-advanced-sdp
+    objective: sdp
+    front: When is basic Sensitive Data Protection in Model Armor enough, and when do you need advanced?
+    back: "Basic inspects a fixed, mainly US set of infoTypes (such as card numbers, US SSNs and Google Cloud credentials) and supports no templates. Advanced uses Sensitive Data Protection templates, for your own infoTypes and regions, and can de-identify content as well as inspect it."
+  - id: what-hitl-is-for
+    objective: hitl
+    front: Which tool calls should require human confirmation?
+    back: "Irreversible or high-impact ones: payments and refunds, deletions, messages sent outside the company. Confirming every call trains people to click yes; confirming the risky ones keeps the check meaningful."
+  - id: act-as-user
+    objective: identity-propagation
+    front: Why should an agent that acts for a user retrieve data with that user's identity?
+    back: "So the data source applies the user's own permissions. If the agent retrieves with its own broad identity and filters afterwards, one injected instruction or bug can return data the user was never allowed to see."
+quiz:
+  - id: refund-confirmation
+    objective: hitl
+    question: "A support agent's issue_refund tool must get a person's approval for refunds over $500, and run on its own below that. How do you build this in ADK?"
+    choices:
+      - "Add 'ask a manager before refunds over $500' to the agent's instruction"
+      - "Wrap the tool with require_confirmation set to a check that amount > 500"
+      - "Add a Model Armor template that blocks replies that mention a refund"
+    answer: 1
+    explanation: "ADK's tool confirmation pauses the tool until a person or supervising system responds, and require_confirmation can take a function of the tool's input, so only large refunds pause. An instruction is not enforced: the model can skip it. Model Armor screens content, not the decision to call a tool."
+  - id: retrieval-leak
+    objective: identity-propagation
+    question: "An HR assistant searches every HR document with its own service identity, and its instructions say to show users only their own records. A user gets it to reveal a colleague's salary. What fixes the cause?"
+    choices:
+      - "Strengthen the instruction to say salaries are confidential under all conditions"
+      - "Turn on Sensitive Data Protection to block salary figures in every reply"
+      - "Search with the user's identity, so the source returns only what they may read"
+    answer: 2
+    explanation: "The agent could read everything, so the only barrier was an instruction the model could be talked out of. Acting in the user's context, with their own authorisation, lets the data source apply the user's permissions before anything reaches the model. Blocking every salary would also break the legitimate case of a user viewing their own, and a stronger instruction is still not a control."
+  - id: card-numbers-prompt
+    objective: model-armor
+    question: "A teammate proposes stopping card numbers leaking in replies by adding 'never output card numbers' to the system prompt. What should you add instead?"
+    choices:
+      - "Model Armor with Sensitive Data Protection on responses, set to inspect and block"
+      - "A second sentence in the system prompt that repeats the rule in capital letters"
+      - "A larger model, which follows system prompt instructions more reliably overall"
+    answer: 0
+    explanation: "Card numbers are one of the infoTypes basic Sensitive Data Protection inspects, and inspect-and-block stops the offending response outside the model. Repeating the rule or using a larger model still relies on the model obeying, which an injected instruction can undo."
+  - id: eu-ids-masked
+    objective: sdp
+    question: "Replies may contain EU national ID numbers. Policy says to mask them and still send the rest of the reply. Which configuration fits?"
+    choices:
+      - "Basic Sensitive Data Protection, which covers the common infoTypes"
+      - "Advanced Sensitive Data Protection, with templates that de-identify"
+      - "A floor setting that requires every template to inspect responses"
+    answer: 1
+    explanation: "Basic covers a fixed, mainly US set of infoTypes and supports inspection only. Advanced uses Sensitive Data Protection templates, so you choose the infoTypes and can de-identify (mask or redact) rather than block the whole reply. A floor setting sets a minimum for templates; it does not define what to mask."
+  - id: org-minimum
+    objective: model-armor
+    question: "Security requires that every team's Model Armor template blocks prompt injection at no lower than a set confidence, and that no team can weaken this. What do you configure?"
+    choices:
+      - "One shared template that each team copies and then edits for its own needs"
+      - "An Agent Gateway route rule that names every team's template by resource name"
+      - "A floor setting at the organisation level that templates must meet or exceed"
+    answer: 2
+    explanation: "Floor settings define the minimum requirements for templates, and you cannot create or update a template that is less strict than the floor. Copies of a shared template can be edited freely, and a route rule decides where traffic goes, not how strict screening is."
+  - id: tune-before-block
+    objective: model-armor
+    question: "You are adding a new Model Armor template to a live agent and worry that false positives will block real customers. What is a sensible first step?"
+    choices:
+      - "Run it as inspect only, review what it logs, then switch to inspect and block"
+      - "Run it as inspect and block straight away, and loosen it after complaints"
+      - "Skip screening for now and rely on the system prompt until the team is sure"
+    answer: 0
+    explanation: "Inspect only logs violations to Cloud Logging without stopping anything, so you can see what the template would block and tune its thresholds before you enforce. Blocking first makes customers find your false positives, and skipping screening leaves the agent unprotected."
+status: draft
+updated: "2026-11-17"
+---
+
+## Defend the agent in layers
+
+The threat model lesson ended on defence in depth: no single layer is enough.
+The identity, access and gateway lessons built the outer layers. This lesson
+adds the guardrails nearest the agent, around a support agent that answers order
+questions, searches a knowledge base and issues refunds.
+
+<Figure
+  src="/media/agent-guardrail-layers.svg"
+  alt="A table of five threats to a support agent, with the guardrail layer and mechanism for each. Prompt injection in a message or a tool's output: Model Armor on prompts and tool output, using the prompt injection and jailbreak detection filter. Harmful content in a reply: Model Armor on responses, using the responsible AI filters. Card numbers or credentials leaking in or out: Sensitive Data Protection inside Model Armor; basic inspects six infoTypes, advanced uses templates and can de-identify. An irreversible refund issued by mistake: human confirmation before the tool runs, using ADK tool confirmation, always or above a threshold. Retrieval returns data the user may not see: act with the user's identity when acting for a user, so the data source applies the user's own permissions. Footer: each layer catches what another misses; none of them is a line in the system prompt."
+  caption="Each threat has its own layer, enforced outside the model."
+/>
+
+## Model Armor: screen what goes in and out
+
+<Term id="model armor">Model Armor</Term> filters both input (prompts) and
+output (responses). Its filters include prompt injection and jailbreak
+detection, responsible AI filters (hate speech, harassment, sexually explicit
+and dangerous content), malicious URL detection and Sensitive Data Protection.
+For an agent, screen what users send, what tools return (a retrieved page can
+carry an injected instruction), and what the agent replies.
+
+Three settings shape it:
+
+- **Templates.** A template is a set of filters and thresholds, at confidence
+  levels from high down to low and above. It decides how prompts and responses
+  are screened. Different agents can use different templates.
+- **<Term id="floor setting">Floor settings</Term>.** The minimum requirements
+  for templates, set at organisation, folder or project level. You cannot
+  create or update a template that is less strict than the floor, so security
+  can set a baseline that no team can weaken.
+- **Enforcement.** *Inspect only* logs violations to Cloud Logging without
+  stopping anything. *Inspect and block* also stops the offending content. A
+  sensible rollout is to inspect first, review what would have been blocked,
+  tune the thresholds, then block.
+
+On Agent Gateway, you attach Model Armor templates to the gateway, so screening
+applies to the traffic it carries. That integration has its own limits; for
+example, it does not screen documents or file uploads such as PDFs. Model
+Armor is a filter like any other: it can miss an attack, and its quality varies
+by language, which is why the other layers stay in place.
+
+## Sensitive Data Protection: basic or advanced
+
+<Term id="sensitive data protection">Sensitive Data Protection</Term> (SDP) works
+inside Model Armor in two configurations:
+
+| | Basic | Advanced |
+|---|---|---|
+| What it finds | A fixed set: credit card numbers, US Social Security numbers, financial account numbers, US taxpayer IDs, Google Cloud credentials and API keys | Whatever your Sensitive Data Protection templates define |
+| What it does | Inspection only | Inspection and de-identification (mask, redact, tokenise) |
+| Templates | Not supported | Required |
+| Choose it when | Those infoTypes are what you need to catch | You need other infoTypes or regions, or need to mask rather than block |
+
+Basic is quick to turn on, but its infoTypes are mainly for the US. A support
+agent serving Europe, or one that should mask a number and still send the rest
+of the reply, needs advanced.
+
+## Human in the loop: confirm the irreversible
+
+Some actions cannot be undone: a refund, a deletion, an email to a customer.
+For those, a <Term id="human in the loop">human in the loop</Term> approves the
+call before it runs. ADK's **tool confirmation** pauses a tool until a person
+or supervising system responds:
+
+- **Boolean confirmation.** Wrap the tool with `require_confirmation=True`, and
+  every call waits for a yes or no.
+- **Conditional confirmation.** Pass a function instead, such as one that
+  returns true when the amount is over a threshold, so only risky calls pause.
+- **Advanced confirmation.** Inside the tool, call
+  `tool_context.request_confirmation()` with a hint and an expected payload,
+  for a structured answer such as an approved amount.
+
+While the tool waits, the client sees an `adk_request_confirmation` event and
+returns the decision, much like the consent pause in the OAuth lesson. Confirm
+the irreversible and high-impact calls, not every call: approvers who are
+asked about everything stop reading.
+
+<Callout type="note">Check your session service before relying on tool confirmation. ADK's documentation lists DatabaseSessionService and VertexAiSessionService as not supported by this feature.</Callout>
+
+## Act with the user's permissions
+
+When an agent acts for a user, it should never read more than that user could.
+The weak design gives the agent one broad identity that can search every
+document, then tells the model to show users only their own. One injected
+instruction, or one bug, and the model returns data the user was never allowed
+to see.
+
+The strong design carries the user's identity to the data source. With
+three-legged OAuth, the tool calls the source with a token for that user, so
+the source applies the user's own permissions before anything reaches the
+model. The agent's own identity stays narrow, for the things it does as itself.
+This is OWASP's advice for excessive agency: execute actions on behalf of a
+user in that user's context, with the minimum privileges necessary.
+
+<Quiz
+  id="which-guardrail"
+  objective="hitl"
+  question="Which threat is human confirmation the right guardrail for?"
+  choices={["An injected instruction hidden in a retrieved web page", "A deletion of a customer account that cannot be undone", "A card number appearing in the agent's reply to a user"]}
+  answer={1}
+  explanation="Confirmation belongs on irreversible, high-impact actions such as deleting an account. Screening with Model Armor addresses injected instructions, and Sensitive Data Protection addresses card numbers in replies."
+/>
+
+## Recap
+
+- Guardrails are layers: screen input and output with Model Armor, protect
+  sensitive data with SDP, confirm risky actions, and limit identity.
+- Templates set how to screen; floor settings set the minimum no template can
+  go below; inspect only before inspect and block.
+- Basic SDP inspects a fixed, mainly US set of infoTypes; advanced uses
+  templates and can de-identify.
+- Put human confirmation on irreversible or high-impact tool calls, with
+  `require_confirmation` or a threshold function.
+- When acting for a user, act with that user's permissions, not wider ones.
+
+## Sources
+
+- Google Cloud, "Model Armor overview", docs.cloud.google.com/model-armor/overview (retrieved 2026-11-17: filters prompts and responses; prompt injection and jailbreak detection, responsible AI, malicious URL and Sensitive Data Protection filters; templates as "sets of customized filters and thresholds for different safety and security confidence levels"; "Inspect only" logs to Cloud Logging, "Inspect and block" also prevents the content from proceeding; basic SDP inspects credit card, US SSN, financial account, US ITIN, Google Cloud credentials and API key, supports no templates and is "mainly addressed to the US region"; advanced uses SDP templates and supports inspection and de-identification; language support varies).
+- Google Cloud, "Configure floor settings", docs.cloud.google.com/model-armor/configure-floor-settings (retrieved 2026-11-17: floor settings at organisation, folder or project level; "You cannot create or update a template that's less strict than the floor settings").
+- Google Cloud, "Model Armor integration with Agent Gateway", docs.cloud.google.com/model-armor/model-armor-agent-gateway-integration (retrieved 2026-11-17: templates specified on the gateway; block and redact or inspect and log; "Sanitizing prompts and responses that contain documents or file uploads (such as PDFs) isn't supported in this integration").
+- Google, Agent Development Kit documentation, "Get action confirmation for ADK Tools", github.com/google/adk-docs/blob/main/docs/tools-custom/confirmation.md (retrieved 2026-11-17: boolean confirmation with require_confirmation; a confirmation function such as an amount threshold; request_confirmation with a hint and payload; the adk_request_confirmation event; DatabaseSessionService and VertexAiSessionService not supported).
+- OWASP GenAI Security Project, "LLM06:2025 Excessive Agency", github.com/OWASP/www-project-top-10-for-large-language-model-applications/blob/main/2_0_vulns/LLM06_ExcessiveAgency.md (retrieved 2026-11-17: execute extensions in the user's context with minimum privileges, for example through OAuth; require user approval for high-impact actions).
