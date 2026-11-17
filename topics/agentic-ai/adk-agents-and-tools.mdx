@@ -1,0 +1,343 @@
+---
+title: Building agents with ADK
+summary: Define an ADK LlmAgent with a model, an instruction and function tools, compose it with sub-agents or an AgentTool, and put deterministic checks in callbacks.
+tags: [agentic-ai, adk, agents, tools]
+difficulty: intermediate
+estimatedMinutes: 35
+level: 200
+prerequisites: [agentic-ai/the-agent-loop]
+objectives:
+  - id: build-llmagent
+    statement: "Define an LlmAgent with a model, instruction and function tools."
+  - id: compose-agents
+    statement: "Add sub-agents or wrap an agent as an AgentTool, and say how control differs."
+  - id: use-callbacks
+    statement: "Use a callback to validate or modify a model or tool call."
+flashcards:
+  - id: subagent-vs-agenttool
+    objective: compose-agents
+    front: How does control differ between a sub-agent and an AgentTool?
+    back: "A sub-agent receives control by transfer and answers the user from then on (in ADK's default chat mode, until control is transferred back). An AgentTool is called like a function: its answer returns to the calling agent, which keeps control."
+  - id: callback-types
+    objective: use-callbacks
+    front: Name ADK's three pairs of callbacks on an LlmAgent.
+    back: Before and after the agent runs, before and after each model call, and before and after each tool call.
+  - id: tool-schema-source
+    objective: build-llmagent
+    front: What does an ADK function tool's declaration come from?
+    back: The Python function's name, docstring, parameters and type hints. Write the docstring for the model, describing what the tool does, when to use it and what it returns.
+quiz:
+  - id: argument-check-placement
+    objective: use-callbacks
+    question: "A refund tool must never run for amounts over $100. Where should that rule be enforced in an ADK agent?"
+    choices:
+      - "In the instruction, as a rule the model is told never to break"
+      - "In the tool's docstring, so the model sees the limit when it chooses"
+      - "In a before-tool callback that returns an error result for larger amounts"
+    answer: 2
+    explanation: "A before-tool callback runs your code after the model proposes the call and before the tool executes; returning a dictionary skips the tool and sends that result back to the model. The instruction and the docstring are both read by the model, which can get them wrong or be talked out of them, so they guide but do not enforce. (A check inside the tool function itself would also enforce; the callback keeps the policy separate and reusable.)"
+  - id: transfer-or-agenttool
+    objective: compose-agents
+    question: "A recipe agent needs a specialist that converts quantities between metric and US units. The recipe agent must stay in charge and fold the converted amounts into its own reply. How should you attach the specialist?"
+    choices:
+      - "As an AgentTool, so its answer comes back to the recipe agent"
+      - "As a sub-agent in chat mode, so it takes the conversation over"
+      - "As a second root agent, so both reply to the user in turn"
+    answer: 0
+    explanation: "An AgentTool is called like a function: the recipe agent invokes it, gets the result back and keeps control. (In Python, a single_turn sub-agent is the documented alternative with much the same effect.) A chat-mode sub-agent takes over the conversation and keeps answering the user until control is transferred again. An app has one root agent; two agents answering in turn is not how ADK composes agents."
+  - id: misrouted-specialist
+    objective: build-llmagent
+    question: "A coordinator with two sub-agents keeps transferring refund questions to the shipping agent instead of the returns agent. Which field should you check first on the two specialists?"
+    choices:
+      - "Their model, because a larger model routes requests more accurately"
+      - "Their description, which the coordinator reads to pick a transfer target"
+      - "Their instruction, which tells each specialist which requests to accept"
+    answer: 1
+    explanation: "The coordinator's model picks a transfer target from the sub-agents' descriptions, so a vague or overlapping description is the usual cause of misrouting. A specialist's instruction only shapes how it behaves once it already has control; the coordinator never reads it. A larger model cannot route well between descriptions that do not tell the agents apart."
+  - id: docstring-for-model
+    objective: build-llmagent
+    question: "Your agent has a tool def search(q: str) with no docstring, and it is called for the wrong requests. What should you change first?"
+    choices:
+      - "Add a line to the instruction listing every kind of request search must not handle"
+      - "Give it a descriptive name and a docstring saying what it searches and when to use it"
+      - "Wrap it in an AgentTool, so a second model reads each request and decides when to search"
+    answer: 1
+    explanation: "ADK builds the declaration the model sees from the function's name, docstring and type hints, so an unnamed purpose and an empty docstring leave the model guessing. Fix the declaration first. A list of exclusions in the instruction treats a symptom and grows without end, and another agent in front of the tool adds a model call without telling either model what the tool does."
+  - id: after-model-redaction
+    objective: use-callbacks
+    question: "Replies must never show a customer's email address, even when a tool result contains one. Which callback fits?"
+    choices:
+      - "before_model_callback, to remind the model never to repeat emails"
+      - "before_tool_callback, to remove emails from each tool's arguments"
+      - "after_model_callback, to return the response with emails removed"
+    answer: 2
+    explanation: "An after-model callback sees the model's response and can return a modified one, so your code removes the addresses deterministically. A reminder before the call is still only guidance the model can miss. Cleaning tool arguments changes what the tools receive, not what the tools return or what the user sees. (An after-tool callback that strips emails from tool results would also work, before the model ever sees them.)"
+status: draft
+updated: "2026-11-17"
+---
+
+## Where does each behaviour live?
+
+Your online store wants a support agent. It must look up orders, hand returns to
+a specialist, refuse returns over $100 without a person, and never show a full
+account number. In the agent loop lesson you traced a request through model
+calls and tool calls; now you build that agent. Google's
+<Term id="adk">Agent Development Kit (ADK)</Term> is an open-source framework
+for agents in code (Python, TypeScript, Go, Java and Kotlin; the examples here
+are Python), and it is the base of the custom-agent work in this path.
+
+Building one takes a few lines. The design question is where each behaviour
+belongs:
+
+- **The instruction** for goals, tone and when to use what. The model reads it,
+  so it guides; it does not enforce.
+- **A tool** for anything that reads live data or changes a system.
+- **Another agent** for a specialist job, attached either as a sub-agent (it
+  takes over the conversation) or as an <Term id="agenttool">AgentTool</Term>
+  (the parent calls it like a function and gets its answer back).
+- **A <Term id="callback">callback</Term>**, a function ADK runs at a fixed point
+  in the loop, for checks and edits that must happen every time, because
+  callbacks are your code, not the model's judgement.
+
+<Figure
+  src="/media/adk-agent-anatomy.svg"
+  alt="Anatomy of an ADK LlmAgent. The agent box lists name and description (who it is; the description is how other agents route to it), model (the LLM that reasons) and instruction (goal, persona, limits, when to use each tool). Each model call reads the instruction, the tool and sub-agent declarations, the conversation so far and its state, and the user's new message. To the right, tools (function tools, built-in tools such as Search, and AgentTool) are called and return results; sub-agents receive control by transfer. Below, callbacks run your deterministic code before and after the agent, each model call and each tool call: return a value to skip the step, or replace its output."
+  caption="An LlmAgent is configured by its identity, model and instruction; it acts through tools, hands off to sub-agents, and runs your callbacks at fixed points in the loop."
+/>
+
+## Build a support agent in five steps
+
+<Steps>
+<Step id="define-agent" title="Define the agent">
+
+An <Term id="llmagent">LlmAgent</Term> (aliased `Agent`) needs a `name`. In
+practice you also give it a `model`, an `instruction` and a `description`; the
+description is what *other* agents read when deciding whether to route work to
+it. The agent ADK starts from is the root agent; an app has one, and ADK's tools
+look for it under the name `root_agent`.
+
+```python
+from google.adk.agents import LlmAgent
+
+root_agent = LlmAgent(
+    name="support_agent",
+    model="gemini-flash-latest",
+    description="Answers order questions for the online store.",
+    instruction=(
+        "You help customers with their orders. Use get_order_status when the "
+        "user gives an order id. If you cannot help, say so plainly."
+    ),
+)
+```
+
+</Step>
+<Step id="add-function-tool" title="Add a function tool">
+
+Pass a plain Python function in `tools`, and ADK wraps it as a function tool. It
+builds the declaration the model sees from the function's name, docstring,
+parameters and type hints, so give the function a descriptive name and write the
+docstring for the model, as in the agent loop lesson. Return a
+dictionary with a `status` key, which the ADK docs recommend so the model can
+tell success from failure.
+
+```python
+def get_order_status(order_id: str) -> dict:
+    """Returns the status and tracking id of one customer order.
+
+    Use when the user gives an order id. Not for policy questions.
+
+    Args:
+        order_id: The order id, for example "A1234".
+    """
+    if order_id == "A1234":
+        return {"status": "success", "order_status": "shipped", "tracking_id": "T-889"}
+    return {"status": "error", "error_message": f"No order {order_id}."}
+
+root_agent = LlmAgent(
+    ...,  # name, model, description and instruction as in step 1
+    tools=[get_order_status],
+)
+```
+
+ADK also offers built-in tools, such as Google Search and code execution,
+which are Gemini API features run by the Gemini service rather than your code.
+Some of them (Code Execution, Google Search, and Agent Search, Google's managed
+enterprise search from topic 3.4) can only be used on their own in one agent,
+and built-in tools cannot be used inside a sub-agent. The documented workaround
+is to give each one its own agent and attach that agent to the main one as an
+AgentTool, not a sub-agent (see "Sub-agent or AgentTool" below). ADK Python can
+also lift the limit for the two search tools with `bypass_multi_tools_limit=True`.
+
+</Step>
+<Step id="add-sub-agent" title="Add a specialist agent">
+
+Returns are handled by a separate specialist. Give it its own instruction and a
+specific description, then list it in `sub_agents`. ADK gives the parent a way
+to transfer control (`transfer_to_agent`), and the parent's model decides when,
+from the sub-agent descriptions.
+
+```python
+def start_return(order_id: str, reason: str, amount: float) -> dict:
+    """Starts a return for a delivered order.
+
+    Args:
+        order_id: The order id, for example "A1234".
+        reason: Why the customer is returning it, in their words.
+        amount: The refund amount in US dollars.
+    """
+    return {"status": "success", "return_id": "R-501"}
+
+returns_agent = LlmAgent(
+    name="returns_agent",
+    model="gemini-flash-latest",
+    description="Handles return and refund requests for delivered orders.",
+    instruction="Collect the order id, the reason and the refund amount, then start the return.",
+    tools=[start_return],
+)
+
+root_agent = LlmAgent(
+    ...,  # as in step 1
+    tools=[get_order_status],
+    sub_agents=[returns_agent],
+)
+```
+
+</Step>
+<Step id="add-before-tool-callback" title="Block a disallowed argument with a callback">
+
+Returns over $100 need a person. Put that rule in a before-tool callback. It runs
+after the model proposes the call and before the tool executes; returning a
+dictionary skips the tool and sends that dictionary back as the result, while
+returning `None` lets the tool run.
+
+```python
+from typing import Any, Optional
+from google.adk.tools.base_tool import BaseTool
+from google.adk.tools.tool_context import ToolContext
+
+def limit_returns(tool: BaseTool, args: dict[str, Any], tool_context: ToolContext) -> Optional[dict]:
+    if tool.name == "start_return" and args.get("amount", 0) > 100:
+        return {"status": "error", "error_message": "Returns over $100 need a person. Offer a handoff."}
+    return None  # let the tool run
+
+returns_agent = LlmAgent(
+    ...,  # as in step 3
+    tools=[start_return],
+    before_tool_callback=limit_returns,
+)
+```
+
+</Step>
+<Step id="run-adk-web" title="Run it with adk web">
+
+Install ADK (`pip install google-adk`), put the code in `agent.py` inside an
+agent folder with an `__init__.py` and a `.env` file holding your model
+credentials (a Gemini API key, or your Google Cloud project and location), then
+run `adk web` from the folder above it. The browser UI lets you chat with the
+agent and inspect each event: model calls, tool calls, transfers and the effect of
+any callback that changed a result. `adk web` creates a `Runner` for you; in your own application code
+a `Runner` is the object that drives the loop for an agent, as in the agent loop
+lesson's snippet. The ADK Python quickstart walks through the setup.
+
+```bash
+adk web --port 8000
+```
+
+</Step>
+</Steps>
+
+<Callout type="tip">Lab: Google's codelab [ADK: From basics to multi-tool agents](https://codelabs.developers.google.com/multi-tools-ai-agent-adk) builds an agent with several function tools end to end; it does not cover sub-agents or callbacks, which the steps above add. Build one yourself before moving on.</Callout>
+
+## Sub-agent or AgentTool: who keeps control?
+
+Both attach one agent to another. The difference is control.
+
+- A **sub-agent** receives control. When the parent's model transfers to it, the
+  sub-agent answers the user, and in ADK's default (chat) mode it keeps answering
+  until control is transferred again. Use it when the specialist should own the
+  conversation for a while, such as a returns flow.
+- An <Term id="agenttool">AgentTool</Term> wraps an agent so the parent calls it
+  like a function. The wrapped agent's answer comes back to the parent, which
+  stays in charge and, by default, writes the reply. Use it when the parent needs a result to
+  fold into its own work, such as a conversion or a lookup that needs reasoning.
+
+```python
+from google.adk.tools.agent_tool import AgentTool
+
+currency_agent = LlmAgent(
+    name="currency_agent",
+    model="gemini-flash-latest",
+    description="Converts an amount between currencies at today's rate.",
+    instruction="Convert the amount you are given and return only the result.",
+    tools=[get_exchange_rate],
+)
+
+travel_agent = LlmAgent(..., tools=[AgentTool(agent=currency_agent)])
+```
+
+Each choice has a cost. An AgentTool keeps the parent in the middle of every
+exchange: one more model call to read the specialist's answer and relay it. A
+sub-agent saves that, but the parent gives up the conversation until control
+comes back.
+
+<Quiz
+  id="who-answers-next"
+  objective="compose-agents"
+  question="A coordinator transfers to a chat-mode sub-agent, which answers. The user then sends another message. Which agent handles it?"
+  choices={["The coordinator, because control returns to the parent after each sub-agent answer", "The sub-agent, which keeps the conversation until control is transferred again", "Both, because the coordinator reviews and rewrites each of the sub-agent's replies"]}
+  answer={1}
+  explanation="Transfer hands the conversation over. A chat-mode sub-agent keeps handling messages until it, or a rule in the design, transfers control again. Nothing returns control to the coordinator automatically after each answer, and once it has transferred, the coordinator is out of the loop: it neither reviews nor rewrites the sub-agent's replies. Automatic return is what an AgentTool (or ADK 2.0's task and single_turn modes) gives you."
+/>
+
+<Callout type="note">ADK 2.0 adds other sub-agent modes in Python and Go: a `task` sub-agent returns to the parent automatically when its task is done, and a `single_turn` sub-agent returns at once with its result and never talks to the user. This lesson uses `chat`, the default mode for a sub-agent.</Callout>
+
+## Callbacks: where deterministic checks live
+
+A callback runs at one of three before/after pairs of points in an `LlmAgent`'s loop (Python adds error callbacks for failed model and tool calls):
+
+| Callback | Runs | Return a value to… |
+|---|---|---|
+| `before_agent_callback` / `after_agent_callback` | Around the agent's whole run | Skip the agent (before), or add content after its output (after) |
+| `before_model_callback` / `after_model_callback` | Around each model call | Skip the model call and use your response (before), or replace the model's response (after) |
+| `before_tool_callback` / `after_tool_callback` | Around each tool call | Skip the tool and use your result (before), or replace the tool's result (after) |
+
+Returning `None` lets the step proceed unchanged. In Python, only `None` does:
+an empty dictionary from a before-tool callback counts as a result, and the tool
+is skipped.
+
+An after-model callback, for example, can mask 16-digit account numbers in each
+model response, whatever the model wrote:
+
+```python
+import re
+from google.adk.agents.callback_context import CallbackContext
+from google.adk.models import LlmResponse
+
+def mask_accounts(callback_context: CallbackContext, llm_response: LlmResponse):
+    if not (llm_response.content and llm_response.content.parts):
+        return None
+    for part in llm_response.content.parts:
+        if part.text:
+            part.text = re.sub(r"\b\d{12}(\d{4})\b", r"************\1", part.text)
+    return llm_response  # the masked response replaces the original
+```
+
+A real masker must match every format your numbers come in (spaces, dashes,
+other lengths), and with streaming responses it must handle numbers split across
+chunks, for example by masking the final text.
+
+That makes callbacks the place for anything that must hold every time: argument
+checks, policy limits, masking data in a response, caching, logging. The
+instruction can say the same thing, and it is worth saying there so the model
+behaves well, but only the callback guarantees it.
+
+## Sources
+
+- Google, Agent Development Kit documentation, "Simple agents with LlmAgent", github.com/google/adk-docs/blob/main/docs/agents/llm-agents.md (name, description, model, instruction, tools).
+- Google, Agent Development Kit documentation, "Function tools", github.com/google/adk-docs/blob/main/docs/tools-custom/function-tools.md (schema from name, docstring, parameters and type hints; Agent-as-a-Tool and its key difference from sub-agents).
+- Google, Agent Development Kit documentation, "Custom tools", github.com/google/adk-docs/blob/main/docs/tools-custom/index.md (defining effective tool functions; the status key).
+- Google, Agent Development Kit documentation, "Custom agents", section "LLM delegation and agent transfer", github.com/google/adk-docs/blob/main/docs/agents/custom-agents.md (transfer_to_agent; distinct descriptions).
+- Google, Agent Development Kit documentation, "Build collaborative agent teams", github.com/google/adk-docs/blob/main/docs/workflows/collaboration.md (chat, task and single_turn modes, ADK 2.0).
+- Google, Agent Development Kit documentation, "Callbacks" and "Types of callbacks", github.com/google/adk-docs/blob/main/docs/callbacks/ (return-value effects; only None lets the tool run in Python).
+- Google, Agent Development Kit documentation, "Python quickstart", github.com/google/adk-docs/blob/main/docs/get-started/python.md (agent.py, root_agent, adk web).
+- Google Codelabs, "ADK: From basics to multi-tool agents", codelabs.developers.google.com/multi-tools-ai-agent-adk.
