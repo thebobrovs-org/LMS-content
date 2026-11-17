@@ -158,6 +158,20 @@ when it acts as itself.** Using one powerful credential to read every user's
 data is the excessive agency from the threat model lesson. Three-legged OAuth
 keeps the agent to what each user agreed to.
 
+### An example: data agents that query as the user
+
+Google's Conversational Analytics API, which answers questions over BigQuery
+and Looker data, shows the rule in practice. When it is built into an agent
+platform, the platform signs the user in with three-legged OAuth and passes the
+user's delegated access token with each request. BigQuery queries then run as
+that user, not as a shared service account, so the user's IAM permissions and
+row-level and column-level security policies apply without extra code.
+
+Looker works differently. A query runs with the credentials configured for it:
+with Looker API keys (a client ID and secret), every user gets that API user's
+access. To apply each user's own LookML row and column permissions, send that
+user's access token instead.
+
 <Quiz
   id="mailbox-flow"
   objective="2lo-vs-3lo"
@@ -250,3 +264,5 @@ development.
 - OpenID Foundation, "OpenID Connect Core 1.0 incorporating errata set 2", openid.net/specs/openid-connect-core-1_0.html (retrieved 2026-11-17: "a simple identity layer on top of the OAuth 2.0 protocol"; the ID Token "contains Claims about the Authentication of an End-User").
 - Google, Agent Development Kit documentation, "Authenticating with tools", github.com/google/adk-docs/blob/main/docs/tools-custom/authentication.md (retrieved 2026-11-17: authentication manager services recommended for production; AuthScheme, AuthCredential and credential types; OAuth 2.0 authorisation code and client credentials examples; AuthConfig at toolset level; the adk_request_credential pause, redirect, auth response and automatic retry).
 - Google, Agent Development Kit documentation, "Agent Identity Auth Manager for ADK", github.com/google/adk-docs/blob/main/docs/integrations/agent-identity.md (retrieved 2026-11-17: Google-managed lifecycle of auth credentials; Preview release).
+- Google Cloud, Conversational Analytics API, "Integration patterns for data agents", docs.cloud.google.com/gemini/data-agents/conversational-analytics-api/integration-patterns (retrieved 2026-11-17: the agentic platform authenticates the user through a 3-legged OAuth 2.0 flow; queries run with the authenticated user's identity rather than a shared service account, so IAM, row-level and column-level policies apply; Looker queries use the credentials supplied for a Looker API user).
+- Google Cloud, Conversational Analytics API, "Authenticate user identity and connect to a data source", docs.cloud.google.com/gemini/data-agents/conversational-analytics-api/authentication (retrieved 2026-11-17: Looker API keys or an access token; an access token applies the target user's LookML row and column level permissions; with API keys all users share the same level of access).
