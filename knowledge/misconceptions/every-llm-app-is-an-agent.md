@@ -6,6 +6,11 @@ title: "Any app that calls an LLM is an agent"
 scope: "Architects and engineers new to agentic systems"
 sources:
   - "Anthropic, \"Building effective agents\", anthropic.com/engineering/building-effective-agents (workflows vs agents)"
+touches:
+  - agentic-ai/what-is-an-agent
+  - objective:agentic-ai/what-is-an-agent#agent-vs-workflow
+  - item:agentic-ai/what-is-an-agent#classify-invoice-pipeline
+  - item:agentic-ai/what-is-an-agent#classify-summariser
 tags: [agents]
 related: [concept/agent-vs-workflow]
 provenance:

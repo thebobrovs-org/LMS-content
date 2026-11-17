@@ -8,6 +8,12 @@ sources:
   - "ADK documentation, \"Agents\", github.com/google/adk-docs/blob/main/docs/agents/index.md (an LlmAgent's basic components: a model, task instructions and optionally tools)"
   - "Google Cloud, \"What is an AI agent?\", cloud.google.com/discover/what-are-ai-agents (last updated 2026-04-02; definition, and agent vs assistant vs bot table)"
   - "Anthropic, \"Building effective agents\", anthropic.com/engineering/building-effective-agents (agents dynamically direct their own processes and tool usage)"
+touches:
+  - agentic-ai/what-is-an-agent
+  - objective:agentic-ai/what-is-an-agent#define-agent
+  - item:agentic-ai/what-is-an-agent#agent-parts
+  - item:agentic-ai/what-is-an-agent#name-missing-part
+  - item:agentic-ai/what-is-an-agent#who-runs-the-tool
 tags: [agents]
 terms: [agent, LlmAgent, tool, instructions, autonomy]
 related: [concept/agent-vs-workflow]

@@ -9,6 +9,14 @@ sources:
   - "ADK documentation, \"Agents\", section \"Grow from single agent to workflows\", github.com/google/adk-docs/blob/main/docs/agents/index.md (mixing deterministic and non-deterministic tasks)"
   - "ADK documentation, \"Workflows\", github.com/google/adk-docs/blob/main/docs/workflows/index.md (any application with more than one agent or executable node is a workflow; collaborative workflows with a coordinating agent)"
   - "Google Cloud, \"What is an AI agent?\", cloud.google.com/discover/what-are-ai-agents (AI agents vs AI assistants vs bots)"
+touches:
+  - agentic-ai/what-is-an-agent
+  - objective:agentic-ai/what-is-an-agent#agent-vs-workflow
+  - objective:agentic-ai/what-is-an-agent#autonomy-cost
+  - item:agentic-ai/what-is-an-agent#classify-invoice-pipeline
+  - item:agentic-ai/what-is-an-agent#classify-it-troubleshooter
+  - item:agentic-ai/what-is-an-agent#classify-hr-faq
+  - item:agentic-ai/what-is-an-agent#agent-defining-trait
 tags: [agents, architecture]
 terms: [workflow, chatbot, determinism, autonomy]
 related: [concept/agent, misconception/every-llm-app-is-an-agent]
