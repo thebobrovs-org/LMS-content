@@ -88,5 +88,14 @@
   },
   "principal access boundary": {
     "definition": "An IAM policy that defines which resources a principal is eligible to access. It can block access regardless of the principal's role grants (for the permissions it supports), but it never grants access."
+  },
+  "oauth 2.0": {
+    "definition": "An authorisation framework that lets an application obtain limited access to an HTTP service with access tokens, either on behalf of a user who approves it or on its own behalf."
+  },
+  "openid connect": {
+    "definition": "An identity layer on top of OAuth 2.0. It adds an ID token with claims about how the user signed in, so an application can know who the user is."
+  },
+  "authconfig": {
+    "definition": "In ADK, the object that pairs a tool's AuthScheme (how the API expects credentials) with its AuthCredential (the initial information to start the flow)."
   }
 }
