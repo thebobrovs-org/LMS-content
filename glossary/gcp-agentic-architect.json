@@ -301,5 +301,8 @@
   },
   "reciprocal rank fusion": {
     "definition": "A way to merge ranked lists (RRF): each item scores by the reciprocal of its rank in each list, summed, so scores from different search methods never need to be compared. Agent Retrieval uses it for hybrid search, with a weight that leans toward semantic or keyword results."
+  },
+  "tool bloat": {
+    "definition": "Giving a model too many tool definitions in its context, which overwhelms its choice and spends tokens on every call. The fix is progressive disclosure, such as one search tool that loads only the relevant tool schema."
   }
 }
