@@ -126,7 +126,11 @@ is enforced and observed. It sits on agent traffic, including calls to MCP
 servers, and centralises access policies, mTLS (mutual TLS, where both sides
 present certificates) and MCP security. For each call it can:
 
-1. **Know the caller**, from the agent's identity.
+1. **Know the caller.** For traffic out of the agent, that is the agent's
+   identity. For traffic into it, from a client, the gateway authenticates the
+   user's credentials: for agents on Cloud Run it does so through
+   Identity-Aware Proxy (IAP), and Agent Runtime and Gemini Enterprise offer IAP
+   access policies.
 2. **Apply access policy**: is this target approved in the registry, and may
    this agent call it? Policies name targets by their resource names.
 3. **Screen content**, with Model Armor templates configured on the gateway.
