@@ -26,10 +26,19 @@ quiz:
     question: "Refunds over $200 need a person's approval. The agent runs on Agent Runtime with its managed sessions. Where does the design put the limit?"
     choices:
       - "In the instruction: never refund more than $200 without a manager"
-      - "In a Model Armor template that blocks replies mentioning large refunds"
+      - "Wrap issue_refund with require_confirmation for amounts over $200"
       - "In the refund tool, which sends larger refunds to the approval queue"
     answer: 2
-    explanation: "The limit has to be enforced in code. ADK's tool confirmation would do it, but its documentation lists VertexAiSessionService, Agent Runtime's managed sessions, as unsupported, so the tool itself routes larger refunds to people. An instruction can be skipped, and Model Armor screens text, not the decision to refund."
+    explanation: "The limit has to be enforced in code. ADK's tool confirmation would do it, but its documentation lists VertexAiSessionService, Agent Runtime's managed sessions, as unsupported, so the tool itself routes larger refunds to people. An instruction can be skipped."
+  - id: review-memory-bank
+    objective: design-review
+    question: "A design for this brief adds Memory Bank to remember each customer's preferences across conversations. What should the reviewer ask first?"
+    choices:
+      - "Which requirement in the brief does it serve?"
+      - "Is Memory Bank scoped per user, so customers can't see each other's facts?"
+      - "Does the session service support Memory Bank on this runtime?"
+    answer: 0
+    explanation: "Every choice should trace to a requirement, and nothing in this brief asks for facts across conversations. Without one, Memory Bank adds cost, data to protect and behaviour to evaluate for no stated need. Scoping and runtime support matter only once a requirement justifies it."
   - id: review-sessions-lost
     objective: design-review
     question: "In a review, you read: \"Cloud Run, autoscaling from 0 to 20 instances, InMemorySessionService.\" What will customers notice first?"
@@ -38,10 +47,10 @@ quiz:
       - "Slower answers because in-memory sessions are larger than stored ones"
       - "Refunds that run twice because every instance holds its own copy of the tool"
     answer: 0
-    explanation: "In-memory sessions live in one instance. Scaling, restarts and scale-to-zero lose them, so a customer's conversation starts over mid-refund. A persistent session service fixes it."
+    explanation: "In-memory sessions live in one instance. A later turn can reach another instance, and scaling, restarts and scale-to-zero lose them, so a customer's conversation starts over mid-refund. A persistent session service fixes it."
   - id: review-eval-final-answer
     objective: design-review
-    question: "A design's only evaluation is that a reviewer reads 50 final answers before launch. Which defect does it miss?"
+    question: "A design's only evaluation is that a reviewer reads 50 final answers before launch. Which defect can it not detect, even in the answers the reviewer reads?"
     choices:
       - "A wrong tone in the agent's greeting"
       - "A refund issued without first looking up the order"
@@ -90,6 +99,8 @@ answers customers. The requirements, numbered so the design can cite them:
 - **R6.** Traffic is quiet at night and ten times normal on sale days.
 - **R7.** The security team must see and control which systems the agent can
   reach.
+- **R8.** Keep what the team builds and operates, and the running cost, as low
+  as the other requirements allow.
 
 ## Design it in ten decisions
 
@@ -109,9 +120,9 @@ instructions and fixed flows. Here engineers own it and need that control.
 </Step>
 <Step id="capstone-model" title="Model: a managed Gemini model">
 
-Nothing in the brief asks to hold weights, run the model on your own
-infrastructure, or cut cost at a measured, steady volume, so the agent calls a
-managed Gemini model through the API. Start with one capable model, measure,
+R8 favours the least to operate, and nothing in the brief asks to hold weights,
+run the model on your own infrastructure, or cut cost at a measured, steady
+volume, so the agent calls a managed Gemini model through the API. Start with one capable model, measure,
 and only then route simple steps, such as classifying the request, to a
 smaller one.
 
@@ -139,7 +150,7 @@ tool that calls the payments API.
 
 One `LlmAgent` with three tools covers the brief: search the policies, look up
 orders, refund. No step needs a specialist with its own instructions, and no
-work runs in parallel. Use the least autonomy that solves the task: a
+work runs in parallel. Use the least autonomy that solves the task: under R8, a
 multi-agent design would add routing failures and cost without serving a
 requirement.
 
@@ -166,7 +177,7 @@ scored with reference-free checks, and every failure found becomes a new case.
 </Step>
 <Step id="capstone-runtime" title="Runtime: Agent Runtime">
 
-R6 asks for scale with no idle machines to run. Agent Runtime is the managed
+R6 asks for scale, and R8 for no idle machines to run. Agent Runtime is the managed
 option with sessions, evaluation and observability services alongside. It
 gives the least to operate while still meeting the brief. Cloud Run would also
 work, with the session service configured by you.
@@ -174,8 +185,8 @@ work, with the session service configured by you.
 </Step>
 <Step id="capstone-identity-auth" title="Identity and auth: the agent's own, narrow identity">
 
-The agent runs as its own agent identity. It holds only the roles its tools
-need: calling the payments API and the Toolbox query, and searching the data
+For R7 and R2, the agent runs as its own agent identity, so audit logs name it.
+It holds only the roles its tools need: calling the payments API and the Toolbox query, and searching the data
 store. A Principal Access Boundary caps what it could ever reach. The payments
 API is the company's own resource, and the agent acts as itself there, so its
 calls use two-legged OAuth. Customers sign in to the website, not to Google
@@ -223,8 +234,9 @@ model.
 
 ## Review a flawed design
 
-A second team proposed this design for the same brief. Read it and find five
-defects before you open the answers.
+A second team proposed this design for the same brief. Find five wrong choices
+in it, then list every requirement that nothing in it covers. Write your list
+down before you open the answers.
 
 > An ADK agent on Cloud Run, autoscaling from 0 to 20 instances, with
 > `InMemorySessionService`. It runs as the project's default compute service
@@ -233,49 +245,46 @@ defects before you open the answers.
 > own orders. Ask a manager before refunds over $200." Before launch, a reviewer
 > reads 50 final answers and signs off.
 
-<Steps>
-<Step id="review-identity" title="Defect 1: a broad, shared identity">
+<details>
+<summary>Show the five wrong choices</summary>
 
-The default compute service account with Editor can change almost anything in
-the project, and audit logs cannot tell this agent from any other workload
-using the account. One successful injection reaches all of it. **Fix:** an agent
-identity holding only the roles its tools need, inside a Principal Access
-Boundary.
+1. **A broad, shared identity.** The default compute service account with Editor
+   can change almost anything in the project, and audit logs cannot tell this
+   agent from any other workload using the account. One successful injection
+   reaches all of it. Fix: an agent identity holding only the roles its tools
+   need, inside a Principal Access Boundary.
+2. **Free-form SQL, with the customer boundary only in the instruction.**
+   `execute_sql` lets the model write any query, so R2 depends on the model
+   choosing to filter by the right customer. Fix: one parameterised query
+   through MCP Toolbox, with the customer id taken from session state set at
+   sign-in.
+3. **The refund limit only in the instruction.** It is a request to the model,
+   not a control. Fix: the limit in the refund tool's code.
+4. **Sessions in instance memory.** With 0 to 20 instances, a later turn can
+   reach another instance, and scale-to-zero recycles them all: a customer
+   halfway through a refund starts over. Fix: a persistent session service, or
+   Agent Runtime's managed sessions.
+5. **A one-time review of final answers.** Reading answers cannot see a refund
+   made without a lookup, and a one-time review tests none of the weekly
+   changes in R5. Fix: an evalset with expected trajectories, run in CI on every
+   change, plus online monitoring after launch.
 
-</Step>
-<Step id="review-sql" title="Defect 2: free-form SQL">
+</details>
 
-`execute_sql` lets the model write any query, so R2 depends on the model
-choosing to filter by the right customer. **Fix:** one parameterised query
-through MCP Toolbox, with the customer id taken from session state set at
-sign-in.
+<details>
+<summary>Show the requirements nothing covers</summary>
 
-</Step>
-<Step id="review-instruction-rules" title="Defect 3: rules that live only in the instruction">
+- **R1:** no data store, so the policy questions have no source and the model
+  answers from memory.
+- **R4:** no screening, so card numbers are echoed and logged.
+- **R7:** no gateway or registry, so security can neither see nor control what
+  the agent reaches.
 
-Both rules in the instruction, own orders only and refunds over $200, are
-requests to the model, not controls. **Fix:** the customer boundary in the query
-parameter and the refund limit in the tool's code.
+A requirement with no design element behind it is as much a defect as a wrong
+choice, and easier to overlook, because there is nothing on the page to
+question.
 
-</Step>
-<Step id="review-sessions" title="Defect 4: sessions in instance memory">
-
-With autoscaling and scale-to-zero, instances are recycled, and in-memory
-sessions go with them: a customer halfway through a refund starts over. **Fix:**
-a persistent session service, or Agent Runtime's managed sessions.
-
-</Step>
-<Step id="review-evaluation" title="Defect 5: a one-time review of final answers">
-
-Reading final answers cannot see a refund made without a lookup, and a one-time
-review tests none of the weekly changes in R5. **Fix:** an evalset with expected
-trajectories, run in CI on every change, plus online monitoring after launch.
-
-</Step>
-</Steps>
-
-The design also has gaps: nothing covers R1, R4 or R7. A review lists those as
-well. A requirement with no design element behind it is a defect too.
+</details>
 
 <Callout type="tip">Lab: Google's [Professional Agentic Architect learning path](https://www.skills.google/paths/4525) on Google Skills has hands-on labs across the five exam sections. Use them to build pieces of this design for real, and check each one against the brief.</Callout>
 
