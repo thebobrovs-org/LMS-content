@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 400" width="760" height="400" role="img" aria-label="On the left, MCP: a support agent calls tools on MCP servers and gets one result per call, seeing each tool's schema. On the right, A2A: the support agent reads a remote agent's card, sends a message, and the remote agent, with hidden internals, works on a task through states and returns an artifact.">
+  <rect width="760" height="400" fill="#ffffff"/>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <g font-family="Inter, system-ui, sans-serif">
+    <text x="190" y="28" text-anchor="middle" font-size="15" font-weight="600" fill="#0f172a">MCP: agent to tool (vertical)</text>
+    <text x="570" y="28" text-anchor="middle" font-size="15" font-weight="600" fill="#0f172a">A2A: agent to agent (horizontal)</text>
+    <line x1="380" y1="14" x2="380" y2="386" stroke="#cbd5e1"/>
+
+    <!-- MCP side -->
+    <rect x="110" y="48" width="160" height="40" rx="10" fill="#f8fafc" stroke="#0f172a" stroke-width="1.5"/>
+    <text x="190" y="73" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">Support agent</text>
+    <g stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#ar)">
+      <path d="M160,88 L100,150"/>
+      <path d="M220,88 L280,150"/>
+    </g>
+    <rect x="20" y="154" width="160" height="88" rx="10" fill="#dbeafe" stroke="#2563eb"/>
+    <text x="100" y="176" text-anchor="middle" font-size="12" font-weight="600" fill="#1e3a8a">MCP server: orders DB</text>
+    <text x="100" y="198" text-anchor="middle" font-size="11.5" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1e3a8a">get_order(order_id)</text>
+    <rect x="200" y="154" width="160" height="88" rx="10" fill="#dbeafe" stroke="#2563eb"/>
+    <text x="280" y="176" text-anchor="middle" font-size="12" font-weight="600" fill="#1e3a8a">MCP server: carrier API</text>
+    <text x="280" y="198" text-anchor="middle" font-size="11.5" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1e3a8a">book_pickup(...)</text>
+    <g font-size="11.5" fill="#334155">
+      <text x="30" y="276">Typed arguments in, one result out.</text>
+      <text x="30" y="296">The agent sees each tool's name and schema.</text>
+      <text x="30" y="316">Tools have no model or goals of their own.</text>
+    </g>
+
+    <!-- A2A side -->
+    <rect x="400" y="48" width="140" height="40" rx="10" fill="#f8fafc" stroke="#0f172a" stroke-width="1.5"/>
+    <text x="470" y="73" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">Support agent</text>
+    <rect x="590" y="48" width="150" height="40" rx="8" fill="#fef3c7" stroke="#b45309"/>
+    <text x="665" y="66" text-anchor="middle" font-size="11.5" font-weight="600" fill="#78350f">Agent card</text>
+    <text x="665" y="81" text-anchor="middle" font-size="10.5" fill="#78350f">skills, endpoint, auth</text>
+    <path d="M590,68 L544,68" stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#ar)"/>
+    <text x="567" y="106" text-anchor="middle" font-size="10.5" fill="#475569">1. read card</text>
+
+    <path d="M470,88 L470,150" stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#ar)"/>
+    <text x="462" y="124" text-anchor="end" font-size="10.5" fill="#475569">2. message</text>
+
+    <rect x="400" y="154" width="340" height="120" rx="12" fill="#f1f5f9" stroke="#64748b" stroke-dasharray="5 4"/>
+    <text x="570" y="176" text-anchor="middle" font-size="12.5" font-weight="600" fill="#334155">Fraud-review agent (finance team)</text>
+    <text x="570" y="194" text-anchor="middle" font-size="11" fill="#475569">own model, tools and state: hidden from the caller</text>
+    <g font-size="11" text-anchor="middle">
+      <rect x="414" y="210" width="74" height="26" rx="6" fill="#ffffff" stroke="#64748b"/>
+      <text x="451" y="227" fill="#334155">working</text>
+      <rect x="500" y="210" width="110" height="26" rx="6" fill="#ffffff" stroke="#64748b"/>
+      <text x="555" y="227" fill="#334155">input-required</text>
+      <rect x="622" y="210" width="104" height="26" rx="6" fill="#ffffff" stroke="#64748b"/>
+      <text x="674" y="227" fill="#334155">completed</text>
+    </g>
+    <text x="570" y="258" text-anchor="middle" font-size="11" fill="#475569">3. a task moves through states</text>
+    <path d="M520,152 L520,92" stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#ar)"/>
+    <text x="528" y="140" font-size="10.5" fill="#475569">4. artifact back</text>
+    <g font-size="11.5" fill="#334155">
+      <text x="400" y="306">Peers across team or company boundaries.</text>
+      <text x="400" y="326">Long tasks, follow-up questions, streaming.</text>
+      <text x="400" y="346">Requests authenticated as the card requires.</text>
+    </g>
+  </g>
+</svg>

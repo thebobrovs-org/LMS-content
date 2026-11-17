@@ -1,0 +1,295 @@
+---
+title: "A2A and MCP: agents talking to agents and to tools"
+summary: Tell the two protocols apart. MCP connects an agent to tools; A2A connects independent agents, often run by other teams. Read an agent card, and choose between a local sub-agent, an AgentTool and a remote A2A agent.
+tags: [agentic-ai, a2a, mcp, multi-agent]
+difficulty: advanced
+estimatedMinutes: 25
+level: 300
+prerequisites: [agentic-ai/adk-agents-and-tools]
+objectives:
+  - id: a2a-vs-mcp
+    statement: "Choose A2A or MCP for an integration."
+  - id: agent-card
+    statement: "Explain what an agent card advertises and how agents are discovered."
+  - id: local-vs-remote
+    statement: "Choose a local sub-agent, AgentTool or remote A2A agent."
+flashcards:
+  - id: a2a-vs-mcp-card
+    objective: a2a-vs-mcp
+    front: What does MCP connect, and what does A2A connect?
+    back: "MCP connects an agent to tools and data: the agent calls a function with typed arguments and gets a result. A2A connects an agent to another agent, often run by another team: the client sends a message, and the remote agent works on a task with its own model, tools and state, which the client cannot see."
+  - id: agent-card-contents
+    objective: agent-card
+    front: What does an A2A agent card advertise, and where is it usually found?
+    back: "The agent's name, description and version, the endpoint and protocol binding to call, its capabilities (such as streaming), its skills, the input and output formats, and the authentication schemes it requires. It is usually published at /.well-known/agent-card.json on the agent's domain, and can also be listed in a registry."
+  - id: when-remote
+    objective: local-vs-remote
+    front: When should an agent call another agent over A2A instead of running it as a sub-agent or AgentTool?
+    back: "When another team owns, deploys, scales or secures that agent. A sub-agent or AgentTool runs in your own process, from code you own; a remote hop adds latency, a deployment and an authentication path."
+quiz:
+  - id: reuse-fraud-agent
+    objective: local-vs-remote
+    question: "The finance team runs a fraud-review agent as its own service, with its own model, tools and release schedule. Your support agent must ask it to review refund requests. What is the best design?"
+    choices:
+      - "Call it as a remote agent over A2A, using its agent card"
+      - "Wrap the fraud agent as one tool on an MCP server you host"
+      - "Copy its code into your project and add it as a sub-agent"
+      - "Copy its code into your project and wrap it as an AgentTool"
+    answer: 0
+    explanation: "Another team owns, deploys and secures the agent, so you call it across that boundary as a peer: A2A, discovered through its agent card. Wrapping a whole agent as an MCP tool hides its multi-step tasks, follow-up questions and progress behind a single function call. Copying its code forks it: you lose the finance team's fixes and take on running their model and tools."
+  - id: mcp-for-inventory
+    objective: a2a-vs-mcp
+    question: "An agent needs to read stock levels from the warehouse database through one fixed query. Which protocol fits?"
+    choices:
+      - "A2A, with the database exposed as a remote agent"
+      - "A2A, with an agent card that lists the query as a skill"
+      - "MCP, with the query exposed as a tool"
+      - "Neither: put the stock table in the instruction"
+    answer: 2
+    explanation: "A fixed query with typed inputs and a result is a tool, which is what MCP is for. A2A is for agents that reason and work on tasks of their own; a database query does not need a second agent with its own model. Putting the table in the instruction goes stale and spends tokens on every call."
+  - id: a2a-follow-up
+    objective: a2a-vs-mcp
+    question: "A partner's travel-booking agent may need several minutes and may stop to ask your agent which fare to choose. Why does this suit A2A rather than an MCP tool call?"
+    choices:
+      - "A2A calls are faster than MCP tool calls over the same network"
+      - "A2A tasks have states such as input-required and can stream"
+      - "A2A lets your agent see the partner agent's tools and prompts"
+      - "A2A does not need authentication between organisations"
+    answer: 1
+    explanation: "An A2A task moves through states such as working, input-required and completed, so the remote agent can pause to ask a question, stream updates and finish later. A tool call returns one result. A2A is not faster by design. It deliberately keeps the remote agent's tools and prompts opaque, and an A2A server authenticates requests against the requirements its card declares."
+  - id: find-the-card
+    objective: agent-card
+    question: "Your agent knows only the domain of a partner's A2A agent. Where does it look first to learn the endpoint, skills and required authentication?"
+    choices:
+      - "In the partner agent's system instruction, requested over email"
+      - "In a tools/list call to the partner's MCP server"
+      - "In the response to a first test message sent to the domain"
+      - "In the agent card at /.well-known/agent-card.json on that domain"
+    answer: 3
+    explanation: "An A2A server publishes its agent card, a JSON document, at a well-known path on its domain; registries such as Agent Registry can list the same cards. The card names the endpoint, skills and security schemes. An instruction is private to the partner, tools/list is MCP, and a blind test message presumes you already know the endpoint and how to authenticate."
+  - id: card-auth
+    objective: agent-card
+    question: "A partner's agent card declares an OpenID Connect security scheme. What does your client agent do with it?"
+    choices:
+      - "Read the shared credentials from the card and reuse them on each call"
+      - "Get a token from the identity provider and send it with every A2A request"
+      - "Send the first request without credentials, since the card already vouches for it"
+      - "Ignore it, since A2A traffic between agents is trusted by default"
+    answer: 1
+    explanation: "The card defines the schemes and says which the server requires; it holds no secrets. The client obtains credentials out of band (here, a token from the identity provider) and sends them in headers on every request, and the server authenticates each request against those requirements. Unauthenticated or trusted-by-default traffic is exactly what the security schemes rule out."
+  - id: same-team-specialist
+    objective: local-vs-remote
+    question: "Your team owns a small returns specialist that ships with your support agent and should take over the conversation once a return starts. Which design fits?"
+    choices:
+      - "A remote A2A agent on its own Cloud Run service"
+      - "An MCP server that exposes the specialist's reply as a tool"
+      - "A sub-agent in the same app that takes over by transfer"
+      - "A separate agent registered in Gemini Enterprise"
+    answer: 2
+    explanation: "Same team, same release, and it should take over the conversation: that is a local sub-agent, reached by transfer. A remote agent adds a network hop, a second deployment and authentication for no ownership benefit. An MCP tool returns one result rather than taking over the conversation. Registering it as a separate agent splits one app in two."
+  - id: helper-returns-result
+    objective: local-vs-remote
+    question: "Your support agent needs a summarising agent from your own codebase whose summary must come back to the support agent, which then keeps talking to the user. Which design fits?"
+    choices:
+      - "A sub-agent in the same app"
+      - "A remote A2A agent on its own service"
+      - "An agent card published on your domain"
+      - "An AgentTool in the same app"
+    answer: 3
+    explanation: "An AgentTool is called like a function: the summary returns to the support agent, which keeps control. A sub-agent would take over the conversation. A remote agent adds a service and authentication for code you own and ship together. An agent card advertises a remote agent; it does not decide how a local one is called."
+updated: "2026-11-17"
+status: draft
+---
+
+## Two protocols, two boundaries
+
+The ADK lesson (topic 3.2) composed agents inside one app: a sub-agent takes over the
+conversation, and an AgentTool is called like a function. Both run in your
+process, from code you own. Real systems also cross two other boundaries.
+
+- **Agent to tool.** The agent calls a function with typed arguments and gets a
+  result: query a table, book a pickup. The **Model Context Protocol
+  (<Term id="mcp">MCP</Term>)** standardises this. An MCP server publishes tools
+  with names, descriptions and parameter schemas; an agent lists them
+  (`tools/list`) and calls them.
+- **Agent to agent.** The agent asks another agent, often run by another team or
+  company, to do a piece of work. That agent has its own model, tools,
+  instructions and state, and it may take minutes, ask a follow-up question or
+  return files. The **Agent2Agent protocol (<Term id="a2a">A2A</Term>)**
+  standardises this.
+
+The A2A project puts it this way. MCP is vertical: it deepens a single agent.
+A2A is horizontal: it connects agents across a boundary. A2A is an open project
+under the Linux Foundation, contributed by Google, and its current specification is
+version 1.0.
+
+## What A2A exchanges
+
+An A2A client sends a **message** (a role and one or more parts: text, a file
+or structured data) to a remote agent. The remote agent's work is a **task**,
+which moves through states: `submitted`, `working`, `input-required` (it needs
+an answer from the client), `auth-required` (it needs further credentials), and
+finally `completed`, `failed`, `canceled` or `rejected`. Its **artifacts** are
+the files or structured data the task produces. Long work can stream updates
+over server-sent events (a long-lived HTTP response the server keeps writing
+updates to), or send push notifications (the server calls a URL you registered
+when the task changes), so the client does not have to keep asking.
+
+The remote agent stays **opaque**: the client sees its advertised skills, never
+its prompts, tools or reasoning. That is the point. The finance team can change
+its model or tools without breaking yours, and keeps its internals private.
+
+<Quiz
+  id="opaque-remote"
+  objective="a2a-vs-mcp"
+  question="Your agent calls a partner's agent over A2A. What can your agent see of it?"
+  choices={["What its card advertises, plus the task's state and artifacts", "Its tool list and schemas, so your agent can call them directly", "Its system instruction, so your agent can adapt its requests", "Its internal reasoning steps, streamed as they happen"]}
+  answer={0}
+  explanation="A2A keeps the remote agent opaque. The client sees what the card advertises (skills, endpoint, security) and what the task returns (state, messages and artifacts). Tools, instructions and reasoning stay private to the partner, which is what lets it change them without breaking callers."
+/>
+
+<Figure
+  src="/media/a2a-vs-mcp.svg"
+  alt="Two ways an agent reaches out. On the left, MCP: a support agent calls tools on MCP servers, such as get_order on an orders database and book_pickup on a carrier API; each call sends typed arguments and gets one result, and the agent can see each tool's name and schema. On the right, A2A: the same support agent reads the fraud-review agent's agent card, then sends it a message; the remote agent, run by the finance team with its own model, tools and state hidden from the caller, works on a task that moves through states such as working, input-required and completed, and returns an artifact."
+  caption="MCP gives one agent more tools. A2A lets independent agents work together without seeing inside each other."
+/>
+
+<Flashcard id="vertical-horizontal" objective="a2a-vs-mcp" front="Which protocol is vertical and which is horizontal, and what does that mean?" back="MCP is vertical: it deepens one agent by giving it tools and data. A2A is horizontal: it connects separate agents as peers across team or company boundaries." />
+
+## The agent card
+
+A client finds out how to work with a remote agent from its
+<Term id="agent card">agent card</Term>: a JSON document the A2A server
+publishes, usually at `https://{domain}/.well-known/agent-card.json`. Here is a
+shortened card for the finance team's fraud-review agent (A2A 1.0 field names):
+
+```json
+{
+  "name": "Fraud review agent",
+  "description": "Reviews a refund request for fraud risk and returns approve, reject or escalate, with reasons.",
+  "version": "1.2.0",
+  "supportedInterfaces": [
+    {
+      "url": "https://fraud-review.example.com/a2a",
+      "protocolBinding": "JSONRPC",
+      "protocolVersion": "1.0"
+    }
+  ],
+  "capabilities": { "streaming": true, "pushNotifications": false },
+  "defaultInputModes": ["text/plain", "application/json"],
+  "defaultOutputModes": ["application/json"],
+  "skills": [
+    {
+      "id": "review-refund",
+      "name": "Review a refund",
+      "description": "Assesses one refund request against order and payment history.",
+      "tags": ["fraud", "refunds"]
+    }
+  ],
+  "securitySchemes": {
+    "google": {
+      "openIdConnectSecurityScheme": {
+        "openIdConnectUrl": "https://accounts.google.com/.well-known/openid-configuration"
+      }
+    }
+  },
+  "securityRequirements": [{ "schemes": { "google": { "list": ["openid"] } } }]
+}
+```
+
+- **Identity:** `name`, `description` and `version` say what the agent is.
+- **Endpoint:** `supportedInterfaces` gives the URL, the protocol binding (the wire
+  format and transport requests use: JSON-RPC, gRPC or HTTP+JSON) and the A2A
+  protocol version that interface speaks.
+- **Capabilities:** whether it streams or sends push notifications.
+- **Skills:** what it can do, described for the calling agent's model, much as a
+  tool's description is.
+- **Security:** `securitySchemes` defines the authentication methods, here
+  OpenID Connect (an identity layer on OAuth 2.0 that issues signed ID tokens),
+  and `securityRequirements` says which of them the server requires. The card
+  holds no secrets: the client obtains credentials separately, such as a token
+  from the identity provider, and sends them with every request. The server
+  authenticates each request against the requirements its card declares; the
+  card only declares them, so the server's own code must enforce them.
+
+Cards are also how agents are **discovered** at scale. Agent Registry, Google
+Cloud's catalogue of agents and MCP servers, indexes
+A2A agent cards alongside MCP servers, and agents deployed on Agent Runtime
+(Google Cloud's managed service for running agents) are registered there
+automatically. Gemini Enterprise, Google's workplace agent app, lets an
+administrator add an A2A agent by entering its card. Check which A2A version a
+product supports: Gemini Enterprise supports A2A 0.3's streaming mechanism, so
+a 1.0 agent also advertises a 0.3 interface, using the compatibility packages.
+
+## Local or remote: three designs for one scenario
+
+The support agent needs three kinds of help:
+
+| Need | Design | Why |
+|---|---|---|
+| A returns specialist your team owns, which should take over once a return starts | **Sub-agent** | Same code and release, and control should pass to it |
+| A summariser your team owns, whose result comes back to the support agent | **AgentTool** | Same code, and the caller keeps control |
+| The finance team's fraud-review agent | **<Term id="remote agent">Remote agent</Term> over A2A** | Another team owns, deploys, scales and secures it |
+
+| | Sub-agent | AgentTool | Remote A2A agent |
+|---|---|---|---|
+| Runs in | Your process | Your process | Another service |
+| Owned by | You | You | Often another team |
+| Coupling | Shared code and release | Shared code and release | Only the card and the protocol |
+| Identity | Your app's | Your app's | Authenticated per request, as the card requires |
+| Latency | In process | In process | A network call, possibly a long task |
+
+Go remote when another team owns, scales or secures the agent, not merely
+because a capability sounds separate. Every remote hop adds latency, a
+deployment and an authentication path to keep working.
+
+## A2A in ADK
+
+ADK can serve an agent over A2A and call a remote one. To serve the
+fraud-review agent, the finance team wraps it in its `agent.py`:
+
+```python
+from google.adk.a2a.utils.agent_to_a2a import to_a2a
+
+a2a_app = to_a2a(fraud_review_agent, port=8001)  # local test: uvicorn agent:a2a_app --port 8001
+```
+
+`to_a2a` builds an agent card from the agent's name, description and tools
+unless you pass your own. By default the card advertises `http://localhost`, so
+a deployed agent passes its real `host` and `protocol`, or its own card. On the calling side, a remote agent joins your agent
+like a sub-agent, but every turn crosses the network:
+
+```python
+from google.adk.agents import LlmAgent
+from google.adk.agents.remote_a2a_agent import RemoteA2aAgent
+
+fraud_review = RemoteA2aAgent(
+    name="fraud_review",
+    description="Reviews refund requests for fraud risk. Use before approving a refund over 200 EUR.",
+    agent_card="https://fraud-review.example.com/.well-known/agent-card.json",
+)
+
+support_agent = LlmAgent(
+    name="support_agent",
+    model="gemini-flash-latest",
+    instruction="You help customers with orders and refunds.",
+    sub_agents=[fraud_review],
+)
+```
+
+The finance team can host its agent on Cloud Run (Google Cloud's serverless
+container service) or on Agent Runtime, both of
+which document A2A agents (in Preview at the time of writing).
+
+<Callout type="note">A2A is young and moving fast: agent card field names differ between specification versions, and A2A hosting on Agent Runtime and Cloud Run, and A2A registration in Gemini Enterprise, are in Preview. Check the version each product supports before you rely on a field name.</Callout>
+
+## Sources
+
+- A2A Project, "A2A Protocol Specification", version 1.0.0, a2a-protocol.org/v1.0.0/specification (agent card, task, message, part, artifact; task states; well-known path /.well-known/agent-card.json; protocol bindings JSON-RPC, gRPC and HTTP+JSON; security schemes; every request authenticated against the declared requirements).
+- A2A Project, "A2A and MCP", a2a-protocol.org/latest/topics/a2a-and-mcp (MCP is vertical, A2A is horizontal; agents partnering versus using capabilities).
+- A2A Project, README, github.com/a2aproject/A2A (an open source project under the Linux Foundation, contributed by Google).
+- Google, Agent Development Kit documentation, "A2A quickstart: exposing" and "A2A quickstart: consuming", github.com/google/adk-docs/tree/main/docs/a2a (to_a2a; RemoteA2aAgent with name, description and agent_card).
+- Google Cloud, "Create an Agent2Agent agent", docs.cloud.google.com/gemini-enterprise-agent-platform/build/runtime/create-an-a2a-agent (Agent Runtime A2A agents, Preview).
+- Google Cloud, "A2A agents on Cloud Run", docs.cloud.google.com/run/docs/ai/a2a-agents (Preview).
+- Google Cloud, "Agent Registry and the A2A protocol", docs.cloud.google.com/agent-registry/a2a-protocol, and "Automatic registration", docs.cloud.google.com/agent-registry/automatic-registration (indexes A2A agent cards; automatic registration on Agent Runtime).
+- Google Cloud, "Register and manage an A2A agent", docs.cloud.google.com/gemini/enterprise/docs/register-and-manage-an-a2a-agent (agent card entered as JSON; A2A v0.3 streaming; Preview).

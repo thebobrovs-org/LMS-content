@@ -70,5 +70,17 @@
   },
   "session": {
     "definition": "The record of one conversation between a user and an agent: its messages, the agent's events and its working state. A session service is where an agent stores sessions."
+  },
+  "mcp": {
+    "definition": "Model Context Protocol: an open standard for offering tools to agents. An MCP server publishes tools with names, descriptions and parameter schemas; an MCP client, such as an agent, lists and calls them."
+  },
+  "a2a": {
+    "definition": "Agent2Agent: an open protocol for independent agents to discover each other through agent cards and work together on tasks, without seeing each other's internals."
+  },
+  "agent card": {
+    "definition": "A JSON document an A2A agent publishes, usually at /.well-known/agent-card.json, advertising its skills, endpoint, capabilities and required authentication."
+  },
+  "remote agent": {
+    "definition": "An agent running in another process or service, often owned by another team, that a client agent reaches over A2A."
   }
 }
