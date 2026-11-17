@@ -73,7 +73,7 @@ sign-off between each, core first, then one exam section at a time.
 |----|-------|--------------|--------------------|--------------|--------|
 | 1.1 | 100 | `workflow-builder` | Choose a chat agent or a workflow for a use case. | figure + codelab | in review |
 | 1.2 | 200 | `cx-agent-studio-flows` | Choose an instruction-based or flow-based agent for a use case. | **sim `cx-route-resolver`** | in review |
-| 1.3 | 200 | `enterprise-data-gemini-enterprise` | Explain the roles of an app, a data store and a connector. | figure | plan-approved |
+| 1.3 | 200 | `enterprise-data-gemini-enterprise` | Explain the roles of an app, a data store and a connector. | figure | in review |
 
 ### S2 Coding agents (exam section 2, 17%)
 

@@ -232,5 +232,62 @@
   },
   "design review": {
     "definition": "A structured check of a design against its requirements and known failure modes, which finds wrong choices and requirements nothing in the design serves."
+  },
+  "semantic governance policy": {
+    "definition": "A plain-language rule enforced on Agent Gateway that checks each proposed tool call against the user's request, the conversation and the policy before it runs, and denies a call that violates it (Preview)."
+  },
+  "confused deputy": {
+    "definition": "A program with broad authority of its own that acts for a less-privileged party, so the program's rights, not the party's, decide what happens; for example an agent with wide data access fetching a record for a user who could not reach it alone."
+  },
+  "data store": {
+    "definition": "In Gemini Enterprise (and Agent Search), a store of indexed content that an app searches. Each store holds one type of data: structured, unstructured or a third-party source."
+  },
+  "connector": {
+    "definition": "In Gemini Enterprise, the integration that brings content from a source such as Google Drive, Jira or SharePoint into one or more data stores, either by ingesting and syncing it or by federating queries to the source."
+  },
+  "blended search": {
+    "definition": "Connecting several data stores to one Gemini Enterprise app, so a single query searches across all of them while each store keeps its own type."
+  },
+  "mcp server": {
+    "definition": "A program that offers tools (and optionally resources and prompts) to an agent over the Model Context Protocol. The agent is the client that lists and calls them."
+  },
+  "skill": {
+    "definition": "A folder of instructions and supporting files, headed by a SKILL.md with a name and description, that a coding agent loads on demand for a kind of task."
+  },
+  "progressive disclosure": {
+    "definition": "Loading a skill in steps: its name and description are always in context, its full instructions load when a task matches, and its other files load only when needed."
+  },
+  "antigravity": {
+    "definition": "Google's agentic development environment, offered as a desktop app, a CLI (agy), IDE extensions and a Python SDK."
+  },
+  "rule": {
+    "definition": "Persistent guidance for a coding agent in a Markdown file, in its context always or when a trigger such as a file pattern matches. The model reads it and decides; nothing enforces it."
+  },
+  "hook": {
+    "definition": "A command the coding agent's harness runs on a lifecycle event, such as before or after a tool call, whatever the model decides. A hook that runs before a tool call can block it."
+  },
+  "subagent": {
+    "definition": "A delegated agent with its own instructions, context and optionally its own model and tool list, which takes a task from the main agent and returns a result."
+  },
+  "plugin": {
+    "definition": "A versioned package that bundles a coding agent's customisations, such as skills, hooks, subagents and MCP servers (and, in Antigravity, rules), so a team can install and update them together."
+  },
+  "skill registry": {
+    "definition": "An Agent Platform repository, in Preview, that stores versioned agent skills in a Google Cloud project for agents to search and load. Google plans to make it part of Agent Registry."
+  },
+  "terminal sandbox": {
+    "definition": "Operating-system isolation that a coding agent runs its shell commands in, limiting which files they can write and, in Antigravity, blocking network access unless a domain is allowed."
+  },
+  "permission preset": {
+    "definition": "A coding agent setting that decides which actions run without approval, such as Antigravity's Request Review, Default, Auto and Turbo."
+  },
+  "cloud workstations": {
+    "definition": "Google Cloud's managed development environments, each on a dedicated VM in your VPC; a place to run coding agents away from developer laptops."
+  },
+  "gke agent sandbox": {
+    "definition": "Isolated execution of untrusted agent-generated code on GKE: each sandbox is a Pod with its own kernel boundary (gVisor or a microVM), handed out from warm pools, with a controller you install on the cluster."
+  },
+  "agents cli": {
+    "definition": "Google's command-line tool and set of skills that teach a coding agent the agent lifecycle on Google Cloud: scaffold, evaluate, deploy, publish and observe. It is a tool for coding agents, not a coding agent itself."
   }
 }
