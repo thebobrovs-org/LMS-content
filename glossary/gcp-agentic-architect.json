@@ -256,5 +256,8 @@
   },
   "skill registry": {
     "definition": "An Agent Platform repository, in Preview, that stores versioned agent skills in a Google Cloud project for agents to search and load. Google plans to make it part of Agent Registry."
+  },
+  "agents cli": {
+    "definition": "Google's command-line tool and set of skills that teach a coding agent the agent lifecycle on Google Cloud: scaffold, evaluate, deploy, publish and observe. It is a tool for coding agents, not a coding agent itself."
   }
 }
