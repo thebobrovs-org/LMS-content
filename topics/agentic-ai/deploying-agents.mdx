@@ -1,0 +1,271 @@
+---
+title: "Deploying agents: Agent Runtime, Cloud Run or GKE"
+summary: Agent Runtime, Cloud Run and GKE can all run your agent. Choose the one with the least you must operate that still meets the requirements, keep sessions out of instance memory, and set scaling for latency and cost.
+tags: [agentic-ai, agents, deployment, cloud-run, gke]
+difficulty: intermediate
+estimatedMinutes: 25
+level: 200
+prerequisites: [agentic-ai/what-is-an-agent]
+objectives:
+  - id: choose-runtime
+    statement: "Choose Agent Runtime, Cloud Run or GKE from a scenario's requirements, and say what you take on with each."
+  - id: scaling
+    statement: "Set scaling (minimum and maximum instances, concurrency) for a load pattern, and explain what each setting trades."
+  - id: cost-levers
+    statement: "Name the cost levers for a deployed agent: model tokens, instance settings, billing mode and what you operate yourself."
+flashcards:
+  - id: three-runtimes
+    objective: choose-runtime
+    front: What does each of Agent Runtime, Cloud Run and GKE give an agent?
+    back: "Agent Runtime: a managed runtime built for agents, with sessions, Memory Bank, evaluation and observability services alongside. Cloud Run: serverless containers that scale to zero, where you configure the session and memory services. GKE: Kubernetes, with control of nodes, GPUs and networking, and the most to operate."
+  - id: in-memory-sessions
+    objective: choose-runtime
+    front: What happens to an ADK agent's sessions on Cloud Run if you do not configure a session service?
+    back: "They fall back to in-memory storage and are lost whenever an instance is recycled. Point the agent at a persistent session service, such as a database or Agent Runtime's managed Sessions."
+  - id: min-instances-trade
+    objective: scaling
+    front: What do minimum instances trade?
+    back: "Idle cost for latency. Warm instances avoid cold starts on the first requests after a quiet period, but you pay for them while they wait."
+  - id: biggest-cost-lever
+    objective: cost-levers
+    front: Which cost grows with every turn of the agent loop, and how do you lower it?
+    back: "Model calls: every turn sends the conversation and tool results to the model as tokens. Fewer turns, shorter context and a smaller model where it is good enough lower it. Instance settings, billing mode and what you operate are the other levers."
+  - id: billing-modes
+    objective: cost-levers
+    front: How do Cloud Run's request-based and instance-based billing differ, and which suits which traffic?
+    back: "Request-based billing charges only while an instance handles requests, starts or shuts down, which suits spiky or sporadic traffic. Instance-based billing charges for each instance's whole life, which can cost less under steady load."
+quiz:
+  - id: runtime-fast-managed
+    objective: choose-runtime
+    question: "A small team built an ADK agent and needs it in production this month with conversation history and long-term memory. They have no platform engineers. Where should it run?"
+    choices:
+      - "GKE, because it gives the most control over how the agent scales"
+      - "Agent Runtime, because sessions and memory are managed for them"
+      - "Cloud Run with the default in-memory session service"
+    answer: 1
+    explanation: "Agent Runtime is built for this: deploy the agent code and use its managed Sessions and Memory Bank, with no cluster or session database to run. GKE gives control the team cannot staff. Cloud Run's default in-memory sessions are lost whenever an instance is recycled, so conversation history would vanish."
+  - id: runtime-beside-services
+    objective: choose-runtime
+    question: "A company runs all its APIs as Cloud Run services, with one CI/CD pipeline, one way to set up networking and one dashboard. It adds an ADK agent that needs a custom HTTP endpoint next to those APIs. What fits best?"
+    choices:
+      - "Cloud Run, with the agent's sessions in a persistent session service"
+      - "GKE, because an agent is too complex for serverless containers"
+      - "Agent Runtime, because the agent needs managed memory services"
+    answer: 0
+    explanation: "The agent is one more container in a platform the company already runs well, so Cloud Run reuses everything they have. It just needs a persistent session service, which can even be Agent Runtime's managed Sessions. GKE adds a cluster to operate for no stated need. Nothing in the scenario asks for managed memory, and even if it did, a Cloud Run agent can use Agent Runtime's Sessions and Memory Bank."
+  - id: runtime-node-control
+    objective: choose-runtime
+    question: "A regulated bank must run its agent on nodes it configures and audits, inside a private network, and serve an open-weights model on its own GPUs next to the agent. Which runtime meets this?"
+    choices:
+      - "Agent Runtime, because it is the most managed option"
+      - "Cloud Run, because it scales to zero when idle"
+      - "GKE, because it gives control of nodes, GPUs and networking"
+    answer: 2
+    explanation: "Node-level control and self-served open models on your own accelerators are what GKE is for, and ADK's own guidance points to GKE for more control and for open models. A managed runtime takes node control away by design, which is the opposite of the requirement. Scaling to zero does not address node control at all."
+  - id: gke-always-cheaper
+    objective: cost-levers
+    question: "A teammate says: 'GKE is always cheapest, because you avoid paying for a managed service.' What is wrong with this?"
+    choices:
+      - "Nothing; managed services always cost more in total"
+      - "It ignores the cost of running the cluster yourself, and idle capacity"
+      - "GKE is always the most expensive, so the reverse is true"
+    answer: 1
+    explanation: "Total cost includes the people and time to operate the cluster, upgrades, security patching and nodes you pay for while traffic is low. For a small or spiky workload, a managed or serverless runtime is often cheaper overall. Neither option is always cheaper: it depends on load and on what your team already runs."
+  - id: cold-start-fix
+    objective: scaling
+    question: "An agent on Cloud Run gets a few requests an hour. The first request after a quiet spell takes several extra seconds, and users notice. What setting addresses this, and what does it cost?"
+    choices:
+      - "Raise the minimum instances to 1, and pay for an instance while it waits"
+      - "Raise the maximum instances, which costs nothing while traffic is low"
+      - "Raise the concurrency, so one instance serves more requests at once"
+    answer: 0
+    explanation: "The delay is a cold start: no instance was running. A minimum of one keeps an instance warm, at the price of paying for it while idle. The maximum caps how far it scales out, which does nothing for the first request. Concurrency sets how many requests one running instance takes, which also does not help when no instance is running."
+  - id: memory-bound-concurrency
+    objective: scaling
+    question: "An agent loads a large document into memory for each request. At high load its instances start running out of memory, though CPU stays low. Which change addresses this most directly?"
+    choices:
+      - "Lower the concurrency, so each instance holds fewer requests at once"
+      - "Lower the maximum instances, so fewer instances run"
+      - "Raise the minimum instances, so more instances stay warm"
+    answer: 0
+    explanation: "Each request holds memory, so the number of requests sharing one instance decides how much memory it needs. Lower concurrency spreads the load over more instances. Fewer instances would pack even more requests into each, and a warm floor helps cold starts, not memory per instance."
+  - id: max-instances-cap
+    objective: cost-levers
+    question: "A public agent could be hit by a burst of automated traffic, and every request calls the model. Which setting puts a ceiling on how much the deployment itself can scale out and spend?"
+    choices:
+      - "The minimum instances"
+      - "The maximum instances"
+      - "The container's memory limit"
+    answer: 1
+    explanation: "The maximum caps how many instances run at once, so a burst cannot scale the service, and its bill, without limit. It does not cap model spend on its own, so pair it with quotas, rate limits or a gateway. The minimum only sets a floor, and the memory limit sizes each instance."
+status: draft
+updated: "2026-11-17"
+---
+
+## Three places to run the same agent
+
+Once an agent works on your machine, it needs to run somewhere users can reach. On Google Cloud an agent built with ADK (Google's open-source agent framework) can run in three main places, and the agent's
+code barely changes between them:
+
+- **<Term id="Agent Runtime">Agent Runtime</Term>** (formerly Agent Engine) is a
+  managed runtime built for agents. You deploy the agent code, and it runs on
+  infrastructure Google manages, next to agent services such as managed
+  sessions, Memory Bank, evaluation and observability. A
+  <Term id="session">session</Term> is the record of one conversation (its
+  messages and state), and a session service is where the agent stores them.
+  Memory Bank keeps long-term memory across sessions.
+- **Cloud Run** runs any container on serverless infrastructure that scales
+  with requests, down to zero. You package the agent behind an HTTP server
+  (ADK provides one) and deploy it like any other service.
+- **GKE** (Google Kubernetes Engine) runs your containers on Kubernetes
+  clusters. It gives you the most control, over nodes, accelerators and
+  networking, and leaves you the most to operate.
+
+These are **substitutes**: each can host the same agent. The question is not
+which is best but which gives you what you need with the least you must run
+yourself. That is the decision this lesson teaches.
+
+<Callout type="note">This lesson uses the Agent Development Kit (ADK), Google's open-source framework for building agents in code, for its examples. The runtime choice is the same for agents built with other frameworks.</Callout>
+
+<Figure
+  src="/media/agent-runtime-decision.svg"
+  alt="Decision table comparing Agent Runtime, Cloud Run and GKE, ordered from less to operate and less control to more control and more to operate. Agent Runtime is a managed runtime built for agents with Sessions and Memory Bank built in; you control the code, dependencies and scaling settings; it fits when you want it managed and live fast. Cloud Run is serverless containers that scale to zero; you configure a session service or use a managed one; you control the container, server, scaling and billing mode; it fits an agent beside other Cloud Run services. GKE is managed Kubernetes clusters; you configure a session service or use a managed one; you control nodes, GPUs, networking and the whole platform; it fits compliance needs, your own GPUs or an existing cluster. The footer says they are substitutes: pick the one with the least you must operate that still meets the requirements."
+  caption="The three runtimes trade control for operating burden. Start from the left and move right only when a requirement forces you to."
+/>
+
+## What each one gives you, and what you bring
+
+**Agent Runtime** is the most opinionated. With ADK you deploy with
+`adk deploy agent_engine` (the command still uses the old name), and the service
+provides the server that answers queries. The agent can use the managed
+**Sessions** service for conversation history and **Memory Bank** for long-term
+memory, and the runtime connects to Google Cloud's agent evaluation,
+observability and identity features. You give up control of the serving stack
+in exchange. Choose it when you want an agent in production quickly and have no
+reason to run the platform yourself.
+
+**Cloud Run** gives you a container you control: the server, the dependencies,
+the billing mode and the scaling settings, with no cluster to run. It fits when
+the agent sits beside other Cloud Run services, needs a custom HTTP API, or your
+team already deploys everything this way. The ADK command is
+`adk deploy cloud_run`.
+
+**GKE** gives you Kubernetes: you choose node types, attach GPUs, set network
+policy and run sidecars. ADK's documentation points to GKE when you need more
+control and for serving open models. It fits a platform team that already runs
+GKE, strict compliance rules about the nodes and network, or open-weights models
+served on your own accelerators next to the agent. GKE Autopilot hands node
+management to Google, but you still operate a cluster.
+
+<Callout type="warning">On Cloud Run, and on GKE where you run the server yourself, state is yours to place. If you deploy an ADK agent to Cloud Run without a session service, it falls back to in-memory sessions. Cloud Run starts and stops instances as traffic changes and spreads requests across them, so memory on one instance is neither shared nor kept: conversations are lost whenever an instance is recycled. Point the agent at a persistent session service (a database, or Agent Runtime's managed Sessions) and an artifact store (where the agent keeps files it creates). Memory Bank, for long-term memory, also works without deploying the agent to Agent Runtime: you create an Agent Runtime instance for it, and the agent can run elsewhere.</Callout>
+
+That last point means the choice is not all or nothing. A common hybrid runs the
+agent on Cloud Run, where the team's other services live, and uses Agent
+Runtime's managed Sessions and Memory Bank for state.
+
+<Quiz
+  id="sessions-lost"
+  objective="choose-runtime"
+  question="An agent moved from local testing to Cloud Run. Users report that it forgets the conversation partway through, at random. What is the likely cause?"
+  choices={["The model's context window is too small for the conversation", "Sessions are in instance memory, so a new or recycled instance has none", "Cloud Run does not support multi-turn agents"]}
+  answer={1}
+  explanation="Without a configured session service, ADK on Cloud Run keeps sessions in memory. When a request lands on a different instance, or an instance is recycled, that history is gone. A persistent session service fixes it. A context limit would fail predictably on long conversations, not at random, and Cloud Run runs multi-turn agents fine once state lives outside the instance."
+/>
+
+## Three scenarios
+
+- **A fast managed launch.** A small team with no platform engineers needs an
+  agent live this month, with conversation history and memory. Agent Runtime:
+  the state services are managed, and there is no server or cluster to run.
+- **One more service on an existing platform.** A company already ships every
+  API to Cloud Run through one pipeline. Cloud Run: the agent reuses the
+  pipeline, networking and dashboards, with a persistent session service.
+- **Control the platform must keep.** A regulated firm has to configure and
+  audit its own nodes and serve an open-weights model on its own GPUs. GKE: no
+  managed runtime gives it that control.
+
+## Scaling: three settings
+
+All three runtimes scale out by adding instances. On Cloud Run and Agent
+Runtime you set three settings directly; on GKE the same ideas map to a
+HorizontalPodAutoscaler's minimum and maximum replicas (you configure autoscaling
+yourself), and concurrency is whatever your server allows.
+
+- **<Term id="min instances">Minimum instances</Term>** keep instances warm. With
+  zero, the first request after a quiet spell waits for a cold start (a new
+  instance starting the container and loading the agent). A minimum of one or
+  more avoids that, and you pay for those instances while they wait.
+- **Maximum instances** cap how far the service scales out. That protects your
+  budget and the systems behind the agent from a burst.
+- **<Term id="container concurrency">Concurrency</Term>** is how many requests
+  one instance handles at once. Agents spend most of each request waiting on the
+  model and tools, so an instance can usually serve several at a time; too many,
+  and a memory-hungry agent runs out of memory.
+
+With ADK on Cloud Run you pass these through to `gcloud`: flags after `--` go to
+`gcloud run deploy`, and `--no-allow-unauthenticated` keeps the service private.
+Concurrency is left at Cloud Run's default here.
+
+```bash
+adk deploy cloud_run --project=my-project --region=us-central1 ./my_agent \
+  -- --no-allow-unauthenticated --min-instances=1 --max-instances=20
+```
+
+How you set them depends on the load. For **spiky or sporadic traffic**, keep the
+minimum at zero (or one, if cold starts hurt users), size the maximum to what
+your budget and back-end systems can take, and leave concurrency moderate. For
+**steady traffic**, a warm floor of instances costs little extra because they
+are busy anyway, and instance-based billing may be cheaper.
+
+Agent Runtime exposes the same three settings on a deployed agent (in Preview at
+the time of writing), with its own defaults and limits. Check the current values
+in the Agent Runtime documentation before you rely on them.
+
+<Flashcard id="concurrency-meaning" objective="scaling" front="What does container concurrency set, and why can agents usually take more than one request per instance?" back="How many requests one instance handles at once. An agent spends most of a request waiting on the model and tools, so one instance can serve several in parallel, up to the point where memory runs out." />
+
+## What drives the bill
+
+A deployed agent has four cost levers:
+
+- **Model calls.** Often the largest running cost, because every turn of the
+  loop sends the conversation and tool results to the model. For a low-traffic
+  agent with warm instances, compute can cost more. Fewer turns, shorter context
+  and a smaller model where it is good enough all lower token spend.
+- **Instance settings.** Minimum instances you pay for while idle, the size of
+  each instance, and a maximum that bounds the worst case.
+- **Billing mode.** On Cloud Run, request-based billing charges only while an
+  instance handles requests, starts or shuts down, which suits spiky traffic.
+  Instance-based billing charges for the whole life of each instance, which can
+  cost less under steady load.
+- **What you operate.** GKE's node prices can look low, but the cluster, its
+  upgrades and the engineers who run it are part of the cost. A managed runtime
+  folds that into its price.
+
+So "GKE is always cheapest" and "managed is always most expensive" are both
+wrong. The cheapest runtime is the one whose total cost, including the work you
+take on, is lowest for this agent's load.
+
+<Flashcard id="spiky-billing" objective="cost-levers" front="An internal agent gets bursts of traffic a few times a day and nothing in between. Which Cloud Run billing mode fits?" back="Request-based billing: instances are charged only while they handle requests, start or shut down, so the quiet hours cost little. Instance-based billing would charge for instances through the idle time." />
+
+<Callout type="tip">Agent Runtime and Cloud Run both have their own pricing pages, and agent services such as Sessions and Memory Bank are priced separately. Compare them for your expected traffic rather than relying on a rule of thumb.</Callout>
+
+## Recap
+
+- Agent Runtime, Cloud Run and GKE are substitutes. Pick the one with the least
+  you must operate that still meets the requirements.
+- Agent Runtime gives you managed agent services; on Cloud Run and GKE you
+  configure the session and memory services yourself, or use Agent Runtime's.
+- Minimum instances trade idle cost for no cold starts; maximum instances cap
+  scale-out and spend; concurrency sets requests per instance.
+- Model calls are often the largest cost, though warm idle compute can be for a
+  quiet agent. Count the cost of operating a platform too.
+
+## Sources
+
+- Google, Agent Development Kit documentation, "Deploying your agent", github.com/google/adk-docs/blob/main/docs/deploy/index.md (retrieved 2026-11-17: Agent Runtime is a fully managed auto-scaling service designed for agents; Cloud Run runs the agent as a container; GKE is a good option for more control and for running open models).
+- Google, Agent Development Kit documentation, "Deploy to Agent Runtime", github.com/google/adk-docs/blob/main/docs/deploy/agent-runtime/index.md and deploy.md (retrieved 2026-11-17: Agent Runtime is a set of modular services to scale and govern agents; the deployment payload; `adk deploy agent_engine`; Agent Runtime is a paid service).
+- Google, Agent Development Kit documentation, "Deploy to Cloud Run", github.com/google/adk-docs/blob/main/docs/deploy/cloud-run.md (retrieved 2026-11-17: without session and artifact service URIs, sessions and artifacts are lost whenever an instance is recycled; `agentengine://` managed sessions; passing gcloud flags after `--`, including `--min-instances`).
+- Google, Agent Development Kit documentation, "Memory", github.com/google/adk-docs/blob/main/docs/sessions/memory.md (retrieved 2026-11-17: you do not need to deploy your agent to Agent Runtime to use Memory Bank).
+- Google Cloud, Cloud Run documentation: "Set minimum instances", docs.cloud.google.com/run/docs/configuring/min-instances; "About concurrency", docs.cloud.google.com/run/docs/about-concurrency (I/O-bound requests suit higher concurrency; memory-heavy ones lower); "Billing settings", docs.cloud.google.com/run/docs/configuring/billing-settings (last updated 2026-11-12, 2026-11-10 and 2026-11-12: minimum instances avoid slow starts; concurrency; request-based vs instance-based billing).
+- Google Cloud, "Deploy an agent", docs.cloud.google.com/gemini-enterprise-agent-platform/scale/runtime/deploy-an-agent (last updated 2026-11-12: Agent Runtime's minimum and maximum instances, container concurrency and resource limits, marked Preview).
+- Google Cloud, "Agent Runtime", docs.cloud.google.com/gemini-enterprise-agent-platform/build/runtime (last updated 2026-11-12: "Because the name of Agent Runtime changed over time", its API resource is still ReasoningEngine).

@@ -10,5 +10,17 @@
   },
   "determinism spectrum": {
     "definition": "The range of designs ordered by how much the system decides for itself: a chatbot acts only when the user asks, a workflow follows the designer's path, and an agent directs its own steps. More autonomy buys flexibility and costs predictability."
+  },
+  "min instances": {
+    "definition": "The number of instances a service keeps running even with no traffic, so requests avoid cold starts; you pay for them while they wait."
+  },
+  "container concurrency": {
+    "definition": "The number of requests one instance of a service handles at the same time."
+  },
+  "agent runtime": {
+    "definition": "Google Cloud's managed runtime for deploying, scaling and governing agents, with agent services such as managed Sessions and Memory Bank alongside (formerly Agent Engine)."
+  },
+  "session": {
+    "definition": "The record of one conversation between a user and an agent: its messages, the agent's events and its working state. A session service is where an agent stores sessions."
   }
 }
