@@ -229,5 +229,8 @@
   },
   "memory bank": {
     "definition": "Agent Platform's managed long-term memory: it extracts facts from conversations with an LLM, consolidates them with what it already holds, keeps them isolated per scope (such as agent and user), and returns the relevant ones in later sessions."
+  },
+  "design review": {
+    "definition": "A structured check of a design against its requirements and known failure modes, which finds wrong choices and requirements nothing in the design serves."
   }
 }

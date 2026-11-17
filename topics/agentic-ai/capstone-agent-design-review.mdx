@@ -1,0 +1,299 @@
+---
+title: "Capstone: design and review an agentic system"
+summary: Design one customer-service agent end to end, from build approach to guardrails, tracing every choice to a requirement. Then review a flawed design of the same agent and find its five defects.
+tags: [agentic-ai, agents, architecture, design-review]
+difficulty: advanced
+estimatedMinutes: 45
+level: 400
+prerequisites: [agentic-ai/low-code-or-code, agentic-ai/deploying-agents, agentic-ai/agent-eval-criteria, agentic-ai/guardrails-model-armor-hitl]
+objectives:
+  - id: end-to-end-design
+    statement: "Produce an end-to-end design that names and justifies each choice."
+  - id: design-review
+    statement: "Find the defects in a flawed agent design and fix each."
+quiz:
+  - id: orders-tool-customer-id
+    objective: end-to-end-design
+    question: "The order-lookup tool must return only the signed-in customer's orders. Where should the tool get the customer id from?"
+    choices:
+      - "From the model, which reads it from the conversation"
+      - "From session state that the web app sets at sign-in"
+      - "From the instruction, which tells the model to use only the customer's id"
+    answer: 1
+    explanation: "A value the model supplies is a value an injected instruction can change, and an instruction is not enforced. When the tool reads the id from state that the signed-in web app wrote, the query can only ever return that customer's orders."
+  - id: refund-limit-where
+    objective: end-to-end-design
+    question: "Refunds over $200 need a person's approval. The agent runs on Agent Runtime with its managed sessions. Where does the design put the limit?"
+    choices:
+      - "In the instruction: never refund more than $200 without a manager"
+      - "In a Model Armor template that blocks replies mentioning large refunds"
+      - "In the refund tool, which sends larger refunds to the approval queue"
+    answer: 2
+    explanation: "The limit has to be enforced in code. ADK's tool confirmation would do it, but its documentation lists VertexAiSessionService, Agent Runtime's managed sessions, as unsupported, so the tool itself routes larger refunds to people. An instruction can be skipped, and Model Armor screens text, not the decision to refund."
+  - id: review-sessions-lost
+    objective: design-review
+    question: "In a review, you read: \"Cloud Run, autoscaling from 0 to 20 instances, InMemorySessionService.\" What will customers notice first?"
+    choices:
+      - "Conversations that forget what was said when an instance is recycled"
+      - "Slower answers because in-memory sessions are larger than stored ones"
+      - "Refunds that run twice because every instance holds its own copy of the tool"
+    answer: 0
+    explanation: "In-memory sessions live in one instance. Scaling, restarts and scale-to-zero lose them, so a customer's conversation starts over mid-refund. A persistent session service fixes it."
+  - id: review-eval-final-answer
+    objective: design-review
+    question: "A design's only evaluation is that a reviewer reads 50 final answers before launch. Which defect does it miss?"
+    choices:
+      - "A wrong tone in the agent's greeting"
+      - "A refund issued without first looking up the order"
+      - "An answer that cites the wrong policy page"
+    answer: 1
+    explanation: "A final answer can read well while the path behind it was wrong. Only a check on the trajectory, the tool calls and their order, sees a refund made without a lookup. A reader can catch tone and a wrong citation in the answer itself."
+  - id: review-who-acts
+    objective: design-review
+    question: "The flawed design runs the agent as the project's default compute service account with the Editor role. What is the fix?"
+    choices:
+      - "Keep the account, and add an instruction never to touch other resources"
+      - "Give the agent its own identity with only the roles its tools need"
+      - "Screen every prompt with Model Armor so no injection reaches the agent"
+    answer: 1
+    explanation: "Least privilege limits what a fooled agent can do. Screening can miss an injection, and an instruction is not enforced. An agent identity names this agent alone in audit logs and holds only what its tools need, with a Principal Access Boundary as an outer limit."
+---
+
+The exam asks you to combine choices, not recite them. In this lesson you
+design one agent from a written brief, one decision at a time, and tie each
+decision to a line of that brief. Then you review a weaker design of the same
+agent and name what is wrong with it. That is a
+<Term id="design review">design review</Term>: a check of a design against its
+requirements and the failure modes you already know.
+
+Two rules run through everything below. **Every choice traces to a requirement.**
+If you cannot point at the line in the brief that a choice serves, it is
+decoration or a guess. **Evaluation, identity and guardrails are designed in
+from the start.** Bolted on at the end, they cost a rebuild, which is the lesson
+of the low-code-or-code topic.
+
+## The brief
+
+Northwind Outdoor, an online retailer, wants an agent on its website that
+answers customers. The requirements, numbered so the design can cite them:
+
+- **R1.** Answer questions about returns, shipping and warranty from about 2,000
+  policy pages. The support team edits them every week.
+- **R2.** Tell a signed-in customer the status of their own orders, which are in a
+  Cloud SQL database. Never another customer's.
+- **R3.** Issue refunds through the internal payments API. A refund over $200
+  needs a support lead's approval first.
+- **R4.** Customers sometimes paste card numbers into the chat. They must not be
+  repeated or stored in logs.
+- **R5.** The engineering team ships weekly and wants every change tested
+  automatically before it reaches customers.
+- **R6.** Traffic is quiet at night and ten times normal on sale days.
+- **R7.** The security team must see and control which systems the agent can
+  reach.
+
+## Design it in ten decisions
+
+Each step names the choice, the requirement behind it, and the lesson that
+taught the reasoning.
+
+<Steps>
+<Step id="capstone-build-approach" title="Build approach: ADK, in code">
+
+R5 asks for evaluation gated on every change, R3 needs a refund rule enforced
+in code, and R2 needs a custom integration with the orders database. Those are
+the signals for code from the low-code-or-code lesson, so the agent is built
+with ADK. CX Agent Studio, Google's tool for customer conversations, is where
+you would start if a contact-centre team owned the agent and most of it were
+instructions and fixed flows. Here engineers own it and need that control.
+
+</Step>
+<Step id="capstone-model" title="Model: a managed Gemini model">
+
+Nothing in the brief asks to hold weights, run the model on your own
+infrastructure, or cut cost at a measured, steady volume, so the agent calls a
+managed Gemini model through the API. Start with one capable model, measure,
+and only then route simple steps, such as classifying the request, to a
+smaller one.
+
+</Step>
+<Step id="capstone-knowledge" title="Knowledge: Agent Search over the policy pages">
+
+R1 is plain document question answering with no special pipeline needs, so the
+first choice is Agent Search, Google's out-of-the-box RAG. The pages change
+weekly, so the data store is kept in step with the source. Superseded pages are
+marked with metadata and filtered out, because an outdated page is a data
+problem, not a prompt problem. Reach for RAG Engine only when you need to
+configure chunking, embeddings or reranking yourself.
+
+</Step>
+<Step id="capstone-tools" title="Tools: one safe query, one refund function">
+
+For R2, the orders database is reached through MCP Toolbox for Databases with
+one named, parameterised query, `get_orders_for_customer`, never a free-form
+SQL tool. Its customer id comes from session state that the web app writes when
+the customer signs in, not from the model. For R3, `issue_refund` is a function
+tool that calls the payments API.
+
+</Step>
+<Step id="capstone-orchestration" title="Orchestration: one agent, no team">
+
+One `LlmAgent` with three tools covers the brief: search the policies, look up
+orders, refund. No step needs a specialist with its own instructions, and no
+work runs in parallel. Use the least autonomy that solves the task: a
+multi-agent design would add routing failures and cost without serving a
+requirement.
+
+</Step>
+<Step id="capstone-sessions" title="Sessions and memory: persistent sessions, no Memory Bank">
+
+A refund conversation can span several turns, and under R6 instances come and
+go, so sessions must live in a persistent session service, never in instance
+memory. The signed-in customer's id is held in session state. Nothing in the
+brief asks the agent to remember facts across conversations, so there is no
+Memory Bank.
+
+</Step>
+<Step id="capstone-evaluation" title="Evaluation: a golden evalset gated in CI">
+
+For R5, an evalset records the expected tool calls as well as the answer. It
+includes edge cases (a refund of exactly $200), adversarial ones (a pasted
+instruction to refund someone else's order) and cases for R4. Trajectory
+matching with `IN_ORDER` checks that the order lookup comes before every refund,
+while still allowing extra calls in between. CI runs the evalset on every change
+and fails the build on a regression. After launch, sampled live traffic is
+scored with reference-free checks, and every failure found becomes a new case.
+
+</Step>
+<Step id="capstone-runtime" title="Runtime: Agent Runtime">
+
+R6 asks for scale with no idle machines to run. Agent Runtime is the managed
+option with sessions, evaluation and observability services alongside. It
+gives the least to operate while still meeting the brief. Cloud Run would also
+work, with the session service configured by you.
+
+</Step>
+<Step id="capstone-identity-auth" title="Identity and auth: the agent's own, narrow identity">
+
+The agent runs as its own agent identity. It holds only the roles its tools
+need: calling the payments API and the Toolbox query, and searching the data
+store. A Principal Access Boundary caps what it could ever reach. The payments
+API is the company's own resource, and the agent acts as itself there, so its
+calls use two-legged OAuth. Customers sign in to the website, not to Google
+Cloud. The customer boundary for R2 is enforced by the query's parameter, from
+the step on tools.
+
+</Step>
+<Step id="capstone-guardrails" title="Gateway and guardrails: control the traffic, screen the text, gate the refund">
+
+For R7, the agent and its MCP server are registered in Agent Registry, and its
+calls to the MCP server and the payments API go through Agent Gateway, where access policies decide which targets
+the agent may call and every call is recorded. A Model Armor template screens
+prompts and responses for prompt injection, and its Sensitive Data Protection
+filter covers the card numbers in R4. Start with inspect only to tune it, then
+switch to inspect and block before launch, under an organisation floor setting.
+For R3, the refund limit lives in code, as the next section explains.
+
+</Step>
+</Steps>
+
+<Figure
+  src="/media/capstone-reference-architecture.svg"
+  alt="Reference architecture for the Northwind Outdoor support agent. A customer signs in on the website, which sets the customer id in session state and sends the chat to the agent. The agent, an ADK LlmAgent on Agent Runtime with persistent sessions and its own agent identity, calls a managed Gemini model and searches the policy pages in Agent Search. Its calls to the MCP server and the payments API pass through Agent Gateway, which applies access policies and records each call: MCP Toolbox with the parameterised query get_orders_for_customer on Cloud SQL, and issue_refund on the payments API, which sends refunds over 200 dollars to the support leads' approval queue. Model Armor screens prompts and responses for prompt injection and card numbers. Agent Registry lists the agent and its MCP server. Below, an evalset runs in CI on every change, and sampled live traffic is scored online; failures become new eval cases. Each element is labelled with the requirement it serves, R1 to R7."
+  caption="Every box answers a numbered requirement. A box with no requirement next to it would be the first thing to question."
+/>
+
+## The refund limit: where a rule is enforced
+
+R3 is the decision that most often goes wrong. Writing "ask a manager before
+refunds over $200" in the instruction is not enforcement: the model can skip
+it, and an injected instruction can talk it out of it. The limit belongs in
+code.
+
+ADK's tool confirmation is the first tool to reach for. Wrap the tool with
+`require_confirmation` set to a function that returns true when the amount is
+over $200, and those calls pause until a person responds. But check the session
+service: ADK's documentation lists `VertexAiSessionService`, which Agent
+Runtime's managed sessions use, as not supported by this feature. So this
+design puts the rule in `issue_refund` itself. At $200 or less it calls the
+payments API. Above that, it files the refund in the support leads' approval
+queue and tells the customer it is pending. Either way, code decides, not the
+model.
+
+<Callout type="tip">This kind of conflict between two good choices is what design reviews are for. Agent Runtime was chosen for R6 and tool confirmation for R3; reading the constraints of both together showed that they don't combine, and the design changed before anything was built.</Callout>
+
+## Review a flawed design
+
+A second team proposed this design for the same brief. Read it and find five
+defects before you open the answers.
+
+> An ADK agent on Cloud Run, autoscaling from 0 to 20 instances, with
+> `InMemorySessionService`. It runs as the project's default compute service
+> account, which has the Editor role. Tools: `execute_sql` against the orders
+> database, and `issue_refund`. The instruction says: "Only show customers their
+> own orders. Ask a manager before refunds over $200." Before launch, a reviewer
+> reads 50 final answers and signs off.
+
+<Steps>
+<Step id="review-identity" title="Defect 1: a broad, shared identity">
+
+The default compute service account with Editor can change almost anything in
+the project, and audit logs cannot tell this agent from any other workload
+using the account. One successful injection reaches all of it. **Fix:** an agent
+identity holding only the roles its tools need, inside a Principal Access
+Boundary.
+
+</Step>
+<Step id="review-sql" title="Defect 2: free-form SQL">
+
+`execute_sql` lets the model write any query, so R2 depends on the model
+choosing to filter by the right customer. **Fix:** one parameterised query
+through MCP Toolbox, with the customer id taken from session state set at
+sign-in.
+
+</Step>
+<Step id="review-instruction-rules" title="Defect 3: rules that live only in the instruction">
+
+Both rules in the instruction, own orders only and refunds over $200, are
+requests to the model, not controls. **Fix:** the customer boundary in the query
+parameter and the refund limit in the tool's code.
+
+</Step>
+<Step id="review-sessions" title="Defect 4: sessions in instance memory">
+
+With autoscaling and scale-to-zero, instances are recycled, and in-memory
+sessions go with them: a customer halfway through a refund starts over. **Fix:**
+a persistent session service, or Agent Runtime's managed sessions.
+
+</Step>
+<Step id="review-evaluation" title="Defect 5: a one-time review of final answers">
+
+Reading final answers cannot see a refund made without a lookup, and a one-time
+review tests none of the weekly changes in R5. **Fix:** an evalset with expected
+trajectories, run in CI on every change, plus online monitoring after launch.
+
+</Step>
+</Steps>
+
+The design also has gaps: nothing covers R1, R4 or R7. A review lists those as
+well. A requirement with no design element behind it is a defect too.
+
+<Callout type="tip">Lab: Google's [Professional Agentic Architect learning path](https://www.skills.google/paths/4525) on Google Skills has hands-on labs across the five exam sections. Use them to build pieces of this design for real, and check each one against the brief.</Callout>
+
+## Recap
+
+- Number the requirements, and make every design choice cite one.
+- Choose the least you must build and operate that still meets the brief:
+  managed model, Agent Search, one agent, a managed runtime.
+- Enforce rules in code, such as query parameters and tool logic, never only in
+  the instruction.
+- Design evaluation, identity and guardrails in from the start.
+- Read the constraints of your choices together. Two good choices can conflict.
+- In a review, look for wrong choices and for requirements with nothing behind
+  them.
+
+## Sources
+
+- Google Cloud, "Professional Agentic Architect exam guide", services.google.com/fh/files/misc/professional_agentic_architect_exam_guide_english.pdf (the five exam sections this design covers; retrieved 2026-11-17).
+- Google Skills, "Professional Agentic Architect" learning path, www.skills.google/paths/4525 (labs).
+- Google, Agent Development Kit documentation, "Get action confirmation for ADK Tools", github.com/google/adk-docs/blob/main/docs/tools-custom/confirmation.md (retrieved 2026-11-17: require_confirmation with a confirmation function such as an amount threshold; DatabaseSessionService and VertexAiSessionService not supported).
+- The other facts in this lesson are taught, with their sources, in the earlier lessons of this path: low-code or code, choosing a model, RAG pipelines, MCP tools and integrations, multi-agent orchestration, sessions, state and memory, evaluation criteria, deploying agents, agent identity, OAuth, Agent Gateway and Registry, and guardrails.

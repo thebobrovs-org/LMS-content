@@ -122,7 +122,7 @@ sign-off between each, core first, then one exam section at a time.
 
 | ID | Level | Topic (`id`) | One-line objective | Visual / lab | Status |
 |----|-------|--------------|--------------------|--------------|--------|
-| 0.5 | 400 | `capstone-agent-design-review` | Produce an end-to-end design that names and justifies each choice. | figure + codelab | plan-approved |
+| 0.5 | 400 | `capstone-agent-design-review` | Produce an end-to-end design that names and justifies each choice. | figure + codelab | in review |
 
 ### Track × level matrix
 
