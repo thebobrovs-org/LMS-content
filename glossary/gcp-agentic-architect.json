@@ -71,6 +71,12 @@
   "session": {
     "definition": "The record of one conversation between a user and an agent: its messages, the agent's events and its working state. A session service is where an agent stores sessions."
   },
+  "tool trajectory match": {
+    "definition": "Comparing an agent's actual tool calls (name and arguments) with the expected ones, in one of three modes: exact, in-order (extra calls allowed) or any-order (extra calls and any order allowed)."
+  },
+  "gen ai evaluation service": {
+    "definition": "Agent Platform's managed evaluation for models and agents, with rubric-based (including adaptive), computation-based and custom function metrics scored where needed by a judge model."
+  },
   "context window": {
     "definition": "The tokens a model sees in one call: instructions, tool declarations, history, recalled memory, retrieved content and the new message. Its size is a limit, and every token in it costs time and money."
   },
