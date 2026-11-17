@@ -70,5 +70,20 @@
   },
   "session": {
     "definition": "The record of one conversation between a user and an agent: its messages, the agent's events and its working state. A session service is where an agent stores sessions."
+  },
+  "rag": {
+    "definition": "Retrieval-augmented generation: before the model answers, the system retrieves relevant passages from your documents and puts them in the model's context."
+  },
+  "embedding": {
+    "definition": "A vector of numbers that represents the meaning of a piece of text, so texts with similar meaning sit close together and can be found by similarity search."
+  },
+  "top-k": {
+    "definition": "How many of the highest-ranked retrieved chunks are passed on to the model (or to the next retrieval step)."
+  },
+  "reranking": {
+    "definition": "Rescoring a wider set of retrieved candidates with a stronger relevance model, so only the most relevant few reach the model."
+  },
+  "rag engine": {
+    "definition": "Agent Platform's managed RAG pipeline and corpus service: it ingests, chunks, embeds, indexes and retrieves your documents, with configurable chunking, embedding model, vector database and reranking."
   }
 }
