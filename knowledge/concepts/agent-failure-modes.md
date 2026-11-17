@@ -30,6 +30,6 @@ review-by: 2027-11-17
 - **Hallucination:** a claim in the reply that no tool or retrieval span returned.
 - **Rising cost:** token usage per model call and per turn, and model calls per turn.
 
-**Reading a trace.** Two passes: first find the longest spans (where the time went), then look for repeated calls (where the agent made no progress). A short repeated call is a loop, not a slow tool, even though each call is fast.
+**Reading a trace.** Two passes: first find the longest spans (where the time went), then look for repeated calls (where the agent made no progress). Repeated calls that return unchanged results with no progress can indicate a reasoning loop rather than a slow tool, even though each call is fast; polling a changing job status or a bounded retry can legitimately repeat the same tool and arguments.
 
 **Fixes follow causes.** A loop is fixed by making the tool's result unambiguous, telling the model when to stop and capping model calls per run; a slow tool by caching it or running it in parallel; drift by scoring answers live and offline and pinning model versions; cost by sending less context.
