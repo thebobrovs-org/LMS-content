@@ -120,11 +120,11 @@ quiz:
     question: "An agent's refactor of a billing module comes with three edited tests, and the suite passes. What should the reviewer do?"
     choices:
       - "Approve it, since the whole suite passes after the change"
-      - "Approve it once a second run of the suite also passes"
-      - "Ask why the tests changed, and rerun the original tests on the new code"
+      - "Approve it once a second, clean run of the suite passes in CI"
+      - "Ask why the tests changed, then rerun the original tests"
       - "Ask the agent to add more tests, then approve once they pass"
     answer: 2
-    explanation: "A refactor must not change behaviour, so its check is the same tests passing before and after. Edited tests may mean behaviour changed and the tests were bent to match, so the original tests are the ones to run. A passing suite proves little when the agent wrote the tests it passes, a second run repeats the same check, and new tests do not restore the old ones."
+    explanation: "A refactor must not change behaviour, so its check is the same tests passing before and after. Edited tests may mean behaviour changed and the tests were bent to match, so the original tests are the ones to run. A passing suite proves little when the agent edited the tests it now passes, a second run repeats the same check, and new tests do not restore the old ones."
 updated: "2026-11-17"
 status: draft
 ---
@@ -155,8 +155,8 @@ Antigravity runs the agent's shell commands in a
 <Term id="terminal sandbox">terminal sandbox</Term>, using each operating
 system's built-in process isolation (kernel namespaces on Linux, Seatbelt on
 macOS, AppContainer on recent Windows 11). It runs on the developer's own
-machine, not in a Google-managed environment: there is no virtual machine or
-container image, just a boundary around each command on the laptop. Inside it, writes are limited to the
+machine, not in a Google-managed environment, built on the operating system's
+own isolation with no virtual machines or Docker images to manage. Inside it, writes are limited to the
 workspace, temporary folders, build caches and paths you allow with
 `write_file`, `~/.ssh` and `.env` files are blocked, and "sandboxed commands run
 without network access by default". Domains you allow for `read_url`
@@ -324,11 +324,11 @@ that proves the work is done:
 
 | Job | The check | What it proves |
 |---|---|---|
-| Patch a bug or vulnerability | A reproduction test first: it fails before the fix and passes after | The fix addresses the actual flaw, not a guess at it |
-| Refactor | The existing tests pass before and after, unchanged | Behaviour stayed the same; edited tests are a reason to look closer |
+| Patch a bug or vulnerability | Where possible, a reproduction test first: it fails before the fix and passes after | The fix addresses the actual flaw, not a guess at it |
+| Refactor | The tests of its public behaviour pass before and after, unchanged | Behaviour stayed the same; edited tests are a reason to look closer |
 | Optimise, such as a JVM heap size or a Cloud Run concurrency limit | Measure, change, then measure again under the same load | The change helped; without a baseline, "faster" is a guess |
 
-<Flashcard id="maintenance-checks" objective="safe-refactor" front="What check proves each agent maintenance job: a patch, a refactor, an optimisation?" back="Patch: a reproduction test that fails before the fix and passes after. Refactor: the existing tests pass before and after, unchanged. Optimisation: measure, change, then measure again under the same load." />
+<Flashcard id="maintenance-checks" objective="safe-refactor" front="What check proves each agent maintenance job: a patch, a refactor, an optimisation?" back="Patch: where possible, a reproduction test that fails before the fix and passes after. Refactor: the tests of its public behaviour pass before and after, unchanged. Optimisation: measure, change, then measure again under the same load." />
 
 <Callout type="note">File names, presets and features in this lesson are as documented in November 2026; coding-agent security settings change often, so check the current documentation before relying on a default.</Callout>
 
