@@ -88,5 +88,11 @@
   },
   "principal access boundary": {
     "definition": "An IAM policy that defines which resources a principal is eligible to access. It can block access regardless of the principal's role grants (for the permissions it supports), but it never grants access."
+  },
+  "agent gateway": {
+    "definition": "Google Cloud's managed gateway for agent traffic. It applies access policies to calls between agents, tools, MCP servers and other agents, can screen them with Model Armor, and records traces and access logs."
+  },
+  "agent registry": {
+    "definition": "Google Cloud's catalogue of registered agents, MCP servers, endpoints and skills. It gives each one identifiers for discovery and for the policies and route rules that govern it."
   }
 }
