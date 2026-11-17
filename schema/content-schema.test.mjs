@@ -32,7 +32,7 @@ test("a well-formed topic parses, with defaults filled in", () => {
   const minimal = check(TopicFrontmatterSchema, { title: "T", summary: "S", tags: ["x"], difficulty: "beginner", estimatedMinutes: 1 });
   assert.equal(minimal.ok, true);
   assert.deepEqual([minimal.value.status, minimal.value.quiz, minimal.value.authors], ["published", [], []]);
-  assert.equal(SCHEMA_VERSION, 1);
+  assert.equal(SCHEMA_VERSION, 2);
 });
 
 test("the baseline review's fixtures all fail", () => {
@@ -56,7 +56,7 @@ test("the baseline review's fixtures all fail", () => {
     assert.equal(r.ok, false, name);
     assert.ok(r.problems.every((p) => p.startsWith("t.mdx: ")), name);
   }
-  assert.deepEqual(check(TopicFrontmatterSchema, { ...topic, id: "x" }, "t.mdx").problems, ["t.mdx: Unrecognized key(s) in object: 'id'"]);
+  assert.deepEqual(check(TopicFrontmatterSchema, { ...topic, id: "x" }, "t.mdx").problems, ['t.mdx: Unrecognized key: "id"']);
   assert.match(check(TopicFrontmatterSchema, { ...topic, updated: new Date(0) }).problems[0], /updated: .*quoted YYYY-MM-DD/);
 });
 
@@ -143,6 +143,19 @@ test("a date must be a real calendar day, not only shaped like one", () => {
     assert.equal(check(TopicFrontmatterSchema, { ...topic, updated: bad }).ok, false, bad);
   }
   assert.equal(check(TopicFrontmatterSchema, { ...topic, updated: "2024-02-29" }).ok, true);
+});
+
+test("IsoDate rejects non-string types with quoted-date reminder and malformed strings (#137)", () => {
+  for (const badType of [new Date(0), 42, true, {}, []]) {
+    const r = check(TopicFrontmatterSchema, { ...topic, updated: badType }, "t.mdx");
+    assert.equal(r.ok, false);
+    assert.deepEqual(r.problems, ["t.mdx: updated: must be a quoted YYYY-MM-DD string (an unquoted date parses as a Date)"]);
+  }
+  for (const badFormat of ["", "2026", "2026-9-1", "not-a-date"]) {
+    const r = check(TopicFrontmatterSchema, { ...topic, updated: badFormat }, "t.mdx");
+    assert.equal(r.ok, false);
+    assert.ok(r.problems.includes("t.mdx: updated: must be a quoted YYYY-MM-DD string"));
+  }
 });
 
 test("learning objectives: declared on the topic, referenced by items; ids are slugs and unique (LMS-content#83)", () => {

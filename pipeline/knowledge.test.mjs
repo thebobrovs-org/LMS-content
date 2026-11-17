@@ -62,11 +62,15 @@ test("a well-formed record loads; the schema refuses an unknown field, a mismatc
     "claims/bytes-set-intensity.md": RECORD({ owner: "someone" }),
     "claims/wrong-type.md": RECORD({ id: "claim/wrong-type", type: "decision" }),
     "claims/old.md": RECORD({ id: "claim/old", status: "superseded" }),
+    "claims/self.md": RECORD({ id: "claim/self", status: "superseded", "superseded-by": "claim/self" }),
+    "claims/order.md": RECORD({ id: "claim/order", reviewed: "2026-09-12", "review-by": "2026-09-11" }),
   });
   assert.equal(bad.records.length, 0);
   assert.match(bad.problems.join("\n"), /owner/);
   assert.match(bad.problems.join("\n"), /must start with "decision\/"/);
   assert.match(bad.problems.join("\n"), /names the record that replaces it/);
+  assert.match(bad.problems.join("\n"), /a record cannot supersede itself/);
+  assert.match(bad.problems.join("\n"), /review-by is before reviewed/);
 });
 
 test("a record lives in its type's folder under the slug of its own id: a wrong folder and a wrong file name are both refused; v0's single source still counts", () => {
