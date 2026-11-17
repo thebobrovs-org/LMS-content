@@ -289,5 +289,11 @@
   },
   "agents cli": {
     "definition": "Google's command-line tool and set of skills that teach a coding agent the agent lifecycle on Google Cloud: scaffold, evaluate, deploy, publish and observe. It is a tool for coding agents, not a coding agent itself."
+  },
+  "hybrid search": {
+    "definition": "Retrieval that runs semantic (vector) search and keyword search together and merges the two ranked lists, so a result can match by meaning or by an exact token such as a product code."
+  },
+  "reciprocal rank fusion": {
+    "definition": "A way to merge ranked lists (RRF): each item scores by the reciprocal of its rank in each list, summed, so scores from different search methods never need to be compared. Agent Retrieval uses it for hybrid search, with a weight that leans toward semantic or keyword results."
   }
 }
