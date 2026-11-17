@@ -20,8 +20,14 @@
   "agent runtime": {
     "definition": "Agent Platform's managed runtime that deploys, operates and scales agents, used with its Sessions and Memory Bank services (formerly Agent Engine)."
   },
-  "hybrid agent": {
-    "definition": "A system that combines low-code agents (for example a Workflow Builder workflow) with code-built agents or tools (for example an ADK agent or an MCP server) that the low-code side calls."
+  "data store": {
+    "definition": "In Gemini Enterprise (and Agent Search), a store of indexed content that an app searches. Each store holds one type of data: structured, unstructured or a third-party source."
+  },
+  "connector": {
+    "definition": "In Gemini Enterprise, the integration that brings content from a source such as Google Drive, Jira or SharePoint into one or more data stores, either by ingesting and syncing it or by federating queries to the source."
+  },
+  "blended search": {
+    "definition": "Connecting several data stores to one Gemini Enterprise app, so a single query searches across all of them while each store keeps its own type."
   },
   "trajectory": {
     "definition": "The sequence of tool calls (and other intermediate steps) an agent took before it answered. Evaluating it checks the path, not just the final response."
@@ -73,6 +79,42 @@
   },
   "session": {
     "definition": "The record of one conversation between a user and an agent: its messages, the agent's events and its working state. A session service is where an agent stores sessions."
+  },
+  "mcp": {
+    "definition": "Model Context Protocol: an open standard for offering tools to agents. An MCP server publishes tools with names, descriptions and parameter schemas; an MCP client, such as an agent, lists and calls them."
+  },
+  "google cloud mcp servers": {
+    "definition": "Remote MCP servers that run on Google's infrastructure and offer an HTTP endpoint for a Google Cloud service, such as BigQuery or GKE, with access controlled through IAM."
+  },
+  "mcp toolbox for databases": {
+    "definition": "An open-source MCP server that exposes database queries as agent tools, each defined in configuration with a fixed statement and typed parameters."
+  },
+  "agent registry": {
+    "definition": "Google Cloud's catalogue of registered agents, MCP servers, endpoints and skills. It gives each one identifiers for discovery and for the policies and route rules that govern it."
+  },
+  "rag": {
+    "definition": "Retrieval-augmented generation: before the model answers, the system retrieves relevant passages from your documents and puts them in the model's context."
+  },
+  "embedding": {
+    "definition": "A vector of numbers that represents the meaning of a piece of text, so texts with similar meaning sit close together and can be found by similarity search."
+  },
+  "top-k": {
+    "definition": "How many of the highest-ranked retrieved chunks are passed on to the model (or to the next retrieval step)."
+  },
+  "reranking": {
+    "definition": "Rescoring a wider set of retrieved candidates with a stronger relevance model, so only the most relevant few reach the model."
+  },
+  "rag engine": {
+    "definition": "Agent Platform's managed RAG pipeline and corpus service: it ingests, chunks, embeds, indexes and retrieves your documents, with configurable chunking, embedding model, vector database and reranking."
+  },
+  "session state": {
+    "definition": "Key-value data an agent and its code read and write during a session. In ADK a key's prefix sets its scope: none (this session), user:, app: or temp:."
+  },
+  "memory bank": {
+    "definition": "Agent Platform's managed long-term memory: it extracts facts from conversations with an LLM, consolidates them with what it already holds, keeps them isolated per scope (such as agent and user), and returns the relevant ones in later sessions."
+  },
+  "hybrid agent": {
+    "definition": "A system that combines low-code agents (for example a Workflow Builder workflow) with code-built agents or tools (for example an ADK agent or an MCP server) that the low-code side calls."
   },
   "slm": {
     "definition": "Small language model: fewer parameters than a large model, so lower cost and latency per request, but a narrower range of tasks it handles well."
@@ -131,9 +173,6 @@
   "agent gateway": {
     "definition": "Google Cloud's managed gateway for agent traffic, including calls to MCP servers. It enforces access policies on that traffic, can screen it with Model Armor, and records it so it can be monitored."
   },
-  "agent registry": {
-    "definition": "Google Cloud's catalogue of registered agents, MCP servers, endpoints and skills. It gives each one identifiers for discovery and for the policies and route rules that govern it."
-  },
   "oauth 2.0": {
     "definition": "An authorisation framework that lets an application obtain limited access to an HTTP service with access tokens, either on behalf of a user who approves it or on its own behalf."
   },
@@ -191,9 +230,6 @@
   "graph workflow": {
     "definition": "Orchestration defined as nodes and edges, with routed branches, fan-out and join, and back-edges for loops; ADK 2.0's Workflow class."
   },
-  "mcp": {
-    "definition": "Model Context Protocol: an open standard for offering tools to agents. An MCP server publishes tools with names, descriptions and parameter schemas; an MCP client, such as an agent, lists and calls them."
-  },
   "a2a": {
     "definition": "Agent2Agent: an open protocol for independent agents to discover each other through agent cards and work together on tasks, without seeing each other's internals."
   },
@@ -202,33 +238,6 @@
   },
   "remote agent": {
     "definition": "An agent running in another process or service, often owned by another team, that a client agent reaches over A2A."
-  },
-  "google cloud mcp servers": {
-    "definition": "Remote MCP servers that run on Google's infrastructure and offer an HTTP endpoint for a Google Cloud service, such as BigQuery or GKE, with access controlled through IAM."
-  },
-  "mcp toolbox for databases": {
-    "definition": "An open-source MCP server that exposes database queries as agent tools, each defined in configuration with a fixed statement and typed parameters."
-  },
-  "rag": {
-    "definition": "Retrieval-augmented generation: before the model answers, the system retrieves relevant passages from your documents and puts them in the model's context."
-  },
-  "embedding": {
-    "definition": "A vector of numbers that represents the meaning of a piece of text, so texts with similar meaning sit close together and can be found by similarity search."
-  },
-  "top-k": {
-    "definition": "How many of the highest-ranked retrieved chunks are passed on to the model (or to the next retrieval step)."
-  },
-  "reranking": {
-    "definition": "Rescoring a wider set of retrieved candidates with a stronger relevance model, so only the most relevant few reach the model."
-  },
-  "rag engine": {
-    "definition": "Agent Platform's managed RAG pipeline and corpus service: it ingests, chunks, embeds, indexes and retrieves your documents, with configurable chunking, embedding model, vector database and reranking."
-  },
-  "session state": {
-    "definition": "Key-value data an agent and its code read and write during a session. In ADK a key's prefix sets its scope: none (this session), user:, app: or temp:."
-  },
-  "memory bank": {
-    "definition": "Agent Platform's managed long-term memory: it extracts facts from conversations with an LLM, consolidates them with what it already holds, keeps them isolated per scope (such as agent and user), and returns the relevant ones in later sessions."
   },
   "mcp server": {
     "definition": "A program that offers tools (and optionally resources and prompts) to an agent over the Model Context Protocol. The agent is the client that lists and calls them."
