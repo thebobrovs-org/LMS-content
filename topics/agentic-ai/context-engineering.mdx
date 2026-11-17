@@ -450,6 +450,21 @@ failures from the evalset with the test settings above):
 
 <Flashcard id="eval-loop" objective="measure-effect" front="How do you decide whether a context change ships?" back="Run the same evalset before and after the change, one change at a time. Ship only if the tool trajectory and response scores hold and tokens per turn fell. If a score drops, read the failing cases for a shared cause." />
 
+### Try it: cut the budget without losing the evidence
+
+The simulation below is the same late turn, 47,000 tokens, with the lesson's
+three evalset cases beside it. Predict first: which single cut breaks a case,
+and which case does it break?
+
+Then find a set of cuts that brings the turn to about 21,000 tokens or fewer
+with all three cases passing. Turn on caching last and watch what changes, and
+what does not.
+
+<Simulation id="context-budget-explorer" />
+
+Explain it: when `long_session_recall` failed, which removed item caused it,
+and why does session state fix one of its causes but not the other?
+
 ## Recap
 
 - Context is a per-call budget: it drives cost, latency and quality.
