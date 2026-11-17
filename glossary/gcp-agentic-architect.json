@@ -19,5 +19,14 @@
   },
   "agent runtime": {
     "definition": "Agent Platform's managed runtime that deploys, operates and scales agents, used with its Sessions and Memory Bank services (formerly Agent Engine)."
+  },
+  "trajectory": {
+    "definition": "The sequence of tool calls (and other intermediate steps) an agent took before it answered. Evaluating it checks the path, not just the final response."
+  },
+  "offline evaluation": {
+    "definition": "Running an agent on a fixed dataset of cases before release, so that versions can be compared and regressions caught before users see them."
+  },
+  "online monitoring": {
+    "definition": "Measuring a deployed agent's quality on live traffic, through traces, logs and metrics, to catch what the offline dataset missed and what changes after launch."
   }
 }
