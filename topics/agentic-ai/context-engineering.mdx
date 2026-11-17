@@ -1,0 +1,465 @@
+---
+title: Context engineering at scale
+summary: Context is a per-call budget. Break a turn into its parts, cut each one with the right technique, know what context caching does and does not do, and prove every change with an evalset.
+tags: [agentic-ai, adk, context, evaluation]
+difficulty: advanced
+estimatedMinutes: 35
+level: 400
+prerequisites: [agentic-ai/adk-agents-and-tools]
+objectives:
+  - id: context-budget
+    statement: "Break a turn's context into components and find the largest."
+  - id: reduce-context
+    statement: "Choose a technique to reduce each component without losing quality."
+  - id: measure-effect
+    statement: "Verify a context change with evaluation, not intuition."
+flashcards:
+  - id: context-components
+    objective: context-budget
+    front: What goes into an agent's context on each model call?
+    back: "The instructions, the declarations of every tool the agent can call, the conversation history (earlier turns, tool calls and tool results), any memory recalled from past sessions, any retrieved content, and the new user message."
+  - id: component-fixes
+    objective: reduce-context
+    front: Name one fix for each context component.
+    back: "Tool declarations: expose only the tools a step needs (a tool filter, or split the work across sub-agents). History: compact it (summarise older turns, keep recent ones raw). Memory: recall it on demand with a tool instead of preloading it every turn. Retrieved content: rerank and pass fewer chunks. Instructions: keep them short, and keep them stable at the front of the prompt so caching makes them cheaper (caching does not make them smaller)."
+  - id: caching-card
+    objective: reduce-context
+    front: What does context caching change, and what does it not change?
+    back: "It cuts the cost and latency of reprocessing a prefix that repeats across calls, such as stable instructions and tool declarations. It does not shrink the context: cached tokens still count in the context window and still sit in front of the model."
+quiz:
+  - id: largest-component
+    objective: context-budget
+    question: "A support agent's turn 20 carries 3,000 tokens of instructions, 10,000 of tool declarations, 18,000 of conversation history, 6,000 of preloaded memory and 10,000 of retrieved chunks. Which component should you work on first?"
+    choices:
+      - "The instructions, since they are sent on every call"
+      - "The tool declarations, since there are many tools"
+      - "The conversation history, since it is the largest and still growing"
+      - "The retrieved chunks, since retrieval is the slowest step"
+    answer: 2
+    explanation: "History is the largest component at 18,000 tokens, and it grows with every turn, so it gives the biggest saving now and later. The instructions are the smallest part; keep them short and stable so caching makes them cheaper. Tool declarations and retrieved chunks are worth cutting next, but each is smaller than history."
+  - id: tool-sprawl-fix
+    objective: reduce-context
+    question: "A support agent had 8 tools and chose well. After the team connected two MCP servers, it has 40 tools and more often calls a similar but wrong one. Which change addresses the cause?"
+    choices:
+      - "Move to a model with a larger context window so all 40 declarations fit comfortably"
+      - "Expose only the tools each step needs, with a tool filter or by splitting the work across sub-agents"
+      - "Enable context caching so the 40 declarations are cheaper to resend"
+      - "Raise the number of retrieved chunks so the model has more background on each tool"
+    answer: 1
+    explanation: "Every declaration the agent can see is a candidate on every call, so 40 tools give the model more look-alike choices and more tokens to read. Exposing only what a step needs, for example tool_filter on an MCP toolset or a sub-agent per task, removes the wrong candidates. A bigger window and caching leave all 40 choices in front of the model, and more retrieved chunks add tokens without narrowing the choice."
+  - id: bigger-window
+    objective: reduce-context
+    question: "Long support conversations are getting slower and costlier, and late answers sometimes ignore what the user just said. A teammate proposes moving to a model with a much larger context window. What do you do instead?"
+    choices:
+      - "Compact the history: summarise older turns and keep the most recent ones as they were"
+      - "Accept the proposal, since a larger window removes the limit on history"
+      - "Clear the history every five turns so each call starts fresh"
+      - "Enable context caching on the full history so it is not reprocessed"
+    answer: 0
+    explanation: "A larger window lets more tokens in, but every one of them is still processed on every call, so latency and cost keep rising and old turns keep distracting the model. Compaction keeps what matters from the old turns at a fraction of the size. Clearing the history loses facts the user gave earlier. Caching can make the repeated part of the history cheaper, but it shrinks nothing: every old turn still fills the window and still distracts the model."
+  - id: caching-misread
+    objective: measure-effect
+    question: "After enabling context caching, a team sees the same number of input tokens per turn as before and concludes caching is not working. What is the right reading?"
+    choices:
+      - "Caching is broken, because a working cache removes the cached tokens from the request"
+      - "Caching is working only if the total input tokens per turn fall below the level before caching"
+      - "Caching does not shrink the context; check the cached-token count in the response's usage data instead"
+      - "Caching only applies to the user's message, which is too short to show a change"
+    answer: 2
+    explanation: "A cached prefix is still part of the request and still counts in the context window. What changes is that those tokens are not reprocessed at the full rate, which the response's usage metadata reports as cached tokens. A falling input total is the wrong test, and caching works on a repeated prefix of the prompt, not the user's message."
+  - id: cache-prefix-order
+    objective: reduce-context
+    question: "An agent's system instruction begins with the current date and time, followed by 6,000 tokens of fixed policy text. The cache almost never hits. Why?"
+    choices:
+      - "The policy text is too long to be cached"
+      - "The changing timestamp comes first, so no two requests share the same prefix"
+      - "Caching only covers tool declarations, not instructions"
+      - "The cache needs the history to be compacted first"
+    answer: 1
+    explanation: "Caching reuses a prefix that repeats exactly across requests, and the guidance is to put large, common content at the start. A timestamp at the very beginning makes every prefix different, so nothing after it can be reused. Move the fixed policy text to the front and the changing parts after it. The instruction is the start of the request's prefix, 6,000 tokens is above the minimums, instructions can be cached, and compaction is unrelated."
+  - id: memory-preload
+    objective: reduce-context
+    question: "An agent uses preload_memory, which adds about 6,000 tokens of recalled memories before every model call. Most turns are about the current order and need none of it. Which change cuts the most cost without losing memory on the turns that need it?"
+    choices:
+      - "Remove memory from the agent entirely"
+      - "Give the agent the load_memory tool, so it searches memory only when a turn needs it"
+      - "Cache the recalled memories as part of the stable prefix"
+      - "Summarise the preloaded memories into a shorter block before every call"
+    answer: 1
+    explanation: "load_memory makes recall a tool call the model makes when it judges memory helpful, so ordinary turns carry no memory tokens. Removing memory loses it on the turns that need it. Recalled memories depend on the query, so they are not a stable prefix to cache, and a summarised block still spends tokens on every turn."
+  - id: compaction-forgets
+    objective: reduce-context
+    question: "After turning on history compaction, the agent sometimes asks again for an order id the user gave at turn 2. What is the best fix?"
+    choices:
+      - "Turn compaction off for all sessions"
+      - "Save the order id in session state when the user gives it, and read it from there"
+      - "Raise the compaction threshold until no session is ever compacted"
+      - "Ask users to repeat key details every few turns"
+    answer: 1
+    explanation: "A fact the agent will need again belongs in session state, which compaction does not summarise away, and an optional instruction placeholder such as {order_id?} can put it back in front of the model. Turning compaction off or raising the threshold until it never runs gives back the saving. Asking users to repeat themselves moves the cost onto them."
+  - id: verify-compaction
+    objective: measure-effect
+    question: "History compaction cut tokens per turn by 40%, and five manual chats looked fine. What should happen before it ships?"
+    choices:
+      - "Ship it, since the token saving is measured and the chats looked fine"
+      - "Run the evalset with and without the change and compare the scores, including cases that depend on early details"
+      - "Ship it to all users and watch for complaints"
+      - "Ask the model whether its answers got worse"
+    answer: 1
+    explanation: "The token saving is measured, but quality is not: five chats you chose cannot show the cases where compaction drops a detail. Running the same evalset before and after puts a number on both sides, and long, multi-turn cases are where compaction can fail. Shipping and waiting for complaints measures on users, and a model's opinion of itself is not a test."
+  - id: filter-regression
+    objective: measure-effect
+    question: "After filtering an agent's tools from 40 to 8, the average tool trajectory score across the evalset's cases drops from 1.0 to 0.8. Every failing case asks about a warranty. What does this tell you?"
+    choices:
+      - "The filter removed a tool those cases need, such as a warranty lookup, so add it to the step that handles them"
+      - "The trajectory threshold is too strict, so lower it to 0.8"
+      - "The evalset is out of date, so delete the warranty cases"
+      - "The model got worse at choosing tools, so restore all 40 tools"
+    answer: 0
+    explanation: "The failures share one topic, which points at a missing tool rather than worse tool choice. Add the warranty tool where those requests are handled, or route them to a sub-agent that has it, and run the evalset again. Lowering the threshold or deleting cases hides the regression, and restoring all 40 tools gives back the problem the filter fixed."
+updated: "2026-11-17"
+status: draft
+---
+
+## Context is a budget
+
+Every model call an agent makes carries a **<Term id="context window">context</Term>**: everything the
+model sees in that one call. At low traffic you can ignore it. At scale, it
+decides three things:
+
+- **Cost.** Input tokens are billed on every call, and an agent makes several
+  calls per turn.
+- **Latency.** More tokens take longer to process before the first output token.
+- **Quality.** Material the model does not need still competes for its
+  attention: an extra tool is one more wrong choice, an old turn is one more
+  thing to misread.
+
+So treat context as a budget, and spend it on what the current step needs.
+
+## Break a turn into its parts
+
+On each call an ADK agent sends the model these parts, in roughly this order:
+the parts that stay the same on every call first, then the parts that change.
+
+| Component | What it is | Grows with |
+|---|---|---|
+| Instructions | The agent's instruction (system prompt) | Fixed per agent (except values filled in from session state, covered below) |
+| Tool declarations | Name, description and parameters of every tool the agent can call | Number of tools |
+| History | Earlier turns, including tool calls and tool results | Every turn |
+| Memory | Facts recalled from past sessions | How memory is recalled |
+| Retrieved content | Chunks of documents fetched from a knowledge base | Number of chunks and their size |
+| User message | The new input | Message length |
+
+To find the largest part, measure it. Each model response carries **usage
+metadata**, a set of token counts for that call, including the prompt's total.
+The Gemini API's `count_tokens` call counts any piece on its own, such as the
+instructions, the declarations or the retrieved chunks. Measure on real long
+sessions, because history is small at turn 2 and dominant at turn 20.
+
+Take a support agent at ten times its launch traffic. Two MCP servers have been
+connected (MCP, the Model Context Protocol, is the standard way to plug a
+server's ready-made tools into an agent), so it now has 40 tools, and its
+conversations run long. A turn late in a long session looks like this
+(illustrative numbers):
+
+- instructions 3,000 tokens
+- tool declarations 10,000 (40 tools at about 250 each)
+- history 18,000
+- preloaded memory 6,000
+- retrieved chunks 10,000 (ten chunks of about 1,000 tokens)
+
+That is 47,000 tokens before the user's message, and history is the largest
+part.
+
+<Flashcard id="measure-first" objective="context-budget" front="How do you find which part of an agent's context to cut first?" back="Measure tokens per turn by component (instructions, tool declarations, history, memory, retrieved content) on real long sessions, then start with the largest. History is small early and usually dominant late, so measure late turns." />
+
+## Cut each part with the right technique
+
+<Figure
+  src="/media/context-budget.svg"
+  alt="Panel A: illustrative tokens per turn for a support agent, as stacked bars by component. Before any cut: instructions 3k, tool declarations 10k, history 18k, memory 6k, retrieved chunks 10k, total 47,000. Filtering tools to the ones the step needs cuts tool declarations to 2k, total 39,000. Compacting history cuts it to 4k, total 25,000. Recalling memory on demand cuts memory to 1.5k, total 20,500. Panel B: with context caching the turn is still 20,500 tokens; the stable 5k prefix of instructions and tool declarations is cached, so it costs less and is processed faster, but it still counts in the context window."
+  caption="Each cut shrinks one component, and each subsection below explains one row. Caching shrinks nothing; it makes the repeated prefix cheaper."
+/>
+
+### Tool declarations: expose only what the step needs
+
+Every declaration is in front of the model on every call, so 40 tools mean 40
+candidates for each choice, many with similar names, and about 10,000 tokens
+of declarations. Give each agent, or each step, only the tools it needs:
+
+- **Filter a toolset.** An ADK `McpToolset` connects to one MCP server and
+  exposes its tools to the agent. It takes a `tool_filter` list, and ADK's
+  security and scoping guidance is to always supply one, so the model sees only
+  the necessary actions.
+- **Split by task.** A coordinator delegates to sub-agents (topic 3.2), each
+  with a short instruction and the handful of tools its task needs.
+
+```python
+from google.adk.tools.mcp_tool import McpToolset
+from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPConnectionParams
+
+orders_tools = McpToolset(
+    connection_params=StreamableHTTPConnectionParams(url=ORDERS_MCP_URL),
+    tool_filter=["get_order", "get_refund_status", "check_warranty"],
+)
+```
+
+With the other server filtered the same way, the agent sees 8 tools instead of
+40, and the declarations drop to about 2,000 tokens. A model with a larger
+context window does not help here: it fits all 40 declarations, and all 40
+choices are still in front of the model.
+
+### History: compact it
+
+ADK records a session as **events**: each user message, model reply, tool call
+and tool result is one event, and one user turn with everything it triggers is
+one **invocation**. <Term id="history compaction">History compaction</Term>
+summarises older events and keeps the most recent ones as they were. In ADK
+you set an `EventsCompactionConfig` on the `App`, ADK's top-level object that wraps the root agent together with app-wide settings such as compaction and caching, and the runner compacts the
+session's events for you. Token-based compaction triggers once a model call's
+prompt reaches a threshold, and keeps the last few events raw; a sliding window
+instead compacts every few invocations.
+
+```python
+from google.adk.apps.app import App, EventsCompactionConfig
+
+app = App(
+    name="support_app",
+    root_agent=root_agent,
+    events_compaction_config=EventsCompactionConfig(
+        token_threshold=30000,    # compact once a call's whole prompt reaches this
+        event_retention_size=5,   # keep the 5 most recent events as they were
+    ),
+)
+```
+
+The threshold counts the whole prompt, so set it above the fixed part
+(instructions, tools, memory and retrieval), or every call compacts. Pass the
+App to the runner, `Runner(app=app, session_service=...)`; compaction runs only
+through the App.
+
+A summary can drop a detail. Facts the agent will need again, such as an order
+id, belong in **session state**: key-value pairs stored on the session for the
+whole conversation, which compaction does not summarise (topic 3.3 covers state
+in full). A tool writes a key, for example
+`tool_context.state["order_id"] = order_id`, and an optional placeholder such as
+`{order_id?}` in the agent's instruction puts the value back in front of the
+model on every call. The `?` makes it render empty until the key is set. Put
+placeholders at the end of the instruction, so the fixed text before them stays
+the same on every call. With ADK's explicit caching (below), a change to a
+placeholder's value means a new cache wherever the placeholder sits.
+
+### Memory: recall it on demand
+
+Long-term memory is a store, searchable across sessions, that ADK's memory
+service fills from past conversations. It is separate from session state, which
+lasts for one session. ADK offers two ways to bring memory into a turn. The
+`preload_memory` tool searches memory with the turn's user message before
+every model call and adds the results, so what it adds changes from turn to
+turn. The `load_memory` tool lets the model search memory only when it
+judges a turn needs it. If most turns are about the current order, preloading
+spends memory tokens on every call for nothing; `load_memory` spends them only
+on the turns that ask. In the example, if about one turn in four calls
+`load_memory`, memory averages about 1,500 tokens per turn instead of 6,000.
+
+### Retrieved content: pass fewer, better chunks
+
+Retrieval splits documents into chunks, finds the k chunks that best match the
+query (the **top-k**), and adds them to every call that answers from retrieved
+content. A **reranker** rescores those candidates for relevance so you can pass
+fewer of them. Reranking plus a smaller top-k (topic 3.4 goes deeper) usually
+keeps the right evidence in fewer tokens. Retrieve only on the steps that need
+it.
+
+<Quiz
+  id="pick-the-cut"
+  objective="context-budget"
+  question="In the support agent above, which cut alone removes the most tokens per late turn?"
+  choices={["Filtering tools from 40 to 8 (10,000 to 2,000 tokens)", "Compacting history (18,000 to 4,000 tokens)", "Recalling memory on demand (6,000 to about 1,500 tokens)", "Reranking and passing five chunks instead of ten (10,000 to 5,000 tokens)"]}
+  answer={1}
+  explanation="Compaction removes 14,000 tokens, against 8,000 for tool filtering, about 4,500 for on-demand memory and 5,000 for a smaller top-k. History was the largest component, so cutting it saves the most."
+/>
+
+## Context caching: cheaper, not smaller
+
+The model reads a request from front to back. The parts that are the same on
+every call (instructions and tool declarations) form its front, or
+**prefix**; history, memory, retrieved chunks and the new message come after it.
+
+**<Term id="context caching">Context caching</Term>** reuses the processing
+of a prefix that repeats across calls. It cuts the cost and latency of that
+prefix. It does not cut the context: the cached tokens are still sent, still
+count in the context window, and are still in front of the model.
+
+- **Implicit caching** is on by default for Gemini 2.5 and newer models. It
+  applies when a request's prefix matches an earlier one and is above a
+  model-specific minimum (2,048 tokens on Gemini 2.5 models, 4,096 on several
+  newer ones). Put large, common content at the start of the prompt and
+  changing content, such as the date, after it.
+- **ADK's context caching** is configured on the `App` with a
+  `ContextCacheConfig` (`min_tokens`, `ttl_seconds`, `cache_intervals`). ADK
+  then creates and refreshes cache entries itself, with a lifetime and a reuse
+  count you set, instead of relying on automatic matching. The class is
+  experimental, and explicit caches are not available on every model.
+- The response's usage metadata reports how many tokens came from the cache
+  (`cached_content_token_count` in the Gemini API's `usage_metadata`), so check
+  that count, not the input total.
+
+On the published price lists, cached input tokens bill at a fraction of the
+standard input rate (for Gemini 3.5 Flash, a tenth). Explicit caches, such as
+those ADK's `ContextCacheConfig` creates, also bill storage for each hour they
+live. Rates vary by model, so check the current pricing page for yours.
+
+Caching pairs with the cuts above: it makes a lean, stable prefix cheap. It is
+not a substitute for them.
+
+## Prove every change with an evalset
+
+A context change can save tokens and quietly break an answer: a filter drops a
+tool a rare request needs, or a summary drops a detail. Token counts show the
+saving; only evaluation shows the cost.
+
+An <Term id="evalset">evalset</Term> is a fixed set of cases. Each case is a
+conversation that records the user's input, the tool calls you expect (with
+arguments) and a reference reply. ADK runs the agent on every case and scores
+it:
+
+- `tool_trajectory_avg_score` checks that the agent made the expected tool
+  calls. Default threshold 1.0, an exact match.
+- `response_match_score` checks how close the reply is to the reference.
+  Default threshold 0.8.
+
+Each criterion scores a case from 0 to 1, averaged over its turns, and a case
+passes when its score reaches the threshold.
+
+The same run also reports efficiency values that never pass or fail a case.
+One of them, `token_usage_v1`, gives the average tokens per invocation, with a
+breakdown that includes input, cached and output tokens. So one run measures
+both the quality and the saving. Topics 4.2 and 4.4 go deeper.
+
+The loop for each change:
+
+1. Run the evalset on the current agent and record the scores and
+   `token_usage_v1`.
+2. Make one change, such as the tool filter.
+3. Run the same evalset again with `adk eval`.
+4. Ship only if the scores hold and the tokens fell. If a score drops, look at
+   which cases failed: they usually share a cause, such as a missing tool.
+
+Here is a ready-made evalset for the support agent. It has three cases: a
+refund status check, a warranty question that needs the tool a careless filter
+drops, and a conversation whose last turn needs the order id from the first,
+which catches compaction that loses it. Once the state fix is in, `get_order`
+stores the id in session state; before it, the id survives only if the
+compaction summary happens to keep it.
+
+```json
+{
+  "eval_set_id": "support_context_checks",
+  "eval_cases": [
+    {
+      "eval_id": "refund_status",
+      "conversation": [
+        {
+          "user_content": {"role": "user", "parts": [{"text": "Where is my refund for order A1234?"}]},
+          "final_response": {"role": "model", "parts": [{"text": "The refund for order A1234 was issued and should reach you within 5 business days."}]},
+          "intermediate_data": {"tool_uses": [{"name": "get_refund_status", "args": {"order_id": "A1234"}}]}
+        }
+      ],
+      "session_input": {"app_name": "support_app", "user_id": "eval_user", "state": {}}
+    },
+    {
+      "eval_id": "warranty_question",
+      "conversation": [
+        {
+          "user_content": {"role": "user", "parts": [{"text": "Is the blender from order B5678 still under warranty?"}]},
+          "final_response": {"role": "model", "parts": [{"text": "Yes, the blender from order B5678 is under warranty until March 2027."}]},
+          "intermediate_data": {"tool_uses": [{"name": "check_warranty", "args": {"order_id": "B5678"}}]}
+        }
+      ],
+      "session_input": {"app_name": "support_app", "user_id": "eval_user", "state": {}}
+    },
+    {
+      "eval_id": "long_session_recall",
+      "conversation": [
+        {
+          "user_content": {"role": "user", "parts": [{"text": "Hi, I'm asking about order C9012."}]},
+          "final_response": {"role": "model", "parts": [{"text": "I found order C9012. How can I help with it?"}]},
+          "intermediate_data": {"tool_uses": [{"name": "get_order", "args": {"order_id": "C9012"}}]}
+        },
+        {
+          "user_content": {"role": "user", "parts": [{"text": "What is your return window?"}]},
+          "final_response": {"role": "model", "parts": [{"text": "You can return items within 30 days of delivery."}]},
+          "intermediate_data": {"tool_uses": []}
+        },
+        {
+          "user_content": {"role": "user", "parts": [{"text": "OK, then please check my refund."}]},
+          "final_response": {"role": "model", "parts": [{"text": "The refund for order C9012 is being processed."}]},
+          "intermediate_data": {"tool_uses": [{"name": "get_refund_status", "args": {"order_id": "C9012"}}]}
+        }
+      ],
+      "session_input": {"app_name": "support_app", "user_id": "eval_user", "state": {}}
+    }
+  ]
+}
+```
+
+The replies and tool results in these cases depend on your own test data.
+Point the tools at a fixed test store so the expected replies stay true from
+run to run. A real evalset needs many more cases; this one is sized to catch
+the changes in this lesson.
+
+In the file, `user_content` is the input, `intermediate_data.tool_uses` the
+expected tool calls, `final_response` the reference reply, and `session_input`
+the session's starting state.
+
+Two settings make the run test what you changed. First, expose the App as `app`
+in your agent module: `adk eval` uses the App's compaction and caching settings
+only then. Second, the third case has only three turns, so with the production
+settings above compaction never reaches its first turn. In a test copy of the
+App, set a threshold and retention that are low on purpose, such as
+`token_threshold=2000` and `event_retention_size=2`. That is below the agent's
+fixed prompt, so every call compacts and turn 1 is summarised before turn 3
+runs. Check the first reply's `prompt_token_count` to confirm the prompt is
+above the threshold, or nothing is compacted and the case passes without
+testing anything.
+
+```bash
+adk eval support_agent support_agent/support_context_checks.evalset.json --print_detailed_results
+```
+
+The first argument is the agent's folder; the second is the evalset file,
+saved inside it. Here is what the loop might show for this lesson's changes
+(illustrative results; token figures come from long real sessions, and the
+failures from the evalset with the test settings above):
+
+| Change | Tokens per late turn | Failing case | Verdict |
+|---|---|---|---|
+| Tool filter that left out `check_warranty` | 39,000 | warranty_question | Add the tool back to the filter |
+| Compaction, order id kept only in history | 25,000 | long_session_recall | Store the id in state |
+| Both fixed, plus on-demand memory | 20,500 | None | Ship |
+
+<Flashcard id="eval-loop" objective="measure-effect" front="How do you decide whether a context change ships?" back="Run the same evalset before and after the change, one change at a time. Ship only if the tool trajectory and response scores hold and tokens per turn fell. If a score drops, read the failing cases for a shared cause." />
+
+## Recap
+
+- Context is a per-call budget: it drives cost, latency and quality.
+- Measure tokens by component on long sessions, and cut the largest first.
+- Filter tools, compact history (keep needed facts in state), recall memory on
+  demand, and pass fewer, better chunks.
+- Caching makes a stable prefix cheaper; it does not make the context smaller.
+- Run the same evalset before and after each change, one change at a time.
+
+## Sources
+
+- Google, Agent Development Kit documentation, "Compress agent context for performance", github.com/google/adk-docs/blob/main/docs/context/compaction.md (EventsCompactionConfig on the App; token-based compaction with token_threshold and event_retention_size; sliding window with compaction_interval and overlap_size; pass the App to the Runner).
+- Google, Agent Development Kit documentation, "Context caching with Gemini", github.com/google/adk-docs/blob/main/docs/context/caching.md (ContextCacheConfig on the App with min_tokens, ttl_seconds and cache_intervals; experimental).
+- Google, Agent Development Kit documentation, "MCP tools", github.com/google/adk-docs/blob/main/docs/tools-custom/mcp-tools/index.md (tool_filter on McpToolset; always supply tool_filter to expose only necessary actions).
+- Google, Agent Development Kit documentation, "Memory", github.com/google/adk-docs/blob/main/docs/sessions/memory.md (preload_memory and load_memory; load_memory retrieves memory when the agent decides it would help).
+- Google, Agent Development Kit, adk-python source, src/google/adk/tools/preload_memory_tool.py (process_llm_request runs on each model request, searching memory with the turn's user message) and src/google/adk/flows/llm_flows/prompt/_instructions_utils.py (a missing state key raises an error unless the placeholder ends in ?).
+- Google, Agent Development Kit documentation, "Why evaluate agents", github.com/google/adk-docs/blob/main/docs/evaluate/index.md (evalset structure; tool_trajectory_avg_score default 1.0 and response_match_score default 0.8; the adk eval command).
+- Google, Agent Development Kit, adk-python source, src/google/adk/cli/cli_eval.py (get_app_or_root_agent) and src/google/adk/evaluation/evaluation_generator.py (the eval runner is built from the module's app when present).
+- Google, Agent Development Kit documentation, "Evaluation criteria", github.com/google/adk-docs/blob/main/docs/evaluate/criteria.md (efficiency criteria are always on and informational; token_usage_v1 reports tokens per invocation with input, cached and output breakdown).
+- Google, Gemini API documentation, "Context caching", ai.google.dev/gemini-api/docs/caching (implicit caching on by default for Gemini 2.5 and newer; minimum input tokens per model; put large and common content at the start of the prompt; cached tokens reported in the response's usage data).
+- Google Cloud, "Generative AI pricing", cloud.google.com/vertex-ai/generative-ai/pricing, and Gemini API pricing, ai.google.dev/gemini-api/docs/pricing (cached input rates, for example $0.15 against $1.50 per million input tokens for Gemini 3.5 Flash, plus hourly storage for explicit caches; retrieved 2026-11-17).
+- Google, Gen AI SDK, google-genai types, GenerateContentResponseUsageMetadata.cached_content_token_count (the cached-token count on generateContent responses, which ADK events carry as usage_metadata).

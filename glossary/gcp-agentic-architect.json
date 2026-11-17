@@ -70,5 +70,14 @@
   },
   "session": {
     "definition": "The record of one conversation between a user and an agent: its messages, the agent's events and its working state. A session service is where an agent stores sessions."
+  },
+  "context window": {
+    "definition": "The tokens a model sees in one call: instructions, tool declarations, history, recalled memory, retrieved content and the new message. Its size is a limit, and every token in it costs time and money."
+  },
+  "context caching": {
+    "definition": "Reusing the processing of a prompt prefix that repeats across calls, which cuts the cost and latency of that prefix. The cached tokens still count in the context window."
+  },
+  "history compaction": {
+    "definition": "Summarising or trimming a conversation's earlier turns so each call carries less history, while keeping the most recent turns as they were."
   }
 }
