@@ -19,7 +19,7 @@ reviewed: 2026-11-17
 review-by: 2027-11-17
 ---
 
-**Concept.** An LLM-based agent has four parts: a **model** that reasons, **instructions** that set its goal and limits, **tools** that let it read data or act (functions, APIs, other agents), and a **loop** in which the model chooses the next tool call, sees the result and decides again until it can answer. ADK names the first three as an agent's basic components (model, task instructions, optionally tools); the loop is how its runtime executes them. State (session history, memory) lets the loop carry what it has learned between turns.
+**Concept.** A tool-using LLM agent, the kind this path studies, has four parts: a **model** that reasons, **instructions** that set its goal and limits, **tools** that let it read data or act (functions, APIs, other agents), and a **loop** in which the model chooses the next tool call, sees the result and decides again until it can answer. ADK names the first three as an agent's basic components, and only the model and instructions are required: an ADK agent without tools is valid but can only produce text, never read live data or act. The loop is how its runtime executes them. State (session history, memory) lets the loop carry what it has learned between turns.
 
 **What makes it an agent.** The model directs its own steps and tool use at run time; the developer does not lay out the path. A program whose path is designed in advance (even one where a model picks between predefined branches) is a workflow, not an agent, however smart each call is.
 

@@ -18,6 +18,6 @@ review-by: 2027-11-17
 
 **The model.** "It uses Gemini, so it's an agent."
 
-**How it shows.** A learner labels a summariser, a classifier or a fixed three-step pipeline as an agent, then reaches for agent tooling and guardrails it does not need, or misses that a real agent needs them.
+**How it shows.** A learner labels a summariser, a classifier or a fixed three-step pipeline as an agent, then reaches for agent machinery it does not need. The reverse also shows: a learner assumes a non-agent feature needs no evaluation or protection at all. Every LLM feature needs evaluation and protections suited to its data and outputs; an agent adds trajectory checks, permissions for its actions and guards against compounding errors.
 
 **The correcting example.** A pipeline that always extracts fields, then calls the model to draft a reply, then sends it for approval is a workflow: the designer fixed the order. It becomes an agent only when the model directs the path itself, choosing its own steps and tools rather than filling slots in a path the designer laid out.

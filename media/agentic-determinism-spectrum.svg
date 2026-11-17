@@ -27,8 +27,8 @@
       <text x="58" y="190">Answers each message</text>
       <text x="58" y="210">Acts only when asked</text>
       <text x="58" y="240" fill="#047857">+ Simple, low risk</text>
-      <text x="58" y="260" fill="#b45309">− Cannot finish a task</text>
-      <text x="58" y="280" fill="#b45309">   for you</text>
+      <text x="58" y="260" fill="#b45309">− User directs each</text>
+      <text x="58" y="280" fill="#b45309">   next step</text>
     </g>
 
     <rect x="275" y="112" width="210" height="196" rx="14" fill="#f8fafc" stroke="#2563eb" stroke-width="1.5"/>

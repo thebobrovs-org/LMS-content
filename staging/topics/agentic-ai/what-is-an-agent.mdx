@@ -7,7 +7,7 @@ estimatedMinutes: 15
 level: 100
 objectives:
   - id: define-agent
-    statement: "Name the four core parts of an agent (model, instructions, tools, loop), plus the state around them, and what each contributes."
+    statement: "Name the parts of a tool-using agent (model, instructions, tools, loop), plus the state around them, and what each contributes."
   - id: agent-vs-workflow
     statement: "Classify a use case as a chatbot, a deterministic workflow or an agent, and justify the choice."
   - id: autonomy-cost
@@ -15,8 +15,8 @@ objectives:
 flashcards:
   - id: agent-parts
     objective: define-agent
-    front: What are the parts of an LLM agent?
-    back: A model that reasons, instructions that set its goal and limits, tools it can call, and a loop in which the model picks the next call and sees the result. State carries what it learned between turns.
+    front: What are the parts of a tool-using LLM agent?
+    back: A model that reasons, instructions that set its goal and limits, tools it can call, and a loop in which the model picks the next call and sees the result. State carries what it learned between turns. (In ADK only the model and instructions are required; an agent without tools can only produce text.)
   - id: agent-defining-trait
     objective: agent-vs-workflow
     front: What makes a system an agent rather than a workflow?
@@ -37,22 +37,31 @@ quiz:
     explanation: The path never changes and no model chooses what happens next, so it is a workflow with a model call inside one step. Calling an LLM does not make a system an agent, and a model choosing its output (which fields) is not the same as choosing the next step.
   - id: classify-it-troubleshooter
     objective: agent-vs-workflow
-    question: "An IT helper must investigate a user's problem. Depending on what it finds, it may check logs, look up the device, read a runbook or open a ticket, in any order. Which design fits?"
+    question: "An IT helper investigates users' problems. The issues are new and varied, so no one can write a decision tree for them in advance. The helper must choose which checks to run (logs, device lookup, runbooks, opening a ticket) based on what each check finds. Which design fits?"
     choices:
       - An agent, because the next step depends on what each step finds
       - A workflow with a branch for each known problem type
       - A chatbot that answers the user's question without taking actions
     answer: 0
-    explanation: The path cannot be known in advance, which is exactly where an agent earns its cost. A branching workflow only handles the cases its designer foresaw, and here each finding decides the next check.
+    explanation: The path cannot be designed in advance, which is exactly where an agent earns its cost. A workflow with branches is still the designer's path. It handles the cases someone foresaw and wrote conditions for. Here the issues are open-ended, so the model has to direct the investigation itself, choosing each next check from what the last one found.
+  - id: classify-hr-faq
+    objective: agent-vs-workflow
+    question: "An HR assistant answers employees' policy questions one message at a time. It takes no actions in any system, and the employee decides what to ask next. What is it?"
+    choices:
+      - A chatbot, because the user directs each next step and it only answers
+      - A workflow, because its answers follow the policy documents
+      - An agent, because Gemini reasons about each question
+    answer: 0
+    explanation: The user controls the path and the system only answers, so it is a chatbot. Drawing answers from fixed documents does not make it a designer-laid-out workflow, and reasoning inside one reply is not the same as directing a sequence of steps and tool calls.
   - id: autonomy-tradeoff
     objective: autonomy-cost
     question: "You replace a fixed workflow with an agent that picks its own steps. What do you give up?"
     choices:
-      - Nothing important, as long as the system prompt is well written
-      - Tool access, because an agent can call only one tool per task
+      - Nothing, as long as you still check that the final answer is correct
+      - Nothing, if a restrictive system prompt lists the allowed steps
       - Some predictability and testability, so you need more evaluation and guardrails
     answer: 2
-    explanation: Autonomy buys flexibility at the price of predictability, latency, cost and testing effort. A prompt cannot make an agent's path predictable, and agents can call many tools across many turns. That is why evaluation and security matter more as autonomy grows.
+    explanation: Autonomy buys flexibility at the price of predictability, latency, cost and testing effort. Checking only the final answer misses a wrong or unsafe path that happened to end well, and a prompt that lists steps is guidance the model can drift from, not an enforced limit. That is why evaluation and security matter more as autonomy grows.
   - id: name-missing-part
     objective: define-agent
     question: "A team gives a model good instructions and a clear goal, and it writes excellent plans for resetting a user's password. But nothing ever changes in the identity system. Which part of an agent is missing?"
@@ -66,11 +75,11 @@ quiz:
     objective: autonomy-cost
     question: "An agent that can issue refunds is about to launch. Which concern grows because it can act, not just answer?"
     choices:
-      - Its replies will be longer than a chatbot's
+      - A strong final-answer quality eval is enough to make it safe
       - A wrong action does real damage, so it needs narrow permissions
-      - Its replies will be harder for customers to read
+      - A system prompt saying never refund over $100 fully controls its actions
     answer: 1
-    explanation: An agent that can act can act wrongly, and the damage is real. Narrow permissions and guardrails (such as human approval before refunds) limit what a mistake or an attack can do.
+    explanation: An agent that can act can act wrongly, and the damage is real. A final-answer eval does not show which actions it took on the way, and a rule in the prompt is not a guardrail, because the model can be wrong or manipulated into ignoring it. Narrow permissions and enforced controls (such as a refund limit in the tool and human approval before large refunds) limit what a mistake or an attack can do.
 status: draft
 updated: "2026-11-17"
 ---
@@ -78,16 +87,21 @@ updated: "2026-11-17"
 ## Not everything with an LLM is an agent
 
 Teams call almost any feature that uses a large language model an "agent". That
-label matters: an agent needs evaluation, identity and guardrails that a
-summariser does not, and a task that a simple workflow handles well becomes
+label matters. Every LLM feature needs evaluation and protections suited to its
+data and outputs, but an agent adds more: checks on the path it took, permissions
+for the actions it can take, and guards against errors that compound over many
+turns. And a task that a simple workflow handles well becomes
 slower, costlier and harder to test when you make it an agent. Many of the
 architecture choices in this path start with one question: **does this task need
 an agent at all?**
 
 ## The parts of an agent
 
-An <Term id="agent">agent</Term> has four core parts, plus state. Google's Agent
-Development Kit (ADK) names the first three as an agent's basic components.
+The tool-using <Term id="agent">agents</Term> this path studies have four core
+parts, plus state. Google's Agent Development Kit (ADK) names the first three as
+an agent's basic components, with tools optional: an ADK agent needs only a model
+and instructions, but without tools it can only produce text, never read live data
+or act.
 
 - **A model** that reads the situation and reasons about what to do.
 - **Instructions** that set the goal, the persona and the limits.
@@ -111,7 +125,7 @@ The defining question is **who controls the path**: who decides what happens nex
 
 <Figure
   src="/media/agentic-determinism-spectrum.svg"
-  alt="A left-to-right spectrum from chatbot to workflow to agent. Chatbot: the user decides; answers each message and acts only when asked; simple and low risk but cannot finish a task. Workflow: the designer decides; paths laid out in advance, with models filling steps or picking branches; predictable and testable but breaks when the path cannot be known ahead. Agent: the model decides; directs its own steps and tool calls in a loop; handles open-ended tasks but is less predictable and needs evals and guardrails."
+  alt="A left-to-right spectrum from chatbot to workflow to agent. Chatbot: the user decides; answers each message and acts only when asked; simple and low risk, but the user directs each next step. Workflow: the designer decides; paths laid out in advance, with models filling steps or picking branches; predictable and testable but breaks when the path cannot be known ahead. Agent: the model decides; directs its own steps and tool calls in a loop; handles open-ended tasks but is less predictable and needs evals and guardrails."
   caption="The determinism spectrum: moving right buys flexibility and costs predictability."
 />
 
