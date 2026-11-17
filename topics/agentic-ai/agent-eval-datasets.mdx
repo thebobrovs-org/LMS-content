@@ -255,7 +255,8 @@ for real.
   schema and what the session has created so far, so asking for an order that was
   never created can return a not-found error.
 - An **injection** returns a response you fix in advance, or an error, optionally
-  after a delay and only for matching arguments. Use it to test how the agent
+  after a delay, only for matching arguments, or only some of the time (a set
+  probability). Use it to test how the agent
   handles a timeout or a 500 from the payments API.
 
 Generated mock responses come from a model, so they can vary from run to run;
