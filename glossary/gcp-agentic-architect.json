@@ -70,5 +70,17 @@
   },
   "session": {
     "definition": "The record of one conversation between a user and an agent: its messages, the agent's events and its working state. A session service is where an agent stores sessions."
+  },
+  "slm": {
+    "definition": "Small language model: fewer parameters than a large model, so lower cost and latency per request, but a narrower range of tasks it handles well."
+  },
+  "maas": {
+    "definition": "Model as a service: a model called through a managed API endpoint, pay-as-you-go by default (reserved capacity is an option), with no serving infrastructure to run."
+  },
+  "model garden": {
+    "definition": "Google Cloud's catalogue of Google, partner and open models, with the serving options each one offers (managed endpoints or self-deployment)."
+  },
+  "self-deployed model": {
+    "definition": "A model whose weights you deploy to an endpoint or cluster you control (for example Gemma on an Agent Platform endpoint or GKE), paying for that compute while it runs."
   }
 }

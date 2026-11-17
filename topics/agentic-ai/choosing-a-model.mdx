@@ -1,0 +1,219 @@
+---
+title: Choosing a model and how to serve it
+summary: Model choice is three separate decisions (size, openness and serving), each driven by a different requirement. Start with a managed model, self-deploy only for a stated need, and route easy steps to a smaller model.
+tags: [agentic-ai, google-cloud, models, architecture]
+difficulty: intermediate
+estimatedMinutes: 15
+level: 200
+prerequisites: [agentic-ai/what-is-an-agent, agentic-ai/google-agent-platform-map]
+objectives:
+  - id: model-axes
+    statement: "Separate the three axes of model choice (size, openness, serving) and say what each trades."
+  - id: match-requirement
+    statement: "Choose a model and serving option for a scenario's latency, cost, control and compliance needs."
+  - id: route-models
+    statement: "Explain when to route between a large and a small model inside one agent."
+flashcards:
+  - id: three-axes
+    objective: model-axes
+    front: "What are the three separate decisions in choosing a model?"
+    back: "Size (a large model or a small one), openness (proprietary or open weights) and serving (a managed API, or a model you deploy and run yourself). Each is driven by different requirements."
+  - id: maas-meaning
+    objective: model-axes
+    front: "What is model as a service (MaaS)?"
+    back: "A model you call through a managed API endpoint, with no serving infrastructure of your own to run. It is pay-as-you-go by default, with reserved capacity as an option, rather than paying for machines."
+  - id: open-not-self-hosted
+    objective: model-axes
+    front: "Does choosing an open model mean you have to host it yourself?"
+    back: "No. Openness and serving are separate. Model Garden offers some open models as managed MaaS endpoints too; open weights give you the option to self-deploy, not the obligation."
+  - id: default-managed
+    objective: match-requirement
+    front: "What is the default serving choice, and what moves you off it?"
+    back: "Start with a managed model. Move to a self-deployed one only for a stated need: running it on infrastructure you operate, holding its weights, or cost at a steady, high volume that you have measured."
+  - id: route-small-large
+    objective: route-models
+    front: "Why route between a small and a large model inside one agent?"
+    back: "Most steps (classifying a request, extracting fields, simple replies) don't need the strongest model. A small model handles them quickly and cheaply; the large model is kept for the steps that need hard reasoning."
+quiz:
+  - id: axis-flash-vs-pro
+    objective: model-axes
+    question: "A team switches its agent from Gemini Pro to Gemini Flash to cut latency. Which decision did it change?"
+    choices:
+      - "Size: a smaller, faster model in the same family"
+      - "Openness: from a proprietary model to an open one"
+      - "Serving: from a managed API to a self-deployed model"
+    answer: 0
+    explanation: "Pro and Flash are both proprietary Gemini models called through the same managed API, so openness and serving did not change. Only the size and capability tier changed, which is what trades quality for latency and cost."
+  - id: open-means-self-host
+    objective: model-axes
+    question: "An architect says: 'We picked an open Gemma model, so now we have to run our own GPUs.' What is wrong with that?"
+    choices:
+      - "Nothing; open models can only be self-deployed"
+      - "Open models can be served managed only after you fine-tune them"
+      - "A model's openness doesn't fix how it's served"
+    answer: 2
+    explanation: "Choosing open weights decides what you are allowed to do with the model, not how it is served. Model Garden offers some open models, Gemma among them, as managed MaaS endpoints, with no tuning needed first, and you self-deploy only if you have a reason to."
+  - id: eu-residency
+    objective: match-requirement
+    question: "A bank's agent must process customer data only in the EU. The team is small, needs no custom weights, and wants nothing to operate. What fits best?"
+    choices:
+      - "Self-deploy an open model on GKE, because only self-hosting keeps data in a region"
+      - "A managed model called through an endpoint in an EU region"
+      - "A small model, because small models keep data local"
+    answer: 1
+    explanation: "Residency is a question of where the model is served. Many managed models, Gemini among them, can be called on an EU regional or multi-region endpoint (not the global one), which meets the need without anything to operate. Self-deploying also works but adds operations the team doesn't want, and nothing in the requirement calls for it. Model size has nothing to do with where data is processed."
+  - id: custom-weights-edge
+    objective: match-requirement
+    question: "A manufacturer must fine-tune a model on its own maintenance logs and then run it on machines it operates in factories with no internet connection. What fits best?"
+    choices:
+      - "A proprietary model through a managed API"
+      - "An open-weights model that the company deploys itself"
+      - "The largest available model, through any serving option"
+    answer: 1
+    explanation: "Tuning on its own logs and running on its own factory machines calls for weights the company holds, which an open model gives. A managed API needs the network, and a model tuned through a managed service stays with the provider. Size doesn't help if the model can't be reached."
+  - id: spiky-startup
+    objective: match-requirement
+    question: "A startup's agent sees a few requests at night and bursts of thousands at lunchtime. Two engineers run everything. Which serving option fits?"
+    choices:
+      - "Model as a service, paying for what is used"
+      - "A self-deployed model on a GPU endpoint sized for the lunchtime peak"
+      - "A self-deployed model on an autoscaling endpoint"
+    answer: 0
+    explanation: "A managed endpoint scales with the bursts within its quota, has nothing to operate, and the team pays for what it uses. A self-deployed endpoint sized for the peak sits mostly idle and still costs money. Autoscaling helps, but GPU replicas take minutes to start, unless it scales to zero a minimum replica still costs money overnight (and scaling up from zero adds a cold start), and the two engineers still have to operate it."
+  - id: route-support-agent
+    objective: route-models
+    question: "A support agent first decides what kind of request it has (billing, password, outage, other), and only outages need a long diagnostic investigation. How should it use models?"
+    choices:
+      - "The largest model for every step, so quality is the same everywhere"
+      - "A small model for the classification, and a large model for the outage investigation"
+      - "A small model for every step, since most requests are simple"
+    answer: 1
+    explanation: "Classifying a request is a simple, frequent step that a small model does quickly and cheaply. The rare outage investigation needs the strongest reasoning, so that step uses the large model. One model everywhere either overpays on every simple step or fails on the hard one."
+  - id: steady-volume-cost
+    objective: match-requirement
+    question: "An agent has run on a managed model for a year. Its traffic is now steady around the clock and very high, and the bill has grown large. What should the team do next?"
+    choices:
+      - "Move to a self-deployed model now, since at this volume it will cost less"
+      - "Compare the measured per-use bill with the cost of endpoints sized for that steady load"
+      - "Switch to the largest model, so fewer requests are needed"
+    answer: 1
+    explanation: "Steady, high volume is the case where self-deploying can cost less, because the endpoint stays busy, but it is a measurement, not a rule: compare real numbers, including the work of operating it. Self-deploying is not guaranteed to be cheaper, and a larger model costs more per request rather than less."
+  - id: route-not-worth-it
+    objective: route-models
+    question: "An internal agent handles about 50 requests a day, and nearly every step needs careful reasoning. Should the team add a small model and a router?"
+    choices:
+      - "No; the saving would be small for the extra work and risk"
+      - "Yes; a small model for the easy steps will cut the bill"
+      - "Yes; then send every step to the small model"
+    answer: 0
+    explanation: "Routing pays off when there are many simple steps to move to the cheap model. Here there are few requests and few simple steps, so the saving is tiny (the bill barely moves), while two models and a router must be evaluated and a wrong route sends a hard step to a model that can't handle it."
+status: draft
+updated: "2026-11-17"
+---
+
+## Why model choice matters early
+
+The model fixes much of an agent's cost, its latency, where its data is
+processed and how far you can customise it. It is also hard to change later:
+prompts, tool descriptions and evaluation thresholds all get tuned to one model's
+behaviour. So make the choice deliberately, from requirements, not from habit.
+
+The exam frames it as three comparisons: a large or a small model, an open or a
+proprietary model, and a model you host or one you consume as a service. They are
+three separate decisions, and the most common mistake is to treat two of them as
+one.
+
+## Three separate decisions
+
+**Size.** A large model reasons better over long, multi-step problems. A
+<Term id="SLM">small language model (SLM)</Term> answers faster and costs less
+per request, but handles a narrower range of tasks well. Within Gemini, the Pro,
+Flash and Flash-Lite tiers are steps along this axis: the same family and the same
+API, trading capability for speed and cost.
+
+**Openness.** A proprietary model, such as Gemini or a partner model like
+Claude, is used through its provider's service; you never hold the weights. An
+open-weights model, such as Google's Gemma, publishes its weights, so you may
+fine-tune it, inspect it and run it on hardware you choose. Tuning alone doesn't
+force open weights: Gemini models can be tuned through Agent Platform's managed
+tuning, but you never hold the result. Choose open weights when you need to hold
+the model yourself, for example to tune it and run it on your own machines.
+
+**Serving.** With <Term id="MaaS">model as a service (MaaS)</Term> you call a
+managed endpoint and pay as you go (reserved capacity is an option), with
+nothing to operate. With a
+<Term id="self-deployed model">self-deployed model</Term> you deploy the weights
+to an endpoint or cluster you control, such as an Agent Platform endpoint or
+GKE, and you pay for that compute while it is provisioned, usually whether
+or not requests arrive.
+<Term id="Model Garden">Model Garden</Term> is the catalogue where you find
+Google, partner and open models and the serving options each one offers.
+
+<Callout type="warning">Open does not mean self-hosted. Model Garden offers some open models, Gemma among them, as managed MaaS endpoints too. Open weights give you the option to self-deploy, not the obligation.</Callout>
+
+<Flashcard id="three-axes-inline" objective="model-axes" front="Choosing between calling an API and running the model on your own GKE cluster is a decision on which axis?" back="Serving. It says nothing about the model's size or whether its weights are open." />
+
+## From requirement to choice
+
+Each axis is pushed by different requirements. Read the requirement, find the
+axis it acts on, then choose.
+
+<Figure
+  src="/media/agentic-model-choice-table.svg"
+  alt="A decision table with three columns: requirement, axis it acts on, and usual lean. Low latency, or many simple steps: size, smaller model (Flash, Flash-Lite). Hard, multi-step reasoning: size, larger model (Pro). Hold and tune the weights yourself: openness, open weights (Gemma). Model must run only on infrastructure you operate: serving, self-deployed (endpoint or GKE). Data must stay in one region: serving, regional endpoint (where), managed or self-deployed. Small team, spiky traffic, nothing to operate: serving, model as a service (MaaS). Steady, very high volume: serving, self-deploying may cost less; measure first. Footer: default, start with a managed model; self-deploy only for a stated need; combine rows for a real scenario."
+  caption="Each requirement acts on one axis. A scenario usually combines several rows."
+/>
+
+Two rows deserve a closer look:
+
+- **Residency is not the same as control.** If data must be processed in the EU,
+  choose a model served from an EU region. Many managed models, Gemini among
+  them, can be called on an EU regional or multi-region endpoint (never the
+  global endpoint, which gives no residency guarantee); support varies by model,
+  so check its locations. A managed endpoint in the EU then meets the need. Self-deploy only when the requirement is stronger: the model must run on
+  infrastructure you operate yourself.
+- **Cost at scale is a measurement, not a rule.** A self-deployed endpoint costs
+  money every hour it runs. It can beat per-use pricing only when traffic is
+  steady and high enough to keep it busy, so compare the real numbers before
+  moving off a managed model.
+
+So the default is simple: **start with a managed model, and move to a
+self-deployed one only for a stated need**, such as a need to run it on
+infrastructure you operate, holding its weights or a measured cost saving.
+
+<Quiz
+  id="axis-gke-vs-api"
+  objective="model-axes"
+  question="A team moves from calling Gemma through a managed endpoint to running the same Gemma model on its own GKE cluster. Which decision changed?"
+  choices={["Size", "Openness", "Serving"]}
+  answer={2}
+  explanation="Same model, so the same size and the same open weights. Only where and how it is served changed: from a managed endpoint to infrastructure the team runs."
+/>
+
+## Routing between models in one agent
+
+An agent doesn't need one model for everything. Most of its steps are simple:
+deciding what kind of request it has, extracting fields, writing a short
+confirmation. A few are hard: a multi-step diagnosis, a plan with trade-offs.
+Send the simple steps to a small, fast model and keep the large model for the
+hard ones. The router is the step that decides which model handles a request.
+Agent frameworks such as <Term id="adk">ADK</Term> let each agent set its own
+model, so a design can give the router and the simple steps a small model and the
+reasoning step a large one.
+
+Routing has a cost of its own: two models to evaluate, and a wrong route sends a
+hard request to a model that can't handle it. Use it when the volume of simple
+steps is large enough that the savings matter, and evaluate the router as
+carefully as the rest of the agent.
+
+<Callout type="note">There is no official Google rule for when to pick a small model over a large one. Treat it as engineering judgement: state the requirement, choose, and confirm with an evaluation on your own tasks.</Callout>
+
+## Sources
+
+- Google Cloud, Professional Agentic Architect exam guide, services.google.com/fh/files/misc/professional_agentic_architect_exam_guide_english.pdf (section 3.1, the bullet on selecting and configuring the language model; LLM vs SLM, self-hosted vs SaaS, open-source vs proprietary, weighed on cost, security and architecture).
+- Google Cloud, Agent Platform documentation, "Choose a serving option for open models", docs.cloud.google.com/gemini-enterprise-agent-platform/models/open-models/choose-serving-option (open models served as MaaS or self-deployed).
+- Google Cloud, Agent Platform documentation, Model Garden and self-deployed models, docs.cloud.google.com/gemini-enterprise-agent-platform/models/model-garden/self-deployed-models.
+- Google Cloud, Generative AI on Agent Platform pricing, cloud.google.com/vertex-ai/generative-ai/pricing (Gemma 4 offered as a managed model priced per token; Gemini tuning priced per training token).
+- Google Cloud, "Serve Gemma open models using GPUs on GKE with vLLM", docs.cloud.google.com/kubernetes-engine/docs/tutorials/serve-gemma-gpu-vllm.
+- Google AI for Developers, Gemma documentation, ai.google.dev/gemma/docs (Gemma, a family of open models).
+- Google, Agent Development Kit documentation, "LLM agents", github.com/google/adk-docs/blob/main/docs/agents/llm-agents.md (each LlmAgent sets its own model).
