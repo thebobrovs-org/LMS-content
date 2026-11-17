@@ -78,7 +78,8 @@ for the PO) → `building` (concept approved) → `preview` (preview shared, wai
 `review` (PO approved the preview; cross-review running) → `merged`.
 
 **Cross-review.** When a PR reaches `review`, the other two agents each review it against the
-design checklist below and the brief. All three agents may post under one GitHub account, so a
+design checklist below and the brief, and against "One visual style": a sim that looks unlike
+the others gets `CHANGES` even when it works. All three agents may post under one GitHub account, so a
 review is a PR comment that starts with `Review by <agent>: APPROVE` or
 `Review by <agent>: CHANGES`, followed by the checklist items that fail, each with the file and
 line and what to change. Check the product claims against their sources, run `npm run gate` on the
@@ -112,9 +113,8 @@ The exemplars show the bar for richness, not a look to copy: **`approval-gate-ex
    content** via `requestAnimationFrame(() => sim.resize(document.body.scrollHeight + 8))`
    after every render — no clipping, no runaway scroll. It's an **embed**, not a
    page: no site chrome (header/sticky nav), no unrelated panels.
-4. **On-theme, plain CSS only.** Copy the token block from
-   [`template/style.css`](template/style.css) and apply the host `theme` via
-   `document.documentElement.dataset.theme`. **No CSS frameworks or CDNs**
+4. **On-theme, plain CSS only.** Start `style.css` with the sim kit (see "One visual style"
+   below) and apply the host `theme` via `document.documentElement.dataset.theme`. **No CSS frameworks or CDNs**
    (no Tailwind Play, no MathJax unless math is truly essential and vendored),
    **no off-brand palettes** — it must read correctly in light *and* dark.
 5. **A measurable readout.** Show one live line that makes the trade-off concrete
@@ -132,6 +132,43 @@ The exemplars show the bar for richness, not a look to copy: **`approval-gate-ex
    keyboard-operable (every drag has a button alternative); always-visible focus ring;
    honor `reducedMotion` (no essential motion-only cue).
 
+## One visual style
+
+Every sim looks like it came from one studio, whatever it draws. The concepts differ; the
+look doesn't. The look lives in one file, [`simulations/kit/sim-kit.css`](../../simulations/kit/sim-kit.css):
+
+- **Copy it verbatim** to the top of the sim's `style.css`, then add only the sim's own rules
+  after its end marker. The app copies each package on its own, so there is no shared import;
+  the gate's `style-kit` test fails if the copy differs by a byte. To change the look, change
+  the kit, bump its version, and recopy it into every sim on it in the same PR.
+  [`template/style.css`](template/style.css) already starts with it.
+- **Colour means the same thing everywhere.** `--primary` is "now" or the learner's own
+  action; `--violet` is the model; `--teal` is the runtime or a tool; `--green` is pass, kept,
+  allowed; `--red` is fail, lost, denied; `--amber` is a limit or a line not to cross.
+  `--orange`, `--rose` and `--gold` are for extra categories, used in that order. Don't invent
+  a hue; if a sim truly needs one, add it to the kit with light and dark values that pass the
+  `palette-contrast` test.
+- **Type.** System sans at 14 px; `h2` 13 px muted; captions 14 px; legend 12 px muted; in SVG
+  `.k-title` 13 px bold, `.k-label` 12 px, `.k-small` 10.5 px muted, `.k-code` for code. No web fonts.
+- **Illustration.** Flat 2-D shapes, no gradients, shadows or 3-D. A hue stroke over a light
+  tint of the same hue (`fill-opacity` around .12 to .25 on shapes, never on text). Strokes
+  1.5 px for chrome, 2 to 3 px for what matters now (`.k-now`). Dashed (`.k-off`) means
+  absent, off or not stored. Radii: 4 px small marks, 8 px boxes, 14 px panels, pills for
+  buttons.
+- **Controls.** Pills (`.chip` with `aria-pressed`) for choices; exactly one `button.primary`
+  for the main action; plain buttons for the rest (Step, Reset). Sliders use the kit's
+  `input[type=range]`. Never disable a control that can hold focus.
+- **The frame.** A `.panel.predict` card first (question + chips + `.verdict`), then a
+  `.panel.stage` with the drawing (`.scroll` around a wide SVG), the `.caption`
+  (`role="status"`) and the `.controls`, then any result panels, then one `.legend` line.
+- **Motion.** Transitions only, about `var(--dur)` (0.6 s), started by the learner. No loops,
+  no idle animation, nothing that only moves to look busy. The kit switches transitions off
+  under `prefers-reduced-motion` and under a `.reduced` class you set from `init.reducedMotion`;
+  every end state must be readable without the motion.
+
+[`reference/style-side-by-side.png`](reference/style-side-by-side.png) shows four sims on the
+kit, light and dark: four different drawings, one look.
+
 ## The lesson around the sim
 
 - **Lead-in:** what to predict and what to try, in the lesson's words.
@@ -148,7 +185,8 @@ The exemplars show the bar for richness, not a look to copy: **`approval-gate-ex
 - [ ] A drawing that shows the idea, not a list of rows; a predict step the learner commits to.
 - [ ] The misconception is reachable in three actions or fewer.
 - [ ] Self-sizing (grows to content via `sim.resize`); no clipping or runaway scroll; no page chrome.
-- [ ] Token theme (copied block); correct in light + dark.
+- [ ] Matches the style guide: `style.css` starts with the sim kit, the sim's own rules use only kit
+      tokens with their meanings, and the drawing is flat with kit strokes and radii; correct in light + dark.
 - [ ] Every text colour reads at **4.5:1** on what it sits on, in both modes (3:1 for
       marks and lines); no text faded with `opacity`; ink on a fill is the fill's
       `*-contrast` token, never a bare `#fff`. `simulations/tests/palette-contrast.test.mjs`
@@ -261,15 +299,15 @@ setTimeout(() => { if (!sim.isInitialized()) render(); }, 300);
 
 ## Theming & accessibility
 
-- Copy the token block from [`template/style.css`](template/style.css) so the sim
-  matches light/dark; apply `theme` from `onInit` via `dataset.theme`.
+- Start `style.css` with the sim kit (see "One visual style") so the sim matches
+  light/dark; apply `theme` from `onInit` via `dataset.theme`.
 - Honor `reducedMotion` (passed to `onInit`). Visible focus ring; keyboard-operable.
 - **Contrast (WCAG 1.4.3 / 1.4.11).** Text at 4.5:1 or better on its background; marks,
   lines and borders at 3:1. The template's palette meets this: in light mode muted text
   is `#475569` (not the `#64748b` many sims once used, 4.3:1 on the surface), the teal
   accent `#0f766e`, success `#15803d`, warning `#b45309`, danger `#b91c1c`; in dark
-  mode muted text is `#a5b1c2` on the sims' `#0f172a`/`#1e293b`. Add a token to the
-  block for any extra colour; the gate's `palette-contrast` test checks every token it
+  mode muted text is `#a5b1c2` on the sims' `#0f172a`/`#1e293b`. The kit carries
+  every colour a sim needs (a new one goes into the kit, not one sim); the gate's `palette-contrast` test checks every token it
   finds against the page, surface and panel in both modes (fills and line colours are
   listed there as not-text). Ink on a filled chip or button is `var(--primary-contrast)`
   (white in light, near-black in dark), never a bare `#fff`: white fails on every light

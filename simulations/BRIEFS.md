@@ -9,6 +9,10 @@ propose it in the concept note. The facts in each brief come from its lesson; ch
 product claim against the lesson's sources (and the live Google docs, with the date) before
 you build, and mark scripted numbers as illustrative.
 
+The picture is yours; the look is not. Every sim starts its `style.css` with the shared kit
+and follows ["One visual style"](../skills/lms-authoring-simulations/SKILL.md#one-visual-style),
+so the path reads as one set of sims, not fourteen styles.
+
 ## Status
 
 Update your row in your own PR. Statuses: `open` → `concept` → `building` → `preview` → `review` → `merged`.
