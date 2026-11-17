@@ -20,14 +20,20 @@
   "agent runtime": {
     "definition": "Agent Platform's managed runtime that deploys, operates and scales agents, used with its Sessions and Memory Bank services (formerly Agent Engine)."
   },
-  "workflow builder": {
-    "definition": "The low-code tool in Gemini Enterprise for building chat agents and workflows without code (formerly Agent Designer)."
+  "flow": {
+    "definition": "In Dialogflow CX and CX Agent Studio, a group of pages that models one conversation topic as a state machine."
   },
-  "trigger": {
-    "definition": "What starts a Workflow Builder workflow: manual (an @-mention in chat), a schedule, or an event in a connected app."
+  "page": {
+    "definition": "A state in a Dialogflow CX flow, with its own routes, parameters and event handlers; exactly one page is current at a time."
   },
-  "gemini agent step": {
-    "definition": "A Workflow Builder workflow step in which a model acts on instructions, knowledge and connectors, and returns text or JSON for later steps."
+  "transition route": {
+    "definition": "A Dialogflow CX rule with an intent requirement, a condition requirement or both, which can reply and move the conversation to another page."
+  },
+  "event handler": {
+    "definition": "A Dialogflow CX rule that responds to an event, such as no-match or no-input, usually by replying or reprompting."
+  },
+  "few-shot example": {
+    "definition": "A sample exchange included in an agent's instructions to show the model the behaviour or format you want."
   },
   "trajectory": {
     "definition": "The sequence of tool calls (and other intermediate steps) an agent took before it answered. Evaluating it checks the path, not just the final response."
@@ -79,6 +85,15 @@
   },
   "session": {
     "definition": "The record of one conversation between a user and an agent: its messages, the agent's events and its working state. A session service is where an agent stores sessions."
+  },
+  "workflow builder": {
+    "definition": "The low-code tool in Gemini Enterprise for building chat agents and workflows without code (formerly Agent Designer)."
+  },
+  "trigger": {
+    "definition": "What starts a Workflow Builder workflow: manual (an @-mention in chat), a schedule, or an event in a connected app."
+  },
+  "gemini agent step": {
+    "definition": "A Workflow Builder workflow step in which a model acts on instructions, knowledge and connectors, and returns text or JSON for later steps."
   },
   "prompt injection": {
     "definition": "Input crafted to override an LLM application's instructions. In a direct injection the person using the application writes it; in an indirect one it arrives in content the application reads."
