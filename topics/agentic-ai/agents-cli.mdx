@@ -46,20 +46,20 @@ quiz:
       - "The CLI prints a warning but exits 0, so the pipeline carries on"
       - "The CLI rolls back the last deployment of the agent"
     answer: 0
-    explanation: "With thresholds set (in the eval config or with --fail-under), eval run exits 1 when a metric misses one, so CI can gate the deploy on the exit code. Without thresholds a low score does not fail the run. It does not retry, warn and continue, or touch deployments."
+    explanation: "With thresholds set in the eval config, eval run exits 1 when a metric misses one, so CI can gate the deploy on the exit code. Without thresholds a low score does not fail the run. It does not retry, warn and continue, or touch deployments."
   - id: unattended-pipeline
     objective: choose-driver
-    question: "A nightly CI job should scaffold a test agent, evaluate it and deploy it to a staging project with no one watching. How should it run Agents CLI?"
+    question: "A nightly CI job should evaluate the team's committed agent project and deploy it to a staging project with no one watching. How should it run Agents CLI?"
     choices:
       - "Through a coding agent, so the agent can answer any prompts and no one reviews its choices"
       - "With every choice passed as flags, and the job failing when eval run fails"
       - "With -i on each command, so the CLI asks for anything that is missing"
       - "Without --project, so the deploy uses whatever gcloud is set to on the runner"
     answer: 1
-    explanation: "An unattended job must never stop at a prompt, so it passes everything as flags (such as --yes and --project) and gates on exit codes, so a failed evaluation stops the job. A coding agent adds a model's judgement where none is wanted, -i asks questions no one will answer, and without --project the deploy stops to confirm the project."
+    explanation: "An unattended job must never stop at a prompt, so it passes everything as flags (such as --project) and gates on exit codes, so a failed evaluation stops the job. A coding agent adds a model's judgement where none is wanted, -i asks questions no one will answer, and without --project the deploy stops to confirm the project."
   - id: deploy-skill
     objective: cli-skills
-    question: "A coding agent needs to roll back a bad release and check which service account a deploy runs as. Which bundled skill covers that?"
+    question: "A coding agent needs to roll back a bad release and check which service account the running agent uses in Google Cloud. Which bundled skill covers that?"
     choices:
       - "google-agents-cli-deploy"
       - "google-agents-cli-workflow"
@@ -136,7 +136,7 @@ walks the coding agent through them in order.
 | Scaffold the project | `google-agents-cli-scaffold` | `agents-cli create` |
 | Build the agent's tools and orchestration | `google-agents-cli-adk-code` | `agents-cli run` and `playground` to try it (the coding agent writes the code) |
 | Evaluate against a dataset and metrics | `google-agents-cli-eval` | `agents-cli eval run` |
-| Deploy to a runtime | `google-agents-cli-deploy` | `agents-cli deploy` |
+| Deploy to a runtime (targets, service accounts, rollback) | `google-agents-cli-deploy` | `agents-cli deploy` |
 | Publish to Gemini Enterprise | `google-agents-cli-publish` | `agents-cli publish gemini` |
 | Observe traces and logs | `google-agents-cli-observability` | None (built-in tracing) |
 
@@ -174,9 +174,11 @@ a development project:
    `agents-cli publish gemini` then registers the deployed agent with
    <Term id="gemini enterprise">Gemini Enterprise</Term> so users can reach it.
 6. **Observe.** Generated projects send traces to Cloud Trace (Google Cloud's
-   tracing service) by default, and `--otel-to-cloud` does the same for a local
-   `run` or `playground`. Prompt-response logging and BigQuery analytics are set
-   up as project infrastructure. The observability skill helps read the
+   tracing service) by default, and `--otel-to-cloud` exports a local `run` or
+   `playground`'s traces and logs to Google Cloud. Prompt-response logging needs
+   a logs bucket, which `agents-cli infra single-project --apply` provisions
+   before the first deploy; BigQuery Agent Analytics is opt-in with
+   `create --bq-analytics`. The observability skill helps read the
    results, and what production shows feeds the next round of building.
 
 For local work a Gemini API key from AI Studio is enough: `playground`, `run`
@@ -204,15 +206,20 @@ typing and an unattended pipeline need different flags.
   from gcloud and "stops to ask you to confirm it", and `-d` when there is no
   manifest to read the target from. The pipeline gates on exit codes: with
   thresholds set in the eval config, `eval run` exits 1 when a metric misses
-  one.
+  one, and it also exits 1 if any case errors.
 
-The same order-support agent in a nightly pipeline looks like this:
+Once the order-support project, with its manifest and an eval config that sets
+thresholds, is committed, a nightly job runs from the project folder:
 
 ```bash
-agents-cli create order-support -d agent_runtime --yes
-agents-cli eval run                       # with thresholds set, exits 1 and stops the job
+agents-cli install
+agents-cli eval run                          # exits 1 and stops the job on a missed threshold
 agents-cli deploy --project my-staging-project
 ```
+
+The runner also needs credentials: a Google Cloud identity for the deploy (for
+example a service account through workload identity federation), and a Gemini
+API key or Google Cloud credentials for metrics that an LLM judges.
 
 Choose the driver by what a mistake would cost. Let the coding agent drive the
 inner loop of scaffolding, building, running and evaluating in a development
@@ -221,8 +228,9 @@ judgement, such as a nightly evaluation and staging deploy, in a pipeline.
 
 Keep a person approving steps that change shared resources, such as a deploy to
 production or publishing to users. `agents-cli deploy --dry-run` runs the
-pre-flight and read-only Google Cloud checks without deploying, which gives that
-person evidence before they approve.
+pre-flight and read-only Google Cloud checks without deploying, and exits
+non-zero if a check fails, which gives that person evidence before they
+approve.
 
 <Callout type="note">Commands, flags and skills in this lesson are as documented in November 2026 and change often.</Callout>
 
@@ -245,5 +253,5 @@ person evidence before they approve.
 - Agents CLI documentation, "Lifecycle", google.github.io/agents-cli/guide/lifecycle/ (phases Spec, Scaffold, Build and Orchestrate, Evaluate, Deploy, Publish, Observe, with their skills and commands; "Two ways to drive it").
 - Agents CLI documentation, "Skills reference", google.github.io/agents-cli/reference/skills/ (seven skills; google-agents-cli-workflow always active; what each skill covers, including deploy's service accounts and rollback).
 - Agents CLI documentation, "CLI reference", google.github.io/agents-cli/cli/ (create -a, -d agent_runtime|cloud_run|gke|none, --prototype, -i "Enable interactive prompts for human use", -y "Non-interactive: skip prompts and use defaults"; run and playground --otel-to-cloud; eval grade --fail-under; deploy --dry-run runs pre-flight and read-only Google Cloud checks; deploy reads its target from agents-cli-manifest.yaml, and -d overrides it or deploys without one).
-- Agents CLI documentation, "Development", "Deployment", "Evaluation" and "Observability" guides, google.github.io/agents-cli/guide/ (a coding agent asks the questions one at a time; without --project the deploy stops to confirm the project; eval run exits 1 when a metric misses its threshold so CI can gate on it; generated projects export traces to Cloud Trace; prompt-response logging and BigQuery Agent Analytics through infrastructure set-up).
+- Agents CLI documentation, "Development", "Deployment", "Evaluation" and "Observability" guides, google.github.io/agents-cli/guide/ (a coding agent asks the questions one at a time; without --project the deploy stops to confirm the project; eval run exits 1 when a metric misses its threshold so CI can gate on it; generated projects export traces to Cloud Trace with no configuration; prompt-response logging needs a logs bucket provisioned by infra single-project --apply before the first deploy; BigQuery Agent Analytics with create --bq-analytics; a run also fails when any case errored).
 - Agents CLI documentation, "Authentication", google.github.io/agents-cli/guide/authentication/ (Gemini API key needs no Google Cloud project and covers playground, run and eval for ADK and LangChain templates; the Claude Agent SDK template needs Google Cloud credentials even locally; deployment needs a project with billing; Agents CLI does not control coding agent authentication).
