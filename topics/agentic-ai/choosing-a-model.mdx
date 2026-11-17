@@ -61,7 +61,7 @@ quiz:
       - "A managed model called through an endpoint in an EU region"
       - "A small model, because small models keep data local"
     answer: 1
-    explanation: "Residency is a question of where the model is served. Many managed models, Gemini among them, can be called on an EU regional or multi-region endpoint (not the global one), which meets the need without anything to operate. Self-deploying also works but adds operations the team doesn't want, and nothing in the requirement calls for it. Model size has nothing to do with where data is processed."
+    explanation: "Residency is a question of where the model is served. Many managed models, Gemini among them, can be called on an EU regional or multi-region endpoint (not the global one), which meets the need without anything to operate, once you confirm the model's documented processing stays within the EU. Self-deploying also works but adds operations the team doesn't want, and nothing in the requirement calls for it. Model size has nothing to do with where data is processed."
   - id: custom-weights-edge
     objective: match-requirement
     question: "A manufacturer must fine-tune a model on its own maintenance logs and then run it on machines it operates in factories with no internet connection. What fits best?"
@@ -160,7 +160,7 @@ axis it acts on, then choose.
 
 <Figure
   src="/media/agentic-model-choice-table.svg"
-  alt="A decision table with three columns: requirement, axis it acts on, and usual lean. Low latency, or many simple steps: size, smaller model (Flash, Flash-Lite). Hard, multi-step reasoning: size, larger model (Pro). Hold and tune the weights yourself: openness, open weights (Gemma). Model must run only on infrastructure you operate: serving, self-deployed (endpoint or GKE). Data must stay in one region: serving, regional endpoint (where), managed or self-deployed. Small team, spiky traffic, nothing to operate: serving, model as a service (MaaS). Steady, very high volume: serving, self-deploying may cost less; measure first. Footer: default, start with a managed model; self-deploy only for a stated need; combine rows for a real scenario."
+  alt="A decision table with three columns: requirement, axis it acts on, and usual lean. Low latency, or many simple steps: size, smaller model (Flash, Flash-Lite). Hard, multi-step reasoning: size, larger model (Pro). Hold and tune the weights yourself: openness, open weights (Gemma). Model must run only on infrastructure you operate: serving, self-deployed (endpoint or GKE). Data must be processed in the EU: serving, an EU endpoint, if the model's documented processing stays in the EU. Small team, spiky traffic, nothing to operate: serving, model as a service (MaaS). Steady, very high volume: serving, self-deploying may cost less; measure first. Footer: default, start with a managed model; self-deploy only for a stated need; combine rows for a real scenario."
   caption="Each requirement acts on one axis. A scenario usually combines several rows."
 />
 
@@ -169,8 +169,12 @@ Two rows deserve a closer look:
 - **Residency is not the same as control.** If data must be processed in the EU,
   choose a model served from an EU region. Many managed models, Gemini among
   them, can be called on an EU regional or multi-region endpoint (never the
-  global endpoint, which gives no residency guarantee); support varies by model,
-  so check its locations. A managed endpoint in the EU then meets the need. Self-deploy only when the requirement is stronger: the model must run on
+  global endpoint, which gives no residency guarantee). An endpoint's location is
+  not always the whole processing boundary: Google documents that a locational
+  endpoint may process data within a wider country or multi-region boundary, and
+  in-country processing in Europe varies by model. So check the model's documented
+  processing commitment for your requirement; where it matches, a managed endpoint
+  meets the need. Self-deploy only when the requirement is stronger: the model must run on
   infrastructure you operate yourself.
 - **Cost at scale is a measurement, not a rule.** A self-deployed endpoint costs
   money every hour it runs. It can beat per-use pricing only when traffic is
@@ -213,6 +217,7 @@ carefully as the rest of the agent.
 - Google Cloud, Professional Agentic Architect exam guide, services.google.com/fh/files/misc/professional_agentic_architect_exam_guide_english.pdf (section 3.1, the bullet on selecting and configuring the language model; LLM vs SLM, self-hosted vs SaaS, open-source vs proprietary, weighed on cost, security and architecture).
 - Google Cloud, Agent Platform documentation, "Choose a serving option for open models", docs.cloud.google.com/gemini-enterprise-agent-platform/models/open-models/choose-serving-option (open models served as MaaS or self-deployed).
 - Google Cloud, Agent Platform documentation, Model Garden and self-deployed models, docs.cloud.google.com/gemini-enterprise-agent-platform/models/model-garden/self-deployed-models.
+- Google Cloud, Agent Platform documentation, "Data residency", docs.cloud.google.com/gemini-enterprise-agent-platform/resources/data-residency (a locational endpoint can process data within a broader country or multi-region boundary; in-country processing varies by model).
 - Google Cloud, Generative AI on Agent Platform pricing, cloud.google.com/vertex-ai/generative-ai/pricing (Gemma 4 offered as a managed model priced per token; Gemini tuning priced per training token).
 - Google Cloud, "Serve Gemma open models using GPUs on GKE with vLLM", docs.cloud.google.com/kubernetes-engine/docs/tutorials/serve-gemma-gpu-vllm.
 - Google AI for Developers, Gemma documentation, ai.google.dev/gemma/docs (Gemma, a family of open models).

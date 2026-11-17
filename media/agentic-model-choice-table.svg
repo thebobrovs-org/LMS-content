@@ -25,10 +25,10 @@
 <text x="398" y="235" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f766e">Serving</text>
 <text x="478" y="235" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">Self-deployed (endpoint or GKE)</text>
 <rect x="16" y="258" width="768" height="44" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
-<text x="32" y="285" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#0f172a">Data must stay in one region</text>
+<text x="32" y="285" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#0f172a">Data must be processed in the EU</text>
 <rect x="334" y="268" width="128" height="24" rx="12" fill="#ffffff" stroke="#0f766e" stroke-width="1.4"/>
 <text x="398" y="285" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f766e">Serving</text>
-<text x="478" y="285" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">Regional endpoint (where), managed or self-deployed</text>
+<text x="478" y="285" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">EU endpoint, if the model processes in the EU</text>
 <rect x="16" y="308" width="768" height="44" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
 <text x="32" y="335" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#0f172a">Small team, spiky traffic, nothing to operate</text>
 <rect x="334" y="318" width="128" height="24" rx="12" fill="#ffffff" stroke="#0f766e" stroke-width="1.4"/>
