@@ -129,7 +129,7 @@ present certificates) and MCP security. For each call it can:
 1. **Know the caller.** For traffic out of the agent, that is the agent's
    identity. For traffic into it, from a client, the gateway authenticates the
    user's credentials: for agents on Cloud Run it does so through
-   Identity-Aware Proxy (IAP), and Agent Runtime and Gemini Enterprise offer IAP
+   Identity-Aware Proxy (IAP), announced as an early preview, and Agent Runtime and Gemini Enterprise offer IAP
    access policies.
 2. **Apply access policy**: is this target approved in the registry, and may
    this agent call it? Policies name targets by their resource names.
@@ -179,5 +179,5 @@ gateway is not covered, so routing is part of the design.
 ## Sources
 
 - Google Cloud, "Agent Registry identity and identifiers", docs.cloud.google.com/agent-registry/identity-and-identifiers (last updated 2026-11-10, retrieved 2026-11-17: assigns identifiers and identities to registered agents, MCP servers, endpoints and skills "so that you can discover capabilities, enforce access policies, and route runtime traffic"; registry URNs `urn:agent:` and `urn:mcp:`, which "can't be used in IAM policy bindings, authorization headers, or Agent Gateway route rules"; resource names for policies; a managed workload identity in SPIFFE format for agents on Google Cloud).
-- Google Cloud, "Agent Gateway overview", docs.cloud.google.com/gemini-enterprise-agent-platform/govern/gateways/agent-gateway-overview (retrieved 2026-11-17: "Centralize access policies, mTLS, and Model Context Protocol (MCP) security"; configuring Model Armor on a gateway; monitoring gateway traffic).
+- Google Cloud, "Agent Gateway overview", docs.cloud.google.com/gemini-enterprise-agent-platform/govern/gateways/agent-gateway-overview (retrieved 2026-11-17: "Centralize access policies, mTLS, and Model Context Protocol (MCP) security"; configuring Model Armor on a gateway; monitoring gateway traffic; inbound callers authenticated through Identity-Aware Proxy for Cloud Run, "available soon through an early preview", and IAP access policies for Agent Runtime and Gemini Enterprise).
 - Google Cloud, "Model Armor integration with Agent Gateway", docs.cloud.google.com/model-armor/model-armor-agent-gateway-integration (last updated 2026-11-10, retrieved 2026-11-17: protects "the incoming requests from the client to the agent" and "the outgoing requests from the agent to the external system", with their responses; egress covers MCP servers, external LLMs and other agents).
