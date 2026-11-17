@@ -1,7 +1,7 @@
 // LMS-content#190 review: behaviour the agentic-ai Wave 1 simulations teach, run against each real main.js in the
 // small DOM of sim-dom.mjs.
-// - approval-gate-explorer: a refund denied before the tool never highlights the stage where money moves, and the
-//   balance never changes; a refund denied after the tool has already moved it.
+// - approval-gate-explorer: the same refund rides two tracks; one denial keeps the money on the top track (approval
+//   before issue_refund) and is too late on the bottom one (review after it); a refund under the threshold is not asked.
 // - state-scope-explorer: a populated user: key survives a restart on DatabaseSessionService and is lost on
 //   InMemorySessionService; a session key is not read in a new session of the same user, a user: key is.
 // Run by `npm run gate`.
@@ -11,38 +11,52 @@ import { loadSim } from "./sim-dom.mjs";
 
 const text = (sim, sel) => sim.find(sel).textContent.replace(/\s+/g, " ").trim();
 
-async function stepToEnd(sim) {
-  for (let i = 0; i < 10; i++) await sim.press("#step");
+async function sendAndWait(sim) {
+  await sim.press("#send");
+  await sim.advance(2000);
 }
 
-test("approval-gate-explorer: a denial before the tool never selects the money-moving stage", async () => {
+test("approval-gate-explorer: before the denial, the bottom track has already paid and the top has not", async () => {
   const sim = await loadSim("approval-gate-explorer");
-  // Defaults: €400, before the tool, every refund, deny.
-  for (let i = 0; i < 10; i++) {
-    await sim.press("#step");
-    const now = sim.doc.querySelector(".stage.now");
-    assert.ok(now, "a stage is marked current");
-    assert.doesNotMatch(now.textContent, /Tool runs/, `step ${i + 2} highlights the execution stage after a pre-tool denial`);
-    assert.match(text(sim, "#ledger"), /€5,000\.00/, "the balance never changes");
-  }
-  assert.match(text(sim, "#readout"), /Denied before issue_refund ran/);
+  // Defaults: €400, asks on every refund.
+  await sendAndWait(sim);
+  assert.ok(!sim.find("#decide").hidden, "both signals wait for a decision");
+  assert.match(text(sim, "#t-top"), /€5,000/);
+  assert.match(text(sim, "#t-bottom"), /€4,600/);
 });
 
-test("approval-gate-explorer: a denial after the tool cannot unmove the money", async () => {
+test("approval-gate-explorer: a denial keeps the money only where approval stands before the tool", async () => {
   const sim = await loadSim("approval-gate-explorer");
-  await sim.press("#placement", "after");
-  await stepToEnd(sim);
-  assert.match(text(sim, "#ledger"), /€4,600\.00/);
-  assert.match(text(sim, "#readout"), /Denied after issue_refund ran/);
-});
-
-test("approval-gate-explorer: the checkpoint fires only after a denial in both placements", async () => {
-  const sim = await loadSim("approval-gate-explorer");
-  await stepToEnd(sim);
-  assert.ok(!sim.events.includes("checkpoint:observe-approval-before-side-effect"));
-  await sim.press("#placement", "after");
-  await stepToEnd(sim);
+  await sendAndWait(sim);
+  await sim.press("#deny");
+  await sim.advance(2000);
+  assert.ok(sim.find("#decide").hidden);
+  assert.match(text(sim, "#t-top"), /€5,000/, "the top vault keeps the refund");
+  assert.match(text(sim, "#t-bottom"), /€4,600/, "the bottom vault paid before the review");
+  assert.match(text(sim, "#caption"), /This tool call is rejected/);
+  assert.match(text(sim, "#caption"), /already gone/);
   assert.ok(sim.events.includes("checkpoint:observe-approval-before-side-effect"));
+});
+
+test("approval-gate-explorer: an approval pays on both tracks and fires no checkpoint", async () => {
+  const sim = await loadSim("approval-gate-explorer");
+  await sendAndWait(sim);
+  await sim.press("#approve");
+  await sim.advance(2000);
+  assert.match(text(sim, "#t-top"), /€4,600/);
+  assert.match(text(sim, "#t-bottom"), /€4,600/);
+  assert.ok(!sim.events.includes("checkpoint:observe-approval-before-side-effect"));
+});
+
+test("approval-gate-explorer: a refund under the threshold is never asked about", async () => {
+  const sim = await loadSim("approval-gate-explorer");
+  await sim.press('[data-amount="small"]');
+  await sim.press("#threshold", "100");
+  await sendAndWait(sim);
+  assert.ok(sim.find("#decide").hidden, "no decision is asked");
+  assert.match(text(sim, "#t-top"), /€4,960/);
+  assert.match(text(sim, "#t-bottom"), /€4,960/);
+  assert.match(text(sim, "#t-call"), /Not asked/);
 });
 
 async function writeUserKeyAndRestart(sim) {

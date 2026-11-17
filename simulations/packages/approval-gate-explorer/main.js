@@ -1,41 +1,36 @@
 // `createSim` is a global from sim-sdk.js (a classic script loaded first). No imports:
 // this bundle runs in an opaque-origin sandbox.
 //
-// Where a human approval sits decides whether it can stop a side effect. Before the tool:
-// ADK tool confirmation (FunctionTool(..., require_confirmation=True or a function of the
-// arguments)) pauses the call; a rejection means the tool never runs and the model gets
-// {"error": "This tool call is rejected."} (adk-python function_tool.py). After the tool:
-// a review triggered from an after_tool_callback sees a call that has already run, so a
-// denial cannot unmove the money. Fictional store, amounts and threshold; deterministic.
+// The point of no return. The same refund rides two tracks at once. On the top track the
+// human approval stands before issue_refund (ADK tool confirmation: FunctionTool(...,
+// require_confirmation=True, or a function of the arguments such as amount > threshold));
+// a rejection means the tool never runs and the model receives
+// {"error": "This tool call is rejected."} (adk-python tools/function_tool.py). On the
+// bottom track the review runs after the tool (an after_tool_callback), so by the time the
+// reviewer answers, the coins have already left the vault. One decision drives both
+// signals, so one Deny shows both outcomes. Fictional store, amounts and threshold;
+// deterministic. Motion only while a run plays; none when hidden or under reduced motion.
 
 const app = document.getElementById("app");
 
-const START_BALANCE = 5000;
-const THRESHOLD = 100;
-const REQUESTS = {
-  large: { order: "L-31", amount: 400, item: "chair", text: "Please refund €400 for order L-31. The chair arrived broken." },
-  small: { order: "M-12", amount: 40, item: "mug", text: "Please refund €40 for order M-12. The mug arrived chipped." },
-};
-const PLACEMENTS = {
-  before: "Before the tool: tool confirmation",
-  after: "After the tool: review in after_tool_callback",
-  none: "No approval",
-};
-const POLICIES = {
-  always: "Every refund",
-  threshold: `Refunds over €${THRESHOLD}`,
-};
-const DECISIONS = { deny: "Deny", approve: "Approve" };
+const START = 5000;
+const AMOUNTS = { large: 400, small: 40 };
+const X0 = 112; // trains start here, just right of the model
+const LINE = 400; // issue_refund runs here: money moves
+const SIG = { top: 300, bottom: 520 };
+const END = 690;
+const Y = { top: 120, bottom: 290 };
+const PREDICT = { top: "Top track", bottom: "Bottom track", both: "Both", neither: "Neither" };
 
-let request = "large";
-let placement = "before";
-let policy = "always";
-let decision = "deny";
-let steps = [];
-let shown = 0;
-let timer = null;
-let seenBefore = false; // denied before the tool: no money moved
-let seenAfter = false; // denied after the tool: money already moved
+let amountKey = "large";
+let threshold = 0; // ask for approval on refunds above this
+let reduced = false;
+let prediction = null;
+
+let lanes = {};
+let phase = "ready"; // ready | running | waiting | done
+let decision = null; // null | "approve" | "deny" | "auto"
+let anim = null;
 let reported = false;
 let els = {};
 
@@ -44,210 +39,313 @@ function applyTheme(theme) {
   else delete document.documentElement.dataset.theme;
 }
 
-function esc(s) {
-  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-}
-
-const eur = (n) => `€${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const eur = (n) => `€${n.toLocaleString("en-US")}`;
 
 function reportSize() {
   requestAnimationFrame(() => sim.resize(document.body.scrollHeight + 8));
 }
 
-// The whole run for the current settings, as a list of steps. Each step names the stage it
-// belongs to, and whether money moves in it.
-function plan() {
-  const r = REQUESTS[request];
-  const needs = policy === "always" || r.amount > THRESHOLD;
-  const call = `issue_refund(order_id="${r.order}", amount=${r.amount})`;
-  const denied = decision === "deny";
-  const out = [{ stage: "request", kind: "user", who: "Customer", html: esc(r.text) }];
-  out.push({ stage: "model", kind: "model", who: "Model call 1", html: `Proposes <span class="mono">${esc(call)}</span>. It runs nothing itself.` });
-  const run = () => out.push({ stage: "tool", kind: "tool", who: "Runtime", money: r.amount, html: `Runs <span class="mono">issue_refund</span>. ${eur(r.amount)} leaves the store's account. Result: <span class="mono">{"status": "refunded", "refund_id": "R-5001"}</span>` });
-  const reply = (text) => out.push({ stage: "reply", kind: "answer", who: "Model call 2", html: esc(text) });
+function amount() {
+  return AMOUNTS[amountKey];
+}
 
-  if (placement === "before") {
-    const how = policy === "always" ? "require_confirmation=True" : `require_confirmation(amount=${r.amount}) returns ${needs ? "True" : "False"}`;
-    if (!needs) {
-      out.push({ stage: "gate", kind: "gate", who: "Runtime", html: `<span class="mono">${esc(how)}</span>, so the call does not pause.` });
-      run();
-      reply(`Done: ${eur(r.amount)} is on its way back to you.`);
-    } else {
-      out.push({ stage: "gate", kind: "gate", who: "Runtime", html: `<span class="mono">${esc(how)}</span>. The tool pauses <strong>before it runs</strong>; the client receives an <span class="mono">adk_request_confirmation</span> event.` });
-      out.push({ stage: "gate", kind: denied ? "stop" : "ok", who: "Approver", html: denied ? "Denies the refund." : "Approves the refund." });
-      if (denied) {
-        out.push({ stage: "gate", kind: "tool", who: "Runtime", html: `<span class="mono">issue_refund</span> never runs. The model receives <span class="mono">{"error": "This tool call is rejected."}</span>` });
-        reply(`I couldn't issue that refund: it was declined in review. A colleague will contact you about the ${r.item}.`);
-      } else {
-        run();
-        reply(`Approved and done: ${eur(r.amount)} is on its way back to you.`);
-      }
-    }
-  } else if (placement === "after") {
-    run();
-    if (!needs) {
-      out.push({ stage: "review", kind: "gate", who: "Runtime", html: `The after_tool_callback sees ${eur(r.amount)}, under the €${THRESHOLD} threshold, and asks for no review.` });
-      reply(`Done: ${eur(r.amount)} is on its way back to you.`);
-    } else {
-      out.push({ stage: "review", kind: "gate", who: "Runtime", html: "The after_tool_callback sends the finished call to a reviewer. The refund has already gone out." });
-      out.push({ stage: "review", kind: denied ? "stop" : "ok", who: "Reviewer", html: denied ? `Denies it. The denial is recorded, but the ${eur(r.amount)} has already left; getting it back needs a separate reversal, which may not be possible.` : "Approves it after the fact." });
-      reply(`Done: ${eur(r.amount)} is on its way back to you.`);
-    }
-  } else {
-    run();
-    reply(`Done: ${eur(r.amount)} is on its way back to you.`);
-  }
-  return out;
+function asks() {
+  return amount() > threshold;
 }
 
 function resetRun() {
-  stopAuto();
-  steps = plan();
-  shown = 1;
+  stopAnim();
+  lanes = {
+    top: { x: X0, paid: 0, signal: asks() ? "wait" : "auto", state: "idle", stamp: false, coins: -1 },
+    bottom: { x: X0, paid: 0, signal: asks() ? "wait" : "auto", state: "idle", stamp: false, coins: -1 },
+  };
+  phase = "ready";
+  decision = null;
 }
 
-function done() {
-  return shown >= steps.length;
+// ---- Run logic ----------------------------------------------------------------------------
+
+// Segments a lane travels before the human is asked (or to the end when nobody is asked).
+function firstLeg(name) {
+  if (!asks()) return END;
+  return name === "top" ? SIG.top - 40 : SIG.bottom - 40;
 }
 
-function step() {
-  if (done()) return;
-  shown += 1;
-  if (done()) finish();
+function send() {
+  if (phase === "running" || phase === "waiting") return;
+  if (phase === "done") resetRun();
+  phase = "running";
+  sim.event("refund-sent", { amount: amount(), threshold });
+  animate({ top: firstLeg("top"), bottom: firstLeg("bottom") }, () => {
+    if (asks()) {
+      phase = "waiting";
+      render();
+      els.deny.focus();
+    } else {
+      decision = "auto";
+      finish();
+    }
+  });
+  render();
+}
+
+function decide(choice) {
+  if (phase !== "waiting") return;
+  decision = choice;
+  phase = "running";
+  lanes.top.signal = choice === "approve" ? "go" : "stop";
+  lanes.bottom.signal = choice === "approve" ? "go" : "stop";
+  sim.event("approver-decided", { choice, amount: amount() });
+  els.send.focus();
+  if (choice === "deny") {
+    lanes.top.state = "rejected";
+    lanes.bottom.stamp = true;
+    render();
+    finish();
+    return;
+  }
+  animate({ top: END, bottom: END }, finish);
+  render();
 }
 
 function finish() {
-  const r = REQUESTS[request];
-  const moved = steps.some((s) => s.money);
-  const reviewed = steps.some((s) => s.who === "Approver" || s.who === "Reviewer");
-  sim.event("run-finished", { request, placement, policy, decision, moved });
-  if (reviewed && decision === "deny") {
-    if (placement === "before" && !moved) seenBefore = true;
-    if (placement === "after" && moved) seenAfter = true;
-  }
-  if (!reported && seenBefore && seenAfter) {
+  phase = "done";
+  sim.event("run-finished", { decision, amount: amount(), topPaid: lanes.top.paid, bottomPaid: lanes.bottom.paid });
+  if (decision === "deny" && !reported) {
     reported = true;
     sim.checkpoint("observe-approval-before-side-effect");
-    sim.event("gate-placement-compared", { amount: r.amount });
+  }
+  render();
+}
+
+// ---- Motion -------------------------------------------------------------------------------
+
+// Move both trains to their targets together. A train that crosses LINE pays at that moment.
+function animate(targets, done) {
+  const from = { top: lanes.top.x, bottom: lanes.bottom.x };
+  const dur = reduced || document.hidden ? 0 : 1500;
+  anim = { from, targets, t0: null, dur, done };
+  if (dur === 0) { settle(1); const d = anim.done; anim = null; d(); return; }
+  requestAnimationFrame(frame);
+}
+
+function settle(k) {
+  const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+  for (const name of ["top", "bottom"]) {
+    const L = lanes[name];
+    const x = anim.from[name] + (anim.targets[name] - anim.from[name]) * e;
+    if (L.paid === 0 && x >= LINE) {
+      L.paid = amount();
+      L.coinsAt = k;
+      sim.event("money-moved", { track: name });
+    }
+    L.x = x;
+    L.coins = L.paid && k < 1 ? Math.min(1, (k - L.coinsAt) / 0.45) : -1;
   }
 }
 
-function stopAuto() {
-  if (timer) clearInterval(timer);
-  timer = null;
-  if (els.auto) els.auto.textContent = "Auto";
+function frame(t) {
+  if (!anim) return;
+  if (anim.t0 === null) anim.t0 = t;
+  const k = anim.dur ? Math.min(1, (t - anim.t0) / anim.dur) : 1;
+  settle(k);
+  draw();
+  if (k < 1) { requestAnimationFrame(frame); return; }
+  for (const name of ["top", "bottom"]) lanes[name].coins = -1;
+  const d = anim.done;
+  anim = null;
+  d();
 }
 
-function startAuto() {
-  if (done()) return;
-  els.auto.textContent = "Pause";
-  timer = setInterval(() => {
-    step();
-    renderRun();
-    if (done()) stopAuto();
-  }, 900);
+function stopAnim() {
+  anim = null;
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && anim) anim.dur = 0;
+});
+
+// ---- Drawing ------------------------------------------------------------------------------
+
+function laneSvg(name, title, code) {
+  const y = Y[name];
+  const sx = SIG[name];
+  return `
+    <g class="lane">
+      <text x="24" y="${y - 62}" class="lt">${title}</text>
+      <text x="24" y="${y - 44}" class="lc">${code}</text>
+      <line x1="40" y1="${y}" x2="${END + 40}" y2="${y}" class="rail"/>
+      <line x1="40" y1="${y + 8}" x2="${END + 40}" y2="${y + 8}" class="rail"/>
+      <g transform="translate(50,${y + 4})" class="station"><rect x="-26" y="-18" width="52" height="36" rx="8"/><text y="4">Model</text></g>
+      <g transform="translate(${END + 22},${y + 4})" class="station"><rect x="-30" y="-18" width="60" height="36" rx="8"/><text y="4">Reply</text></g>
+      <g class="vault" transform="translate(${LINE},${y + 52})">
+        <rect x="-62" y="-17" width="124" height="34" rx="8"/>
+        <text y="5" id="${name}-vault"></text>
+      </g>
+      <g class="wallet" transform="translate(${END - 40},${y + 52})">
+        <rect x="-52" y="-17" width="104" height="34" rx="8"/>
+        <text y="5" id="${name}-wallet"></text>
+      </g>
+      <g id="${name}-signal" class="signal" transform="translate(${sx},${y})">
+        <rect x="-4" y="-50" width="8" height="46" rx="3" class="post"/>
+        <rect x="-15" y="-80" width="30" height="34" rx="8" class="head"/>
+        <circle cy="-63" r="10" class="lamp"/>
+        <text y="-88" class="sl" id="${name}-sl"></text>
+      </g>
+      <g id="${name}-coins">${[0, 1, 2, 3, 4].map(() => '<g class="coin" opacity="0"><circle r="8"/><text y="3">€</text></g>').join("")}</g>
+      <g id="${name}-train" class="train">
+        <rect x="-34" y="-17" width="68" height="30" rx="10"/>
+        <text y="3" id="${name}-tt"></text>
+      </g>
+      <g id="${name}-stamp" class="stamp" opacity="0"><rect x="-50" y="-13" width="100" height="26" rx="3"/><text y="5">TOO LATE</text></g>
+    </g>`;
 }
 
 function build() {
-  const sel = (id, label, opts) => `
-      <label class="field">${label}
-        <select id="${id}">${Object.entries(opts).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("")}</select>
-      </label>`;
   app.innerHTML = `
-    <div class="controls">
-      ${sel("request", "Refund request", { large: "€400, order L-31", small: "€40, order M-12" })}
-      ${sel("placement", "Approval placement", PLACEMENTS)}
-      ${sel("policy", "Ask for approval on", POLICIES)}
-      ${sel("decision", "Approver's answer", DECISIONS)}
-      <div class="buttons">
-        <button id="step">Step</button>
-        <button id="auto" class="secondary">Auto</button>
-        <button id="reset" class="secondary">Reset</button>
+    <div class="panel predict" id="predict">
+      <p class="q">Predict first: you will <strong>deny</strong> this refund. Which track keeps the money in the vault?</p>
+      <div class="chips" role="group" aria-label="Your prediction">
+        ${Object.entries(PREDICT).map(([k, v]) => `<button type="button" class="chip" data-predict="${k}" aria-pressed="false">${v}</button>`).join("")}
+      </div>
+      <p class="verdict" id="verdict"></p>
+    </div>
+    <div class="panel stage">
+      <div class="scroll" tabindex="0" role="region" aria-label="The two tracks"><svg viewBox="0 0 760 400" role="img" aria-label="The same refund rides two tracks. On the top track the approval signal stands before the line where issue_refund pays out; on the bottom track the review signal stands after it.">
+        <g class="noreturn">
+          <rect x="${LINE - 12}" y="40" width="24" height="324" rx="8"/>
+          <text x="${LINE}" y="386" class="nl">issue_refund runs here: money moves</text>
+        </g>
+        ${laneSvg("top", "Approval before the tool", "require_confirmation=True")}
+        ${laneSvg("bottom", "Review after the tool", "after_tool_callback → review")}
+      </svg></div>
+      <p class="caption" id="caption" role="status"></p>
+      <div class="decide" id="decide" hidden>
+        <span class="who">Both signals are waiting for you, the approver.</span>
+        <button type="button" id="approve" class="ok">Approve</button>
+        <button type="button" id="deny" class="no">Deny</button>
+      </div>
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Refund">
+          <span class="seglabel">Refund</span>
+          <button type="button" class="pill" data-amount="large" aria-pressed="true">€400 chair</button>
+          <button type="button" class="pill" data-amount="small" aria-pressed="false">€40 mug</button>
+        </div>
+        <label class="field" for="threshold">Ask for approval on refunds over <strong id="thv"></strong>
+          <input id="threshold" type="range" min="0" max="500" step="20" />
+        </label>
+        <div class="buttons">
+          <button type="button" id="send" class="primary">Send refund</button>
+          <button type="button" id="reset" class="secondary">Reset</button>
+        </div>
       </div>
     </div>
-    <ol class="stages" id="stages" aria-label="Where the run is"></ol>
-    <section class="ledger" aria-labelledby="ledger-h">
-      <h2 id="ledger-h">Store refunds account</h2>
-      <p id="ledger"></p>
-    </section>
-    <p class="readout" id="readout" role="status"></p>
-    <section class="transcript" aria-labelledby="tr-h">
-      <h2 id="tr-h">The run, step by step</h2>
-      <ol id="rows"></ol>
-    </section>
-    <p class="legend">A fictional store, threshold and refund. Each run starts from the same balance, so the two placements compare like for like.</p>`;
+    <div class="tiles">
+      <div class="tile"><span class="tl">Top vault</span><span class="tv mono" id="t-top"></span></div>
+      <div class="tile"><span class="tl">Bottom vault</span><span class="tv mono" id="t-bottom"></span></div>
+      <div class="tile"><span class="tl">Your call</span><span class="tv" id="t-call"></span></div>
+    </div>
+    <p class="legend">A fictional store and refund. Both tracks start from the same €5,000 and get the same decision, so the only difference is where the signal stands.</p>`;
   els = {};
-  for (const id of ["request", "placement", "policy", "decision", "step", "auto", "reset", "stages", "ledger", "readout", "rows"]) {
-    els[id] = app.querySelector(`#${id}`);
+  for (const id of ["predict", "verdict", "caption", "decide", "approve", "deny", "threshold", "thv", "send", "reset", "t-top", "t-bottom", "t-call"]) els[id] = app.querySelector(`#${id}`);
+  for (const name of ["top", "bottom"]) {
+    for (const part of ["vault", "wallet", "signal", "sl", "coins", "train", "tt", "stamp"]) els[`${name}-${part}`] = app.querySelector(`#${name}-${part}`);
   }
-  els.request.value = request;
-  els.placement.value = placement;
-  els.policy.value = policy;
-  els.decision.value = decision;
-  const onChange = () => {
-    request = els.request.value;
-    placement = els.placement.value;
-    policy = els.policy.value;
-    decision = els.decision.value;
+  els.threshold.value = String(threshold);
+  app.querySelectorAll("[data-predict]").forEach((b) => b.addEventListener("click", () => {
+    prediction = b.dataset.predict;
+    app.querySelectorAll("[data-predict]").forEach((c) => c.setAttribute("aria-pressed", String(c === b)));
+    sim.event("predicted", { prediction });
+    render();
+  }));
+  app.querySelectorAll("[data-amount]").forEach((b) => b.addEventListener("click", () => {
+    amountKey = b.dataset.amount;
+    app.querySelectorAll("[data-amount]").forEach((c) => c.setAttribute("aria-pressed", String(c === b)));
     resetRun();
-    renderRun();
-  };
-  for (const id of ["request", "placement", "policy", "decision"]) els[id].addEventListener("change", onChange);
-  els.step.addEventListener("click", () => { stopAuto(); step(); renderRun(); });
-  els.auto.addEventListener("click", () => { if (timer) stopAuto(); else startAuto(); });
-  els.reset.addEventListener("click", () => { resetRun(); renderRun(); });
+    render();
+  }));
+  els.threshold.addEventListener("input", () => { threshold = Number(els.threshold.value); resetRun(); render(); });
+  els.send.addEventListener("click", send);
+  els.reset.addEventListener("click", () => { resetRun(); render(); });
+  els.approve.addEventListener("click", () => decide("approve"));
+  els.deny.addEventListener("click", () => decide("deny"));
 }
 
-function renderRun() {
-  const visible = steps.slice(0, shown);
-  const at = visible[visible.length - 1].stage;
-  const stages = [
-    { id: "request", label: "Request" },
-    { id: "model", label: "Model proposes" },
-    { id: "gate", label: "Approval before", off: placement !== "before" },
-    { id: "tool", label: "Tool runs: money moves" },
-    { id: "review", label: "Review after", off: placement !== "after" },
-    { id: "reply", label: "Reply" },
-  ];
-  els.stages.innerHTML = stages.map((s) => `<li class="stage${s.off ? " off" : ""}${s.id === at ? " now" : ""}">${esc(s.label)}${s.off ? " (none)" : ""}${s.id === at ? '<span class="sr"> (current step)</span>' : ""}</li>`).join("");
+function draw() {
+  for (const name of ["top", "bottom"]) {
+    const L = lanes[name];
+    const y = Y[name];
+    const shake = L.state === "rejected" ? " rejected" : "";
+    els[`${name}-train`].setAttribute("transform", `translate(${L.x.toFixed(1)},${y})`);
+    els[`${name}-train`].setAttribute("class", `train${L.paid ? " paid" : ""}${shake}`);
+    els[`${name}-tt`].textContent = (L.state === "rejected" ? "✕ " : "") + eur(amount());
+    els[`${name}-stamp`].setAttribute("opacity", L.stamp ? "1" : "0");
+    els[`${name}-stamp`].setAttribute("transform", `translate(${L.x.toFixed(1)},${y - 34}) rotate(-10)`);
+    els[`${name}-vault`].textContent = `Vault ${eur(START - L.paid)}`;
+    els[`${name}-wallet`].textContent = L.paid ? `Customer +${eur(L.paid)}` : "Customer €0";
+    const coins = els[`${name}-coins`].children;
+    for (let i = 0; i < coins.length; i++) {
+      const k = L.coins < 0 ? -1 : L.coins * 1.5 - i * 0.12;
+      if (k <= 0 || k >= 1) { coins[i].setAttribute("opacity", "0"); continue; }
+      const x = LINE + (END - 40 - LINE) * k;
+      const cy = y + 52 - Math.sin(k * Math.PI) * 40;
+      coins[i].setAttribute("opacity", "1");
+      coins[i].setAttribute("transform", `translate(${x.toFixed(1)},${cy.toFixed(1)})`);
+    }
+    const sig = L.signal;
+    els[`${name}-signal`].setAttribute("class", `signal ${sig}`);
+    els[`${name}-sl`].textContent = sig === "auto" ? `≤ ${eur(threshold)}: no ask` : sig === "wait" ? "approval" : sig === "go" ? "approved" : "denied";
+  }
+}
 
-  const movedStep = visible.find((s) => s.money);
-  const moved = movedStep ? movedStep.money : 0;
-  els.ledger.innerHTML = movedStep
-    ? `Balance <span class="mono">${eur(START_BALANCE - moved)}</span> · <span class="moved">−${eur(moved)} refund R-5001 paid out</span>`
-    : `Balance <span class="mono">${eur(START_BALANCE)}</span> · <span class="still">no money has moved</span>`;
+function captionText() {
+  const a = eur(amount());
+  if (phase === "ready") {
+    return asks()
+      ? `The model proposes issue_refund(amount=${amount()}). Press Send refund: both trains leave together.`
+      : `${a} is not over ${eur(threshold)}, so neither signal will ask. Press Send refund.`;
+  }
+  if (phase === "running" && decision === null) return "Both trains are moving. Watch the bottom one cross the line before it reaches its signal.";
+  if (phase === "waiting") return `Top: the call is paused before issue_refund, nothing has moved. Bottom: issue_refund already ran and ${a} left its vault. Approve or deny?`;
+  if (phase === "running") return "Approved: both trains carry on to the reply.";
+  if (decision === "deny") return `Top: issue_refund never runs; the model gets {"error": "This tool call is rejected."} and the vault keeps ${a}. Bottom: your denial is recorded, but ${a} is already gone. Undoing it needs a separate reversal.`;
+  if (decision === "approve") return `Approved: both tracks pay ${a}. With a yes, placement makes no difference; it only matters when the answer is no.`;
+  return `Nobody was asked: both tracks paid ${a}. Raise the refund or lower the threshold to make the signals ask.`;
+}
 
-  const rows = visible.map((e) => `<li class="row ${e.kind}"><span class="who">${esc(e.who)}</span><span>${e.html}</span></li>`);
-  if (!done()) rows.push(`<li class="pending">Next: step ${shown + 1} of ${steps.length}. Press Step or Auto.</li>`);
-  els.rows.innerHTML = rows.join("");
-
-  const reviewed = steps.some((s) => s.who === "Approver" || s.who === "Reviewer");
-  let text;
-  if (!done()) text = `Step ${shown} of ${steps.length} · ${moved ? `${eur(moved)} has left the account` : "no money has moved yet"}.`;
-  else if (!reviewed) text = `Finished without a human decision · ${moved ? `${eur(moved)} paid out` : "no money moved"}.`;
-  else if (decision === "deny" && !moved) text = "Denied before issue_refund ran · no money moved.";
-  else if (decision === "deny") text = `Denied after issue_refund ran · ${eur(moved)} had already left. The denial changed nothing.`;
-  else text = `Approved · ${eur(moved)} paid out.`;
-  els.readout.className = `readout${done() && reviewed && decision === "deny" ? (moved ? " stopped" : " done") : ""}`;
-  els.readout.textContent = text;
+function render() {
+  if (!anim) draw();
+  els.thv.textContent = threshold === 0 ? "€0 (every refund)" : eur(threshold);
+  els.caption.textContent = captionText();
+  els.decide.hidden = phase !== "waiting";
+  els.send.textContent = phase === "done" ? "Send again" : "Send refund";
+  els["t-top"].textContent = eur(START - lanes.top.paid);
+  els["t-top"].className = `tv mono${lanes.top.paid ? " neg" : " pos"}`;
+  els["t-bottom"].textContent = eur(START - lanes.bottom.paid);
+  els["t-bottom"].className = `tv mono${lanes.bottom.paid ? " neg" : " pos"}`;
+  els["t-call"].textContent = decision === "deny" ? "Denied" : decision === "approve" ? "Approved" : decision === "auto" ? "Not asked" : phase === "waiting" ? "Waiting for you" : "None yet";
+  let verdict = "";
+  if (decision === "deny" && prediction) {
+    verdict = prediction === "top"
+      ? "You predicted the top track: right. Only an approval before the tool can stop the money."
+      : `You predicted ${PREDICT[prediction].toLowerCase()}. Only the top track kept the money: its signal stood before the line.`;
+  }
+  els.verdict.textContent = verdict;
   reportSize();
 }
 
 function readProps(props) {
-  if (!props) return;
-  if (PLACEMENTS[props.placement]) placement = props.placement;
-  if (REQUESTS[props.request]) request = props.request;
+  if (props && AMOUNTS[props.request]) amountKey = props.request;
 }
 
-document.addEventListener("visibilitychange", () => { if (document.hidden) stopAuto(); });
-
 const sim = createSim({
-  onInit({ props, theme }) {
+  onInit({ props, theme, reducedMotion }) {
     applyTheme(theme);
+    reduced = !!reducedMotion;
     readProps(props);
     build();
     resetRun();
-    renderRun();
+    render();
   },
 });
 
@@ -256,6 +354,6 @@ setTimeout(() => {
   if (!sim.isInitialized() && app.childElementCount === 0) {
     build();
     resetRun();
-    renderRun();
+    render();
   }
 }, 300);
