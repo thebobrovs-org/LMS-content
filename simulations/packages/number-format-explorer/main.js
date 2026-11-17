@@ -74,11 +74,31 @@ function mount() {
 
     <div class="range" id="range"></div>
 
-    <div class="readout" id="readout" role="status"></div>`;
+    <div class="readout" id="readout" role="status"></div>
+    <p class="sr-only" id="said" role="status" aria-atomic="true"></p>`;
 
   app.querySelector("#L").addEventListener("input", (e) => setL(+e.target.value));
-  app.querySelectorAll(".presets button").forEach((b) => b.addEventListener("click", () => setL(+b.getAttribute("data-l"))));
+  app.querySelectorAll(".presets button").forEach((b) =>
+    b.addEventListener("click", () => {
+      setL(+b.getAttribute("data-l"));
+      say();
+    }),
+  );
   mounted = true;
+}
+
+/**
+ * After a preset, what each format makes of the new value, said once (LMS-content#136). The readout above only
+ * changes when fp16 starts or stops failing, so most presets left it as it was and nothing was announced. The slider
+ * announces its own value, so it doesn't speak through here.
+ */
+function say() {
+  const v = Math.pow(10, L);
+  const parts = FORMATS.map((f) => {
+    const r = repr(v, f);
+    return `${f.label} ${r.ok ? `≈ ${fmtNum(r.rounded ?? v)}, ${r.errPct < 0.001 ? "exact" : `±${r.errPct}% rounding`}` : r.status}`;
+  });
+  app.querySelector("#said").textContent = `Value ${fmtNum(v)}. ${parts.join("; ")}.`;
 }
 
 /** Set the value (from the slider or a preset) and redraw. */

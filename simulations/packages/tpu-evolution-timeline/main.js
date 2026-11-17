@@ -64,7 +64,7 @@ function render() {
   const MAX_LOG = Math.log10(5000);
 
   const nodes = GENS.map((gen, n) => `
-    <button class="node ${n === i ? "active" : ""} ${n < i ? "past" : ""}" data-i="${n}" aria-label="Go to ${gen.label}">
+    <button class="node ${n === i ? "active" : ""} ${n < i ? "past" : ""}" data-i="${n}" aria-label="Go to ${gen.label}"${n === i ? ' aria-current="step"' : ""}>
       <div class="node-chip"></div><div class="node-label">${gen.label}</div>
     </button>`).join("");
 
@@ -88,11 +88,11 @@ function render() {
   }).join("");
 
   app.innerHTML = `
-    <div class="timeline-track">
+    <nav class="timeline-track" aria-label="TPU generations">
       <div class="timeline-line"></div>
       <div class="timeline-progress" style="width:${progressPct}%"></div>
       ${nodes}
-    </div>
+    </nav>
 
     <div class="story-container">
       <div class="panel wall">

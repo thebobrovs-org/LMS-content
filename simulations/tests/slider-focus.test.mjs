@@ -65,6 +65,7 @@ function fakeDom() {
       },
       addEventListener(type, fn) { (this.listeners[type] ??= []).push(fn); },
       getAttribute: (name) => attrs[name] ?? null,
+      setAttribute: (name, value) => { attrs[name] = String(value); }, // the tile buttons' aria-pressed (LMS-content#136)
       querySelector: (sel) => doc.querySelector(sel),
       querySelectorAll: (sel) => doc.querySelectorAll(sel),
       get innerHTML() { return html; },

@@ -110,7 +110,8 @@ function idleNote() {
 function setSpec(spec, user) {
   if (isAnimating) return;
   currentSpec = spec;
-  document.querySelectorAll(".seg-btn").forEach((b) => b.classList.toggle("on", b.dataset.spec === spec));
+  // The choice is exposed as aria-pressed, not only styled (LMS-content#136).
+  document.querySelectorAll(".seg-btn").forEach((b) => b.setAttribute("aria-pressed", String(b.classList.toggle("on", b.dataset.spec === spec))));
   setPhase("");
   buildChips();
   updateDashboard();

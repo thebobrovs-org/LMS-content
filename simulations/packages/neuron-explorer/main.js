@@ -162,6 +162,7 @@ function initDOM() {
             <button class="btn train" id="btn-train">Auto Train</button>
           </div>
           <button class="btn reset" id="btn-reset">Reset network</button>
+          <p class="sr-only" id="live" role="status" aria-live="polite" aria-atomic="true"></p>
           <div class="converged" id="converged">🎉 <b>Converged</b> — loss fell below 0.01. The neuron learned the rule; those weights are the trained model.</div>
           <div class="metrics">
             <div class="m-card"><div class="m-k">Epochs run</div><div class="m-v" id="m-ep">0</div></div>
@@ -177,13 +178,21 @@ function initDOM() {
       </div>
     </div>`;
 
-  document.getElementById("btn-step").addEventListener("click", () => { if (!converged) { trainStep(); update(); } });
+  document.getElementById("btn-step").addEventListener("click", () => { if (!converged) { trainStep(); update(); announce(converged ? `${epochText()} Converged.` : epochText()); } });
   document.getElementById("btn-train").addEventListener("click", toggleTrain);
   document.getElementById("btn-reset").addEventListener("click", reset);
   document.getElementById("btn-infer").addEventListener("click", runInference);
   document.getElementById("inf-price").addEventListener("input", (e) => { infPrice = clamp(+e.target.value); });
   document.getElementById("inf-color").addEventListener("input", (e) => { infColor = clamp(+e.target.value); });
 }
+
+// What a control just did, said once through the polite live region initDOM mounts (LMS-content#136): the epoch and
+// loss after a step, the score after inference, convergence. Training's own ticks don't speak, so it never floods.
+function announce(text) {
+  const el = document.getElementById("live");
+  if (el) el.textContent = text;
+}
+const epochText = () => `Epoch ${epoch}. Mean loss ${evaluate().meanLoss.toFixed(3)}.`;
 
 function clamp(v) { return Math.max(1, Math.min(10, isFinite(v) ? v : 1)); }
 
@@ -196,6 +205,7 @@ function setBar(fillId, valId, v) {
 
 function update() {
   const { predictions, meanLoss } = evaluate();
+  const stepHadFocus = document.activeElement === document.getElementById("btn-step");
 
   document.getElementById("nd-w1").textContent = w1.toFixed(2);
   document.getElementById("nd-w2").textContent = w2.toFixed(2);
@@ -226,24 +236,29 @@ function update() {
     document.getElementById("btn-train").classList.remove("on");
     document.getElementById("btn-step").disabled = true;
     if (!observed && window.sim) { observed = true; sim.checkpoint("observe-convergence"); }
+    announce(`Converged at epoch ${epoch}: loss below 0.01.`);
   }
+  // Step switches itself off while training or once converged; a keyboard user on it moves to the train button.
+  if (stepHadFocus && document.getElementById("btn-step").disabled) document.getElementById("btn-train").focus({ preventScroll: true });
   reportSize();
 }
 
 function stopTrain() { clearInterval(timer); timer = null; isTraining = false; }
 
 function toggleTrain() {
-  if (isTraining) { stopTrain(); update(); return; }
+  if (isTraining) { stopTrain(); update(); announce(`Training paused. ${epochText()}`); return; }
   if (converged) { converged = false; epoch = 0; w1 = -0.8; w2 = 0.6; b = 0.2; } // re-train from the fixed start
   if (REDUCE) {
     // No animation: train to convergence (or a cap) in one go.
     let i = 0;
     while (evaluate().meanLoss >= 0.01 && i < 2000) { trainStep(); i++; }
     update();
+    announce(epochText());
     return;
   }
   isTraining = true;
   update();
+  announce("Training…");
   // A few steps per tick so it converges in a few seconds, not ~25s, while still animating smoothly.
   timer = setInterval(() => {
     for (let i = 0; i < 4 && evaluate().meanLoss >= 0.01; i++) trainStep();
@@ -258,6 +273,7 @@ function reset() {
   epoch = 0; infResult = null;
   document.getElementById("inf-out").innerHTML = "";
   update();
+  announce(`Network reset to random weights. ${epochText()}`);
 }
 
 function runInference() {
@@ -272,6 +288,7 @@ function runInference() {
     </div>`;
   if (window.sim && sim.event) sim.event("inference", { price: infPrice, color: infColor, score: infResult.prediction });
   update();
+  announce(`Network score ${(infResult.prediction * 100).toFixed(1)}%. Recommendation: ${buy ? "buy" : "walk away"}.`);
 }
 
 const sim = createSim({

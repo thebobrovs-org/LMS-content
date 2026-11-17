@@ -11,8 +11,8 @@
       <div class="header-bar">
         <p class="hint">A <b>matrix unit</b> works in fixed-size tiles — commonly <b>128×128</b>. Any matmul dimension that isn't a multiple of the tile gets <b>silently zero-padded</b> up to the next one — you pay compute and memory for the overhang. Drag the dimensions and watch the waste.</p>
         <div class="seg" role="group" aria-label="matrix-unit tile size">
-          <button type="button" class="seg-btn on" data-tile="128">128 tile</button>
-          <button type="button" class="seg-btn" data-tile="256">256 tile</button>
+          <button type="button" class="seg-btn on" aria-pressed="true" data-tile="128">128 tile</button>
+          <button type="button" class="seg-btn" aria-pressed="false" data-tile="256">256 tile</button>
         </div>
       </div>
 

@@ -10,19 +10,19 @@
     <main id="app" aria-label="TPU capacity orchestrator">
       <div class="control-panel">
         <div class="control-group">
-          <div class="control-label">1 · Target slice</div>
-          <div class="btn-grid" id="slice-btns">
-            <button class="opt-btn active" data-slice="v6e">v6e-256 (Trillium)<span>256 chips · 32 hosts</span></button>
-            <button class="opt-btn" data-slice="v5p">v5p-1024 (training)<span>1024 chips · 128 hosts</span></button>
+          <div class="control-label" id="slice-label">1 · Target slice</div>
+          <div class="btn-grid" id="slice-btns" role="group" aria-labelledby="slice-label">
+            <button class="opt-btn active" aria-pressed="true" data-slice="v6e">v6e-256 (Trillium)<span>256 chips · 32 hosts</span></button>
+            <button class="opt-btn" aria-pressed="false" data-slice="v5p">v5p-1024 (training)<span>1024 chips · 128 hosts</span></button>
           </div>
         </div>
         <div class="control-group">
-          <div class="control-label">2 · Capacity mode</div>
-          <div class="btn-grid" id="mode-btns">
-            <button class="opt-btn active" data-mode="dws">DWS · Flex Start<span>Queued · low cost · ≤7 days</span></button>
-            <button class="opt-btn" data-mode="calendar">DWS · Calendar<span>Scheduled · guaranteed start</span></button>
-            <button class="opt-btn" data-mode="spot">Spot / preemptible<span>Instant · cheapest · risky</span></button>
-            <button class="opt-btn" data-mode="ondemand">On-demand<span>Instant · reliable · full price</span></button>
+          <div class="control-label" id="mode-label">2 · Capacity mode</div>
+          <div class="btn-grid" id="mode-btns" role="group" aria-labelledby="mode-label">
+            <button class="opt-btn active" aria-pressed="true" data-mode="dws">DWS · Flex Start<span>Queued · low cost · ≤7 days</span></button>
+            <button class="opt-btn" aria-pressed="false" data-mode="calendar">DWS · Calendar<span>Scheduled · guaranteed start</span></button>
+            <button class="opt-btn" aria-pressed="false" data-mode="spot">Spot / preemptible<span>Instant · cheapest · risky</span></button>
+            <button class="opt-btn" aria-pressed="false" data-mode="ondemand">On-demand<span>Instant · reliable · full price</span></button>
           </div>
           <div class="calendar-input" id="cal-input">
             <div class="cal-label">Booked reservation</div>

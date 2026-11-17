@@ -52,19 +52,25 @@ function log(msg, type = "info") {
   logView.scrollTop = logView.scrollHeight;
 }
 
+// A choice in a group is shown by styling and exposed as aria-pressed, so a screen reader hears which is on (LMS-content#136).
+function select(group, btn) {
+  document.querySelectorAll(`${group} .opt-btn`).forEach((b) => {
+    b.classList.toggle("active", b === btn);
+    b.setAttribute("aria-pressed", String(b === btn));
+  });
+}
+
 document.querySelectorAll("#slice-btns .opt-btn").forEach((btn) =>
   btn.addEventListener("click", () => {
     if (state.status !== "IDLE") return;
-    document.querySelectorAll("#slice-btns .opt-btn").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
+    select("#slice-btns", btn);
     state.slice = btn.dataset.slice;
   }),
 );
 document.querySelectorAll("#mode-btns .opt-btn").forEach((btn) =>
   btn.addEventListener("click", () => {
     if (state.status !== "IDLE") return;
-    document.querySelectorAll("#mode-btns .opt-btn").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
+    select("#mode-btns", btn);
     state.mode = btn.dataset.mode;
     if (state.mode === "calendar") {
       reservationDate = futureDateLabel();

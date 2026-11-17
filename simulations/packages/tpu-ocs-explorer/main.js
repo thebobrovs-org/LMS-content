@@ -166,7 +166,8 @@ function setMode(mode) {
   // A failure run cancelled midway mustn't keep its hold: render() could then never end
   // the reconfiguration event, and the loop would never rest.
   T.hold = false;
-  document.querySelectorAll(".chip[data-mode]").forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
+  // The choice is exposed as aria-pressed, not only styled (LMS-content#136).
+  document.querySelectorAll(".chip[data-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b.classList.toggle("active", b.dataset.mode === mode))));
   $("runFail").hidden = mode !== "fail";
   $("explanation").innerHTML = explanations[mode];
   cubes.forEach((c) => { c.status = "active"; c.color = BASE; });

@@ -68,7 +68,8 @@ function vizSVG() {
 
 function render() {
   if (!mounted) mountSliders();
-  document.querySelectorAll(".seg-btn").forEach((b) => b.classList.toggle("on", +b.dataset.tile === T));
+  // The choice is exposed as aria-pressed, not only styled (LMS-content#136).
+  document.querySelectorAll(".seg-btn").forEach((b) => b.setAttribute("aria-pressed", String(b.classList.toggle("on", +b.dataset.tile === T))));
   updateSliderLabel("M", M);
   updateSliderLabel("K", K);
   updateSliderLabel("N", N);

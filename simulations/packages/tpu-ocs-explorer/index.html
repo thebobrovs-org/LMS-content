@@ -17,11 +17,11 @@
       </div>
 
       <nav class="modes" aria-label="Operation modes">
-        <button class="chip active" data-mode="ring">1 · global ring</button>
-        <button class="chip" data-mode="slice">2 · pod slicing</button>
-        <button class="chip" data-mode="tenant">3 · cross-rack jobs</button>
-        <button class="chip" data-mode="fail">4 · spare-cube repair</button>
-        <button class="chip" data-mode="random">5 · topology shuffle</button>
+        <button class="chip active" aria-pressed="true" data-mode="ring">1 · global ring</button>
+        <button class="chip" aria-pressed="false" data-mode="slice">2 · pod slicing</button>
+        <button class="chip" aria-pressed="false" data-mode="tenant">3 · cross-rack jobs</button>
+        <button class="chip" aria-pressed="false" data-mode="fail">4 · spare-cube repair</button>
+        <button class="chip" aria-pressed="false" data-mode="random">5 · topology shuffle</button>
         <button class="chip run" id="runFail" hidden>▶ run the failure</button>
       </nav>
 
