@@ -88,5 +88,83 @@
   },
   "principal access boundary": {
     "definition": "An IAM policy that defines which resources a principal is eligible to access. It can block access regardless of the principal's role grants (for the permissions it supports), but it never grants access."
+  },
+  "span": {
+    "definition": "One timed operation in a trace, such as a model call or a tool call, nested under the span of the operation that started it. Its length shows where the time went."
+  },
+  "reasoning loop": {
+    "definition": "An agent failure in which the model repeats the same tool call or step, often with the same arguments, without making progress, until a cap or timeout stops it."
+  },
+  "drift": {
+    "definition": "A deployed agent's quality degrading over time as the model, prompts, tools, data or users change, while the service stays up and fast."
+  },
+  "tool trajectory match": {
+    "definition": "Comparing an agent's actual tool calls (name and arguments) with the expected ones, in one of three modes: exact, in-order (extra calls allowed) or any-order (extra calls and any order allowed)."
+  },
+  "gen ai evaluation service": {
+    "definition": "Agent Platform's managed evaluation for models and agents, with rubric-based (including adaptive), computation-based and custom function metrics scored where needed by a judge model."
+  },
+  "context window": {
+    "definition": "The tokens a model sees in one call: instructions, tool declarations, history, recalled memory, retrieved content and the new message. Its size is a limit, and every token in it costs time and money."
+  },
+  "context caching": {
+    "definition": "Reusing the processing of a prompt prefix that repeats across calls, which cuts the cost and latency of that prefix. The cached tokens still count in the context window."
+  },
+  "history compaction": {
+    "definition": "Summarising or trimming a conversation's earlier turns so each call carries less history, while keeping the most recent turns as they were."
+  },
+  "sequential agent": {
+    "definition": "An orchestration pattern (and ADK's SequentialAgent class, deprecated in Python 2.x in favour of Workflow) that runs sub-agents in a fixed order, each able to use the previous one's result."
+  },
+  "parallel agent": {
+    "definition": "An orchestration pattern (and ADK's ParallelAgent class, deprecated in Python 2.x in favour of Workflow) that runs independent sub-agents at the same time and gathers their results; the branches share session state."
+  },
+  "loop agent": {
+    "definition": "An orchestration pattern (and ADK's LoopAgent class, deprecated in Python 2.x in favour of Workflow) that repeats sub-agents until an exit condition is met or an iteration cap is reached."
+  },
+  "graph workflow": {
+    "definition": "Orchestration defined as nodes and edges, with routed branches, fan-out and join, and back-edges for loops; ADK 2.0's Workflow class."
+  },
+  "mcp": {
+    "definition": "Model Context Protocol: an open standard for offering tools to agents. An MCP server publishes tools with names, descriptions and parameter schemas; an MCP client, such as an agent, lists and calls them."
+  },
+  "a2a": {
+    "definition": "Agent2Agent: an open protocol for independent agents to discover each other through agent cards and work together on tasks, without seeing each other's internals."
+  },
+  "agent card": {
+    "definition": "A JSON document an A2A agent publishes, usually at /.well-known/agent-card.json, advertising its skills, endpoint, capabilities and required authentication."
+  },
+  "remote agent": {
+    "definition": "An agent running in another process or service, often owned by another team, that a client agent reaches over A2A."
+  },
+  "google cloud mcp servers": {
+    "definition": "Remote MCP servers that run on Google's infrastructure and offer an HTTP endpoint for a Google Cloud service, such as BigQuery or GKE, with access controlled through IAM."
+  },
+  "mcp toolbox for databases": {
+    "definition": "An open-source MCP server that exposes database queries as agent tools, each defined in configuration with a fixed statement and typed parameters."
+  },
+  "agent registry": {
+    "definition": "Google Cloud's catalogue of agents, MCP servers and their tools, and endpoints, used for discovery and for access policies that govern which agents may use them."
+  },
+  "rag": {
+    "definition": "Retrieval-augmented generation: before the model answers, the system retrieves relevant passages from your documents and puts them in the model's context."
+  },
+  "embedding": {
+    "definition": "A vector of numbers that represents the meaning of a piece of text, so texts with similar meaning sit close together and can be found by similarity search."
+  },
+  "top-k": {
+    "definition": "How many of the highest-ranked retrieved chunks are passed on to the model (or to the next retrieval step)."
+  },
+  "reranking": {
+    "definition": "Rescoring a wider set of retrieved candidates with a stronger relevance model, so only the most relevant few reach the model."
+  },
+  "rag engine": {
+    "definition": "Agent Platform's managed RAG pipeline and corpus service: it ingests, chunks, embeds, indexes and retrieves your documents, with configurable chunking, embedding model, vector database and reranking."
+  },
+  "session state": {
+    "definition": "Key-value data an agent and its code read and write during a session. In ADK a key's prefix sets its scope: none (this session), user:, app: or temp:."
+  },
+  "memory bank": {
+    "definition": "Agent Platform's managed long-term memory: it extracts facts from conversations with an LLM, consolidates them with what it already holds, keeps them isolated per scope (such as agent and user), and returns the relevant ones in later sessions."
   }
 }
