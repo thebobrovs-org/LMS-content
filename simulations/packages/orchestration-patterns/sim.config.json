@@ -1,0 +1,14 @@
+{
+  "id": "orchestration-patterns",
+  "title": "Orchestration patterns",
+  "version": "1.0.0",
+  "props": {
+    "pattern": { "type": "string", "default": "sequential" }
+  },
+  "checkpoints": [
+    {
+      "id": "observe-state-collision",
+      "hint": "Run the parallel pattern with both branches writing the same state key, and see one branch's result overwritten."
+    }
+  ]
+}

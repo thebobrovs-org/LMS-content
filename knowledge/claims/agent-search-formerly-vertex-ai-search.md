@@ -12,6 +12,8 @@ touches:
   - objective:agentic-ai/google-agent-platform-map#former-names
   - item:agentic-ai/google-agent-platform-map#former-vertex-ai-search
   - item:agentic-ai/google-agent-platform-map#rename-vertex-ai-search
+  - agentic-ai/rag-pipelines
+  - item:agentic-ai/rag-pipelines#backend-intranet
 tags: [google-cloud, product-names]
 provenance:
   origin: authoring
