@@ -301,5 +301,8 @@
   },
   "reciprocal rank fusion": {
     "definition": "A way to merge ranked lists (RRF): each item scores by the reciprocal of its rank in each list, summed, so scores from different search methods never need to be compared. Agent Retrieval uses it for hybrid search, with a weight that leans toward semantic or keyword results."
+  },
+  "environment simulation": {
+    "definition": "An ADK evaluation feature that intercepts calls to chosen tools and returns a model-generated mock or a fixed injected response or error, so tests run without real side effects."
   }
 }
