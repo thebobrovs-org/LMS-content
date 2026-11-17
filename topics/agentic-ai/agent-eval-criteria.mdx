@@ -32,6 +32,14 @@ flashcards:
     objective: continuous-eval
     front: What runs in the CI gate, and what in online monitoring?
     back: "CI: the evalset on every change, with reference-based checks (trajectory match, response match) and judged checks, failing the build on a regression. Online: sampled live traffic scored with reference-free checks (rubrics, groundedness, safety), plus latency, cost and errors. Failures found online become new eval cases."
+  - id: efficiency-criteria
+    objective: pick-criterion
+    front: "What do ADK's efficiency criteria (tool_call_count_v1, inference_call_count_v1, token_usage_v1, invocation_duration_v1) tell you?"
+    back: "How many tool and model calls, tokens and seconds each case took. They are always on and informational, never pass or fail a case, so you compare them between runs: a jump signals a loop or a bloated context."
+  - id: scheduled-runs
+    objective: continuous-eval
+    front: "Why run the evalset on a schedule when no code changed?"
+    back: "Retrieved documents, tool backends and users' wording change without a commit. A falling score on an unchanged agent is how that drift shows up."
 quiz:
   - id: harmless-reorder-mode
     objective: trajectory-modes
@@ -234,14 +242,21 @@ Three tools cover most needs:
   returns a score. Use one for a check only your domain defines, such as "the
   refund amount never exceeds the order total".
 
+ADK also reports four efficiency criteria on every run: `tool_call_count_v1`,
+`inference_call_count_v1` (model calls), `token_usage_v1` and
+`invocation_duration_v1`. They are always on and informational: they never pass
+or fail a case, and ADK rejects a threshold on them. Compare them between runs;
+a jump in tool calls or tokens for the same cases is an early sign of a loop or
+a bloated context.
+
 They combine. A typical setup runs ADK evaluation in CI with trajectory and
 response checks, a few custom metrics for business rules, and managed rubric
 metrics for reply quality.
 
 ## Continuous evaluation
 
-Evaluation is not a one-off before launch. It runs at two points, and failures
-flow from the second back to the first.
+Evaluation is not a one-off before launch. It runs before release and after
+it, and failures flow from production back into the evalset.
 
 <Figure
   src="/media/agent-continuous-evaluation.svg"
@@ -253,6 +268,10 @@ flow from the second back to the first.
   version, a tool. Reference-based checks (trajectory and response match) and
   judged checks both run here, and a regression fails the build before users see
   it.
+- **A scheduled run** repeats the evalset daily or weekly even when nothing
+  was committed. The documents an agent retrieves, the APIs behind its tools
+  and the users' wording all change without a commit, and a falling score on an
+  unchanged agent is how that drift shows up.
 - **Online monitoring** scores a sample of live traces after release. Live
   traffic has no expected trajectory or reply, so it uses reference-free checks
   (rubrics, groundedness, safety) alongside latency, cost and error rates.
