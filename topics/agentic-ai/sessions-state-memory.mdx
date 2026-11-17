@@ -135,12 +135,15 @@ service), loses the conversation whenever a request lands on another copy or a
 copy restarts. Agent Platform Sessions removes the need to run your own store;
 every session has a time to live (365 days unless you set one).
 
-On Google Cloud, `DatabaseSessionService` usually points at **Cloud SQL**
-(managed PostgreSQL or MySQL): it takes a database URL, so the same code runs on
-SQLite locally and Cloud SQL in production. Firestore and Memorystore (managed
-Redis) are in scope too, but as data stores your **tools** read and write, such
-as a customer profile in Firestore or a cache in Memorystore. ADK's
-documentation lists no session service for either, so do not plan on one.
+On Google Cloud, the natural home for `DatabaseSessionService` is **Cloud
+SQL** (managed PostgreSQL or MySQL): it takes a database URL with an async
+driver, so the same code runs on SQLite locally and Cloud SQL in production.
+Firestore and Memorystore (managed Redis) are in scope too, mainly as data
+stores your **tools** read and write, such as a customer profile in Firestore
+or a cache in Memorystore. Neither is one of the three built-in session
+services above: ADK for Java offers a Firestore session service as a separate
+integration, but the ADK for Python package ships none, and no built-in session service runs
+on Memorystore.
 
 ## State scopes: how far a value reaches
 
@@ -299,7 +302,8 @@ decides the conversation is over.
 ## Sources
 
 - Google, Agent Development Kit documentation, "State", github.com/google/adk-docs/blob/main/docs/sessions/state.md (state prefixes: none, user:, app:, temp:; persistence depends on the session service).
-- Google, Agent Development Kit, adk-python source, src/google/adk/sessions/database_session_service.py (DatabaseSessionService takes a SQLAlchemy database URL).
+- Google, Agent Development Kit, adk-python source, src/google/adk/sessions/database_session_service.py (DatabaseSessionService takes a SQLAlchemy database URL with an async driver, such as PostgreSQL, MySQL or SQLite).
+- Google, Agent Development Kit documentation, "Session State Management using Firestore", github.com/google/adk-docs/blob/main/docs/integrations/firestore-session-service.md (a Firestore session service for ADK Java, shipped as a separate package).
 - Google, Agent Development Kit documentation, "Session", github.com/google/adk-docs/blob/main/docs/sessions/session/index.md (events and state; InMemorySessionService, VertexAiSessionService, DatabaseSessionService).
 - Google, Agent Development Kit documentation, "Memory", github.com/google/adk-docs/blob/main/docs/sessions/memory.md (MemoryService; VertexAiMemoryBankService; add_session_to_memory; preload_memory and load_memory; the after-agent callback pattern; memory_service_uri).
 - Google Cloud, "Agent Platform Memory Bank", docs.cloud.google.com/gemini-enterprise-agent-platform/scale/memory-bank (extraction, consolidation, scopes and user ids, retrieval modes, topics and few-shot examples, memory time to live; last updated 2026-11-12).
