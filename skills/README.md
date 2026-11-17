@@ -13,6 +13,7 @@ they govern. Authoring a lesson runs in this repo's root layout (`topics/`,
 
 | Skill | Use it to… |
 |-------|-----------|
+| [`lms-path-blueprint`](lms-path-blueprint/SKILL.md) | **Plan a path before building it**: the path TLDR and a plan per topic in `planning/<path-id>/`, all signed off before any lesson is written. Start here for a new path. |
 | [`sme-content-pipeline`](sme-content-pipeline/SKILL.md) | The **end-to-end workflow**: adopt the topic's SME persona, research → plan → draft to `staging/` → audit → promote to prod. Start here for a new topic. |
 | [`lms-authoring-topics`](lms-authoring-topics/SKILL.md) | Write or edit a **lesson** — one topic = one `.mdx` = one graph node. Frontmatter, MDX components, flashcards/quizzes, steps, images, glossary terms. |
 | [`lms-authoring-paths`](lms-authoring-paths/SKILL.md) | Curate a **learning path** — group topics into ordered levels (100/200/300). |

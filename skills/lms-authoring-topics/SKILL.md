@@ -29,15 +29,16 @@ lesson never carries a number its sources or its records cannot support.
 ## Where it goes
 
 ```
-content/topics/<subject>/<slug>.mdx
+topics/<subject>/<slug>.mdx
 ```
 
-- The file path under `content/topics/` (without `.mdx`) IS the topic **`id`**,
-  e.g. `content/topics/data-structures/hash-tables.mdx` → id `data-structures/hash-tables`.
+- The file path under `topics/` (without `.mdx`) IS the topic **`id`**,
+  e.g. `topics/data-structures/hash-tables.mdx` → id `data-structures/hash-tables`.
+- Draft new topics under `staging/topics/<subject>/<slug>.mdx` (`sme-content-pipeline`); `pipeline/promote.mjs` moves them to `topics/`.
 - Folders are organizational only (subjects like `fundamentals/`, `systems/`,
   `ml-systems/`). **The real structure is the graph** (prerequisite/related
   edges), not the folders.
-- Use kebab-case slugs. The `id` in frontmatter must equal the path.
+- Use kebab-case slugs. **Never put `id` in a topic's frontmatter**: the schema is strict and the app derives the id from the path.
 
 ## Anatomy of a topic file
 
@@ -85,15 +86,14 @@ example is [examples/binary-search.mdx](examples/binary-search.mdx).
 
 `title`, `summary`, `tags` (≥1), `difficulty` (`beginner|intermediate|advanced`),
 `estimatedMinutes` (positive integer). Everything else has a sensible default.
-`id` is derived from the path — set it only if you want to be explicit, and it
-must match.
+`id` is derived from the path and is never set in frontmatter.
 
 ## The MDX body
 
 Plain Markdown plus a **whitelisted** set of components (no arbitrary scripts):
 
 - `<Simulation id="…" height={…} props={{…}} />` — embed an interactive sim. The
-  `id` must exist in `content/simulations/registry.json` (build sims first).
+  `id` must be a package in `simulations/packages/<id>/` (build sims first).
 - `<YouTube id="…" start={…} title="…" />` — privacy-friendly lazy video.
 - `<Callout type="tip|note|warning">…</Callout>` — styled aside.
 - `<Flashcard front="…" back="…" />` — inline recall card (also schedulable).
@@ -101,7 +101,7 @@ Plain Markdown plus a **whitelisted** set of components (no arbitrary scripts):
 - `<Steps><Step title="…">…</Step></Steps>` — a tracked, numbered walkthrough;
   each step is a progress checkpoint that feeds topic mastery.
 - `<Figure src="/media/…" alt="…" caption="…" />` — a framed, captioned image.
-  Put files in `public/media/…`; bare Markdown `![alt](src)` also works (auto-styled).
+  Put files in `media/…` and reference them as `/media/…`; bare Markdown `![alt](src)` also works (auto-styled).
   Prefer SVG for diagrams. `alt` is required.
 
 Put a check (flashcard/quiz/step) right after the thing it tests — "do it, then
@@ -140,11 +140,11 @@ to master — author them intentionally.
 
 ```bash
 # fast per-file pre-check (frontmatter + references for one file)
-node skills/lms-authoring-topics/scripts/validate.mjs content/topics/<subject>/<slug>.mdx
+node skills/lms-authoring-topics/scripts/validate.mjs topics/<subject>/<slug>.mdx
 
 # canonical checks (what CI runs)
-npm run validate-content
-npm run build
+npm run validate:staging   # repo-wide, prod + staging
+npm run gate               # what CI runs
 ```
 
 Fix every error before opening a PR. Common failures: a `prerequisites`/`relatedTo`

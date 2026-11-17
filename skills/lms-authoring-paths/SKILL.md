@@ -13,10 +13,10 @@ path never copies lesson content.
 ## Where it goes
 
 ```
-content/paths/<id>.mdx
+paths/<id>.mdx
 ```
 
-The filename (without `.mdx`) is the path **`id`** and its URL: `content/paths/tpu.mdx`
+The filename (without `.mdx`) is the path **`id`** and its URL: `paths/tpu.mdx`
 → `/paths/tpu`.
 
 ## Shape
@@ -62,8 +62,8 @@ A full example is [examples/example-path.mdx](examples/example-path.mdx).
 
 ## Rules
 
-- **Every topic id in every level must exist** (a real `content/topics/**.mdx`).
-  This is checked by `npm run validate-content`.
+- **Every topic id in every level must exist** (a real `topics/**.mdx`).
+  This is checked by `pipeline/validate.mjs` (part of `npm run gate`).
 - Order matters: levels render in array order; topics render in list order.
 - A topic's own optional `level` frontmatter field can echo its tier for a badge,
   but the path's grouping is what drives the path page.
@@ -74,7 +74,7 @@ A full example is [examples/example-path.mdx](examples/example-path.mdx).
 
 - **Path** = the track (`tpu.mdx`).
 - **Level** = a tier (100/200/300) inside the path.
-- **Sub-topic** = each topic id in a level (its own `content/topics/**.mdx` lesson).
+- **Sub-topic** = each topic id in a level (its own `topics/**.mdx` lesson).
 - **Steps** = authored *inside* a lesson with `<Steps>` (see `lms-authoring-topics`).
 
 So splitting a big subject into "101 / 201 / 301" means writing several small
@@ -83,7 +83,6 @@ topic files and listing them under the path's levels — no new infrastructure.
 ## Validate
 
 ```bash
-node skills/lms-authoring-topics/scripts/validate.mjs content/paths/<id>.mdx
-npm run validate-content
-npm run build
+node skills/lms-authoring-topics/scripts/validate.mjs paths/<id>.mdx
+npm run gate
 ```

@@ -1,13 +1,13 @@
 # Topic frontmatter reference
 
-The exact contract, mirroring `lib/content/schema.ts` (the Zod source of truth).
+The exact contract, mirroring `schema/content-schema.mjs` (the zod source of truth, hyperstack ADR 0001).
 Frontmatter is YAML between `---` fences at the top of the `.mdx` file.
 
 ## Fields
 
 | Field | Type | Required | Default | Notes |
 |-------|------|----------|---------|-------|
-| `id` | string | derived | path | Must equal the file path under `topics/` without `.mdx`. Usually omit and let it derive. |
+| `id` | — | never | path | Derived from the file path under `topics/` without `.mdx`. **Not allowed in frontmatter**: the schema is strict and rejects it. |
 | `title` | string | **yes** | — | Sentence case. Shown on cards, the lesson header, the graph. |
 | `summary` | string | **yes** | — | 1–2 sentences. Powers cards, search snippets, graph tooltips. |
 | `tags` | string[] | **yes** (≥1) | — | Drives filtering and related suggestions, e.g. `[data-structures, hashing]`. |
@@ -49,14 +49,14 @@ quiz:
     explanation: <why>            # optional
 ```
 
-## Rules CI enforces (`npm run validate-content`)
+## Rules CI enforces (`npm run gate`, via `pipeline/validate.mjs`)
 
 1. **Schema** — required fields present; enums and types valid.
 2. **Referential integrity** — every `prerequisites`/`relatedTo` id resolves to an existing topic (no dangling edges).
 3. **Acyclic prerequisites** — a topic can't be its own ancestor (the prerequisite subgraph must be a DAG).
-4. **Simulation refs** — every `<Simulation id="…">` in the body resolves to an entry in `content/simulations/registry.json`.
+4. **Simulation refs** — every `<Simulation id="…">` in the body resolves to a package in `simulations/packages/<id>/`.
 5. **Quiz sanity** — `answer` is a valid index into `choices`.
 
 > The fast JS validator (`scripts/build-graph.mjs`) mirrors the critical rules;
-> the full `npm run build` runs the canonical Zod validation. If the fast check
+> `npm run gate` runs the canonical Zod validation. If the fast check
 > passes but the build fails, trust the build.

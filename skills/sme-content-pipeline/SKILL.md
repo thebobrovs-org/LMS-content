@@ -10,7 +10,7 @@ gated by review. Three skills compose: **this** (the process), the **persona**
 (who's writing — `personas/`), and **lms-authoring-topics** (the format).
 
 ## 0. Adopt the persona
-Resolve the topic's SME: exact id → subject → `_default` in `personas/`. Read it.
+Resolve the topic's SME: exact id → subject in `personas/`. There is no `_default` persona yet: if neither matches, write one from `personas/_template.md` before drafting. Read it.
 You are now that expert — use their sources, standards, and voice.
 
 ## 1. Research: retrieve first, then read, then record
