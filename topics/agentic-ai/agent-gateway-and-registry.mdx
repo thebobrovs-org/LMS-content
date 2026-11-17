@@ -1,0 +1,179 @@
+---
+title: Agent Gateway and Agent Registry
+summary: Once many agents call many tools, you need one place to control and see that traffic, and one catalogue of what is allowed to exist. Learn what Agent Gateway enforces and records, what Agent Registry's identifiers are for, and how both combine with agent identity.
+tags: [agentic-ai, agents, security, governance]
+difficulty: advanced
+estimatedMinutes: 25
+level: 300
+prerequisites: [agentic-ai/agent-identity-and-access]
+objectives:
+  - id: gateway-role
+    statement: "Explain what Agent Gateway enforces and observes."
+  - id: registry-role
+    statement: "Explain how Agent Registry identifiers support discovery and governance."
+  - id: design-governance
+    statement: "Design governance combining identity, gateway policy and registry."
+flashcards:
+  - id: three-questions
+    objective: design-governance
+    front: Which question does each of agent identity, Agent Gateway and Agent Registry answer?
+    back: "Identity: who is calling? Registry: what exists, and is it approved? Gateway: may this caller make this call now, and what happened? Identity names the caller, the registry names the target, and the gateway applies policy between them."
+  - id: gateway-card
+    objective: gateway-role
+    front: What does Agent Gateway do?
+    back: "It sits on agent traffic, including calls to MCP servers. It enforces access policies on that traffic, can screen it with Model Armor, and records the traffic so it can be monitored."
+  - id: registry-card
+    objective: registry-role
+    front: What does Agent Registry do?
+    back: "It catalogues registered agents, MCP servers, endpoints and skills, and gives each one identifiers, so teams can discover what exists and policies can name exactly what is allowed."
+  - id: urn-vs-resource-name
+    objective: registry-role
+    front: Which Agent Registry identifier do you put in a policy or a gateway route rule?
+    back: "The resource name (projects/…/locations/…/agents/…). The registry URN (urn:agent:…) identifies the entry across the registry but cannot be used in IAM policy bindings, authorisation headers or gateway route rules."
+quiz:
+  - id: block-unregistered-mcp
+    objective: design-governance
+    question: "All agent traffic goes through Agent Gateway. A developer points an agent at an MCP server they found online, which no one has reviewed. Where is the call stopped at run time?"
+    choices:
+      - "At Agent Gateway, by the access policy applied to the call"
+      - "At Agent Registry, which refuses calls to servers it lacks"
+      - "At Model Armor, which screens the call before it reaches the server"
+    answer: 0
+    explanation: "The gateway is where policy on agent traffic is enforced, and its policy can name the approved targets in the registry, provided the agent's outbound traffic goes through it. The registry is the catalogue that policy refers to; it does not sit on the traffic. Model Armor screens content for threats such as prompt injection, not which servers are approved."
+  - id: identifier-in-route-rule
+    objective: registry-role
+    question: "You are writing an Agent Gateway route rule that should allow calls to one registered agent. Which identifier goes in the rule?"
+    choices:
+      - "The agent's registry URN, such as urn:agent:invoice-lookup"
+      - "The agent's resource name, projects/…/locations/…/agents/…"
+      - "The agent's display name, as shown in the console's list"
+    answer: 1
+    explanation: "Agent Registry's documentation says to use resource names in policy bindings and route rules. Registry URNs identify the entry across the registry but cannot be used in policy bindings or route rules, and a display name is not an identifier at all."
+  - id: one-place-to-see
+    objective: gateway-role
+    question: "Security wants one place to see every tool call that any team's agents make, and to block calls the policy does not allow. What fits?"
+    choices:
+      - "Ask each team to add logging inside its own agents' tools"
+      - "Agent Registry, which records every call to a registered tool"
+      - "Route agent traffic through Agent Gateway with access policies"
+    answer: 2
+    explanation: "The gateway sits on the traffic, so it can both enforce the policy and record every call that passes through it, in one place. Logging inside each agent is scattered and can be skipped, and the registry is a catalogue of what exists, not a record of calls."
+  - id: why-gateway-too
+    objective: design-governance
+    question: "Every agent already has its own identity and narrow IAM roles. What does adding Agent Gateway contribute?"
+    choices:
+      - "It grants the IAM roles that each agent needs to reach its tools"
+      - "One enforcement and audit point for agent traffic to tools and agents"
+      - "It replaces agent identities, so IAM roles are no longer needed at all"
+    answer: 1
+    explanation: "IAM roles decide which Google Cloud resources an identity can reach, and they are granted through allow policies, not by the gateway. Agent traffic also goes to MCP servers, endpoints and other agents, and the gateway applies policy to that traffic and records it in one place. It relies on identity to know who is calling; it does not replace it."
+  - id: find-before-build
+    objective: registry-role
+    question: "A team is about to build an agent that looks up invoices. How should they check whether one already exists in the organisation?"
+    choices:
+      - "Search Agent Registry, which catalogues the registered agents"
+      - "Read Agent Gateway's access logs to find which agents call the invoice API"
+      - "List the service accounts in each project and guess from their names"
+    answer: 0
+    explanation: "Discovering capabilities is one of the registry's stated purposes. Gateway logs show traffic, not what is registered and available, and service account names say nothing reliable about an agent's capabilities."
+status: draft
+updated: "2026-11-17"
+---
+
+## One agent is easy; fifty are not
+
+With one agent, you can read its code to see which tools it calls. With fifty
+agents, built by different teams, calling MCP servers, internal endpoints and
+each other, nobody can. Two questions become hard to answer: **what is allowed
+to exist**, and **what is actually happening**.
+
+The last lesson answered **who is calling**: each agent has its own identity
+and narrow roles. This lesson adds the other two pieces of runtime governance.
+
+<Figure
+  src="/media/agent-gateway-registry.svg"
+  alt="One agent tool call with three governance pieces. On the left, the invoice agent, with Agent Identity answering who: its own principal, a SPIFFE-based identity. At the top, Agent Registry answering what exists: invoice-agent and finance-mcp, an MCP server, are registered; pdf-tools-online is not listed. A dotted arrow shows that gateway policies name registry entries. In the middle, Agent Gateway answering may it happen: 1, which agent is calling; 2, is the target registered, and does the policy allow this agent to call it; 3, screen the content with Model Armor; 4, record the call for monitoring. On the right, the call to finance-mcp, registered and allowed, goes through; the call to pdf-tools-online, not registered, is refused. Footer: identity answers who is calling, the registry answers what exists, and the gateway answers whether this call may happen now, and records it."
+  caption="Identity names the caller, the registry names the target, and the gateway applies policy between them."
+/>
+
+## Agent Registry: what exists
+
+<Term id="agent registry">Agent Registry</Term> assigns distinct identifiers and
+identities to registered agents, MCP servers, endpoints and skills, so that you
+can **discover** capabilities, **enforce** access policies and **route** runtime
+traffic. It is the catalogue the rest of governance refers to. A team looking for an
+existing invoice agent searches the registry before building a new one.
+
+Each entry has two kinds of identifier, for two jobs:
+
+- A **registry URN**, such as `urn:agent:…` or `urn:mcp:…`, which identifies
+  the entry across the registry.
+- A **resource name**, such as `projects/…/locations/…/agents/…`, for
+  governance. Policy bindings and gateway route rules use resource names. The
+  registry's documentation is explicit: registry URNs cannot be used in IAM
+  policy bindings, authorisation headers or gateway route rules.
+
+If you register only what you approve, the registry becomes your list of
+approved targets.
+
+Agents running on Google Cloud get a managed workload identity in SPIFFE
+format: the agent identity from the last lesson.
+
+## Agent Gateway: what may happen now
+
+<Term id="agent gateway">Agent Gateway</Term> is where policy on agent traffic
+is enforced and observed. It sits on agent traffic, including calls to MCP
+servers, and centralises access policies, mTLS (mutual TLS, where both sides
+present certificates) and MCP security. For each call it can:
+
+1. **Know the caller**, from the agent's identity.
+2. **Apply access policy**: is this target approved in the registry, and may
+   this agent call it? Policies name targets by their resource names.
+3. **Screen content**, with Model Armor templates configured on the gateway.
+   They can screen traffic into the agent and traffic out of it, to MCP
+   servers, models and other agents, within limits the next lesson covers.
+4. **Record what happened**, so the traffic can be monitored.
+
+Because it is on the path, the gateway gives you one place to enforce rules and
+one place to see every call, instead of trusting each team to build both into
+each agent.
+
+## Putting the three together
+
+| Piece | Question | In the invoice example |
+|---|---|---|
+| **Agent identity** | Who is calling? | The invoice agent's own principal |
+| **Agent Registry** | What exists, and is it approved? | finance-mcp is registered; pdf-tools-online is not |
+| **Agent Gateway** | May this call happen now, and what happened? | The call to finance-mcp passes and is logged; the call to pdf-tools-online is refused and logged |
+
+Design governance in that order. Give every agent its own identity. Register
+every agent, MCP server and endpoint you approve. Then route agent traffic
+through the gateway with policies that name the caller's identity and the
+target's resource name. If all of the agent's outbound traffic goes through the
+gateway, and its policy allows only the targets you registered, a call to an
+unreviewed server fails and the attempt is logged. Traffic that goes around the
+gateway is not covered, so routing is part of the design.
+
+<Quiz
+  id="which-piece"
+  objective="design-governance"
+  question="An auditor asks: 'Is this MCP server in our catalogue of approved servers?' Which piece answers that?"
+  choices={["Agent identity, which names the calling agent", "Agent Registry, which lists the registered servers", "Agent Gateway, which records each call made"]}
+  answer={1}
+  explanation="Whether a server is approved is a question about what exists, which the registry answers. Identity answers who is calling, and the gateway enforces and records calls; its policy looks the answer up in the registry."
+/>
+
+## Recap
+
+- Identity answers who is calling, the registry what exists, and the gateway
+  whether a call may happen now, and what happened.
+- Agent Registry catalogues agents, MCP servers, endpoints and skills. Policies
+  and route rules use resource names, never URNs.
+- Agent Gateway enforces access policies on agent traffic that passes through
+  it, can screen it with Model Armor, and records it, in one place.
+
+## Sources
+
+- Google Cloud, "Agent Registry identity and identifiers", docs.cloud.google.com/agent-registry/identity-and-identifiers (last updated 2026-11-10, retrieved 2026-11-17: assigns identifiers and identities to registered agents, MCP servers, endpoints and skills "so that you can discover capabilities, enforce access policies, and route runtime traffic"; registry URNs `urn:agent:` and `urn:mcp:`, which "can't be used in IAM policy bindings, authorization headers, or Agent Gateway route rules"; resource names for policies; a managed workload identity in SPIFFE format for agents on Google Cloud).
+- Google Cloud, "Agent Gateway overview", docs.cloud.google.com/gemini-enterprise-agent-platform/govern/gateways/agent-gateway-overview (retrieved 2026-11-17: "Centralize access policies, mTLS, and Model Context Protocol (MCP) security"; configuring Model Armor on a gateway; monitoring gateway traffic).
+- Google Cloud, "Model Armor integration with Agent Gateway", docs.cloud.google.com/model-armor/model-armor-agent-gateway-integration (last updated 2026-11-10, retrieved 2026-11-17: protects "the incoming requests from the client to the agent" and "the outgoing requests from the agent to the external system", with their responses; egress covers MCP servers, external LLMs and other agents).

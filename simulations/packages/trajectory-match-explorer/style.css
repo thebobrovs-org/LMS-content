@@ -1,0 +1,230 @@
+/* Mirrors the LMS design tokens (docs/12-design-system.md) so the sim matches
+ * the active theme. --danger is the failing-mode colour, as in lru-cache. */
+:root {
+  --bg: #ffffff;
+  --fg: #0f172a;
+  --muted: #475569;
+  --surface: #f8fafc;
+  --border: #e2e8f0;
+  --primary: #2563eb;
+  --primary-contrast: #ffffff;
+  --accent: #0f766e;
+  --success: #15803d;
+  --danger: #b91c1c;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --fg: #e5e7eb;
+    --muted: #9ca3af;
+    --surface: #242424;
+    --border: #2e2e2e;
+    --primary: #60a5fa;
+    --primary-contrast: #0b1220;
+    --accent: #2dd4bf;
+    --success: #4ade80;
+    --danger: #f87171;
+  }
+}
+[data-theme="light"] {
+  --bg: #ffffff;
+  --fg: #0f172a;
+  --muted: #475569;
+  --surface: #f8fafc;
+  --border: #e2e8f0;
+  --primary: #2563eb;
+  --primary-contrast: #ffffff;
+  --accent: #0f766e;
+  --success: #15803d;
+  --danger: #b91c1c;
+}
+[data-theme="dark"] {
+  --bg: #1a1a1a;
+  --fg: #e5e7eb;
+  --muted: #9ca3af;
+  --surface: #242424;
+  --border: #2e2e2e;
+  --primary: #60a5fa;
+  --primary-contrast: #0b1220;
+  --accent: #2dd4bf;
+  --success: #4ade80;
+  --danger: #f87171;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+}
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+}
+#app {
+  padding: 16px;
+}
+button,
+select {
+  font: inherit;
+}
+button {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+}
+button.primary {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-contrast);
+}
+button[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-contrast);
+}
+button:disabled {
+  cursor: default;
+  color: var(--muted);
+}
+select {
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--fg);
+}
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.label {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.presets,
+.add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.lanes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+@media (max-width: 520px) {
+  .lanes {
+    grid-template-columns: 1fr;
+  }
+}
+.lane {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+}
+li:first-child {
+  border-top: 0;
+}
+.call {
+  flex: 1 1 10rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+}
+.num {
+  color: var(--muted);
+  font-size: 12px;
+}
+.row-actions {
+  display: flex;
+  gap: 4px;
+}
+.row-actions button {
+  padding: 2px 8px;
+}
+.empty {
+  color: var(--muted);
+}
+.modes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (max-width: 520px) {
+  .modes {
+    grid-template-columns: 1fr;
+  }
+}
+.mode {
+  padding: 10px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
+.mode.pass {
+  border-color: var(--success);
+}
+.mode.fail {
+  border-color: var(--danger);
+}
+.mode h3 {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.verdict {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+.mode.pass .verdict {
+  color: var(--success);
+}
+.mode.fail .verdict {
+  color: var(--danger);
+}
+.why {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.readout {
+  margin-top: 12px;
+  font-weight: 600;
+}
+.legend {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+#readout {
+  margin: 0 16px 16px;
+}
