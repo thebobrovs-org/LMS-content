@@ -20,6 +20,9 @@
   "agent runtime": {
     "definition": "Agent Platform's managed runtime that deploys, operates and scales agents, used with its Sessions and Memory Bank services (formerly Agent Engine)."
   },
+  "hybrid agent": {
+    "definition": "A system that combines low-code agents (for example a Workflow Builder workflow) with code-built agents or tools (for example an ADK agent or an MCP server) that the low-code side calls."
+  },
   "trajectory": {
     "definition": "The sequence of tool calls (and other intermediate steps) an agent took before it answered. Evaluating it checks the path, not just the final response."
   },

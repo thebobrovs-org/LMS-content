@@ -1,0 +1,212 @@
+---
+title: "Low-code or code: designing hybrid agents"
+summary: Start low-code when the platform covers the need, move to code for control it cannot give, and expect hybrids, with a low-code experience in front of code-built agents and tools. Decide early where evaluation and identity live, because that is what a migration breaks.
+tags: [agentic-ai, google-cloud, architecture, low-code]
+difficulty: advanced
+estimatedMinutes: 25
+level: 300
+prerequisites: [agentic-ai/google-agent-platform-map]
+objectives:
+  - id: choose-build-approach
+    statement: "Choose low-code, code or a hybrid for a scenario and defend it."
+  - id: hybrid-design
+    statement: "Design a low-code front end that calls code-built agents or tools."
+  - id: migration-signals
+    statement: "Name the signals that a low-code agent should move to code."
+  - id: migration-risks
+    statement: "Plan where evaluation, identity and governance will live before a migration."
+flashcards:
+  - id: default-low-code
+    objective: choose-build-approach
+    front: "When should an agent stay low-code?"
+    back: "When the platform covers the need: its steps, connectors and tools do the job, the people who own the process can maintain it, and its built-in sharing and governance are enough. Move to code only for control the platform cannot give."
+  - id: migration-signals-list
+    objective: migration-signals
+    front: "What signals that a low-code agent should move (at least partly) to code?"
+    back: "Logic the platform's steps can't express; orchestration beyond its limits (nested or parallel sub-agents); evaluation that must run in CI on every change; control of deployment, scaling or networking; and integrations no connector or tool covers."
+  - id: two-registration-paths
+    objective: hybrid-design
+    front: "How does a code-built agent appear in Gemini Enterprise?"
+    back: "Deploy an ADK agent to Agent Runtime and register it as a custom agent, or register an agent that speaks A2A by its agent card (A2A registration is in preview)."
+  - id: what-migrations-break
+    objective: migration-risks
+    front: "What does moving an agent from low-code to code usually break, and so needs deciding early?"
+    back: "Evaluation (the test cases have to be rebuilt for the new agent), identity (whose permissions the agent uses, and an OAuth setup if it must act for the user) and governance (console settings such as Model Armor screening can stop applying)."
+quiz:
+  - id: hr-approval-flow
+    objective: choose-build-approach
+    question: "HR wants an agent that collects a leave request, checks the balance through an existing HR connector, and routes it to a manager for approval. HR analysts will maintain it. What fits best?"
+    choices:
+      - "A Workflow Builder workflow in Gemini Enterprise"
+      - "An ADK agent deployed to Agent Runtime"
+      - "A workflow that calls an ADK agent for the balance check"
+    answer: 0
+    explanation: "Every part is covered by the platform: workflow steps, an existing connector and a human approval step, and the owners are analysts, not developers. Code adds build, test and deployment work for no control the team needs. A hybrid would split a simple process across two systems for nothing: the connector already does the balance check."
+  - id: nested-research
+    objective: choose-build-approach
+    question: "A research team wants a planner agent that hands each question to topic agents, which in turn hand sub-questions to their own specialist agents. Every change must pass trajectory tests in CI before release. What fits best?"
+    choices:
+      - "A Workflow Builder chat agent with topic sub-agents"
+      - "An ADK multi-agent system deployed from a pipeline"
+      - "A CX Agent Studio agent with a flow for each topic"
+    answer: 1
+    explanation: "Delegation two levels deep and evaluation gated in CI are control a low-code tool doesn't give: Workflow Builder allows sub-agents only one level deep, and its testing is manual simulation. ADK lets agents delegate to agents that delegate again, and runs evaluation in a pipeline. CX Agent Studio is built for customer conversations, and its flows are fixed conversation paths, not a hierarchy of researchers."
+  - id: forecast-hybrid
+    objective: hybrid-design
+    question: "Store managers already work in Gemini Enterprise. They want an agent that answers stock questions and drafts reorders, but demand forecasting is a tested model the data science team owns in code. What design fits?"
+    choices:
+      - "Rebuild the forecast as Workflow Builder steps"
+      - "Move the assistant to a standalone ADK web app"
+      - "Keep it in Gemini Enterprise; call the forecast as an MCP tool"
+    answer: 2
+    explanation: "The experience stays where the managers already are, and the forecast stays with the team that owns and tests it, exposed as an MCP server the workflow calls. Rebuilding a tested model as low-code steps loses its tests, and moving everyone to a new app throws away the experience they already use for no gain."
+  - id: contact-centre-tools
+    objective: hybrid-design
+    question: "A CX Agent Studio agent must look up live order status. The team's existing MCP server for orders runs on Cloud Run and only speaks the older SSE transport. What should they change?"
+    choices:
+      - "Serve the MCP server over streamable HTTP"
+      - "Wrap the server in a CX Agent Studio flow"
+      - "Give the agent an API key for the server"
+    answer: 0
+    explanation: "CX Agent Studio's MCP tool supports only servers that use streamable HTTP, so an SSE-only server must be moved to that transport. Flows are fixed conversation paths; they don't change how a tool is reached. For authentication on Cloud Run, Google recommends an ID token from the CX service agent, which holds the Cloud Run Invoker role, so an API key isn't the missing piece."
+  - id: model-armor-registered-adk
+    objective: migration-risks
+    question: "A team moves a Gemini Enterprise agent to ADK on Agent Runtime and registers it back in Gemini Enterprise. Their Model Armor screening was set up in the Gemini Enterprise console. What should they plan for?"
+    choices:
+      - "Re-applying the console settings after each deploy"
+      - "Configuring Model Armor in the agent's own code"
+      - "Replacing Model Armor with an Agent Gateway policy"
+    answer: 1
+    explanation: "Google documents that the console's Model Armor settings don't automatically protect registered ADK agents; the agent sets up screening itself, through the Model Armor API in its code. Re-applying console settings doesn't help, because they don't reach the agent. Agent Gateway can call Model Armor for traffic it manages, but that is Model Armor configured on the gateway, not a replacement for it; the documented path for a registered agent is the Model Armor API in its code."
+  - id: signal-to-migrate
+    objective: migration-signals
+    question: "Three teams ask to move their working Workflow Builder agents (at least partly) to code. Which request names a real signal to migrate?"
+    choices:
+      - "Its answers are vague, so we need better instructions"
+      - "It must reach an inventory system on our private network"
+      - "More colleagues want to use it, so we need to share it"
+    answer: 1
+    explanation: "An integration that no connector, MCP server or existing agent can reach is control the platform doesn't give, so that part belongs in code. Vague answers call for better instructions or knowledge, which low-code tools edit directly. Sharing is built into Gemini Enterprise."
+status: draft
+updated: "2026-11-17"
+---
+
+## Real systems mix both
+
+Production agent systems often mix low-code and code. A common shape is a low-code
+experience that people use every day, in front of code-built agents and tools that
+do the hard parts. Scenario questions test the judgement behind that split: when to
+stay low-code, when to move to code, and how to join the two.
+
+Low-code here means Gemini Enterprise's **Workflow Builder** (chat agents and
+workflows built visually) and **CX Agent Studio** (customer-facing conversational
+agents, with **flows**: fixed conversation paths, reused from Dialogflow CX, for
+deterministic logic). Code means
+the **Agent Development Kit (ADK)**, deployed to Agent Runtime, Cloud Run or GKE.
+
+## Start low-code; move to code for control
+
+Start low-code when the platform covers the need. Its steps, connectors and tools
+do the job, the people who own the process can maintain it, and you get Gemini
+Enterprise's sharing and governance without building them. Move to code when you
+need control the platform cannot give.
+
+<Figure
+  src="/media/agentic-low-code-limits.svg"
+  alt="A table titled What pushes a design from low-code to code. Custom logic: low-code gives steps, connectors and tools; code gives any logic you can write and test. Orchestration: low-code gives sub-agents one at a time, one level deep; code gives parallel, nested and graph flows (ADK). Evaluation: low-code gives manual simulation in Workflow Builder, and CX test cases with an API in beta; code gives evaluation sets in CI on every change. Deployment control: low-code is hosted by the platform; code gives Agent Runtime, Cloud Run or GKE, and your own network. Integrations: low-code gives connectors, MCP servers and existing agents; code gives anything, including systems on your network. Footer: start low-code when the platform covers the need; move a part to code when one of these rows bites."
+  caption="The limits that push a design from low-code to code. If none applies, stay low-code."
+/>
+
+The limits are concrete. Workflow Builder, for example, runs a chat agent's
+sub-agents one at a time and only one level deep. A design that needs specialists
+working in parallel, or a planner that delegates to agents that delegate again, has
+outgrown it. Evaluation is the other common trigger. Workflow Builder is tested by
+running simulations by hand, with no documented API for automated tests. CX Agent
+Studio is further along: its test cases can be run through an API (in beta), but
+they test the CX agent, not code you own. If logic you own must pass trajectory
+tests (checks of the tool calls the agent made) in a pipeline on every change, that
+logic needs to live in code beside its **evaluation sets**: files of test cases with
+the expected answers and tool calls.
+
+<Callout type="tip">The migration signals: logic the steps can't express, orchestration beyond the platform's limits, evaluation that must run in CI, control of deployment or networking, and an integration no connector or tool covers. A wish for better instructions is not one of them.</Callout>
+
+## Three scenarios
+
+- **IT helpdesk: stay low-code.** Employees ask how to reset a password or request
+  a laptop, and the agent answers from the IT knowledge base and files a ServiceNow
+  ticket through a connector (write actions pause for a person's review). The platform covers every part, and the IT team can
+  maintain it. Code would add a build and deploy pipeline for nothing.
+- **Insurance claims triage: code.** Three specialist agents check policy, damage
+  photos and fraud signals at the same time, then a fourth decides. Every release
+  must pass evaluation sets in CI. Parallel specialists and CI-gated evaluation are
+  both beyond the low-code limits, so this is an ADK multi-agent system.
+- **Sales quotes: hybrid.** Sales staff live in Gemini Enterprise, but pricing is a
+  complex, tested calculation the finance engineers own. Keep the quote workflow in
+  Workflow Builder, put pricing behind an MCP server, and call a registered ADK agent
+  from an existing-agent step for the drafting that needs many tools. The figure below shows this design.
+
+## Hybrid designs
+
+A <Term id="hybrid agent">hybrid agent</Term> keeps the experience low-code and puts
+the hard logic in code. Google documents several joins; the main ones:
+
+- **A low-code agent calls code-built tools.** Workflow Builder has MCP steps, and a
+  Gemini agent step can be given MCP tools to choose from. CX Agent Studio can call
+  OpenAPI tools, and MCP servers that use streamable HTTP (MCP's HTTP transport;
+  the older SSE transport isn't supported); for a server on Cloud Run, Google
+  recommends authenticating with the CX service agent's ID token, granted the Cloud
+  Run Invoker role. Put your logic behind an MCP server or an API, on Cloud Run for
+  example, and the low-code agent calls it.
+- **A low-code agent calls a code-built agent.** Workflow Builder's existing-agent
+  step runs an ADK or A2A agent that has been published (registered) in Gemini
+  Enterprise and shared with you, as one step of the workflow. CX Agent Studio can delegate a task
+  to a remote ADK or A2A agent through an A2A tool.
+- **A code-built agent appears in Gemini Enterprise.** Deploy an ADK agent to Agent
+  Runtime and register it as a custom agent, or register an A2A agent by its agent
+  card (the description an A2A agent publishes of itself). A2A registration is in
+  preview, not yet generally available. Users then find the agent beside the
+  low-code ones.
+
+<Figure
+  src="/media/agentic-hybrid-architecture.svg"
+  alt="A hybrid architecture. Employees use Gemini Enterprise, the low-code tier. Inside it, a Workflow Builder workflow has three steps: an MCP step that calls an MCP server on Cloud Run, which exposes pricing as tools and wraps an internal pricing API; an existing-agent step that calls an ADK agent on Agent Runtime, which has its own tools and a large model; and a human approval step where a person signs off. Beside the workflow, the same ADK agent is registered in Gemini Enterprise, which the step needs, and users can open it directly. The MCP server and the ADK agent sit in a code-built tier: your project. A band underneath reads: decide early where identity, evaluation and Model Armor screening live for each part; those are what a later migration breaks."
+  caption="A low-code experience in front, code-built agents and tools behind. Each part needs its own identity, evaluation and screening."
+/>
+
+<Flashcard id="hybrid-normal" objective="hybrid-design" front="In a hybrid agent, what usually stays low-code and what moves to code?" back="The experience people use (the workflow, the chat, the approvals) stays low-code; the hard logic (a tested calculation, a multi-agent investigation, a private integration) moves to code-built agents or tools that the low-code side calls." />
+
+## Decide early where evaluation and identity live
+
+Migrations rarely break the prompt. They break what was wrapped around it:
+
+- **Evaluation.** Test cases written for a low-code agent don't run against an ADK
+  agent. Rebuild them as evaluation sets, and keep the old and new agents scoring
+  the same cases until the switch.
+- **Identity.** A low-code agent acts inside the platform's sign-in and sharing. A
+  code-built agent needs its own: whose permissions it uses, and an OAuth setup if
+  it must act for the user.
+- **Governance.** Settings can quietly stop applying. Google documents that Model
+  Armor settings in the Gemini Enterprise console don't automatically protect
+  registered ADK or A2A agents (they configure screening in their own code), and
+  that traffic to a registered A2A agent bypasses Agent Gateway.
+
+So when a design starts low-code but may grow, decide at the start where each of
+these will live for every part of the system.
+
+<Quiz
+  id="eval-before-switch"
+  objective="migration-risks"
+  question="A team is replacing a Workflow Builder agent with an ADK agent that should behave the same. How do they show the new agent is ready to take over?"
+  choices={["Copy the instructions and compare a few chats by hand", "Score both agents on the same evaluation set", "Roll it out to everyone and watch errors for a week"]}
+  answer={1}
+  explanation="The old agent's test cases don't run against the new one, so rebuild them as an evaluation set and score both agents on the same cases until the switch. Copied instructions and a few chats by hand don't show the agent behaves the same across cases. Watching errors after a full rollout finds regressions only once users have hit them."
+/>
+
+## Sources
+
+- Google Cloud, Professional Agentic Architect exam guide, services.google.com/fh/files/misc/professional_agentic_architect_exam_guide_english.pdf (objectives 1.1, 1.2 and 3.1).
+- Google Cloud, Workflow Builder documentation, docs.cloud.google.com/gemini/enterprise/docs/workflow-builder (overview), /workflow-builder/connect-mcp-servers (MCP steps and MCP tools), /workflow-builder/add-existing-agents (registered, shared ADK and A2A agents), /workflow-builder/quotas-and-limits (sub-agents one level deep and run one at a time) and /workflow-builder/simulate-workflows (manual simulation).
+- Google Cloud, CX Agent Studio documentation, docs.cloud.google.com/gemini-enterprise-cx/cx-agent-studio/flow (flows for deterministic logic), /tool/mcp (streamable HTTP only; Cloud Run authentication by service agent ID token), /tool/a2a-protocol (delegating to remote agents) and /evaluation (test cases, runnable through the v1beta runEvaluation API).
+- Google Cloud, Gemini Enterprise, "Register and manage ADK agents hosted on Agent Runtime", docs.cloud.google.com/gemini/enterprise/docs/register-and-manage-an-adk-agent (custom agent via Agent Runtime; console Model Armor settings don't automatically protect ADK agents).
+- Google Cloud, Gemini Enterprise, "Register and manage A2A agents", docs.cloud.google.com/gemini/enterprise/docs/register-and-manage-an-a2a-agent (preview; traffic bypasses Agent Gateway; console Model Armor settings don't automatically protect A2A agents).
+- Google, Agent Development Kit, adk.dev (parallel and graph workflows, evaluation at adk.dev/evaluate, deployment to Agent Runtime, Cloud Run or GKE).
