@@ -22,5 +22,17 @@
   },
   "max iterations": {
     "definition": "A cap on how many times an agent loop may run, so a loop that is not converging stops. ADK counts it in model calls per run (max_llm_calls); a LoopAgent's max_iterations is a separate cap on cycles of a workflow loop."
+  },
+  "adk": {
+    "definition": "Agent Development Kit: Google's open-source framework for building agents in code (Python, TypeScript, Go, Java and Kotlin)."
+  },
+  "llmagent": {
+    "definition": "ADK's model-driven agent (alias Agent), configured with a name, model, instruction, tools, optional sub-agents and callbacks."
+  },
+  "agenttool": {
+    "definition": "An ADK wrapper that lets one agent call another like a function tool. The wrapped agent's answer returns to the caller, which keeps control."
+  },
+  "callback": {
+    "definition": "A function ADK runs at a fixed point in the loop: before or after an agent, a model call or a tool call. It can let the step proceed, skip it with its own result, or replace the output."
   }
 }
