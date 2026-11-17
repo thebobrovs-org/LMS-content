@@ -1,0 +1,194 @@
+---
+title: What good looks like for an agent
+summary: An agent can give the right answer the wrong way. Name the six dimensions of agent quality, judge the path as well as the answer, and evaluate before launch while monitoring after it.
+tags: [agentic-ai, agents, evaluation]
+difficulty: beginner
+estimatedMinutes: 15
+level: 100
+prerequisites: [agentic-ai/what-is-an-agent]
+objectives:
+  - id: quality-dimensions
+    statement: "Name the dimensions of agent quality (final response, trajectory, grounding, safety, latency, cost) and an example failure for each."
+  - id: right-answer-wrong-way
+    statement: "Explain why checking only the final answer misses agent failures."
+  - id: offline-vs-online
+    statement: "Distinguish offline evaluation before launch from online monitoring after it, and say why you need both."
+flashcards:
+  - id: six-dimensions
+    objective: quality-dimensions
+    front: What are the six dimensions of agent quality in this path?
+    back: "Final response (is the answer right), trajectory (did it take an acceptable path of tool calls), grounding (are its claims supported by what its tools returned), safety (is the output within policy), latency (how long the turn took) and cost (model calls, tool calls and tokens spent)."
+  - id: trajectory-definition
+    objective: right-answer-wrong-way
+    front: What is an agent's trajectory, and why evaluate it?
+    back: "The sequence of tool calls (and intermediate steps) the agent took before it answered. An agent can reach a correct answer through a wrong, wasteful or unauthorised path, and only a check on the trajectory sees that."
+  - id: offline-online
+    objective: offline-vs-online
+    front: How do offline evaluation and online monitoring differ?
+    back: "Offline evaluation runs the agent on a fixed dataset before release, to compare versions and catch regressions. Online monitoring measures the deployed agent on live traffic, through traces, logs and metrics, because live inputs differ from any dataset and things change after launch."
+  - id: safety-vs-response
+    objective: quality-dimensions
+    front: "An agent's reply answers the question correctly but includes another customer's address. Which dimension fails?"
+    back: "Safety. A final response can be correct and still be outside policy, so safety is judged separately from correctness. A policy like this one usually needs a rubric-based or custom check, because a generic harmful-content check does not know your data rules."
+quiz:
+  - id: unauthorised-refund-verdict
+    objective: right-answer-wrong-way
+    question: "An account agent must call verify_identity before it deletes an account. In a test run it calls delete_account without verifying, then replies 'Your account has been deleted.' The reply matches the reference answer word for word. Should the run pass?"
+    choices:
+      - "Yes, because the final response matches the reference exactly"
+      - "No, because the trajectory skipped the required verification step"
+      - "Yes, because the reply accurately reports what the tool did"
+    answer: 1
+    explanation: "The answer is right but the path is not: the agent took an action its policy forbids. A response-only check passes this run, which is exactly why you evaluate the trajectory too. An accurate report of the action is a grounded reply, but grounding is a separate dimension: the action behind it is still unauthorised."
+  - id: name-the-dimension-loop
+    objective: quality-dimensions
+    question: "A travel agent answers correctly, but in production it calls search_flights eleven times with the same arguments before replying, and the turn takes 40 seconds. Which dimensions does this failure hit?"
+    choices:
+      - "Latency and cost only, because the answer was correct"
+      - "Trajectory only, because the loop is a path problem"
+      - "Trajectory, latency and cost"
+    answer: 2
+    explanation: "A correct answer does not make the path acceptable: the eleven identical calls are a trajectory failure, and the extra time and extra model and tool calls are its symptoms, so latency and cost fail too. Naming only the symptoms misses the cause, and naming only the trajectory misses what users and the bill feel."
+  - id: name-the-dimension-grounding
+    objective: quality-dimensions
+    question: "A support agent calls get_order, which returns 'status: shipped on 3 May'. The agent replies 'Your order has not shipped yet.' Which dimension is the root cause of this failure?"
+    choices:
+      - "Grounding, because the reply contradicts the tool output"
+      - "Trajectory, because it should have called track_shipment instead"
+      - "Safety, because it gave the customer wrong information"
+    answer: 0
+    explanation: "get_order returned the shipping status, so the agent had the right data and its path was acceptable. Its reply then contradicts that data: an ungrounded claim, also called a hallucination. The final response is wrong as a result, but the root cause is grounding, which a groundedness check against the tool output catches. Wrong information is not a safety failure in this sense; safety is about harmful or off-policy content."
+  - id: why-monitor-after-launch
+    objective: offline-vs-online
+    question: "Your agent passed every case in its evaluation dataset before launch. Why do you still monitor it in production?"
+    choices:
+      - "Offline evaluation checks only the final response, so trajectory problems appear only in production"
+      - "Live traffic differs from any dataset, and models, prompts, tools and data change after launch"
+      - "Latency and cost can be measured only on production traffic, never in offline runs"
+    answer: 1
+    explanation: "A dataset covers the cases you thought of. Real users ask things it never covered, and the model version, the prompt, a tool's API or the retrieved documents can change after release. Offline cases can record the expected trajectory, so they do check the path, and offline runs report latency and cost too. Keep both, and feed failures you find in production back into the dataset."
+  - id: offline-for-a-prompt-change
+    objective: offline-vs-online
+    question: "A teammate wants to change the agent's instructions and ship it today. What tells you, before release, whether the change broke something?"
+    choices:
+      - "Online monitoring of the new version's live traffic"
+      - "A few manual test chats with the new version before release"
+      - "Running the offline evaluation dataset on the old and new versions"
+    answer: 2
+    explanation: "Offline evaluation is the before-release check: the same fixed cases, run on both versions, show what got better or worse. Online monitoring only sees the new version after users already have it. A few manual chats cover only the cases you think of in the moment, and they do not compare the two versions on the same cases."
+status: draft
+updated: "2026-11-17"
+---
+
+## A demo is not an evaluation
+
+Many agents ship after a few happy demos. Someone asks the questions they had in
+mind, the answers look right, and the agent goes live. Then it refunds the wrong
+order, loops on a tool for a minute, or quotes a policy it never retrieved.
+
+The trouble is that an agent does more than answer. As the first lesson showed,
+it chooses a path: which <Term id="tool">tools</Term> to call, with what
+arguments, in what order. A good answer can hide a bad path. So before you
+choose eval tools or criteria, you need a clear picture of what "good" means for
+an agent.
+
+## Six dimensions of quality
+
+Google's Agent Development Kit (ADK) splits agent evaluation into two parts: the
+**final response** and the **trajectory and tool use**. The
+<Term id="trajectory">trajectory</Term> is the sequence of tool calls (and other
+intermediate steps) the agent took before it answered. ADK compares it with an
+expected trajectory, the path you would accept.
+
+ADK's built-in criteria also check grounding, safety and efficiency. This path
+groups them into six dimensions, each with a typical failure:
+
+| Dimension | The question | A failure |
+|---|---|---|
+| **Final response** | Is the answer correct, relevant and complete? | It gives last year's price. |
+| **Trajectory** | Did it call acceptable tools, with the right arguments, in an acceptable order, and only tools it may use? | It issues a refund without the approval step. |
+| **Grounding** | Are its claims supported by what its tools and retrieval returned? | The tool says 12 months; the agent says 24. |
+| **Safety** | Is the output harmless and within policy? | It reveals another customer's address. |
+| **Latency** | How long did the turn take? | It answers in 40 seconds. |
+| **Cost** | How many model calls, tool calls and tokens did it spend? | It spends 40,000 tokens on a one-line answer. |
+
+Latency and cost are often symptoms of a trajectory problem: a loop of repeated
+calls shows up as a slow, expensive turn.
+
+<Callout type="note">ADK has a built-in criterion for each dimension: `tool_trajectory_avg_score` for the trajectory, `response_match_score` and `final_response_match_v2` for the final response, `hallucinations_v1` for grounding, `safety_v1` for harmful content, and efficiency criteria (tool calls, model calls, tokens, duration) for latency and cost. Business rules, such as never revealing another customer's data, need a rubric-based or custom check. The efficiency criteria report a number but never pass or fail a case: you judge latency and cost against targets you set yourself, as the figure below does. A later lesson covers how to choose and tune these criteria.</Callout>
+
+<Flashcard id="dimensions-inline" objective="quality-dimensions" front="Which quality dimension does a reply fail when it contradicts what the agent's own tool returned?" back="Grounding. The claim is not supported by the tool output, so it is ungrounded (a hallucination), even if the agent called the right tool." />
+
+## The right answer, the wrong way
+
+Here is one run of a refund agent, scored on all six dimensions.
+
+<Figure
+  src="/media/agent-quality-scorecard.svg"
+  alt="One refund agent run scored on six quality dimensions. The user asks for a refund of order 1182, and the policy says refunds over 100 dollars need a manager's approval. The agent calls get_order, then issue_refund for 240 dollars, then replies that the refund has been issued. Final response, grounding, safety, latency and cost pass. Trajectory fails because the agent skipped the approval step. Overall the run fails, and a check on the final response alone would have passed it."
+  caption="The reply is correct and grounded, and the run is fast and cheap. It still fails, because the path broke the refund policy."
+/>
+
+The customer got the right message, the amount matches the order, and the turn
+was quick. A test that compares only the final response with a reference answer
+passes this run. But the agent took an action its policy forbids. In production,
+that is the failure that costs money.
+
+This is why evaluating agents differs from evaluating a single model call. A
+model call has one output to check. An agent's output is the end of a path, and
+the path is where it reads data, spends money and changes systems. **Judge the
+path as well as the answer.**
+
+<Callout type="warning">An evaluation finds this failure; it does not prevent it. The approval rule itself belongs outside the model, in the refund tool or an approval step, as the first lesson showed. Evaluation tells you whether the agent behaves as designed on the cases you test.</Callout>
+
+<Quiz
+  id="right-answer-wrong-way-inline"
+  objective="right-answer-wrong-way"
+  question="Your eval compares each final response with a reference answer and nothing else. Which failure can it never catch?"
+  choices={["A reply that states the wrong delivery date", "A correct reply reached by calling a tool the agent was not allowed to use", "A reply that is much shorter than the reference"]}
+  answer={1}
+  explanation="A wrong date or a very different reply changes the final response, so a reference comparison can flag it. A correct reply reached through a forbidden tool looks identical to a good run at the end. Only a check on the trajectory sees which tools were called."
+/>
+
+## Before launch and after it
+
+There are two times to measure quality, and you need both.
+
+<Term id="offline evaluation">Offline evaluation</Term> runs the agent on a fixed
+dataset before release: a set of cases with the inputs, the expected trajectory
+and the expected response. Because the cases stay the same, you can run them on
+every change (a new prompt, a new model version, a new tool) and see exactly what
+got better or worse. In ADK, these datasets are test files and evalsets, and a
+later lesson shows how to build one.
+
+<Term id="online monitoring">Online monitoring</Term> measures the deployed agent
+on live traffic. ADK records each run as a trace (the record of one run), with a
+span (one timed step) for each model call and tool call, and can export traces to Cloud Trace; logs and metrics sit
+alongside. Monitoring catches what the dataset missed:
+
+- **New inputs.** Real users ask things no one put in the dataset.
+- **Changes after launch.** A model version, a prompt, a tool's API or the
+  documents the agent retrieves can change, and the same input then takes a
+  different path.
+- **Behaviour at scale.** Slow turns, rising cost and rare failures show up only
+  across many runs.
+
+The two feed each other. A failure you find in production becomes a new case in
+the offline dataset, so the next release is tested against it.
+
+<Flashcard id="feed-back" objective="offline-vs-online" front="What do you do with a failure you find through online monitoring?" back="Add it to the offline evaluation dataset as a new case, so every later release is tested against it before launch." />
+
+## Recap
+
+- An agent's quality has six dimensions: final response, trajectory, grounding,
+  safety, latency and cost.
+- A correct answer can come from a wrong, wasteful or unauthorised path, so
+  judge the trajectory as well as the answer.
+- Evaluate offline on a fixed dataset before each release, and monitor online
+  after launch; turn what monitoring finds into new offline cases.
+
+## Sources
+
+- Google, Agent Development Kit documentation, "Why evaluate agents", github.com/google/adk-docs/blob/main/docs/evaluate/index.md (retrieved 2026-11-17: agent evaluation covers the trajectory and tool use and the final response; test files and evalsets; the built-in criteria and the efficiency criteria, which never pass or fail a case).
+- Google, Agent Development Kit documentation, "Evaluation criteria", github.com/google/adk-docs/blob/main/docs/evaluate/criteria.md (retrieved 2026-11-17: what each criterion measures, including hallucinations_v1 for groundedness and safety_v1 for harmlessness).
+- Google, Agent Development Kit documentation, "Agent activity traces", github.com/google/adk-docs/blob/main/docs/observability/traces.md (retrieved 2026-11-17: traces with spans for agent invocations, model calls and tool executions; export to Cloud Trace).
