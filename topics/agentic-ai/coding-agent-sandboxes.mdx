@@ -330,6 +330,15 @@ that proves the work is done:
 
 <Flashcard id="maintenance-checks" objective="safe-refactor" front="What check proves each agent maintenance job: a patch, a refactor, an optimisation?" back="Patch: where possible, a reproduction test that fails before the fix and passes after. Refactor: the tests of its public behaviour pass before and after, unchanged. Optimisation: measure, change, then measure again under the same load." />
 
+Google also offers a security agent built for the patch job: **CodeMender**, on
+Agent Platform, in Preview for a limited set of customers. It finds
+vulnerabilities, verifies them, and generates and validates patches for the
+verified ones. By default it asks you to confirm each file change before
+writing it, and a flag (`-y`) turns that off. Keep the confirmation on, and
+send its patches through the same branch, CI and review gates as any other
+agent's: a dedicated security agent is still an agent whose output is
+untrusted until reviewed.
+
 <Callout type="note">File names, presets and features in this lesson are as documented in November 2026; coding-agent security settings change often, so check the current documentation before relying on a default.</Callout>
 
 ## Recap
@@ -352,6 +361,7 @@ that proves the work is done:
 
 ## Sources
 
+- Google Cloud, "CodeMender" and "Fix and patch vulnerabilities", docs.cloud.google.com/gemini-enterprise-agent-platform/agents/codemender (Preview, limited set of customers; an AI code security agent that can find, verify and generate patches; produces, validates and applies patches for verified vulnerabilities; prompts to confirm each file modification by default; -y auto-approves).
 - Antigravity documentation, "Sandbox" and "Permissions", antigravity.google/docs/sandbox/ and antigravity.google/docs (terminal sandbox enabled by default in the app; built on native operating system primitives, with no virtual machines or Docker images; Linux namespaces, macOS Seatbelt, Windows AppContainer; "Sandboxed commands run without network access by default"; read_url domains as the outbound allowlist; ~/.ssh and .env blocked; presets Request Review, Default, Auto, Turbo; Default selected by default, Request Review if the sandbox is unavailable; Auto not available for business or enterprise accounts; rules as action(target), Deny > Ask > Allow; legacy business and enterprise presets Default, Full machine and Turbo mode do not turn the sandbox on).
 - Antigravity CLI documentation, settings and flags, antigravity.google/docs (enableTerminalSandbox default false; agy --sandbox; toolPermission request-review by default, proceed-in-sandbox).
 - Antigravity documentation, "Enterprise", antigravity.google/docs/enterprise (keep Default or Request Review enabled).
