@@ -94,3 +94,36 @@ test("state-scope-explorer: a new session reads the user: key but not the sessio
   await sim.press("#user", "Ben");
   assert.equal(text(sim, "#merged"), "{ }", "another user reads neither key");
 });
+
+test("context-budget-explorer: compacting without pinning loses the order id and fails recall", async () => {
+  const sim = await loadSim("context-budget-explorer");
+  await sim.press('[data-predict="long_session_recall"]');
+  await sim.press("#compact");
+  assert.match(text(sim, "#cases"), /long_session_recall ?✗ Fail/);
+  assert.match(text(sim, "#verdict"), /^Right/);
+  await sim.press("#pin");
+  assert.match(text(sim, "#cases"), /long_session_recall ?✓ Pass/);
+});
+
+test("context-budget-explorer: top 5 drops the return-policy chunk unless reranked", async () => {
+  const sim = await loadSim("context-budget-explorer");
+  await sim.press('[data-topk="5"]');
+  assert.match(text(sim, "#cases"), /long_session_recall ?✗ Fail/);
+  await sim.press("#rerank");
+  assert.match(text(sim, "#cases"), /rank 2/);
+});
+
+test("context-budget-explorer: lean and passing fires the checkpoint; caching cuts the bill, not the tokens", async () => {
+  const sim = await loadSim("context-budget-explorer");
+  await sim.press('[data-tools="careless"]');
+  await sim.press("#compact");
+  await sim.press("#pin");
+  await sim.press('[data-memory="load"]');
+  assert.ok(!sim.events.includes("checkpoint:observe-evidence-survives"), "a lost check_warranty still fails a case");
+  await sim.press('[data-tools="filtered"]');
+  assert.ok(sim.events.includes("checkpoint:observe-evidence-survives"));
+  assert.match(text(sim, "#r-total"), /^20,500/);
+  await sim.press("#cache");
+  assert.match(text(sim, "#r-total"), /^20,500/, "caching doesn't shrink the context");
+  assert.match(text(sim, "#r-billed"), /16,000 uncached/);
+});
