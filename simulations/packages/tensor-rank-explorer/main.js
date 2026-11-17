@@ -75,10 +75,27 @@ function modelShape() {
   return "(" + Array(rank).fill(MODEL).join(", ") + (rank === 1 ? "," : "") + ")";
 }
 
-function render() {
+function buildControls() {
   $("controls").innerHTML = [0, 1, 2, 3].map((r) =>
-    `<button class="rbtn ${r === rank ? "active" : ""}" data-r="${r}"><span class="rk">rank ${r}</span><span class="nm">${NAMES[r]}</span></button>`
+    `<button class="rbtn" data-r="${r}"><span class="rk">rank ${r}</span><span class="nm">${NAMES[r]}</span></button>`
   ).join("");
+  document.querySelectorAll(".rbtn").forEach((b) => b.addEventListener("click", () => {
+    rank = +b.dataset.r;
+    if (!observed) { observed = true; sim.checkpoint("observe-footprint"); }
+    sim.event("rank", { rank });
+    render();
+  }));
+}
+
+function render() {
+  // The rank buttons are written once and only their state changes, so the button a keyboard user pressed stays
+  // the same element and keeps focus (LMS-content#135).
+  if (!document.querySelector(".rbtn")) buildControls();
+  document.querySelectorAll(".rbtn").forEach((b) => {
+    const on = +b.dataset.r === rank;
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-pressed", String(on));
+  });
 
   $("blocktitle").textContent = `The shape, as blocks — ${NAMES[rank]}`;
   $("blocks").innerHTML = blocksSVG();
@@ -107,12 +124,6 @@ function render() {
   else
     note.innerHTML = `A <b>rank-3</b> tensor needs three indices — like a <b>color image</b> (height × width × 3 RGB channels). ${N}×${N}×${N} = <b>${cnt}</b> numbers in the toy, but <span class="hl over">128 GiB</span> at model scale. <b>One extra dimension</b> took the same data past a whole chip's HBM — that's why color/video tensors, activations, and the KV-cache devour memory, and why operators watch rank.`;
 
-  document.querySelectorAll(".rbtn").forEach((b) => b.addEventListener("click", () => {
-    rank = +b.dataset.r;
-    if (!observed) { observed = true; sim.checkpoint("observe-footprint"); }
-    sim.event("rank", { rank });
-    render();
-  }));
   reportSize();
 }
 

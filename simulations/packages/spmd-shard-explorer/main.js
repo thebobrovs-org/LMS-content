@@ -121,7 +121,7 @@ function setSpec(spec, user) {
 
 async function runStep() {
   if (isAnimating) return;
-  isAnimating = true; btnRun.disabled = true; btnReset.disabled = true;
+  isAnimating = true; setRunBusy(true); btnReset.disabled = true;
   fireObserved();
   const s = SPECS[currentSpec];
 
@@ -148,7 +148,14 @@ async function runStep() {
 
   setPhase("");
   setNote("", "<b>Step complete.</b> The rendezvous was a one-time startup; every step after stays on the <b>ICI</b> (the DCN sits idle). Run again, or Reset to cold-start.");
-  isAnimating = false; btnRun.disabled = false; btnReset.disabled = false;
+  isAnimating = false; setRunBusy(false); btnReset.disabled = false;
+}
+
+// While a step plays, Run is marked aria-disabled rather than disabled: a disabled button loses focus, so a keyboard
+// user who pressed Run would be dropped to the page (LMS-content#135). runStep() ignores presses meanwhile.
+function setRunBusy(busy) {
+  if (busy) btnRun.setAttribute("aria-disabled", "true");
+  else btnRun.removeAttribute("aria-disabled");
 }
 
 function reset() {
@@ -156,7 +163,9 @@ function reset() {
   started = false;
   setPhase("");
   setNote("", "Cold. The next run does the one-time <b>DCN rendezvous</b> first, then the per-step <b>ICI</b> collective.");
-  btnReset.disabled = true;
+  const fromReset = document.activeElement === btnReset;
+  btnReset.disabled = true; // nothing to reset until the next run
+  if (fromReset) btnRun.focus();
 }
 
 document.querySelectorAll(".seg-btn").forEach((b) => b.addEventListener("click", () => setSpec(b.dataset.spec, true)));

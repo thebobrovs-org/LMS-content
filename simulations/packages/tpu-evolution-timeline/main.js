@@ -35,7 +35,30 @@ function selectGen(n) {
   render();
 }
 
+/**
+ * The focused control, as a selector for its replacement, so that it takes focus again after a render writes the
+ * controls anew (LMS-content#135, as tpu-vm-anatomy does, #130); null when focus is elsewhere.
+ */
+function focusedControl() {
+  const el = document.activeElement;
+  if (!el || !app.contains(el)) return null;
+  for (const attr of ["data-i", "data-act"]) {
+    const value = el.getAttribute(attr);
+    if (value !== null) return `[${attr}="${value}"]`;
+  }
+  return el.id ? `#${el.id}` : null;
+}
+/** Focus the control again after a render; when it's now disabled (the last step's Next, the first step's Prev), the other step button. */
+function restoreFocus(sel) {
+  if (!sel) return;
+  const same = app.querySelector(sel);
+  const other = app.querySelector(sel === '[data-act="next"]' ? '[data-act="prev"]' : '[data-act="next"]');
+  const target = same && !same.disabled ? same : other;
+  if (target && !target.disabled) target.focus();
+}
+
 function render() {
+  const focused = focusedControl();
   const g = GENS[i];
   const progressPct = (i / (GENS.length - 1)) * 100;
   const MAX_LOG = Math.log10(5000);
@@ -103,6 +126,7 @@ function render() {
   app.querySelector('[data-act="reset"]').addEventListener("click", () => selectGen(0));
   app.querySelector('[data-act="prev"]').addEventListener("click", () => selectGen(i - 1));
   app.querySelector('[data-act="next"]').addEventListener("click", () => selectGen(i + 1));
+  restoreFocus(focused);
   reportSize();
 }
 

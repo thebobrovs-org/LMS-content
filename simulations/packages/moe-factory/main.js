@@ -67,7 +67,27 @@ function applyTheme(theme) {
   else delete document.documentElement.dataset.theme;
 }
 
+/**
+ * The focused control, as a selector for its replacement, so that it takes focus again after a render writes the
+ * controls anew (LMS-content#135, as tpu-vm-anatomy does, #130); null when focus is elsewhere.
+ */
+function focusedControl() {
+  const el = document.activeElement;
+  if (!el || !app.contains(el)) return null;
+  for (const attr of ["data-mode"]) {
+    const value = el.getAttribute(attr);
+    if (value !== null) return `[${attr}="${value}"]`;
+  }
+  return el.id ? `#${el.id}` : null;
+}
+/** Focus the control again after a render. */
+function restoreFocus(sel) {
+  const target = sel && app.querySelector(sel);
+  if (target) target.focus();
+}
+
 function render() {
+  const focused = focusedControl();
   const k = kFor(mode);
   const activeSet = new Set(active);
   const experts = Array.from({ length: N }, (_, i) => {
@@ -86,7 +106,7 @@ function render() {
       <div class="modes" role="group" aria-label="Routing mode">
         ${MODES.map(
           (m) =>
-            `<button data-mode="${m.id}" class="${m.id === mode ? "active" : ""}">${m.label}</button>`,
+            `<button data-mode="${m.id}" class="${m.id === mode ? "active" : ""}" aria-pressed="${m.id === mode}">${m.label}</button>`,
         ).join("")}
       </div>
       <button id="route" class="primary">Route a token &rarr;</button>
@@ -123,6 +143,7 @@ function render() {
     reset();
     render();
   });
+  restoreFocus(focused);
   reportSize();
 }
 
