@@ -131,9 +131,10 @@ Three settings shape it:
   sensible rollout is to inspect first, review what would have been blocked,
   tune the thresholds, then block.
 
-On Agent Gateway, you attach Model Armor templates to the gateway, so screening
-applies to the traffic it carries. That integration has its own limits; for
-example, it does not screen documents or file uploads such as PDFs. Model
+On Agent Gateway, you specify Model Armor templates on the gateway, and the
+documentation describes them for its ingress traffic. That integration has its
+own limits; for example, it does not screen documents or file uploads such as
+PDFs. Model
 Armor is a filter like any other: it can miss an attack, and its quality varies
 by language, which is why the other layers stay in place.
 
