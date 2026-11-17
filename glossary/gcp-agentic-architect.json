@@ -229,5 +229,11 @@
   },
   "memory bank": {
     "definition": "Agent Platform's managed long-term memory: it extracts facts from conversations with an LLM, consolidates them with what it already holds, keeps them isolated per scope (such as agent and user), and returns the relevant ones in later sessions."
+  },
+  "generator-critic": {
+    "definition": "An agent design pattern (also called reflection) in which one agent drafts and a critic checks the draft against criteria, approving it or returning fixes, in a loop that needs an exit and a cap."
+  },
+  "plan-then-execute": {
+    "definition": "An agent design pattern in which a planner writes the whole plan first, a gate (a person or a policy check) approves it, and only then do executors carry out the steps."
   }
 }
