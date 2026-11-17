@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 430" width="760" height="430" role="img" aria-label="Three routes from an ADK agent to enterprise systems. A Google Cloud MCP server is hosted, secured and updated by Google, with access through IAM roles you grant. MCP Toolbox for Databases is an open-source server you run in front of your database, with named queries you write. A custom MCP server wraps an internal API, and you build, host, secure and patch it. All three can be listed in Agent Registry.">
+  <rect width="760" height="430" fill="#ffffff"/>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <g font-family="Inter, system-ui, sans-serif">
+    <text x="380" y="28" text-anchor="middle" font-size="16" font-weight="600" fill="#0f172a">Three routes to enterprise systems</text>
+
+    <!-- agent -->
+    <rect x="300" y="44" width="160" height="40" rx="10" fill="#f8fafc" stroke="#0f172a" stroke-width="1.5"/>
+    <text x="380" y="69" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">ADK agent (MCP client)</text>
+    <g stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#ar)">
+      <path d="M340,84 L134,118"/>
+      <path d="M380,84 L380,118"/>
+      <path d="M420,84 L626,118"/>
+    </g>
+    <text x="380" y="106" text-anchor="middle" font-size="10.5" fill="#475569" dx="64">MCP over HTTP</text>
+
+    <!-- columns -->
+    <g font-size="13" font-weight="600" text-anchor="middle">
+      <rect x="20" y="122" width="228" height="44" rx="10" fill="#dbeafe" stroke="#2563eb"/>
+      <text x="134" y="149" fill="#1e3a8a">Google Cloud MCP server</text>
+      <rect x="266" y="122" width="228" height="44" rx="10" fill="#fef3c7" stroke="#b45309"/>
+      <text x="380" y="149" fill="#78350f">MCP Toolbox for Databases</text>
+      <rect x="512" y="122" width="228" height="44" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-dasharray="5 4"/>
+      <text x="626" y="149" fill="#334155">Custom MCP server</text>
+    </g>
+
+    <!-- row labels inside columns -->
+    <g font-size="11.5" fill="#334155">
+      <text x="32" y="192" font-weight="600">For</text>
+      <text x="32" y="210">A Google Cloud service, such as</text>
+      <text x="32" y="226">BigQuery, Spanner or GKE</text>
+      <text x="32" y="254" font-weight="600">Hosts and updates</text>
+      <text x="32" y="272">Google</text>
+      <text x="32" y="300" font-weight="600">Secures</text>
+      <text x="32" y="318">IAM roles you grant;</text>
+      <text x="32" y="334">optional read-only deny policy</text>
+
+      <text x="278" y="192" font-weight="600">For</text>
+      <text x="278" y="210">Named queries against your</text>
+      <text x="278" y="226">own database tables</text>
+      <text x="278" y="254" font-weight="600">Hosts and updates</text>
+      <text x="278" y="272">You run the open-source server;</text>
+      <text x="278" y="288">you write the queries</text>
+      <text x="278" y="300" font-weight="600" dy="16">Secures</text>
+      <text x="278" y="334">You: DB account, fixed queries,</text>
+      <text x="278" y="350">authenticated parameters</text>
+
+      <text x="524" y="192" font-weight="600">For</text>
+      <text x="524" y="210">An internal API nothing</text>
+      <text x="524" y="226">else covers</text>
+      <text x="524" y="254" font-weight="600">Hosts and updates</text>
+      <text x="524" y="272">You build it with an MCP SDK and</text>
+      <text x="524" y="288">host it on Cloud Run or GKE</text>
+      <text x="524" y="300" font-weight="600" dy="16">Secures</text>
+      <text x="524" y="334">You, end to end</text>
+    </g>
+    <g fill="none" stroke="#cbd5e1">
+      <rect x="20" y="172" width="228" height="190" rx="10"/>
+      <rect x="266" y="172" width="228" height="190" rx="10"/>
+      <rect x="512" y="172" width="228" height="190" rx="10"/>
+    </g>
+
+    <!-- registry band -->
+    <rect x="20" y="376" width="720" height="34" rx="10" fill="#ecfdf5" stroke="#047857"/>
+    <text x="380" y="398" text-anchor="middle" font-size="12" fill="#064e3b"><tspan font-weight="600">Agent Registry</tspan>: all three listed for discovery; access policies bind agent identities to them</text>
+  </g>
+</svg>
