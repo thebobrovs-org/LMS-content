@@ -168,6 +168,11 @@ a development project:
    responses to a dataset and grades them against the chosen metrics, some
    scored by an LLM acting as judge. Failures send the coding agent back to
    step 3.
+   The dataset lives in `tests/eval/datasets/` (for example
+   `basic-dataset.json`) in Agent Platform's evaluation dataset format, not
+   ADK's evalset format: Agents CLI no longer reads `*.evalset.json` files, so
+   a project that has them migrates first. `agents-cli scaffold upgrade`
+   detects them and converts them.
 5. **Deploy and publish.** The coding agent shows the developer the result of
    `agents-cli deploy --dry-run`, and once the developer approves, runs
    `agents-cli deploy`, which reads the target from the manifest.
@@ -256,4 +261,5 @@ approve.
 - Agents CLI documentation, "Skills reference", google.github.io/agents-cli/reference/skills/ (seven skills; google-agents-cli-workflow always active; what each skill covers, including deploy's service accounts and rollback).
 - Agents CLI documentation, "CLI reference", google.github.io/agents-cli/cli/ (create -a, -d agent_runtime|cloud_run|gke|none, --prototype, -i "Enable interactive prompts for human use", -y "Non-interactive: skip prompts and use defaults"; run and playground --otel-to-cloud; eval grade --fail-under; deploy --dry-run runs pre-flight and read-only Google Cloud checks; deploy reads its target from agents-cli-manifest.yaml, and -d overrides it or deploys without one).
 - Agents CLI documentation, "Development", "Deployment", "Evaluation", "CI/CD" and "Observability: Cloud Trace" guides, google.github.io/agents-cli/guide/ and google.github.io/agents-cli/guide/observability/cloud-trace/ (keyless CI authentication through workload identity federation; a coding agent asks the questions one at a time; without --project the deploy stops to confirm the project; eval run exits 1 when a metric misses its threshold so CI can gate on it; generated projects export traces to Cloud Trace with no configuration; prompt-response logging needs a logs bucket provisioned by infra single-project --apply before the first deploy; BigQuery Agent Analytics with create --bq-analytics; a run also fails when any case errored).
+- Agents CLI documentation, "Migrate eval datasets", google.github.io/agents-cli/reference/eval-dataset-migration/ (eval generate and related commands no longer read tests/eval/evalsets/*.evalset.json; agents-cli scaffold upgrade converts them to tests/eval/datasets/*-dataset.json in the EvaluationDataset format).
 - Agents CLI documentation, "Authentication", google.github.io/agents-cli/guide/authentication/ (Gemini API key needs no Google Cloud project and covers playground, run and eval for ADK and LangChain templates; the Claude Agent SDK template needs Google Cloud credentials even locally; deployment needs a project with billing; Agents CLI does not control coding agent authentication).
