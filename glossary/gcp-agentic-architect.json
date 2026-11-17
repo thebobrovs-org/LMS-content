@@ -89,6 +89,12 @@
   "principal access boundary": {
     "definition": "An IAM policy that defines which resources a principal is eligible to access. It can block access regardless of the principal's role grants (for the permissions it supports), but it never grants access."
   },
+  "agent gateway": {
+    "definition": "Google Cloud's managed gateway for agent traffic, including calls to MCP servers. It enforces access policies on that traffic, can screen it with Model Armor, and records it so it can be monitored."
+  },
+  "agent registry": {
+    "definition": "Google Cloud's catalogue of registered agents, MCP servers, endpoints and skills. It gives each one identifiers for discovery and for the policies and route rules that govern it."
+  },
   "oauth 2.0": {
     "definition": "An authorisation framework that lets an application obtain limited access to an HTTP service with access tokens, either on behalf of a user who approves it or on its own behalf."
   },
@@ -151,9 +157,6 @@
   },
   "mcp toolbox for databases": {
     "definition": "An open-source MCP server that exposes database queries as agent tools, each defined in configuration with a fixed statement and typed parameters."
-  },
-  "agent registry": {
-    "definition": "Google Cloud's catalogue of agents, MCP servers and their tools, and endpoints, used for discovery and for access policies that govern which agents may use them."
   },
   "rag": {
     "definition": "Retrieval-augmented generation: before the model answers, the system retrieves relevant passages from your documents and puts them in the model's context."
