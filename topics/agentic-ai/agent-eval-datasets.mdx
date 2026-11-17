@@ -241,6 +241,29 @@ other, while a simulated user answers whatever it is asked. A scenario is short:
 
 <Callout type="warning">A simulated conversation has no fixed expected reply or trajectory, so criteria that compare against one do not apply. ADK lists `tool_trajectory_avg_score`, `response_match_score` and `final_response_match_v2` as unsupported with user simulation. Use criteria that need no reference instead, such as rubric-based checks, grounding (`hallucinations_v1`), safety and multi-turn task success.</Callout>
 
+### Simulate the tools as well
+
+Some tools should not run in a test: one that issues a refund or sends an email,
+or one whose backend is slow, flaky or not reachable from CI. ADK's
+<Term id="environment simulation">environment simulation</Term> (ADK Python
+1.24.0 and later) intercepts the calls to the tools you name and returns a
+synthetic response instead. You attach it as a `before_tool_callback` or as a
+plugin, so the agent's code doesn't change, and tools you don't name still run
+for real.
+
+- A **mock strategy** has a model generate a plausible response from the tool's
+  schema and what the session has created so far, so asking for an order that was
+  never created can return a not-found error.
+- An **injection** returns a response you fix in advance, or an error, optionally
+  after a delay, only for matching arguments, or only some of the time (a set
+  probability). Use it to test how the agent
+  handles a timeout or a 500 from the payments API.
+
+Generated mock responses come from a model, so they can vary from run to run;
+injections are exact, and a random seed makes probabilistic ones repeatable.
+
+<Flashcard id="simulate-tools" objective="evalset-vs-test" front="How do you test an agent whose tools must not run for real, such as a refund tool?" back="Simulate the tools. ADK's environment simulation intercepts calls to the tools you name, through a before_tool_callback or a plugin, and returns a model-generated mock or a fixed injected response or error, so nothing real happens and you can test error handling." />
+
 So a practical set looks like this: a few test files that guard the core tool
 paths on every change, an evalset of longer sessions with edge and adversarial
 cases that runs before each release, and simulated users for the branching
@@ -264,3 +287,4 @@ conversations. Try it in Google's codelab, [Evaluating Agents with ADK](https://
 - Google, Agent Development Kit documentation, "User simulation", github.com/google/adk-docs/blob/main/docs/evaluate/user-sim.md (retrieved 2026-11-17: ConversationScenario with starting_prompt, conversation_plan and user_persona; the example of an agent asking for two values one at a time or both at once).
 - Google, Agent Development Kit documentation, "Evaluation criteria", github.com/google/adk-docs/blob/main/docs/evaluate/criteria.md (retrieved 2026-11-17: match types EXACT, IN_ORDER and ANY_ORDER, with EXACT the default; which criteria support user simulation).
 - Google Codelabs, "Evaluating Agents with ADK", codelabs.developers.google.com/adk-eval/instructions (found by search on 2026-11-17; linked as a lab, not used as a source for the lesson's claims).
+- Google, Agent Development Kit documentation, "Environment simulation", adk.dev/evaluate/environment_simulation/ (retrieved 2026-11-17: supported in ADK Python v1.24.0; intercepts tool calls and returns synthetic responses; attached with create_callback as a before_tool_callback or create_plugin; MOCK_STRATEGY_TOOL_SPEC generates a response from the tool schema and session context; InjectionConfig sets an injected error or response, optional latency, match_args and a random seed; unconfigured tools run for real).
