@@ -21,7 +21,7 @@ flashcards:
   - id: what-agent-identity-adds
     objective: agent-identity
     front: What does Agent Identity give an agent that a shared service account does not?
-    back: "Its own principal, so you grant access to that agent alone and audit logs name it (and the user it acted for). Agent identities are not shared by default, cannot be impersonated, allow no long-lived keys, and their tokens are bound to the agent's own certificate."
+    back: "Its own principal, so you grant access to that agent alone and audit logs name it (and, when it acts for a user, that user). Agent identities are not shared by default, cannot be impersonated, allow no long-lived keys, and their tokens are bound to the agent's own certificate to prevent token theft."
   - id: assume-injection
     objective: least-privilege
     front: Why design an agent's access as if prompt injection will succeed?
@@ -35,45 +35,45 @@ quiz:
     objective: least-privilege
     question: "An agent's only tool reads invoice files from one Cloud Storage bucket. A teammate suggests giving it the Owner role on the project 'so it never fails with a permission error'. What should you grant instead?"
     choices:
-      - "Owner on the project, because a failed call is worse than broad access"
-      - "A read-only role on that one bucket, granted to the agent's own principal"
-      - "Editor on the project, because it cannot change IAM policies"
+      - "Owner on the project, since a failed call costs more than broad access"
+      - "A read-only role on that one bucket, granted to the agent's principal"
+      - "Editor on the project, since that is narrower than Owner and still works"
     answer: 1
-    explanation: "The tool only reads one bucket, so that is all the agent needs. Owner and Editor both reach every resource in the project, so a single injected instruction could read, change or delete any of it. A permission error is a cheap, visible failure; a breach is not."
+    explanation: "The tool only reads one bucket, so that is all the agent needs. Owner and Editor both reach most resources in the project, so a single injected instruction could read, change or delete any of it. A permission error is a cheap, visible failure; a breach is not."
   - id: identity-over-shared-account
     objective: agent-identity
     question: "Five agents share one service account. An audit log shows that account deleted a dataset. What would Agent Identity have changed?"
     choices:
-      - "The log would name the specific agent, and the user it acted for, and only that agent would have held the grant"
-      - "The deletion would have been impossible, because agent identities cannot hold write roles"
-      - "The log would show the prompt that caused the deletion"
+      - "The log would name the agent, and only that agent would have held the grant"
+      - "The deletion would be blocked, since agent identities cannot hold write roles"
+      - "The deletion would be blocked, since agent identities can't be impersonated"
     answer: 0
-    explanation: "Each agent identity is its own principal: you grant access to it alone, and audit logs record both the agent and the delegating user. Agent identities can hold any role you grant, so the grant still has to be narrow. Audit logs record who acted, not the prompt."
+    explanation: "Each agent identity is its own principal: you grant access to it alone, and audit logs name the agent (and the user, when it acts for one). Agent identities can hold any role you grant, so the grant still has to be narrow. Not being impersonable stops other principals acting as the agent; it does not stop the agent itself."
   - id: cap-existing-grant
     objective: pab
-    question: "An agent's identity holds roles granted by several teams, and more may be added later. Security requires that it can never reach resources outside the finance project, whatever is granted. What do you add?"
+    question: "An agent's identity holds roles granted by several teams, and more may be added later. Security requires that, whatever is granted, it stays within the finance project. What do you add?"
     choices:
-      - "An instruction in the agent's system prompt to stay within the finance project"
-      - "A Principal Access Boundary policy that makes only the finance project's resources eligible"
-      - "A second agent that reviews each tool call before it runs"
+      - "An instruction in the agent's system prompt to stay inside the finance project"
+      - "A Principal Access Boundary policy, covering the agent, that allows only finance"
+      - "A second agent that reviews each of its tool calls before they are allowed to run"
     answer: 1
-    explanation: "A Principal Access Boundary sets which resources the principal is eligible to access, regardless of the roles it has been granted, so a later broad grant still cannot reach past it. A system prompt is not a security control, and a reviewing agent is another model that can be fooled."
+    explanation: "A Principal Access Boundary sets which resources the principals it covers are eligible to access, regardless of the roles they have been granted, so a later broad grant still cannot reach past it (for the permissions the boundary supports). A system prompt is not a security control, and a reviewing agent is another model that can be fooled."
   - id: boundary-does-not-grant
     objective: pab
-    question: "You bind a Principal Access Boundary policy that allows the finance project to an agent with no roles yet. It still cannot read the finance dataset. Why?"
+    question: "A Principal Access Boundary policy covering a new agent allows only the finance project. The agent has no role grants yet, and it cannot read the finance dataset. Why?"
     choices:
-      - "The boundary takes a day to apply"
-      - "A boundary cannot include datasets, only buckets"
-      - "A boundary never grants access; the agent also needs a role on the dataset"
+      - "The agent must be redeployed before a new boundary takes effect"
+      - "The boundary must list the dataset by name, not just its project"
+      - "A boundary never grants access; the agent also needs a role on it"
     answer: 2
-    explanation: "A Principal Access Boundary can only block or not block. Only an allow policy, a role grant, actually gives access. Grant a read role on the dataset, and the boundary keeps that grant, and any later one, inside the finance project."
+    explanation: "A Principal Access Boundary can only block or not block. Only an allow policy, a role grant, actually gives access; no redeploy or extra listing changes that. Grant a read role on the dataset, and the boundary keeps that grant, and any later one, inside the finance project."
   - id: leaked-token
     objective: agent-identity
     question: "Why is a leaked credential less useful to an attacker when the agent uses Agent Identity rather than a service account with a downloaded key?"
     choices:
-      - "Agent identities allow no long-lived keys, and their access tokens are bound to the agent's own certificate"
-      - "Agent identities encrypt every request, so traffic cannot be read in transit"
-      - "Agent identities rotate their roles every hour, so a stolen token loses its access"
+      - "No long-lived keys exist, and its tokens are bound to the agent's certificate"
+      - "Its requests are encrypted, so traffic cannot be read while in transit"
+      - "Its roles rotate every hour, so a stolen token soon loses its access"
     answer: 0
     explanation: "A downloaded service account key works from anywhere until someone revokes it. Agent identities cannot have long-lived keys, and their tokens are cryptographically bound to the agent's X.509 certificate to prevent token theft. Roles do not rotate, and encryption in transit is not what stops a stolen token."
 status: draft
@@ -119,17 +119,17 @@ Compared with a shared service account, an agent identity:
   workloads by default, so a grant to one reaches only that agent.
 - **is the principal you grant to.** You grant roles directly to the agent's
   identifier, so each agent's access is set on its own.
-- **shows up in audit logs.** The logs record both the agent and the user it
-  acted for, so you can tell which agent did what.
+- **shows up in audit logs.** The logs record the agent and, when it acts for
+  a user, that user, so you can tell which agent did what.
 - **is harder to steal.** It cannot be impersonated, it allows no long-lived
-  keys, and its access tokens are bound to the agent's certificate, so a token
-  copied elsewhere is useless.
+  keys, and its access tokens are bound to the agent's certificate, which is
+  designed to stop a stolen token being reused elsewhere.
 
 One operational detail: the identity is tied to the deployed agent resource. A
 redeployed agent can get a new identity, so its grants do not carry over;
 manage them as part of the deployment.
 
-<Flashcard id="redeploy-new-principal" objective="agent-identity" front="Why can an agent lose its access after being deleted and redeployed?" back="Its identity is tied to the agent resource. A redeployed agent gets a new resource ID and so a new principal; the old grants stay on the old identifier, inactive. Grant roles as part of the deployment." />
+<Flashcard id="redeploy-new-principal" objective="agent-identity" front="Why can an agent lose its access after being deleted and redeployed?" back="Its identity is tied to the agent resource. A redeployed agent can get a new principal, so the old grants do not carry over. Grant roles as part of the deployment." />
 
 ## Step 2: grant only what the tools need
 
@@ -141,7 +141,7 @@ role. Work out access from the tools:
 2. **Grant the narrowest role on the narrowest resource.** A read-only role on
    that bucket, and one on that dataset, granted to the agent's principal.
    Avoid project-wide grants and the broad basic roles (Owner, Editor), which
-   reach every resource in the project.
+   reach most resources in the project.
 3. **Assume the injection will succeed.** Ask what a hijacked agent could do
    with exactly these grants. Here: read invoices and one dataset, nothing
    else.
@@ -154,9 +154,11 @@ narrow grant. Broad access fails silently, on the day someone exploits it.
 Grants drift. Another team adds a role for a new feature; someone grants a
 broad role to debug and forgets it. A
 <Term id="principal access boundary">Principal Access Boundary</Term> (PAB)
-policy guards against that. It defines the resources a principal is
-**eligible** to access. If a resource is outside the boundary, the principal
-cannot reach it, regardless of the roles it has been granted.
+policy guards against that. It defines the resources the principals it covers
+are **eligible** to access. If a resource is outside the boundary, they cannot
+reach it (for the permissions the boundary supports), regardless of the roles
+they have been granted. A boundary applies to a set of principals that includes
+the agent, rather than being written into each role grant.
 
 **Roles grant; a boundary caps.** A PAB policy can only block or not block; it
 never grants. So you use both:
@@ -170,13 +172,13 @@ access any Google Cloud resource; the cap exists only once you add one. And a
 PAB policy only blocks access that involves the permissions it supports, so
 it backs up narrow grants rather than replacing them.
 
-<Callout type="warning">A common trap: "give the agent Owner on the project so it never fails". Owner reaches every resource in the project, so a single injected instruction can read, change or delete any of it. Grant the narrowest roles the tools need, and cap the agent with a boundary.</Callout>
+<Callout type="warning">A common trap: broad basic roles "to avoid permission errors". Owner reaches most resources in the project, so a single injected instruction can read, change or delete any of it. Grant the narrowest roles the tools need, and add a boundary that covers the agent.</Callout>
 
 <Quiz
   id="which-control"
   objective="pab"
   question="Which control would stop a broad role, granted to an agent by mistake next month, from reaching the HR project?"
-  choices={["A narrow role on the finance bucket", "A Principal Access Boundary that makes only the finance project eligible", "Agent Identity on its own"]}
+  choices={["A narrow read role on the finance bucket, granted today", "A boundary covering the agent that allows only finance", "Agent Identity, so the agent becomes its own principal"]}
   answer={1}
   explanation="Only the boundary limits what a future grant can reach. A narrow role today does not stop a broad one being added later, and Agent Identity makes the agent its own principal but does not cap what it is granted."
 />
