@@ -12,7 +12,7 @@
 import { z } from "zod";
 
 /** Bump when a change here needs a consumer change. Consumers check it at build. */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 const nonEmpty = z.string().min(1, "must not be empty");
 /** An id in the content tree: kebab-case segments, `dir/name` for a topic. */

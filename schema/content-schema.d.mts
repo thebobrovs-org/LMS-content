@@ -22,7 +22,7 @@ export function check<S extends z.ZodTypeAny>(schema: S, value: unknown, file?: 
     problems: string[];
 };
 /** Bump when a change here needs a consumer change. Consumers check it at build. */
-export const SCHEMA_VERSION: 1;
+export const SCHEMA_VERSION: 2;
 /** An id in the content tree: kebab-case segments, `dir/name` for a topic. */
 export const ContentIdSchema: z.ZodString;
 export const VideoSchema: z.ZodObject<{

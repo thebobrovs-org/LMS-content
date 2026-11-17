@@ -32,7 +32,7 @@ test("a well-formed topic parses, with defaults filled in", () => {
   const minimal = check(TopicFrontmatterSchema, { title: "T", summary: "S", tags: ["x"], difficulty: "beginner", estimatedMinutes: 1 });
   assert.equal(minimal.ok, true);
   assert.deepEqual([minimal.value.status, minimal.value.quiz, minimal.value.authors], ["published", [], []]);
-  assert.equal(SCHEMA_VERSION, 1);
+  assert.equal(SCHEMA_VERSION, 2);
 });
 
 test("the baseline review's fixtures all fail", () => {
