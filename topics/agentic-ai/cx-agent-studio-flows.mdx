@@ -267,15 +267,16 @@ call and its output. Google's advice is to use them strategically:
 ## Test the agent, and let Gemini find issues
 
 CX Agent Studio tests an agent with test cases of three kinds: **golden** cases
-replay an ideal conversation as a regression check, **scenario** cases have
-Gemini generate conversations from a user goal, and **simulation** cases give a
+replay an ideal conversation as a regression check, **scenario** cases
+simulate conversations from a user goal, and **simulation** cases give a
 simulated user an ordered list of goals. An evaluation run plays them and scores
 the results.
 
 To get help with failures, select test cases, choose **Run selected**, and tick
-**Find issues with AI**. After the run, Gemini adds suggested fixes to the
-results and a downloadable loss report that summarises how the agent performed
-and where to improve it. Google recommends a run count of 3 or more for useful
+**Find issues with AI**. After the run, AI-based suggestions appear on the
+results page, along with a downloadable loss report that summarises how the
+agent performed and where to improve it; Ask Gemini opens a helper that starts
+from that report. Google recommends a run count of 3 or more for useful
 suggestions. The feature is in Preview and, at the time of writing, supports
 agent applications with a single agent.
 
