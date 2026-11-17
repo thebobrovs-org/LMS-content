@@ -38,19 +38,19 @@ quiz:
     explanation: "A before-tool callback runs your code after the model proposes the call and before the tool executes; returning a dictionary skips the tool and sends that result back to the model. The instruction and the docstring are both read by the model, which can get them wrong or be talked out of them, so they guide but do not enforce. (A check inside the tool function itself would also enforce; the callback keeps the policy separate and reusable.)"
   - id: transfer-or-agenttool
     objective: compose-agents
-    question: "A travel agent needs a currency-conversion specialist. The travel agent must stay in charge and fold the converted amount into its own reply. How should you attach the specialist?"
+    question: "A recipe agent needs a specialist that converts quantities between metric and US units. The recipe agent must stay in charge and fold the converted amounts into its own reply. How should you attach the specialist?"
     choices:
-      - "As an AgentTool, so its answer comes back to the travel agent"
+      - "As an AgentTool, so its answer comes back to the recipe agent"
       - "As a sub-agent in chat mode, so it takes the conversation over"
       - "As a second root agent, so both reply to the user in turn"
     answer: 0
-    explanation: "An AgentTool is called like a function: the travel agent invokes it, gets the result back and keeps control. (In Python, a single_turn sub-agent is the documented alternative with the same effect.) A chat-mode sub-agent takes over the conversation and keeps answering the user until control is transferred again. An app has one root agent; two agents answering in turn is not how ADK composes agents."
+    explanation: "An AgentTool is called like a function: the recipe agent invokes it, gets the result back and keeps control. (In Python, a single_turn sub-agent is the documented alternative with much the same effect.) A chat-mode sub-agent takes over the conversation and keeps answering the user until control is transferred again. An app has one root agent; two agents answering in turn is not how ADK composes agents."
   - id: misrouted-specialist
     objective: build-llmagent
     question: "A coordinator with two sub-agents keeps transferring refund questions to the shipping agent instead of the returns agent. Which field should you check first on the two specialists?"
     choices:
       - "Their model, because a larger model routes requests more accurately"
-      - "Their description, which the coordinator's model reads to choose where to transfer"
+      - "Their description, which the coordinator reads to pick a transfer target"
       - "Their instruction, which tells each specialist which requests to accept"
     answer: 1
     explanation: "The coordinator's model picks a transfer target from the sub-agents' descriptions, so a vague or overlapping description is the usual cause of misrouting. A specialist's instruction only shapes how it behaves once it already has control; the coordinator never reads it. A larger model cannot route well between descriptions that do not tell the agents apart."
@@ -65,13 +65,13 @@ quiz:
     explanation: "ADK builds the declaration the model sees from the function's name, docstring and type hints, so an unnamed purpose and an empty docstring leave the model guessing. Fix the declaration first. A list of exclusions in the instruction treats a symptom and grows without end, and another agent in front of the tool adds a model call without telling either model what the tool does."
   - id: after-model-redaction
     objective: use-callbacks
-    question: "Every reply the agent sends must have account numbers masked, whatever the model writes. Which callback fits?"
+    question: "Replies must never show a customer's email address, even when a tool result contains one. Which callback fits?"
     choices:
-      - "before_model_callback, to remind the model to mask numbers"
-      - "before_tool_callback, to mask numbers in each tool's arguments"
-      - "after_model_callback, to replace the response with a masked copy"
+      - "before_model_callback, to remind the model never to repeat emails"
+      - "before_tool_callback, to remove emails from each tool's arguments"
+      - "after_model_callback, to return the response with emails removed"
     answer: 2
-    explanation: "An after-model callback sees the model's response and can return a modified one, so your code masks the numbers deterministically. A reminder before the call is still only guidance. Masking tool arguments changes what the tools receive, not what the user sees."
+    explanation: "An after-model callback sees the model's response and can return a modified one, so your code removes the addresses deterministically. A reminder before the call is still only guidance the model can miss. Cleaning tool arguments changes what the tools receive, not what the tools return or what the user sees. (An after-tool callback that strips emails from tool results would also work, before the model ever sees them.)"
 status: draft
 updated: "2026-11-17"
 ---
@@ -284,9 +284,9 @@ comes back.
   id="who-answers-next"
   objective="compose-agents"
   question="A coordinator transfers to a chat-mode sub-agent, which answers. The user then sends another message. Which agent handles it?"
-  choices={["The coordinator, because control returns after each answer", "The sub-agent, which keeps the conversation until control is transferred again", "Both, because the coordinator reviews the sub-agent's reply"]}
+  choices={["The coordinator, because control returns to the parent after each sub-agent answer", "The sub-agent, which keeps the conversation until control is transferred again", "Both, because the coordinator reviews and rewrites each of the sub-agent's replies"]}
   answer={1}
-  explanation="Transfer hands the conversation over. A chat-mode sub-agent keeps handling messages until it, or a rule in the design, transfers control again. Nothing returns control to the coordinator automatically after each answer, and once it has transferred, the coordinator is out of the loop: it neither reviews nor rewrites the sub-agent's replies. Automatic return is what an AgentTool gives you."
+  explanation="Transfer hands the conversation over. A chat-mode sub-agent keeps handling messages until it, or a rule in the design, transfers control again. Nothing returns control to the coordinator automatically after each answer, and once it has transferred, the coordinator is out of the loop: it neither reviews nor rewrites the sub-agent's replies. Automatic return is what an AgentTool (or ADK 2.0's task and single_turn modes) gives you."
 />
 
 <Callout type="note">ADK 2.0 adds other sub-agent modes in Python and Go: a `task` sub-agent returns to the parent automatically when its task is done, and a `single_turn` sub-agent returns at once with its result and never talks to the user. This lesson uses `chat`, the default mode for a sub-agent.</Callout>
@@ -305,8 +305,8 @@ Returning `None` lets the step proceed unchanged. In Python, only `None` does:
 an empty dictionary from a before-tool callback counts as a result, and the tool
 is skipped.
 
-An after-model callback, for example, can mask account numbers in every reply,
-whatever the model wrote:
+An after-model callback, for example, can mask 16-digit account numbers in each
+model response, whatever the model wrote:
 
 ```python
 import re
@@ -319,8 +319,12 @@ def mask_accounts(callback_context: CallbackContext, llm_response: LlmResponse):
     for part in llm_response.content.parts:
         if part.text:
             part.text = re.sub(r"\b\d{12}(\d{4})\b", r"************\1", part.text)
-    return llm_response  # the masked copy replaces the model's response
+    return llm_response  # the masked response replaces the original
 ```
+
+A real masker must match every format your numbers come in (spaces, dashes,
+other lengths), and with streaming responses it must handle numbers split across
+chunks, for example by masking the final text.
 
 That makes callbacks the place for anything that must hold every time: argument
 checks, policy limits, masking data in a response, caching, logging. The
