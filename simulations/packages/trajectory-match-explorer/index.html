@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Trajectory match explorer</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main aria-label="Trajectory match explorer simulation">
+      <div id="app"></div>
+      <div id="readout" class="readout" role="status"></div>
+    </main>
+    <!-- Classic (non-module) scripts: the sim runs in a sandboxed, opaque-origin
+         iframe (sandbox="allow-scripts", no allow-same-origin), where module
+         scripts are blocked. sim-sdk.js exposes a global createSim. -->
+    <script src="./sim-sdk.js"></script>
+    <script src="./main.js"></script>
+  </body>
+</html>
