@@ -1,0 +1,365 @@
+---
+title: Running coding agents safely in sandboxes
+summary: Treat agent-generated code as untrusted. Choose where a coding agent and its code run, from Antigravity's terminal sandbox to Cloud Workstations and GKE Agent Sandbox. Set permission presets and rules that ask before risky commands, and ship agent patches only through tests and human review.
+tags: [agentic-ai, coding-agents, security, sandboxing, gke]
+difficulty: advanced
+estimatedMinutes: 25
+level: 400
+prerequisites: [agentic-ai/customizing-coding-agents]
+objectives:
+  - id: choose-sandbox
+    statement: "Choose an isolation option for a scenario."
+  - id: permission-presets
+    statement: "Set permission presets that require approval for risky commands."
+  - id: safe-refactor
+    statement: "Run a refactor or security patch through an agent with tests and human review before merge."
+flashcards:
+  - id: terminal-sandbox-protects
+    objective: choose-sandbox
+    front: What does Antigravity's terminal sandbox protect, and what does it not?
+    back: "It confines the agent's shell commands on the developer's machine: writes stay in the workspace, temp folders and build caches, secrets such as ~/.ssh and .env are blocked, and there is no network unless a domain is allowed. It does not change what the agent's credentials can do through tools that run outside it."
+  - id: workstation-protects
+    objective: choose-sandbox
+    front: What does running a coding agent on Cloud Workstations protect?
+    back: "The developer's laptop and its credentials: the agent runs on a dedicated VM per workstation, inside your VPC, which, in a private cluster with VMs that have no public IP, is not reachable from the internet and can sit in a VPC Service Controls perimeter. The agent still acts with the workstation's service account and any credentials saved on it, so those must be minimal."
+  - id: gke-agent-sandbox-protects
+    objective: choose-sandbox
+    front: What does GKE Agent Sandbox protect?
+    back: "The node and other tenants from agent-generated code: each sandbox is a Pod with its own kernel boundary (gVisor or a microVM), Pods from a template get a default-deny network policy that blocks internal ranges and the metadata server, and warm pools hand out sandboxes in under a second. Public internet egress stays open unless you restrict it."
+  - id: rule-precedence
+    objective: permission-presets
+    front: In Antigravity's permission rules, what wins when allow, ask and deny conflict?
+    back: "Deny beats ask, and ask beats allow. So an ask rule such as command(terraform apply) still asks for approval when broader allow rules exist, and a deny rule blocks a command even if another rule allows it."
+  - id: untrusted-code-rules
+    objective: safe-refactor
+    front: What are the three rules for agent-generated code?
+    back: "Treat it as untrusted until it is reviewed and tested. Run it in isolation, with production credentials kept out. Keep a person reviewing every patch that ships."
+quiz:
+  - id: scale-isolation
+    objective: choose-sandbox
+    question: "A product lets thousands of users ask an agent to write and run Python on their data, with each run needing a fresh environment in about a second. Where should the generated code run?"
+    choices:
+      - "On the agent's own Cloud Run service, in a subprocess"
+      - "In GKE Agent Sandbox, with a sandbox per run from a warm pool"
+      - "On a Cloud Workstation per user, kept running between requests"
+      - "In a Docker container per run on a shared VM"
+    answer: 1
+    explanation: "Agent-generated code at scale needs a kernel-isolated environment per run that starts fast: GKE Agent Sandbox gives each sandbox its own gVisor or microVM boundary, and warm pools hand them out in under a second. A subprocess shares the service's sandbox and its service-account credentials, containers on a shared VM share that VM's kernel, and workstations are per-developer machines."
+  - id: owner-trap
+    objective: safe-refactor
+    question: "An agent running in a sandbox keeps failing on permission errors while it fixes infrastructure code. A teammate suggests granting its service account Owner on the project so it never fails. What should you do instead?"
+    choices:
+      - "Grant Owner only during working hours, and revoke it at night"
+      - "Grant Editor instead, since it cannot change IAM policies"
+      - "Run the agent with the developer's own credentials, which already work"
+      - "Give the agent its own identity with only the roles the task needs"
+    answer: 3
+    explanation: "Owner would turn every mistake or injected instruction into a project-wide change. Give the agent a dedicated identity with the narrowest roles the task needs, and keep production out of reach. Editor is still a broad basic role, a time window does not shrink what the role can do, and the developer's credentials carry everything the developer can do."
+  - id: ask-before-push
+    objective: permission-presets
+    question: "A team uses Antigravity's Default preset with an allow rule for npm commands. It wants builds to run freely but to be asked before any git push, even if someone later adds a broad allow rule. What should it add?"
+    choices:
+      - "An ask rule, command(git push)"
+      - "A switch to Request Review for the whole team"
+      - "A second allow rule listing only the safe commands"
+      - "A switch to the Auto preset, so pushes are checked automatically"
+    answer: 0
+    explanation: "Ask beats allow, so the push asks for approval whatever allow rules exist, while npm keeps running freely. Request Review would ask before every build too, a list of allowed commands does not make anyone ask before a push, and Auto lets Antigravity decide automatically, rather than a person, whether a command outside the sandbox may run (and is not offered on business accounts)."
+  - id: turbo-risk
+    objective: permission-presets
+    question: "Why is Antigravity's Turbo preset a poor choice on a laptop that holds production credentials?"
+    choices:
+      - "It keeps the sandbox on but skips the approval step"
+      - "It turns off the sandbox and allows any command and file access"
+      - "It asks only for commands outside the workspace folder"
+      - "It sends commands to an automatic check instead of a person"
+    answer: 1
+    explanation: "Turbo turns the sandbox off and allows commands and the full file system without asking, so a wrong or injected command runs with everything on the machine, including those credentials. It does not keep the sandbox, ask about anything, or check commands automatically; that is Auto."
+  - id: sandbox-network
+    objective: permission-presets
+    question: "Under Antigravity's Default preset, the agent's npm install fails inside the sandbox with network errors. What is the right fix?"
+    choices:
+      - "Switch to Turbo for the rest of the session"
+      - "Disable the sandbox in settings and restart"
+      - "Allow the package registry's domain for read_url"
+      - "Run npm install with sudo inside the sandbox"
+    answer: 2
+    explanation: "Sandboxed commands have no network access by default; domains you allow under read_url form the sandbox's outbound allowlist, so allowing the registry fixes the install without opening other domains. Turbo and disabling the sandbox remove every protection to fix one domain, and sudo does not give the sandbox a network."
+  - id: gke-egress
+    objective: choose-sandbox
+    question: "A team creates GKE Agent Sandbox Pods from a SandboxTemplate and assumes the generated code cannot reach the internet. What is true by default?"
+    choices:
+      - "All egress is blocked, including the public internet"
+      - "Egress is limited to Google APIs and cluster DNS"
+      - "No network policy applies until the team writes one"
+      - "Internal traffic is blocked; public internet egress is allowed"
+    answer: 3
+    explanation: "The default-deny policy blocks ingress except from the sandbox router, and blocks egress to private ranges, cluster DNS and the metadata server, but leaves public internet egress open. Code that should not call out needs an egress policy of your own. A Sandbox created directly, not from a template, gets no network policy at all."
+  - id: patch-gates
+    objective: safe-refactor
+    question: "An agent has written a patch for a vulnerable dependency. Which sequence lets it ship safely?"
+    choices:
+      - "The agent pushes to main, since the change is small, urgent and already tested"
+      - "The agent opens a pull request; CI runs tests and scans; a person reviews and merges"
+      - "The agent works on a branch, runs tests and scans in its sandbox, then merges"
+      - "The agent opens a pull request; CI runs the tests; a second agent reviews and merges"
+    answer: 1
+    explanation: "The patch is untrusted until it is tested and reviewed, so it goes through a branch and pull request, CI runs the tests and security scans, and a person reviews before merging. Pushing to main skips every gate, tests the agent runs itself are results the agent controls, and a second agent is still a model deciding."
+  - id: workstation-private
+    objective: choose-sandbox
+    question: "An enterprise team's coding agents must not run on laptops, and the environment they run in must not be reachable from outside the company network. What fits best?"
+    choices:
+      - "Cloud Workstations in a private cluster, reached over VPN"
+      - "GKE Agent Sandbox, one sandbox per developer, kept all day"
+      - "Laptops with the terminal sandbox and the Request Review preset"
+      - "Laptops with a VPN, so traffic passes through the company network"
+    answer: 0
+    explanation: "Cloud Workstations gives each developer a dedicated VM in your VPC. A private cluster (a private gateway, reached through a Private Service Connect endpoint) is what keeps clients outside the company network out: company devices connect over Cloud VPN or Interconnect, and VMs without public IP addresses close the other way in. Turning off VM public IPs alone does not make the access gateway private. GKE Agent Sandbox suits generated code at scale rather than a developer's working environment, and both laptop options still run the agent on a laptop."
+  - id: refactor-check
+    objective: safe-refactor
+    question: "An agent's refactor of a billing module comes with three edited tests, and the suite passes. What should the reviewer do?"
+    choices:
+      - "Approve it, since the whole suite passes after the change"
+      - "Approve it once a second, clean run of the suite passes in CI"
+      - "Ask why the tests changed, then rerun the original tests"
+      - "Ask the agent to add more tests, then approve once they pass"
+    answer: 2
+    explanation: "A refactor must not change behaviour, so its check is the same tests passing before and after. Edited tests may mean behaviour changed and the tests were bent to match, so the original tests are the ones to run. A passing suite proves little when the agent edited the tests it now passes, a second run repeats the same check, and new tests do not restore the old ones."
+updated: "2026-11-17"
+status: draft
+---
+
+## Agent-generated code is untrusted code
+
+A coding agent writes code and runs commands. Both can be wrong: the model can
+misread the task, or follow an
+<Term id="indirect prompt injection">instruction hidden in a file or web page</Term>
+it read. Whatever runs, runs with the permissions of the process and the
+credentials around it. On a developer laptop that can mean SSH keys, cloud
+credentials with production access, and every file in the home folder.
+
+Three rules follow:
+
+1. **Treat agent-generated code as untrusted** until it is reviewed and tested.
+2. **Isolate where it runs**, and keep production credentials out of reach.
+3. **Keep a person reviewing** every patch that ships.
+
+The options below, summarised as a ladder in the figure further down, differ in what
+they protect, and from what. Topic 2.2's hooks
+and tool lists limit what an agent tries; isolation limits the damage when
+something gets through.
+
+## Antigravity's terminal sandbox and permission presets
+
+Antigravity runs the agent's shell commands in a
+<Term id="terminal sandbox">terminal sandbox</Term>, using each operating
+system's built-in process isolation (kernel namespaces on Linux, Seatbelt on
+macOS, AppContainer on recent Windows 11). It runs on the developer's own
+machine, not in a Google-managed environment, built on the operating system's
+own isolation with no virtual machines or Docker images to manage. Inside it, writes are limited to the
+workspace, temporary folders, build caches and paths you allow with
+`write_file`, `~/.ssh` and `.env` files are blocked, and "sandboxed commands run
+without network access by default". Domains you allow for `read_url`
+(Antigravity's web-fetch permission) form the sandbox's outbound allowlist.
+
+How much the agent may do without asking is set by a
+<Term id="permission preset">permission preset</Term>:
+
+| Preset | Sandbox | Terminal commands |
+|---|---|---|
+| Request Review | Off | Always ask |
+| Default | On | Allowed in the sandbox; ask outside it |
+| Auto | On | Allowed in the sandbox; outside it, Antigravity decides automatically instead of asking |
+| Turbo | Off | Allowed, unrestricted, with full file system access |
+
+Default is selected unless the sandbox is unavailable, in which case Antigravity
+uses Request Review. Auto is not available for business or enterprise accounts,
+and Turbo should never be used on a machine that holds production credentials.
+
+On top of a preset, rules say what is allowed, what asks and what is denied,
+written as an action and a target, such as `command(git push)` or
+`read_url(registry.npmjs.org)`. When rules conflict, deny beats ask, and ask
+beats allow. A team can combine them like this:
+
+| Rule | Example | Effect |
+|---|---|---|
+| Allow | `command(npm test)` | Tests run without asking |
+| Ask | `command(git push)` | Every push waits for approval, whatever else is allowed |
+| Deny | `command(rm -rf)` | Commands starting `rm -rf` never run, even if a broader rule allows them |
+
+Command rules match by literal prefix, so `rm -fr` is not caught: deny rules
+narrow risk, but they are not a complete blocklist.
+
+Two details catch teams out:
+
+- **The CLI differs from the app.** In the Antigravity CLI the sandbox is off
+  by default. Turn it on with `"enableTerminalSandbox": true` in its settings,
+  or `agy --sandbox` for a session, and set `"toolPermission":
+  "proceed-in-sandbox"` to let sandboxed commands run without asking.
+- **Business and enterprise accounts use the earlier settings**,
+  whose presets have different meanings: even their Default, like Full machine
+  and Turbo mode, leaves the sandbox off.
+  There, switch on **Enable Sandbox Mode** explicitly. Antigravity's enterprise
+  guidance is to keep Default or Request Review enabled; its documentation does
+  not describe an administrator lock on presets.
+
+The sandbox confines commands, not credentials. A tool the terminal sandbox does
+not cover, such as an <Term id="mcp server">MCP server</Term>, still acts with
+whatever access it was given.
+
+## Cloud Workstations: a managed machine per developer
+
+<Term id="cloud workstations">Cloud Workstations</Term> moves the developer's
+environment, and the coding agent with it, off the laptop. Each workstation
+runs on its own VM inside your VPC. To keep the environment off the internet,
+two settings work together, and neither replaces the other:
+
+- **A private cluster.** Choose a **private gateway** when you create the
+  workstation cluster, so its endpoint has only an internal address. Developers
+  reach it through a Private Service Connect endpoint in your VPC, with a
+  private DNS record for the cluster, and from the company network over Cloud
+  VPN or Cloud Interconnect.
+- **No public IPs on the VMs**, set in the workstation configuration. Without
+  it, the VMs get public addresses even in a private cluster.
+
+Google's security guidance adds a VPC Service Controls perimeter (a boundary
+that stops data in Google APIs such as Cloud Storage or BigQuery being reached
+from, or copied to, projects outside it), which requires a private cluster, and
+keeping each workstation single-user.
+
+For coding agents, Google documents an agent-optimised setup: a workstation can
+suspend when idle and keep its memory, processes and terminal sessions, and
+sample hooks for Claude Code and Antigravity CLI keep it awake while the agent
+is working.
+
+The agent acts with the workstation's credentials: the service account attached
+to its VM (the project's default workstation service account if you attach
+none), plus any gcloud credentials a user saves there. Attach a dedicated
+service account with only the roles development needs, and keep production
+roles off it.
+
+When an agent keeps hitting permission errors, resist granting Owner or Editor
+so it "never fails". These basic roles turn every mistake or injected
+instruction into a project-wide change. Give the agent its own identity, add the
+one role a failing task shows it needs, and never lend it a developer's
+credentials. Topic 5.2 covers agent identities and why basic roles are a trap.
+
+## GKE Agent Sandbox: isolating generated code at scale
+
+When an agent product runs code that agents generate for many users,
+<Term id="gke agent sandbox">GKE Agent Sandbox</Term> gives each run its own
+isolated environment. It was announced as generally available in May 2026 and
+builds on the open-source Agent Sandbox project. This section assumes basic
+GKE: a Pod is the smallest unit GKE schedules, and a network policy controls
+which traffic may reach or leave it.
+
+- **Isolation.** Each sandbox is a Pod with its own kernel boundary: GKE
+  Sandbox with gVisor (a user-space kernel that intercepts the Pod's system
+  calls) or with a microVM (a lightweight VM with its own guest kernel). Code
+  that escapes its process must break a second boundary before it reaches the
+  node or other tenants.
+- **Resources.** A `SandboxTemplate` defines the Pod, a `SandboxWarmPool` keeps
+  sandboxes ready "in less than one second", and a `SandboxClaim` takes one
+  from the pool. A Python SDK creates the claims for you.
+- **Network.** Pods created from a template get a default-deny network policy:
+  no ingress except through the sandbox router (the component that forwards
+  requests to a claimed sandbox), and no egress to private ranges, cluster DNS
+  or the metadata server (the endpoint that hands out the node's credentials to
+  anything that asks). **Public internet egress is
+  allowed by default**, so restrict it if the code should not call out. A
+  Sandbox you create directly, without a template, gets no network policy.
+- **Operations.** You install the Agent Sandbox controller on your cluster and
+  upgrade it yourself; it is not a managed add-on. It runs on Autopilot clusters (Google manages the
+  nodes) and Standard clusters (you manage them).
+
+Keep cloud credentials out of the sandbox too: Google's quickstart turns off
+the automatic Kubernetes service-account token (the credential Kubernetes
+mounts into every Pod by default), and with the template's network
+policy blocking the metadata server, generated code cannot borrow the node's
+identity.
+
+<Callout type="note">For architects comparing options: Google's documentation now suggests a newer project, Agent Substrate on GKE, for most agent workloads, because it packs more agents onto the same nodes. It is open source, needs GKE Standard, and shows no launch stage in its documentation; GKE Agent Sandbox remains the documented choice for a dedicated Pod per agent, GPUs or Autopilot.</Callout>
+
+<Figure
+  src="/media/coding-agent-isolation-ladder.svg"
+  alt="An isolation ladder with four rungs, from least to most isolated. Developer laptop, no sandbox: commands run with every file and credential on the machine. Antigravity terminal sandbox: commands confined to the workspace with no network by default and secrets such as ~/.ssh and .env blocked, but still on the laptop. Cloud Workstations: a dedicated VM per developer in a private cluster, reached through a private gateway, with no public VM IP addresses, a VPC Service Controls perimeter and a minimal service account, which keeps company credentials off laptops. GKE Agent Sandbox: a kernel-isolated Pod per run from a warm pool, with internal traffic and the metadata server blocked, for agent-generated code at scale. A side note says every rung still needs least-privilege credentials and human review before code ships."
+  caption="Each rung isolates more, and none replaces least privilege and review."
+/>
+
+## Choose isolation by scenario
+
+| Scenario | Isolation | Keep out |
+|---|---|---|
+| One developer using a coding agent on a laptop | Terminal sandbox with the Default preset, or Request Review where the sandbox is unavailable | Production credentials on the laptop |
+| An enterprise team of developers using coding agents | Cloud Workstations in a private cluster with no public VM IPs, a perimeter and a minimal service account | Company credentials on laptops; production roles on the workstation |
+| An agent product running generated code for many users | GKE Agent Sandbox, a sandbox per run from a warm pool, with egress restricted | Cloud credentials and the metadata server inside sandboxes |
+
+## Patch a vulnerability with review gates
+
+Isolation decides where agent code runs. Review decides what ships. Say a
+scanner flags a vulnerable dependency, and a coding agent on a workstation
+takes the task:
+
+1. **Work on a branch, from a reproduction.** Where the flaw can be shown, the
+   agent first writes a test that reproduces it and fails. Then it upgrades the
+   dependency and fixes what the upgrade breaks, on its own branch, with
+   permissions that cannot push to main, until that test passes.
+2. **Test in isolation.** It runs the test suite inside the Antigravity CLI's
+   terminal sandbox, turned on with `enableTerminalSandbox` (check that it
+   starts: it needs unprivileged user namespaces, which some containers block),
+   with only the package registry allowed. A malicious build script then cannot
+   reach `~/.ssh` or `.env` files or call anywhere else. Save no gcloud
+   credentials on the workstation, and its minimal service account limits the
+   rest.
+3. **Open a pull request.** CI, not the agent, runs the full tests and security
+   scans; the agent cannot mark its own work as passing.
+4. **A person reviews and merges.** The reviewer checks the diff, especially
+   anything beyond the dependency bump, such as changed tests, new network
+   calls or edited CI files.
+
+The same gates apply to every maintenance job: the agent proposes, tests and
+scans check, and a person decides. Protect the main branch on the server, so no
+agent credential can skip the gates. What changes from job to job is the check
+that proves the work is done:
+
+| Job | The check | What it proves |
+|---|---|---|
+| Patch a bug or vulnerability | Where possible, a reproduction test first: it fails before the fix and passes after | The fix addresses the actual flaw, not a guess at it |
+| Refactor | The tests of its public behaviour pass before and after, unchanged | Behaviour stayed the same; edited tests are a reason to look closer |
+| Optimise, such as a JVM heap size or a Cloud Run concurrency limit | Measure, change, then measure again under the same load | The change helped; without a baseline, "faster" is a guess |
+
+<Flashcard id="maintenance-checks" objective="safe-refactor" front="What check proves each agent maintenance job: a patch, a refactor, an optimisation?" back="Patch: where possible, a reproduction test that fails before the fix and passes after. Refactor: the tests of its public behaviour pass before and after, unchanged. Optimisation: measure, change, then measure again under the same load." />
+
+<Callout type="note">File names, presets and features in this lesson are as documented in November 2026; coding-agent security settings change often, so check the current documentation before relying on a default.</Callout>
+
+## Recap
+
+- Agent-generated code is untrusted until reviewed and tested; isolate where it
+  runs and keep production credentials out.
+- Antigravity's terminal sandbox confines commands on the developer's own machine, with no network
+  by default; presets decide what runs without asking, and rules resolve deny
+  before ask before allow, so an ask rule guards risky commands such as a push. The CLI's sandbox is off until you turn it on.
+- Cloud Workstations gives each developer a managed VM in your VPC; its service
+  account is what the agent can do, so keep it minimal and never reach for
+  Owner or Editor.
+- GKE Agent Sandbox gives each run of generated code a kernel-isolated Pod from
+  a warm pool; for Pods from a template it blocks internal traffic and the
+  metadata server, but allows public egress unless you restrict it.
+- Ship agent patches through a branch, CI tests and scans, and human review,
+  with the main branch protected. Prove a patch with a reproduction test, a
+  refactor with unchanged tests passing before and after, and an optimisation
+  by measuring before and after.
+
+## Sources
+
+- Antigravity documentation, "Sandbox" and "Permissions", antigravity.google/docs/sandbox/ and antigravity.google/docs (terminal sandbox enabled by default in the app; built on native operating system primitives, with no virtual machines or Docker images; Linux namespaces, macOS Seatbelt, Windows AppContainer; "Sandboxed commands run without network access by default"; read_url domains as the outbound allowlist; ~/.ssh and .env blocked; presets Request Review, Default, Auto, Turbo; Default selected by default, Request Review if the sandbox is unavailable; Auto not available for business or enterprise accounts; rules as action(target), Deny > Ask > Allow; legacy business and enterprise presets Default, Full machine and Turbo mode do not turn the sandbox on).
+- Antigravity CLI documentation, settings and flags, antigravity.google/docs (enableTerminalSandbox default false; agy --sandbox; toolPermission request-review by default, proceed-in-sandbox).
+- Antigravity documentation, "Enterprise", antigravity.google/docs/enterprise (keep Default or Request Review enabled).
+- Google Cloud, "About Agent Sandbox on GKE", docs.cloud.google.com/kubernetes-engine/docs/concepts/machine-learning/agent-sandbox, and its quickstart (gVisor or microVMs; Sandbox, SandboxTemplate, SandboxWarmPool, SandboxClaim; warm sandboxes in less than one second; user-installed controller; default-deny network policy for Pods from a SandboxTemplate, with public internet egress allowed and the metadata server blocked; automountServiceAccountToken false; Agent Substrate recommended for most agent workloads).
+- Google Cloud Blog, GKE Agent Sandbox general availability, May 2026 ("GKE Agent Sandbox is now generally available"; Agent Substrate as a new open-source project).
+- Kubernetes SIGs, agent-sandbox README, github.com/kubernetes-sigs/agent-sandbox (the open-source project and its resources).
+- Google Cloud, "Agent-optimized development", docs.cloud.google.com/workstations/docs/agent-optimized-development (suspend on idle keeping memory and processes; keep-alive hooks for Claude Code and Antigravity CLI).
+- Google Cloud, "Configure VPC Service Controls and private clusters", docs.cloud.google.com/workstations/docs/configure-vpc-service-controls-private-clusters (a private cluster's control plane has only an internal IP; clients connect through a Private Service Connect endpoint and private DNS, and off-network machines through Cloud VPN or Cloud Interconnect; turn off public IP addresses in the workstation configuration separately; public clusters cannot be created in a VPC service perimeter).
+- Google Cloud, Cloud Workstations security best practices, service accounts and authentication pages, docs.cloud.google.com/workstations/docs (dedicated VM per workstation; disable public IPs; VPC Service Controls; attach a service account, otherwise the default workstation service account; saved gcloud credentials persist; keep workstations single-user).
+- Google Cloud, "AI security and safety" for MCP, docs.cloud.google.com/mcp/ai-security-safety (create an agent identity; principle of least privilege; deny policy on read-write tool access to production resources).
+- Google Cloud, "Use IAM securely", docs.cloud.google.com/iam/docs/using-iam-securely (avoid basic roles in production; grant Owner only when nearly universal access is required).

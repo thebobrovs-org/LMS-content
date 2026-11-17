@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" width="760" height="440" role="img" aria-label="A loop of six phases, each with its skill and, where there is one, its command. Spec, with the workflow skill. Scaffold, with the scaffold skill and agents-cli create. Build and run, with the adk-code skill and agents-cli run or playground. Evaluate, with the eval skill and agents-cli eval run. Deploy and publish, with the deploy and publish skills and agents-cli deploy and publish gemini. An arrow from Evaluate back to Build is labelled fix and re-run. Observe, with the observability skill and built-in tracing to Cloud Trace, feeds what production traces show back into Build. A note says the workflow skill is always active and walks the coding agent through the loop.">
+  <rect width="760" height="440" fill="#ffffff"/>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <g font-family="Inter, system-ui, sans-serif">
+    <text x="380" y="28" text-anchor="middle" font-size="15" font-weight="600" fill="#0f172a">The agent lifecycle in Agents CLI: a skill and a command per phase</text>
+
+    <!-- top row: Spec -> Scaffold -> Build and run -->
+    <g>
+      <rect x="20" y="60" width="190" height="86" rx="10" fill="#f8fafc" stroke="#64748b"/>
+      <text x="115" y="84" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">1. Spec</text>
+      <text x="115" y="104" text-anchor="middle" font-size="11" fill="#475569">skill: workflow</text>
+      <text x="115" y="124" text-anchor="middle" font-size="11" fill="#475569">writes a spec file</text>
+
+      <rect x="270" y="60" width="190" height="86" rx="10" fill="#dbeafe" stroke="#2563eb"/>
+      <text x="365" y="84" text-anchor="middle" font-size="13" font-weight="600" fill="#1e3a8a">2. Scaffold</text>
+      <text x="365" y="104" text-anchor="middle" font-size="11" fill="#1e3a8a">skill: scaffold</text>
+      <text x="365" y="124" text-anchor="middle" font-size="11" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1e3a8a">agents-cli create</text>
+
+      <rect x="520" y="60" width="190" height="86" rx="10" fill="#dbeafe" stroke="#2563eb"/>
+      <text x="615" y="84" text-anchor="middle" font-size="13" font-weight="600" fill="#1e3a8a">3. Build and run</text>
+      <text x="615" y="104" text-anchor="middle" font-size="11" fill="#1e3a8a">skill: adk-code</text>
+      <text x="615" y="124" text-anchor="middle" font-size="11" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1e3a8a">run · playground</text>
+    </g>
+    <g stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#ar)">
+      <path d="M210,103 L266,103"/>
+      <path d="M460,103 L516,103"/>
+      <path d="M615,146 L615,206"/>
+    </g>
+
+    <!-- middle right: Evaluate -->
+    <rect x="520" y="210" width="190" height="86" rx="10" fill="#dbeafe" stroke="#2563eb"/>
+    <text x="615" y="234" text-anchor="middle" font-size="13" font-weight="600" fill="#1e3a8a">4. Evaluate</text>
+    <text x="615" y="254" text-anchor="middle" font-size="11" fill="#1e3a8a">skill: eval</text>
+    <text x="615" y="274" text-anchor="middle" font-size="11" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1e3a8a">agents-cli eval run</text>
+    <!-- fix and re-run loop -->
+    <path d="M710,253 C750,253 750,103 714,103" stroke="#b45309" stroke-width="1.5" fill="none" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+    <text x="726" y="182" text-anchor="end" font-size="10.5" fill="#b45309">fix and</text>
+    <text x="726" y="196" text-anchor="end" font-size="10.5" fill="#b45309">re-run</text>
+
+    <!-- middle centre: Deploy and publish -->
+    <rect x="270" y="210" width="190" height="86" rx="10" fill="#dbeafe" stroke="#2563eb"/>
+    <text x="365" y="234" text-anchor="middle" font-size="13" font-weight="600" fill="#1e3a8a">5. Deploy and publish</text>
+    <text x="365" y="254" text-anchor="middle" font-size="11" fill="#1e3a8a">skills: deploy, publish</text>
+    <text x="365" y="274" text-anchor="middle" font-size="11" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1e3a8a">deploy · publish gemini</text>
+    <path d="M520,253 L464,253" stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#ar)"/>
+    <text x="486" y="244" text-anchor="middle" font-size="10.5" fill="#475569">passes</text>
+
+    <!-- middle left: Observe -->
+    <rect x="20" y="210" width="190" height="86" rx="10" fill="#f8fafc" stroke="#64748b"/>
+    <text x="115" y="234" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">6. Observe</text>
+    <text x="115" y="254" text-anchor="middle" font-size="11" fill="#475569">skill: observability</text>
+    <text x="115" y="274" text-anchor="middle" font-size="11" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#475569">built-in tracing</text>
+    <path d="M270,253 L214,253" stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#ar)"/>
+
+    <!-- observe feeds back to build -->
+    <path d="M115,296 L115,330 L508,330 L508,132 L516,132" stroke="#64748b" stroke-width="1.5" fill="none" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+    <text x="300" y="322" text-anchor="middle" font-size="10.5" fill="#475569">what production traces show feeds the next round of building</text>
+
+    <g font-size="11.5" fill="#334155">
+      <text x="20" y="372">Blue phases have a command; grey phases are skill-only. The workflow skill is always active</text>
+      <text x="20" y="390">and walks the coding agent through the loop. Every command also works without a coding agent.</text>
+    </g>
+  </g>
+</svg>

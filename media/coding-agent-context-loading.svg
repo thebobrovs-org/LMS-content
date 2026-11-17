@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 430" width="760" height="430" role="img" aria-label="Two panels. In context on every turn: the project instructions file (AGENTS.md, GEMINI.md or CLAUDE.md); the skill listing, which holds each skill's name and description, for example bigquery-cost-review and release-notes; and the MCP tools the agent may call, for example list_dataset_ids, get_table_info and execute_sql_readonly from a BigQuery server. Loaded only when relevant: a skill's SKILL.md body, read when the task matches its description or you type its slash command; reference files in the skill folder, read only if the body points to them; and scripts in the skill folder, which the agent runs so that only their output enters the context. A note says a skill costs a line of context until used, every exposed MCP tool is something the model can call so a server should be limited to the tools the task needs, and some agents load only tool names up front and fetch full schemas when needed.">
+  <rect width="760" height="430" fill="#ffffff"/>
+  <g font-family="Inter, system-ui, sans-serif">
+    <text x="380" y="30" text-anchor="middle" font-size="16" font-weight="600" fill="#0f172a">What a coding agent loads, and when</text>
+
+    <!-- every turn -->
+    <rect x="20" y="50" width="350" height="300" rx="12" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+    <text x="40" y="78" font-size="14" font-weight="600" fill="#1e3a8a">In context on every turn</text>
+    <rect x="40" y="94" width="310" height="62" rx="8" fill="#ffffff" stroke="#93c5fd"/>
+    <text x="54" y="118" font-size="13" font-weight="600" fill="#0f172a">Project instructions</text>
+    <text x="54" y="140" font-size="12" fill="#334155">AGENTS.md, GEMINI.md or CLAUDE.md</text>
+    <rect x="40" y="168" width="310" height="76" rx="8" fill="#ffffff" stroke="#93c5fd"/>
+    <text x="54" y="192" font-size="13" font-weight="600" fill="#0f172a">Skill listing: name and description</text>
+    <text x="54" y="213" font-size="12" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1e3a8a">bigquery-cost-review: Reviews…</text>
+    <text x="54" y="232" font-size="12" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1e3a8a">release-notes: Drafts…</text>
+    <rect x="40" y="256" width="310" height="76" rx="8" fill="#ffffff" stroke="#93c5fd"/>
+    <text x="54" y="280" font-size="13" font-weight="600" fill="#0f172a">MCP tools the agent may call</text>
+    <text x="54" y="301" font-size="12" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1e3a8a">bigquery: list_dataset_ids,</text>
+    <text x="54" y="320" font-size="12" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1e3a8a">  get_table_info, execute_sql_readonly</text>
+
+    <!-- on demand -->
+    <rect x="390" y="50" width="350" height="300" rx="12" fill="#f8fafc" stroke="#64748b" stroke-width="1.5" stroke-dasharray="6 4"/>
+    <text x="410" y="78" font-size="14" font-weight="600" fill="#0f172a">Loaded only when relevant</text>
+    <rect x="410" y="94" width="310" height="76" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="424" y="118" font-size="13" font-weight="600" fill="#0f172a">Skill body: SKILL.md</text>
+    <text x="424" y="139" font-size="12" fill="#334155">Read when the task matches the</text>
+    <text x="424" y="157" font-size="12" fill="#334155">description, or you type /skill-name</text>
+    <rect x="410" y="182" width="310" height="62" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="424" y="206" font-size="13" font-weight="600" fill="#0f172a">Reference files in the skill folder</text>
+    <text x="424" y="228" font-size="12" fill="#334155">Read only if the body points to them</text>
+    <rect x="410" y="256" width="310" height="76" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="424" y="280" font-size="13" font-weight="600" fill="#0f172a">Scripts in the skill folder</text>
+    <text x="424" y="301" font-size="12" fill="#334155">Run by the agent; their output enters</text>
+    <text x="424" y="319" font-size="12" fill="#334155">the context, not their code</text>
+
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker></defs>
+    <path d="M350,206 L408,132" stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#ar)"/>
+    <text x="374" y="190" font-size="11" fill="#475569">match</text>
+
+    <g font-size="12" fill="#334155">
+      <text x="20" y="378">A skill costs a line of context until it is used. Every exposed MCP tool is something the model can call,</text>
+      <text x="20" y="397">so limit a server to the tools the task needs. (Some agents, such as Claude Code with tool search, load</text>
+      <text x="20" y="416">only tool names up front and fetch full schemas when needed; the tools are still callable.)</text>
+    </g>
+  </g>
+</svg>
