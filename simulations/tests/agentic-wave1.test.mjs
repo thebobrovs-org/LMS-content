@@ -94,3 +94,22 @@ test("state-scope-explorer: a new session reads the user: key but not the sessio
   await sim.press("#user", "Ben");
   assert.equal(text(sim, "#merged"), "{ }", "another user reads neither key");
 });
+
+test("workflow-vs-agent-stepper: on a partly shipped order the tram hands off and the car redirects a part", async () => {
+  const sim = await loadSim("workflow-vs-agent-stepper");
+  await sim.press('[data-v="tram"][data-predict="help"]');
+  for (let i = 0; i < 6; i++) await sim.press("#step");
+  const caption = text(sim, "#caption");
+  assert.match(caption, /Handed to a person; nothing changed, with 1 model call/);
+  assert.match(caption, /Part A1234-2 will go to your new address/);
+  assert.match(text(sim, "#verdict"), /Workflow: right/);
+  assert.ok(sim.events.includes("checkpoint:observe-who-decides"));
+});
+
+test("workflow-vs-agent-stepper: with the expected result both change the address, and only the unexpected run fires the checkpoint", async () => {
+  const sim = await loadSim("workflow-vs-agent-stepper");
+  await sim.press('[data-result="expected"]');
+  for (let i = 0; i < 6; i++) await sim.press("#step");
+  assert.match(text(sim, "#caption"), /Same outcome\. The rails used 1 model call, the driver 3/);
+  assert.ok(!sim.events.includes("checkpoint:observe-who-decides"));
+});
