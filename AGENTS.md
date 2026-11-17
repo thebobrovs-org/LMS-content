@@ -34,6 +34,7 @@ The learner app (LMS) fetches this repo at build time.
 | `npm run gate` | **The gate**: CI and `hyperstack/bin/pre-pr` run exactly this |
 | `npm run validate` / `validate:staging` | Content validation |
 | `../hyperstack/bin/pre-pr` | Adds a **build of LMS against this checkout**, so contract breaks show up before merge |
+| `node scripts/merge-plan.mjs <pr>...` | Plans merging a batch of PRs: which merge together as they are, which wait for main and a CI re-run |
 
 ## Invariants (breaking one is a blocking review finding)
 
@@ -46,6 +47,18 @@ The learner app (LMS) fetches this repo at build time.
 - **Checkpoint ids are stable.** Renaming one silently erases the progress learners already made.
 - **Knowledge records are reviewed like content** (`knowledge/README.md`): a record becomes `approved` only through a PR with the review agent's technical-accuracy verdict (currently agy, posted as the required review status); every `touches` reference resolves against the curriculum; a `disputed` record a published lesson depends on names the open issue; a `question` record carries no person; `knowledge/index.json` is generated (`pipeline/knowledge-index.mjs`), never edited.
 - **Accuracy:** hardware and ML-systems numbers cite a primary source in the PR. The review agent (currently agy) reviews technical accuracy.
+
+## Merging a batch of PRs
+
+Merging is the PO's call: never merge without their go-ahead. Once they say go on a batch, don't merge main into every PR and wait for CI before the next one. Only PRs that share files wait on each other:
+
+1. Every PR in the batch is green and approved as it stands. Run `node scripts/merge-plan.mjs <numbers...>`; it reads only git and prints rounds.
+2. **Round 1** merges together, as the PRs are: no file in one is touched by another, and main hasn't changed their files or the gate since their base.
+3. **Each later round** holds PRs that share a file with an earlier one (a glossary, a path, `knowledge/index.json`) or whose base is stale: merge main into each, wait for green CI, then merge that round together. PRs within a round share no files, so they update and run CI in parallel.
+4. **Alone, last, one at a time:** a PR that changes the gate (`pipeline/`, `schema/`, `scripts/`, `.github/`, `package*.json`) or deletes or renames a file, since other files may link to it.
+5. After the last merge, check that CI on main is green. It re-runs the full gate on the merged result, so it catches what disjoint files can't rule out (a link or glossary term one PR removes and another uses, the same item id in two files). If it's red, fix forward at once, because a red main doesn't redeploy staging.
+
+Staging redeploys itself: when CI on main passes, its `content-merged` job dispatches the LMS Deploy workflow with the new commit (`scripts/notify-app.mjs`, secret `LMS_DISPATCH_TOKEN`). Concurrent staging deploys collapse to the newest, so a batch costs one wait, not one per PR. Production never deploys from this repo: it serves the content pinned in `LMS/content.lock.json` and moves only by a PR there plus the PO's manual promotion.
 
 ## `risk:high` paths
 
