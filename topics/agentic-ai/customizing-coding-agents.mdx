@@ -242,20 +242,22 @@ commands, pair the hook with a permission deny rule or a server-side protection
 such as a protected branch.
 
 If you build your own agent on the Antigravity SDK (topic 2.1), its hooks are
-grouped by what they may do rather than named after events:
+named after lifecycle events (such as `PreToolCall`, `PostToolCall` and
+`OnToolError`), and each one also belongs to one of three types, set by what it
+may do:
 
 | SDK hook type | Can it change data? | Can it block? | Use it for |
 |---|---|---|---|
 | **Inspect** | No, read-only | No; runs without delaying the agent | Logging and monitoring, such as `PostToolCallHook` |
-| **Decide** | No (a tool-call allow may sanitise the arguments) | Yes: it returns allow or deny | Policy and permission checks, such as `PreToolCallDecideHook` |
-| **Transform** | Yes, and returns the modified data | Yes: if it fails, the step fails closed | Sanitising data and recovering from errors, such as `OnToolErrorHook` |
+| **Decide** | No (a tool-call allow may sanitise the arguments) | Yes: it returns allow or deny | Policy and permission checks, such as `PreToolCallDecideHook` or `PreTurnHook` |
+| **Transform** | Yes, and returns the modified data | Yes: the agent waits for it, and if it fails the operation fails closed | Sanitising data and recovering from errors, such as `OnToolErrorHook` |
 
 On a tool call, Decide hooks run first and Inspect hooks after the tool has
-run. The checks happen before the action and the logging records what
-actually ran. The Antigravity app's own `hooks.json` still uses event names
-such as `PreToolUse`.
+run, so a check cannot pass on data that changes before the tool runs, and the
+log records what actually ran. The Antigravity app's `hooks.json` uses its own
+event names, such as `PreToolUse`.
 
-<Flashcard id="sdk-hook-types" objective="pick-mechanism" front="In the Antigravity SDK, what can Inspect, Decide and Transform hooks each do?" back="Inspect: read-only and non-blocking, for logging and monitoring. Decide: read-only gating that returns allow or deny, for policy checks. Transform: modifies the data and returns it, and fails closed if it fails, for sanitising data or recovering from errors." />
+<Flashcard id="sdk-hook-types" objective="pick-mechanism" front="In the Antigravity SDK, what can Inspect, Decide and Transform hooks each do?" back="Inspect: read-only and non-blocking, for logging and monitoring. Decide: gating that returns allow or deny (an allow may sanitise tool arguments), for policy checks. Transform: modifies the data and returns it, and fails closed if it fails, for sanitising data or recovering from errors." />
 
 ## Subagents give a focused role its own context
 
