@@ -292,14 +292,16 @@ Media raises two separate problems, with two separate fixes.
   takes it once registered through its Files API. The request then carries a
   reference, and the bytes are not uploaded again on each call.
 - **Tokens.** A referenced file still costs tokens every time it is in the
-  context. The `media_resolution` setting caps how many tokens each image,
-  video frame or PDF page may use. For Gemini 3 and later images, `low` is 280 tokens,
+  context. The `media_resolution` setting caps how many tokens each image or
+  video frame may use, and the visual tokens of each PDF page; text extracted
+  natively from a PDF counts on top, so a text-heavy PDF costs more than its
+  visual budget even at `low`. For Gemini 3 and later images, `low` is 280 tokens,
   `medium` 560, `high` 1,120 (also the default) and `ultra_high` 2,240.
   Video frames use 70 tokens at low or medium and 280 at high. Lower it when
   the task does not need fine detail, such as classifying a photo, and raise it
   for small text in a scanned document.
 
-<Flashcard id="media-two-fixes" objective="reduce-context" front="A support agent receives large product photos and reuses them across a session. What do a Cloud Storage URI and media_resolution each fix?" back="A Cloud Storage URI keeps the bytes out of every request, which fixes payload size and re-uploading. media_resolution caps the tokens each image, frame or PDF page costs (for Gemini 3 images from 280 at low to 2,240 at ultra_high), which fixes the context cost. A reference alone does not make the image cost fewer tokens." />
+<Flashcard id="media-two-fixes" objective="reduce-context" front="A support agent receives large product photos and reuses them across a session. What do a Cloud Storage URI and media_resolution each fix?" back="A Cloud Storage URI keeps the bytes out of every request, which fixes payload size and re-uploading. media_resolution caps the tokens each image or video frame costs (for Gemini 3 images from 280 at low to 2,240 at ultra_high), which fixes the context cost (for a PDF it caps only the visual tokens; its native text counts on top). A reference alone does not make the image cost fewer tokens." />
 
 <Quiz
   id="pick-the-cut"
@@ -483,7 +485,7 @@ failures from the evalset with the test settings above):
 ## Sources
 
 - Google, Gemini API documentation, "File input methods", ai.google.dev/gemini-api/docs/file-input-methods (inline data up to 100 MB per request, 50 MB for PDFs; Cloud Storage URI registration and the Files API for large or reused files).
-- Google, Gemini API documentation, "Media resolution", ai.google.dev/gemini-api/docs/media-resolution (media_resolution caps tokens per media item; Gemini 3 images: low 280, medium 560, high 1,120, ultra_high 2,240, default 1,120; video frames 70 at low or medium and 280 at high).
+- Google, Gemini API documentation, "Media resolution", ai.google.dev/gemini-api/docs/media-resolution (media_resolution caps tokens per media item, with PDF native text counted on top; Gemini 3 images: low 280, medium 560, high 1,120, ultra_high 2,240, default 1,120; video frames 70 at low or medium and 280 at high).
 - Google, Agent Development Kit documentation, "Compress agent context for performance", github.com/google/adk-docs/blob/main/docs/context/compaction.md (EventsCompactionConfig on the App; token-based compaction with token_threshold and event_retention_size; sliding window with compaction_interval and overlap_size; pass the App to the Runner).
 - Google, Agent Development Kit documentation, "Context caching with Gemini", github.com/google/adk-docs/blob/main/docs/context/caching.md (ContextCacheConfig on the App with min_tokens, ttl_seconds and cache_intervals; experimental).
 - Google, Agent Development Kit documentation, "MCP tools", github.com/google/adk-docs/blob/main/docs/tools-custom/mcp-tools/index.md (tool_filter on McpToolset; always supply tool_filter to expose only necessary actions).
