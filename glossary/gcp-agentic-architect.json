@@ -71,6 +71,15 @@
   "session": {
     "definition": "The record of one conversation between a user and an agent: its messages, the agent's events and its working state. A session service is where an agent stores sessions."
   },
+  "span": {
+    "definition": "One timed operation in a trace, such as a model call or a tool call, nested under the span of the operation that started it. Its length shows where the time went."
+  },
+  "reasoning loop": {
+    "definition": "An agent failure in which the model repeats the same tool call or step, often with the same arguments, without making progress, until a cap or timeout stops it."
+  },
+  "drift": {
+    "definition": "A deployed agent's quality degrading over time as the model, prompts, tools, data or users change, while the service stays up and fast."
+  },
   "tool trajectory match": {
     "definition": "Comparing an agent's actual tool calls (name and arguments) with the expected ones, in one of three modes: exact, in-order (extra calls allowed) or any-order (extra calls and any order allowed)."
   },
