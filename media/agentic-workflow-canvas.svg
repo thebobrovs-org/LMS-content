@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" width="800" height="420" role="img" aria-label="An annotated Workflow Builder canvas for a new-starter request">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker></defs>
+<rect width="800" height="420" fill="#ffffff"/>
+<text x="400" y="28" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="16" font-weight="600" fill="#0f172a">A new-starter request as a workflow</text>
+<rect x="16" y="56" width="141" height="100" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="86.5" y="80" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">1  Trigger</text>
+<text x="86.5" y="104" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">App event: Gmail,</text>
+<text x="86.5" y="121" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">email received,</text>
+<text x="86.5" y="138" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">subject filter</text>
+<polyline points="157,106.0 172,106.0" fill="none" stroke="#475569" stroke-width="1.6" marker-end="url(#ah)"/>
+<text x="86.5" y="182" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="400" fill="#64748b">the trigger,</text>
+<text x="86.5" y="198" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="400" fill="#64748b">not a step</text>
+<rect x="173" y="56" width="141" height="100" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+<text x="243.5" y="80" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">2  Gemini Agent</text>
+<text x="243.5" y="104" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">extract name, role,</text>
+<text x="243.5" y="121" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">start date, manager</text>
+<text x="243.5" y="138" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">as JSON</text>
+<polyline points="314,106.0 329,106.0" fill="none" stroke="#475569" stroke-width="1.6" marker-end="url(#ah)"/>
+<text x="243.5" y="182" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="400" fill="#64748b">instructions,</text>
+<text x="243.5" y="198" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="400" fill="#64748b">knowledge,</text>
+<text x="243.5" y="214" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="400" fill="#64748b">output format</text>
+<rect x="330" y="56" width="141" height="100" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+<text x="400.5" y="80" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">3  Condition</text>
+<text x="400.5" y="104" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">is a manager named?</text>
+<text x="400.5" y="121" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">yes: on to step 4</text>
+<text x="400.5" y="138" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">no: branch below</text>
+<polyline points="471,106.0 486,106.0" fill="none" stroke="#475569" stroke-width="1.6" marker-end="url(#ah)"/>
+<rect x="487" y="56" width="141" height="100" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5"/>
+<text x="557.5" y="80" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">4  Approval</text>
+<text x="557.5" y="104" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">a reviewer checks</text>
+<text x="557.5" y="121" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">the details</text>
+<polyline points="628,106.0 643,106.0" fill="none" stroke="#475569" stroke-width="1.6" marker-end="url(#ah)"/>
+<text x="557.5" y="182" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="400" fill="#64748b">before anything</text>
+<text x="557.5" y="198" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="400" fill="#64748b">hard to undo</text>
+<rect x="644" y="56" width="141" height="100" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+<text x="714.5" y="80" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">5  Gemini Agent</text>
+<text x="714.5" y="104" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">create IT ticket,</text>
+<text x="714.5" y="121" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">send welcome email</text>
+<text x="714.5" y="138" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">(connector writes)</text>
+<text x="714.5" y="182" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="400" fill="#64748b">each write also</text>
+<text x="714.5" y="198" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="400" fill="#64748b">needs human review</text>
+<polyline points="400.5,156 400.5,265" fill="none" stroke="#475569" stroke-width="1.6" marker-end="url(#ah)"/>
+<rect x="280.5" y="266" width="240" height="70" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+<text x="400.5" y="287" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">Gemini Agent: reply asking</text>
+<text x="400.5" y="305" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">for the manager; the run ends</text>
+<text x="400.5" y="322" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="400" fill="#334155">(a write, so it needs review too)</text>
+<rect x="16" y="350" width="768" height="52" rx="10" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"/>
+<text x="400" y="372" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#92400e">The workflow guarantees the order: every request is extracted to a schema,</text>
+<text x="400" y="391" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="400" fill="#92400e">checked, and approved by a person before anything is created for them.</text>
+</svg>

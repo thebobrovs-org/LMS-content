@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 468" width="800" height="468" role="img" aria-label="A decision table mapping requirements to the model-choice axis they act on and the usual lean">
+<rect width="800" height="468" fill="#ffffff"/>
+<text x="400.0" y="28" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="16" font-weight="600" fill="#0f172a">From requirement to model choice</text>
+<text x="32" y="50" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#475569">Requirement</text>
+<text x="338" y="50" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#475569">Axis it acts on</text>
+<text x="478" y="50" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#475569">Usual lean</text>
+<rect x="16" y="58" width="768" height="44" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+<text x="32" y="85" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#0f172a">Low latency, or many simple steps</text>
+<rect x="334" y="68" width="128" height="24" rx="12" fill="#ffffff" stroke="#2563eb" stroke-width="1.4"/>
+<text x="398" y="85" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#2563eb">Size</text>
+<text x="478" y="85" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">Smaller model (Flash, Flash-Lite)</text>
+<rect x="16" y="108" width="768" height="44" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+<text x="32" y="135" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#0f172a">Hard, multi-step reasoning</text>
+<rect x="334" y="118" width="128" height="24" rx="12" fill="#ffffff" stroke="#2563eb" stroke-width="1.4"/>
+<text x="398" y="135" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#2563eb">Size</text>
+<text x="478" y="135" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">Larger model (Pro)</text>
+<rect x="16" y="158" width="768" height="44" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+<text x="32" y="185" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#0f172a">Hold and tune the weights yourself</text>
+<rect x="334" y="168" width="128" height="24" rx="12" fill="#ffffff" stroke="#7c3aed" stroke-width="1.4"/>
+<text x="398" y="185" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#7c3aed">Openness</text>
+<text x="478" y="185" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">Open weights (Gemma)</text>
+<rect x="16" y="208" width="768" height="44" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+<text x="32" y="235" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#0f172a">Model must run only on infrastructure you operate</text>
+<rect x="334" y="218" width="128" height="24" rx="12" fill="#ffffff" stroke="#0f766e" stroke-width="1.4"/>
+<text x="398" y="235" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f766e">Serving</text>
+<text x="478" y="235" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">Self-deployed (endpoint or GKE)</text>
+<rect x="16" y="258" width="768" height="44" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+<text x="32" y="285" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#0f172a">Data must be processed in the EU</text>
+<rect x="334" y="268" width="128" height="24" rx="12" fill="#ffffff" stroke="#0f766e" stroke-width="1.4"/>
+<text x="398" y="285" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f766e">Serving</text>
+<text x="478" y="285" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">EU endpoint, if the model processes in the EU</text>
+<rect x="16" y="308" width="768" height="44" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+<text x="32" y="335" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#0f172a">Small team, spiky traffic, nothing to operate</text>
+<rect x="334" y="318" width="128" height="24" rx="12" fill="#ffffff" stroke="#0f766e" stroke-width="1.4"/>
+<text x="398" y="335" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f766e">Serving</text>
+<text x="478" y="335" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">Model as a service (MaaS)</text>
+<rect x="16" y="358" width="768" height="44" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+<text x="32" y="385" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#0f172a">Steady, very high volume</text>
+<rect x="334" y="368" width="128" height="24" rx="12" fill="#ffffff" stroke="#0f766e" stroke-width="1.4"/>
+<text x="398" y="385" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f766e">Serving</text>
+<text x="478" y="385" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">Self-deploying may cost less; measure first</text>
+<text x="24" y="430" font-family="Inter, system-ui, sans-serif" font-size="12" fill="#475569">Default: start with a managed model; self-deploy only for a stated need. Combine rows for a real scenario.</text>
+</svg>

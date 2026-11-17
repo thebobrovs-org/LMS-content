@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 398" width="800" height="398" role="img" aria-label="A table of the limits that push a design from low-code to code">
+<rect width="800" height="398" fill="#ffffff"/>
+<text x="400.0" y="28" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="16" font-weight="600" fill="#0f172a">What pushes a design from low-code to code</text>
+<text x="32" y="52" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#475569">Limit</text>
+<text x="178" y="52" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#2563eb">Low-code gives</text>
+<text x="458" y="52" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f766e">Code gives</text>
+<rect x="16" y="62" width="768" height="50" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+<text x="32" y="92" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">Custom logic</text>
+<text x="178" y="92" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#1e3a8a">Steps, connectors and tools</text>
+<text x="458" y="92" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#134e4a">Any logic you can write and test</text>
+<rect x="16" y="118" width="768" height="50" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+<text x="32" y="148" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">Orchestration</text>
+<text x="178" y="148" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#1e3a8a">Sub-agents one at a time, one level deep</text>
+<text x="458" y="148" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#134e4a">Parallel, nested and graph flows (ADK)</text>
+<rect x="16" y="174" width="768" height="50" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+<text x="32" y="204" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">Evaluation</text>
+<text x="178" y="204" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#1e3a8a">Manual simulation; CX test cases, API in beta</text>
+<text x="458" y="204" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#134e4a">Evaluation sets in CI on every change</text>
+<rect x="16" y="230" width="768" height="50" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+<text x="32" y="260" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">Deployment control</text>
+<text x="178" y="260" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#1e3a8a">Hosted by the platform</text>
+<text x="458" y="260" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#134e4a">Agent Runtime, Cloud Run or GKE; your own network</text>
+<rect x="16" y="286" width="768" height="50" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+<text x="32" y="316" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">Integrations</text>
+<text x="178" y="316" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#1e3a8a">Connectors, MCP servers, existing agents</text>
+<text x="458" y="316" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#134e4a">Anything, including systems on your network</text>
+<text x="24" y="362" font-family="Inter, system-ui, sans-serif" font-size="12" fill="#475569">Start low-code when the platform covers the need; move a part to code when one of these rows bites.</text>
+</svg>
