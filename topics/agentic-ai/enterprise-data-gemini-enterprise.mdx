@@ -27,7 +27,7 @@ flashcards:
   - id: federated-vs-ingestion
     objective: app-store-connector
     front: "What is the difference between a federated connector and an ingestion connector?"
-    back: "Federation sends each query to the source system and returns its live results, copying nothing. Ingestion copies the content into Gemini Enterprise's index and keeps it in sync, which usually gives better search quality at the cost of storage and sync time."
+    back: "Federation sends each query to the source system and returns its live results, with no copy in Gemini Enterprise's index. Ingestion copies the content into Gemini Enterprise's index and keeps it in sync, which usually gives better search quality at the cost of storage and sync time."
   - id: acl-rule
     objective: secure-retrieval
     front: "What permission rule must an agent's retrieval follow?"
@@ -66,13 +66,13 @@ quiz:
     explanation: "Blended search is one app with several data stores connected, searched together, and users can still filter to one store. Separate apps make users search three times. A data store holds only one type of data, so the three sources stay separate stores."
   - id: source-must-not-copy
     objective: app-store-connector
-    question: "A bank's compliance team lets Gemini Enterprise search its case-management system, but forbids copying any of its content out of that system. Which connector mode fits?"
+    question: "A bank's compliance team lets Gemini Enterprise search its case-management system, and lets authorised users see query results, but forbids keeping a copy of its content in Gemini Enterprise's index. Which connector mode fits?"
     choices:
       - "A synced copy, refreshed every three hours"
       - "An ingested store marked as access-controlled"
       - "Federated search, sending each query to the source"
     answer: 2
-    explanation: "A federated connector sends each query to the source system and returns its live results, so nothing is copied, at the cost of possibly lower search quality. Ingestion copies content into Gemini Enterprise's index whatever the sync schedule, and access control limits who sees the copy but doesn't stop the copying."
+    explanation: "A federated connector sends each query to the source system and returns its live results, so no copy is kept in Gemini Enterprise's index, at the cost of possibly lower search quality. Ingestion copies content into Gemini Enterprise's index whatever the sync schedule, and access control limits who sees the copy but doesn't stop the copying."
   - id: leaked-document
     objective: secure-retrieval
     question: "Contracts were imported from Cloud Storage into an unstructured data store. A sales rep now finds a legal-only contract in search results. What is the most likely cause?"
@@ -134,7 +134,8 @@ pieces, and scenario questions turn on keeping them apart.
 Connectors work in one of two ways, and some support both:
 
 - **Federated:** each query is sent to the source system, which returns live
-  results. Nothing is copied, but search quality can be lower.
+  results. Nothing is copied into Gemini Enterprise's index (the results
+  themselves still reach the user), but search quality can be lower.
 - **Ingestion:** content is copied into Gemini Enterprise's index and kept in sync,
   by default with an incremental sync every three hours. Search quality is usually
   better, at the cost of storage and sync time.
