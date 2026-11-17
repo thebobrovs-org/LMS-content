@@ -23,5 +23,3 @@ review-by: 2027-05-17
 **Concept.** Design an agent's access as if prompt injection will succeed. Three steps shrink what a hijacked agent can reach. **Own identity:** with Agent Identity each agent is its own principal, so grants reach only that agent and audit logs name it and, when it acts for a user, that user; agent identities are not shared by default, cannot be impersonated, allow no long-lived keys, and their tokens are bound to the agent's certificate to prevent token theft. **Narrow grants:** grant the narrowest role on the narrowest resource each tool needs, never broad basic roles on a project. **A boundary:** a Principal Access Boundary policy sets the resources the principals it covers are eligible to access (for supported permissions), so a later broad grant still cannot reach past it.
 
 **Roles grant; a boundary caps.** A PAB policy can only block or not block; access needs an allow-policy grant as well. With no PAB policy, a principal is eligible to access any resource.
-
-**Operational detail.** An agent identity is tied to the deployed agent resource; a redeployed agent can get a new principal, so the old grants do not carry over.

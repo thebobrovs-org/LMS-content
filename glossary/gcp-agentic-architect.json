@@ -87,6 +87,6 @@
     "definition": "An open standard for identifying software workloads with cryptographic identities, such as X.509 certificates, rather than shared secrets."
   },
   "principal access boundary": {
-    "definition": "An IAM policy that defines which resources a principal is eligible to access. It can block access regardless of the principal's role grants, but it never grants access."
+    "definition": "An IAM policy that defines which resources a principal is eligible to access. It can block access regardless of the principal's role grants (for the permissions it supports), but it never grants access."
   }
 }
