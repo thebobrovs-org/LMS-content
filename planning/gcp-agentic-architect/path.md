@@ -64,15 +64,15 @@ sign-off between each, core first, then one exam section at a time.
 |----|-------|--------------|--------------------|--------------|--------|
 | 0.1 | 100 | `what-is-an-agent` | Name the parts of an agent (model, instructions, tools, loop, state) and what each contributes. | figure | published |
 | 0.2 | 100 | `google-agent-platform-map` | Place each in-scope product on the map by what it does. | figure | in review |
-| 0.3 | 200 | `choosing-a-model` | Separate the three axes (size, openness, serving) and say what each trades. | figure | plan-approved |
-| 0.4 | 300 | `low-code-or-code` | Choose low-code, code or a hybrid for a scenario and defend it. | figure | plan-approved |
+| 0.3 | 200 | `choosing-a-model` | Separate the three axes (size, openness, serving) and say what each trades. | figure | in review |
+| 0.4 | 300 | `low-code-or-code` | Choose low-code, code or a hybrid for a scenario and defend it. | figure | in review |
 
 ### S1 Low-code agents (exam section 1, 13%)
 
 | ID | Level | Topic (`id`) | One-line objective | Visual / lab | Status |
 |----|-------|--------------|--------------------|--------------|--------|
-| 1.1 | 100 | `workflow-builder` | Choose a chat agent or a workflow for a use case. | figure + codelab | plan-approved |
-| 1.2 | 200 | `cx-agent-studio-flows` | Choose an instruction-based or flow-based agent for a use case. | **sim `cx-route-resolver`** | plan-approved |
+| 1.1 | 100 | `workflow-builder` | Choose a chat agent or a workflow for a use case. | figure + codelab | in review |
+| 1.2 | 200 | `cx-agent-studio-flows` | Choose an instruction-based or flow-based agent for a use case. | **sim `cx-route-resolver`** | in review |
 | 1.3 | 200 | `enterprise-data-gemini-enterprise` | Explain the roles of an app, a data store and a connector. | figure | in review |
 
 ### S2 Coding agents (exam section 2, 17%)
@@ -104,18 +104,18 @@ sign-off between each, core first, then one exam section at a time.
 | 4.1 | 100 | `agent-quality-basics` | Name the dimensions of agent quality and an example failure for each. | figure | on staging |
 | 4.2 | 200 | `agent-eval-datasets` | Build a golden dataset with expected trajectories and responses. | figure + codelab | on staging |
 | 4.3 | 200 | `deploying-agents` | Choose Agent Runtime, Cloud Run or GKE from requirements. | figure | on staging |
-| 4.4 | 300 | `agent-eval-criteria` | Predict whether a trajectory passes exact, in-order or any-order matching. | **sim `trajectory-match-explorer`** | plan-approved |
-| 4.5 | 400 | `agent-observability-troubleshooting` | Read an agent trace to find slow spans and repeated calls. | figure | plan-approved |
+| 4.4 | 300 | `agent-eval-criteria` | Predict whether a trajectory passes exact, in-order or any-order matching. | **sim `trajectory-match-explorer`** | on staging |
+| 4.5 | 400 | `agent-observability-troubleshooting` | Read an agent trace to find slow spans and repeated calls. | figure | on staging |
 
 ### S5 Secure and govern (exam section 5, 15%)
 
 | ID | Level | Topic (`id`) | One-line objective | Visual / lab | Status |
 |----|-------|--------------|--------------------|--------------|--------|
-| 5.1 | 100 | `agent-threat-model` | Name the main agent threats with an example of each. | figure | plan-approved |
-| 5.2 | 200 | `agent-identity-and-access` | Explain what Agent Identity provides over a shared service account. | figure | plan-approved |
-| 5.3 | 300 | `agent-auth-oauth` | Distinguish OAuth 2.0 (authorisation) from OpenID Connect (authentication). | figure | plan-approved |
-| 5.4 | 300 | `agent-gateway-and-registry` | Explain what Agent Gateway enforces and observes. | figure | plan-approved |
-| 5.5 | 400 | `guardrails-model-armor-hitl` | Configure Model Armor templates, floor settings and enforcement. | figure + codelab | plan-approved |
+| 5.1 | 100 | `agent-threat-model` | Name the main agent threats with an example of each. | figure | on staging |
+| 5.2 | 200 | `agent-identity-and-access` | Explain what Agent Identity provides over a shared service account. | figure | on staging |
+| 5.3 | 300 | `agent-auth-oauth` | Distinguish OAuth 2.0 (authorisation) from OpenID Connect (authentication). | figure | on staging |
+| 5.4 | 300 | `agent-gateway-and-registry` | Explain what Agent Gateway enforces and observes. | figure | on staging |
+| 5.5 | 400 | `guardrails-model-armor-hitl` | Configure Model Armor templates, floor settings and enforcement. | figure + codelab | on staging |
 
 ### Core: capstone (comes last)
 *The core track's L400 topic. It sits at the end of the path because it needs every section.*
