@@ -1,0 +1,16 @@
+{
+  "id": "cx-route-resolver",
+  "title": "CX flow route resolver",
+  "version": "1.0.0",
+  "props": {
+    "page": { "type": "string", "default": "confirm" },
+    "balance": { "type": "number", "default": 120 },
+    "input": { "type": "string", "default": "unclear" }
+  },
+  "checkpoints": [
+    {
+      "id": "observe-route-scope",
+      "hint": "With a balance due, send an unmatched input on a page other than the start page, and see the flow's balance_due condition route skipped as out of scope."
+    }
+  ]
+}

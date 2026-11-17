@@ -1,0 +1,197 @@
+---
+title: Agent Identity and least-privilege access
+summary: An agent that runs as a broad service account turns one prompt injection into a breach. Give each agent its own identity, grant it only the roles its tools need, and cap its reach with a Principal Access Boundary.
+tags: [agentic-ai, agents, security, iam]
+difficulty: intermediate
+estimatedMinutes: 30
+level: 200
+prerequisites: [agentic-ai/agent-threat-model, agentic-ai/google-agent-platform-map]
+objectives:
+  - id: agent-identity
+    statement: "Explain what Agent Identity provides over a shared service account."
+  - id: least-privilege
+    statement: "Grant an agent the narrowest roles its tools need."
+  - id: pab
+    statement: "Use a Principal Access Boundary policy to cap an agent's reach."
+flashcards:
+  - id: roles-vs-boundary
+    objective: pab
+    front: What is the difference between an IAM role grant and a Principal Access Boundary?
+    back: "A role grant gives access. A Principal Access Boundary only sets which resources a principal is eligible to access; it can block but never grant. Access needs both: a grant, and a boundary that allows the resource."
+  - id: what-agent-identity-adds
+    objective: agent-identity
+    front: What does Agent Identity give an agent that a shared service account does not?
+    back: "Its own principal, so you grant access to that agent alone and audit logs name it (and, when it acts for a user, that user). Agent identities are not shared by default, cannot be impersonated, allow no long-lived keys, and their tokens are bound to the agent's own certificate to prevent token theft."
+  - id: assume-injection
+    objective: least-privilege
+    front: Why design an agent's access as if prompt injection will succeed?
+    back: "Because no prevention is fool-proof. If the agent can reach only what its tools need, a hijacked agent can do only small things; if it holds broad roles, one injected instruction reaches everything."
+  - id: spiffe
+    objective: agent-identity
+    front: What is SPIFFE, and how does Agent Identity use it?
+    back: "An open standard for identifying workloads. Each agent identity is based on it: a cryptographic identity with an X.509 certificate that Google Cloud provisions and manages on the agent."
+quiz:
+  - id: owner-so-it-never-fails
+    objective: least-privilege
+    question: "An agent's only tool reads invoice files from one Cloud Storage bucket. A teammate suggests giving it the Owner role on the project 'so it never fails with a permission error'. What should you grant instead?"
+    choices:
+      - "Owner on the project, since a failed call costs more than broad access"
+      - "A read-only role on that one bucket, granted to the agent's principal"
+      - "Editor on the project, since that is narrower than Owner and still works"
+    answer: 1
+    explanation: "The tool only reads one bucket, so that is all the agent needs. Owner and Editor both reach most resources in the project, so a single injected instruction could read, change or delete any of it. A permission error is a cheap, visible failure; a breach is not."
+  - id: identity-over-shared-account
+    objective: agent-identity
+    question: "Five agents share one service account. An audit log shows that account deleted a dataset. What would Agent Identity have changed?"
+    choices:
+      - "The log would name the agent, and each agent could hold its own grants"
+      - "The deletion would be blocked, since agent identities cannot hold write roles"
+      - "The deletion would be blocked, since agent identities can't be impersonated"
+    answer: 0
+    explanation: "Each agent identity is its own principal: you grant access to it alone, and audit logs name the agent (and the user, when it acts for one). Agent identities can hold any role you grant, so the grant still has to be narrow. Not being impersonable stops other principals acting as the agent; it does not stop the agent itself."
+  - id: cap-existing-grant
+    objective: pab
+    question: "An agent's identity holds roles granted by several teams, and more may be added later. Security requires that, whatever is granted, it stays within the finance project. What do you add?"
+    choices:
+      - "An instruction in the agent's system prompt to stay inside the finance project"
+      - "A Principal Access Boundary policy, covering the agent, that allows only finance"
+      - "A second agent that reviews each of its tool calls before they are allowed to run"
+    answer: 1
+    explanation: "A Principal Access Boundary sets which resources the principals it covers are eligible to access, regardless of the roles they have been granted, so a later broad grant still cannot reach past it (for the permissions the boundary supports). A system prompt is not a security control, and a reviewing agent is another model that can be fooled."
+  - id: boundary-does-not-grant
+    objective: pab
+    question: "A Principal Access Boundary policy covering a new agent allows only the finance project. The agent has no role grants yet, and it cannot read the finance dataset. Why?"
+    choices:
+      - "The agent must be redeployed before a new boundary takes effect"
+      - "The boundary must list the dataset by name, not just its project"
+      - "A boundary never grants access; the agent also needs a role on it"
+    answer: 2
+    explanation: "A Principal Access Boundary can only block or not block. Only an allow policy, a role grant, actually gives access; no redeploy or extra listing changes that. Grant a read role on the dataset, and the boundary keeps that grant, and any later one, inside the finance project."
+  - id: leaked-token
+    objective: agent-identity
+    question: "Why is a leaked credential less useful to an attacker when the agent uses Agent Identity rather than a service account with a downloaded key?"
+    choices:
+      - "No long-lived keys exist, and its tokens are bound to the agent's certificate"
+      - "Its requests are encrypted, so traffic cannot be read while in transit"
+      - "Its tokens expire hourly, and its roles rotate along with them"
+    answer: 0
+    explanation: "A downloaded service account key works from anywhere until someone revokes it. Agent identities cannot have long-lived keys, and their tokens are cryptographically bound to the agent's X.509 certificate to prevent token theft. Roles do not rotate, and encryption in transit is not what stops a stolen token."
+status: draft
+updated: "2026-11-17"
+---
+
+## One injection, one breach
+
+The last lesson set a rule: least privilege limits the damage of any attack
+that gets through. This lesson makes it concrete on Google Cloud.
+
+Access on Google Cloud is managed by **IAM**. A **principal** (a user, a group, a
+workload) is granted a **role** (a set of permissions) on a resource, such as a
+project or a single bucket, through an **allow policy**. A **service account**
+is a principal for software rather than a person.
+
+Many first agents run as a service account that some other workload already
+uses, with a broad role on the project. That works, until the agent reads a
+document with an injected instruction. The agent can then do anything that
+account can do: read the HR database, change production, reach into other
+projects. Nothing in the logs says which agent did it, because several share
+the account.
+
+Three changes shrink that blast radius, and they build on each other.
+
+<Figure
+  src="/media/agent-blast-radius.svg"
+  alt="Three panels showing what a hijacked invoice agent can reach. Panel 1, shared service account with broad roles in many projects: it can reach the invoices bucket, the finance dataset, the HR database, payroll secrets, production VMs and other projects; one injection reaches all of it. Panel 2, the agent's own principal with two read roles: it can read the invoices bucket and the finance dataset and has no role on the other four; a mistaken broad grant would widen it again. Panel 3, the same roles plus a Principal Access Boundary on the finance project: it can read the invoices bucket and the finance dataset inside the boundary, and the other four are blocked; a later broad grant still cannot reach past the boundary."
+  caption="The same injected instruction, three designs: a shared account, the agent's own identity with narrow roles, and a boundary on top."
+/>
+
+## Step 1: give the agent its own identity
+
+<Term id="agent identity">Agent Identity</Term> gives each agent a dedicated
+principal on Google Cloud. It is based on <Term id="spiffe">SPIFFE</Term>, an
+open standard for workload identity: each agent gets a cryptographic identity
+with an X.509 certificate that Google Cloud provisions and manages on the agent.
+Agent Runtime, Gemini Enterprise, Cloud Run and GKE support it.
+
+Compared with a shared service account, an agent identity:
+
+- **belongs to one agent.** Agent identities are not shared by multiple
+  workloads by default, so a grant to one reaches only that agent.
+- **is the principal you grant to.** You grant roles directly to the agent's
+  identifier, so each agent's access is set on its own.
+- **shows up in audit logs.** The logs record the agent and, when it acts for
+  a user, that user, so you can tell which agent did what.
+- **is harder to steal.** It cannot be impersonated, it allows no long-lived
+  keys, and its access tokens are bound to the agent's certificate, which is
+  designed to stop a stolen token being reused elsewhere.
+
+## Step 2: grant only what the tools need
+
+An identity of its own does nothing for the blast radius if it holds a broad
+role. Work out access from the tools:
+
+1. **List what each tool touches.** The invoice tool reads one bucket; the
+   lookup tool reads one dataset. Nothing writes.
+2. **Grant the narrowest role on the narrowest resource.** A read-only role on
+   that bucket, and one on that dataset, granted to the agent's principal.
+   Avoid project-wide grants and the broad basic roles (Owner, Editor), which
+   reach most resources in the project.
+3. **Assume the injection will succeed.** Ask what a hijacked agent could do
+   with exactly these grants. Here: read invoices and one dataset, nothing
+   else.
+
+A permission error is a cheap, visible failure that you fix by adding one
+narrow grant. Broad access fails silently, on the day someone exploits it.
+
+## Step 3: cap the reach with a boundary
+
+Grants drift. Another team adds a role for a new feature; someone grants a
+broad role to debug and forgets it. A
+<Term id="principal access boundary">Principal Access Boundary</Term> (PAB)
+policy guards against that. It defines the resources the principals it covers
+are **eligible** to access. If a resource is outside the boundary, they cannot
+reach it (for the permissions the boundary supports), regardless of the roles
+they have been granted. A boundary applies to a set of principals that includes
+the agent, rather than being written into each role grant.
+
+**Roles grant; a boundary caps.** A PAB policy can only block or not block; it
+never grants. So you use both:
+
+- the role grants say what the agent can do;
+- the boundary says the furthest it can ever reach, such as the finance project
+  only, whatever is granted later.
+
+Three limits to know. By default, with no PAB policy, a principal is eligible
+to access any Google Cloud resource; the cap exists only once you add one. A
+PAB policy only blocks access that involves the permissions it supports, so it
+backs up narrow grants rather than replacing them. And when several PAB
+policies apply to the same principal, for example set at different scopes,
+their eligible resources combine: a finance-only boundary does not cancel
+another applicable policy that also makes HR eligible. The finance-only cap
+holds only if every policy that applies allows only finance.
+
+<Callout type="warning">A common trap: broad basic roles "to avoid permission errors". Owner reaches most resources in the project, so a single injected instruction can read, change or delete any of it. Grant the narrowest roles the tools need, and add a boundary that covers the agent.</Callout>
+
+<Quiz
+  id="which-control"
+  objective="pab"
+  question="Which control would stop a broad role, granted to an agent by mistake next month, from reaching the HR project?"
+  choices={["A narrow read role on the finance bucket, granted today", "A boundary covering the agent that allows only finance", "Agent Identity, so the agent becomes its own principal"]}
+  answer={1}
+  explanation="Only the boundary limits what a future grant can reach. A narrow role today does not stop a broad one being added later, and Agent Identity makes the agent its own principal but does not cap what it is granted."
+/>
+
+## Recap
+
+- Give each agent its own identity: per-agent grants, per-agent audit, an
+  identity not shared by default, and no long-lived keys.
+- Grant the narrowest roles on the narrowest resources its tools need, and
+  design as if prompt injection will succeed.
+- Roles grant; a Principal Access Boundary caps. Use both, so a mistaken grant
+  later still cannot reach past the boundary.
+
+## Sources
+
+- Google Cloud, "Agent Identity overview", docs.cloud.google.com/iam/docs/agent-identity-overview (retrieved 2026-11-17: a cryptographic identity per agent based on the SPIFFE standard; X.509 certificates auto-provisioned and managed on the agent; access tokens bound to the agent's certificates to prevent token theft; "not shared by multiple workloads by default, can't be impersonated, and don't allow developers to generate long-lived service account keys"; audit logs record the agent and the delegating user; permissions granted directly to the agent's identifier; supported by Agent Runtime, Gemini Enterprise, Cloud Run and GKE).
+- Google Cloud, "Principal Access Boundary policies", docs.cloud.google.com/iam/docs/principal-access-boundary-policies (retrieved 2026-11-17: PAB policies "let you define the resources that principals can access"; they "can only block or not block access—they can't grant access"; by default principals are eligible to access any resource; an ineligible principal's access is limited "regardless of the roles they've been granted"; only supported permissions are blocked; when several policies apply to a principal, the principal is eligible for the resources any of them allows, per the "Principal access boundary policy evaluation" section).
+- OWASP GenAI Security Project, "LLM06:2025 Excessive Agency", github.com/OWASP/www-project-top-10-for-large-language-model-applications/blob/main/2_0_vulns/LLM06_ExcessiveAgency.md (retrieved 2026-11-17: minimise extension permissions).
