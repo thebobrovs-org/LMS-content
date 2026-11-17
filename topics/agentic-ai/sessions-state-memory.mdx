@@ -1,0 +1,293 @@
+---
+title: Sessions, state and Memory Bank
+summary: Decide where each piece of an agent's data belongs. A session holds one conversation's events and state, state prefixes set how far a value reaches, and Memory Bank keeps facts across conversations.
+tags: [agentic-ai, adk, sessions, memory]
+difficulty: intermediate
+estimatedMinutes: 25
+level: 200
+prerequisites: [agentic-ai/adk-agents-and-tools]
+objectives:
+  - id: session-vs-memory
+    statement: "Distinguish a session's history and state from long-term memory."
+  - id: state-scopes
+    statement: "Choose the right state scope for a value."
+  - id: memory-bank
+    statement: "Configure Memory Bank to keep and recall facts across sessions."
+flashcards:
+  - id: session-state-memory
+    objective: session-vs-memory
+    front: What do a session, session state and long-term memory each hold?
+    back: "A session is one conversation: its events (the history) and its state. State is key-value data the agent reads and writes during the conversation. Long-term memory holds facts kept across conversations, such as Memory Bank's extracted memories."
+  - id: state-prefixes
+    objective: state-scopes
+    front: What do ADK's state key prefixes mean?
+    back: "No prefix: this session only. user: shared by all of one user's sessions in the app. app: shared by all users and sessions of the app. temp: this invocation (one turn) only, never persisted."
+  - id: preload-vs-load
+    objective: memory-bank
+    front: How do ADK's two memory tools differ?
+    back: preload_memory retrieves relevant memories at the start of every turn, like a callback. load_memory is a tool the model calls only when it decides memory would help.
+quiz:
+  - id: preferred-language
+    objective: state-scopes
+    question: "Your agent has a set_reply_language tool that the model calls when a user picks a language. The choice must apply, exactly, in all of that user's future conversations. Where should the tool write it?"
+    choices:
+      - "tool_context.state[\"reply_language\"]"
+      - "tool_context.state[\"user:reply_language\"]"
+      - "tool_context.state[\"temp:reply_language\"]"
+    answer: 1
+    explanation: "A user: key is shared by every session of that user in the app, so the value written once is read back exactly in later conversations (on a persistent session service). A key with no prefix belongs to the current session only and is gone when the next conversation starts. A temp: key lasts only for the current turn and is never persisted."
+  - id: everything-in-prompt
+    objective: session-vs-memory
+    question: "To make the agent remember returning customers, a teammate proposes pasting each user's full past transcripts into the instruction on every turn. What is the better design?"
+    choices:
+      - "Paste the transcripts, but switch to a model with a larger context window"
+      - "Paste only the latest transcript, so the prompt stays a manageable size"
+      - "Extract lasting facts into long-term memory and recall only the relevant ones"
+    answer: 2
+    explanation: "Long-term memory such as Memory Bank keeps the facts worth keeping and returns the relevant ones per turn. Pasting transcripts costs tokens and latency on every call, distracts the model, and copies personal data into every prompt; a bigger window only lets you pay for more of it. Keeping just the latest transcript loses what was said before it and still carries everything irrelevant in it."
+  - id: inmemory-in-production
+    objective: session-vs-memory
+    question: "After a busy afternoon, users of a Cloud Run agent report that it sometimes forgets what they said two messages earlier. The agent was built with the defaults from a local prototype. What is the fix?"
+    choices:
+      - "Switch to VertexAiSessionService, or DatabaseSessionService"
+      - "Add Memory Bank, so each instance recalls the conversation"
+      - "Copy every turn into user: state keys, so history follows the user"
+    answer: 0
+    explanation: "The conversation itself is session data, and InMemorySessionService keeps it in one process's memory, which is lost on restart and invisible to other instances. A persistent session service (managed Agent Platform Sessions, or DatabaseSessionService on your own database) fixes that. Memory Bank keeps extracted facts across sessions, not the live conversation. user: keys still live in the same in-memory service, so they vanish too."
+  - id: temp-scope
+    objective: state-scopes
+    question: "While answering one message, a fraud-check tool computes a risk score that a later tool call in the same reply reads. Policy says the score must never be stored. Which key should the first tool write?"
+    choices:
+      - "risk_score"
+      - "temp:risk_score"
+      - "user:risk_score"
+    answer: 1
+    explanation: "temp: state lasts for one invocation, from the user's message to the agent's reply, and is never persisted, which is exactly what a value used within one reply and never stored needs. A key with no prefix is session state, saved with the session for the rest of the conversation. A user: key is stored across all of this user's sessions."
+  - id: memory-wiring
+    objective: memory-bank
+    question: "A team adds VertexAiMemoryBankService to the Runner and preload_memory to the agent. Weeks later the agent still remembers nothing from earlier conversations. What is missing?"
+    choices:
+      - "A step that sends sessions to Memory Bank, such as add_session_to_memory in a callback"
+      - "A switch from preload_memory to load_memory, so the model asks for memories itself"
+      - "A longer time to live on each session, so earlier conversations are still available"
+    answer: 0
+    explanation: "Memory Bank generates memories only from the session data you send it. Without a call such as add_session_to_memory (for example in an after-agent callback), it has nothing to recall, and preload_memory retrieves an empty set. Switching to load_memory changes when retrieval happens, not whether memories exist. A longer session time to live keeps old conversations stored, but sessions are not searched across; memory is."
+  - id: memory-retention
+    objective: memory-bank
+    question: "Compliance requires that remembered facts about a customer are deleted after 90 days and never appear in another customer's conversation. Which Memory Bank settings meet both?"
+    choices:
+      - "A 90-day time to live on memories, and a user id on every session"
+      - "A 90-day time to live on sessions, and memories stored as app: state"
+      - "A rule in the instruction to forget facts after 90 days, and one shared scope"
+    answer: 0
+    explanation: "A memory time to live deletes memories when it expires, and Memory Bank keeps an isolated collection per scope (such as app or agent, and user), which is why every session needs a user id. A session time to live removes conversations, not the memories generated from them, and app: state is shared by every user, the opposite of isolation. An instruction cannot delete stored data, and a shared scope mixes customers."
+  - id: preload-or-load
+    objective: memory-bank
+    question: "In a high-volume FAQ agent, most questions need nothing from past conversations and each memory lookup adds latency. Which recall tool fits?"
+    choices:
+      - "preload_memory, so relevant memories are fetched at the start of every turn"
+      - "load_memory, so the model fetches memories only when it decides they help"
+      - "Neither: paste the user's memories into the instruction when the session starts"
+    answer: 1
+    explanation: "load_memory is a tool the model calls only when memory would help, so turns that need none skip the lookup. preload_memory runs a lookup on every turn, which suits agents that almost always need context. Pasting memories into the instruction spends tokens on every call and goes stale within the session."
+status: draft
+updated: "2026-11-17"
+---
+
+## Where does each piece of data belong?
+
+Your support agent from the previous lesson now has real users. A customer
+orders a lamp on Monday, asks you to ship it to their Lyon office, and picks
+French as their reply language (the agent has a `set_language` tool for that).
+On Thursday they come back. What should the agent still
+know, and where should it have kept it?
+
+Get this wrong in one direction and the agent feels broken: it forgets what was
+said three turns ago, or asks for the language again. Get it wrong in the other
+and it costs tokens on every call and keeps personal data it never needed. ADK
+gives you three places, and the decision is which one each value belongs in.
+
+## Sessions: one conversation
+
+A <Term id="session">session</Term> is one conversation thread between a user
+and your agent. It holds two things:
+
+- **Events**, the history: every user message, model response, tool call and
+  tool result, in order. Each model call reads them, which is how the agent
+  remembers what was said three turns ago.
+- **<Term id="session state">State</Term>**, a key-value scratchpad the agent
+  and your code read and write during the conversation, such as
+  `order_id = "B-77"`.
+
+A `SessionService` stores sessions. ADK ships three kinds:
+
+| Service | Where sessions live | Use it for |
+|---|---|---|
+| `InMemorySessionService` | The process's memory; **lost on restart** | Local development and tests |
+| `DatabaseSessionService` | A relational database you run (PostgreSQL, MySQL, SQLite) | Persistent sessions you manage |
+| `VertexAiSessionService` | Agent Platform Sessions, managed by Google Cloud | Production on Google Cloud without running a session store |
+
+Agent Platform is Google Cloud's managed platform for building and running
+agents, and Agent Platform Sessions is its managed session store. In production,
+use a persistent service. An in-memory service on a platform that runs several
+copies of your app, such as Cloud Run (Google Cloud's serverless container
+service), loses the conversation whenever a request lands on another copy or a
+copy restarts. Agent Platform Sessions removes the need to run your own store;
+every session has a time to live (365 days unless you set one).
+
+## State scopes: how far a value reaches
+
+The prefix on a state key sets its scope:
+
+| Key | Scope | Example |
+|---|---|---|
+| `order_id` (no prefix) | This session only | The order being discussed |
+| `user:language` | Every session of this user, in this app | A preference the user set |
+| `app:support_hours` | Every user and session of the app | A global setting |
+| `temp:api_raw` | This invocation only (one turn); never persisted | A scratch value between two tools |
+
+Your code reads and writes one merged state; the session service stores each
+key where its prefix says. A tool writes state through its `tool_context`:
+
+```python
+from google.adk.tools.tool_context import ToolContext
+
+def set_language(language: str, tool_context: ToolContext) -> dict:
+    """Sets the language the agent replies in, for all of this user's conversations.
+
+    Args:
+        language: An ISO language code, for example "fr".
+    """
+    tool_context.state["user:language"] = language
+    return {"status": "success", "language": language}
+```
+
+Scopes beyond the current session persist only if the session service does:
+with `InMemorySessionService`, a `user:` key disappears on restart along with
+everything else. ADK documents and tests the shared `user:` and `app:` scopes on
+`DatabaseSessionService`; on Agent Platform Sessions, check that a `user:` key
+written in one session reads back in a new one before you rely on it.
+
+<Quiz
+  id="discount-code-scope"
+  objective="state-scopes"
+  question="Every user of the store should see the same current discount code, which an admin tool updates. Which key fits?"
+  choices={["discount_code, with no prefix", "user:discount_code", "temp:discount_code", "app:discount_code"]}
+  answer={3}
+  explanation="app: keys are shared by every user and session of the app, so one update reaches everyone. A key with no prefix would live in one session, a user: key would have to be written separately for each user, and a temp: key disappears at the end of the turn."
+/>
+
+## Memory: what lasts across conversations
+
+A session ends. Some of what the user said is worth keeping: where they work,
+what they bought, what went wrong last time. That is **long-term memory**, and
+ADK reaches it through a memory service. Session and state are short-term memory
+for one conversation; memory is a searchable store across many.
+
+<Term id="memory bank">Memory Bank</Term> is Agent Platform's managed long-term
+memory, and ADK connects to it with `VertexAiMemoryBankService`. It does not
+store transcripts. It:
+
+- **Extracts** the meaningful facts from a conversation with an LLM, and
+  **consolidates** them with what it already holds, so a changed fact updates a
+  memory instead of piling up duplicates.
+- **Isolates** memories per scope, such as the app (or agent) and the user, so one
+  user's memories never reach another's conversation. Every session therefore
+  needs a user id.
+- **Retrieves** either all memories for a scope or only the ones most relevant
+  to the current message.
+
+You can steer what it extracts with your own topics and few-shot examples, let
+the agent write a memory directly when it decides one is worth saving, and set a
+time to live on memories.
+
+<Figure
+  src="/media/agent-memory-timeline.svg"
+  alt="One user across two sessions. Session 1 (Monday) holds its events (the user orders a desk lamp shipped to the Lyon office, the agent calls create_order and gets order B-77, the user asks for replies in French) and its state: order_id for this session only, user:language for every session of this user, temp:api_raw gone after the turn. Session 2 (Thursday) starts a new history; its state still has user:language, carried over, while order_id is gone. After a turn or the session, Memory Bank generates memories: facts an LLM extracted and consolidated, isolated per agent and user, such as 'Ships work orders to the Lyon office'. At the start of a turn in session 2, the agent recalls the relevant memories."
+  caption="Events and plain state end with the session, user: state follows the user, and Memory Bank keeps extracted facts for later sessions."
+/>
+
+So on Thursday the agent starts a new, empty conversation, yet still replies in
+French (a `user:` key its own tool wrote) and offers the Lyon office (a fact
+Memory Bank extracted and recalled). The order id from Monday is gone, as it
+should be.
+
+## Wire Memory Bank into an ADK agent
+
+Three pieces, each a choice:
+
+1. **The service.** Pass a `VertexAiMemoryBankService` to the `Runner`, or start
+   `adk web` with `--memory_service_uri="agentengine://<agent_runtime_id>"`. It
+   needs an Agent Runtime instance in your project, though the agent itself need
+   not be deployed there. Agent Runtime is Agent Platform's managed runtime for
+   agents; it was formerly called Agent Engine, which is why the parameter is
+   `agent_engine_id`.
+2. **When to save.** Memories are generated when you send session data to the
+   service, for example at the end of each turn or session. An after-agent
+   callback that calls `add_session_to_memory` does it automatically.
+3. **How to recall.** `preload_memory` retrieves relevant memories at the start
+   of every turn; `load_memory` is a tool the model calls only when it decides
+   memory would help. Preload is predictable and costs a lookup on every model call in a turn; load
+   saves lookups but depends on the model asking.
+
+```python
+from google.adk.agents import LlmAgent
+from google.adk.agents.callback_context import CallbackContext
+from google.adk.memory import VertexAiMemoryBankService
+from google.adk.runners import Runner
+from google.adk.sessions import VertexAiSessionService
+from google.adk.tools import preload_memory
+
+async def save_to_memory(callback_context: CallbackContext):
+    await callback_context.add_session_to_memory()
+
+root_agent = LlmAgent(
+    name="support_agent",
+    model="gemini-flash-latest",
+    instruction="Help customers with orders. Use what you remember about them.",
+    tools=[preload_memory],
+    after_agent_callback=save_to_memory,
+)
+
+runner = Runner(
+    agent=root_agent,
+    app_name="store-support",
+    session_service=VertexAiSessionService(
+        project="PROJECT_ID", location="LOCATION", agent_engine_id="AGENT_RUNTIME_ID"
+    ),
+    memory_service=VertexAiMemoryBankService(
+        project="PROJECT_ID", location="LOCATION", agent_engine_id="AGENT_RUNTIME_ID"
+    ),
+)
+```
+
+The Runner's session service creates and loads each session by `app_name`,
+`user_id` and `session_id` (the ids you pass to `run_async`), and its memory
+service is what `add_session_to_memory` and the memory tools talk to. An
+after-agent callback runs after every agent run, so this agent sends its session
+to Memory Bank after every turn, and Memory Bank consolidates what it already
+holds; to save once per conversation, call `add_session_to_memory` when your app
+decides the conversation is over.
+
+<Callout type="warning">Long-term memory is personal data. Keep only what the agent needs, scope it to the user, and set a time to live that matches your retention rules.</Callout>
+
+## Choosing the place
+
+- **Needed only for this turn?** `temp:` state.
+- **Part of this conversation?** The session's events and plain state.
+- **A setting your app owns, the same every time?** `user:` (or `app:`) state on
+  a persistent session service that shares those scopes (verified on
+  `DatabaseSessionService`). Your code writes and reads it exactly.
+- **A fact users mention that you did not model as a field?** Memory Bank, which
+  extracts it, consolidates it and recalls it when relevant.
+- **Everything, pasted into the prompt?** Never. Every token in the prompt costs
+  latency and money on every call, distracts the model and spreads personal data;
+  topic 3.8 measures it.
+
+## Sources
+
+- Google, Agent Development Kit documentation, "State", github.com/google/adk-docs/blob/main/docs/sessions/state.md (state prefixes: none, user:, app:, temp:; persistence depends on the session service).
+- Google, Agent Development Kit documentation, "Session", github.com/google/adk-docs/blob/main/docs/sessions/session/index.md (events and state; InMemorySessionService, VertexAiSessionService, DatabaseSessionService).
+- Google, Agent Development Kit documentation, "Memory", github.com/google/adk-docs/blob/main/docs/sessions/memory.md (MemoryService; VertexAiMemoryBankService; add_session_to_memory; preload_memory and load_memory; the after-agent callback pattern; memory_service_uri).
+- Google Cloud, "Agent Platform Memory Bank", docs.cloud.google.com/gemini-enterprise-agent-platform/scale/memory-bank (extraction, consolidation, scopes and user ids, retrieval modes, topics and few-shot examples, memory time to live; last updated 2026-11-12).
+- Google Cloud, "Manage sessions with ADK", docs.cloud.google.com/gemini-enterprise-agent-platform/scale/sessions/manage-with-adk (Agent Platform Sessions; VertexAiSessionService; every session expires, default time to live 365 days).

@@ -70,5 +70,11 @@
   },
   "session": {
     "definition": "The record of one conversation between a user and an agent: its messages, the agent's events and its working state. A session service is where an agent stores sessions."
+  },
+  "session state": {
+    "definition": "Key-value data an agent and its code read and write during a session. In ADK a key's prefix sets its scope: none (this session), user:, app: or temp:."
+  },
+  "memory bank": {
+    "definition": "Agent Platform's managed long-term memory: it extracts facts from conversations with an LLM, consolidates them with what it already holds, keeps them isolated per scope (such as agent and user), and returns the relevant ones in later sessions."
   }
 }
