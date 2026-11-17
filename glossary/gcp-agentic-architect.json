@@ -10,5 +10,14 @@
   },
   "determinism spectrum": {
     "definition": "The range of designs ordered by how much the system decides for itself: a chatbot acts only when the user asks, a workflow follows the designer's path, and an agent directs its own steps. More autonomy buys flexibility and costs predictability."
+  },
+  "gemini enterprise": {
+    "definition": "Google's platform where employees discover, create, run and govern AI agents, including the low-code Workflow Builder."
+  },
+  "agent platform": {
+    "definition": "Gemini Enterprise Agent Platform: Google Cloud's platform to build, scale, govern and optimise agents, announced in April 2026 as the evolution of Vertex AI."
+  },
+  "agent runtime": {
+    "definition": "Agent Platform's managed runtime that deploys, operates and scales agents, used with its Sessions and Memory Bank services (formerly Agent Engine)."
   }
 }
