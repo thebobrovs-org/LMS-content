@@ -93,13 +93,13 @@ quiz:
     explanation: "Permission filtering is only as good as the ACLs a connector can see, and connectors have documented gaps: in Jira, attachments on private comments don't inherit the comment's restrictions. So check the limits and test as a user who should be denied. Trusting the mapping alone misses such gaps, and ACL metadata you add yourself is for data you import from Cloud Storage or BigQuery, not for connector stores."
   - id: policy-updated-this-morning
     objective: app-store-connector
-    question: "HR updated the leave policy in Confluence at 9:00. At 10:00 the agent still quotes the old policy, though a test user can open the new page in Confluence. The Confluence connector ingests with default settings. What explains it?"
+    question: "HR edited the leave-policy page in Confluence at 9:00. At 10:00 the agent still quotes the old wording, though a test user sees the edit in Confluence. The Confluence connector ingests with default settings. What explains it?"
     choices:
-      - "The new page's ACLs block the test user"
+      - "Confluence's ACLs hide the edit from the agent"
       - "The copy hasn't synced since the change"
-      - "Blended search ranked an old page higher"
+      - "Blended search ranked another page higher"
     answer: 1
-    explanation: "An ingestion connector answers from its copy, which picks up changes at the next sync, every three hours by default, so a change made an hour ago may not be there yet. The user can open the page in Confluence, so ACLs aren't hiding it, and ranking can't return text that isn't in the index. Shorten the sync schedule or use federation where freshness matters."
+    explanation: "An ingestion connector answers from its copy, which picks up changes at the next sync, every three hours by default, so a change made an hour ago may not be there yet. The test user sees the edit, so ACLs aren't hiding it, and the page was edited in place, so no other page outranks it: ranking can't return text that isn't in the index. Shorten the sync schedule or use federation where freshness matters."
   - id: video-question
     objective: multimodal
     question: "A field engineer wants to ask the Gemini Enterprise assistant about a 3-minute MP4 clip of a faulty pump. What is the simplest route?"
@@ -184,8 +184,8 @@ everything at once or filter to one store. A few rules apply:
 ## Permission-aware retrieval
 
 The rule that matters most: **an agent must never widen what a user can read.**
-Two layers of control are involved. IAM roles on the project and the app, with a
-user licence, decide who may use the app at all. Inside the app, Gemini Enterprise
+Two layers of control are involved. Who may use the app at all is decided by IAM
+roles on the project and the app, plus a Gemini Enterprise licence for each user. Inside the app, Gemini Enterprise
 filters results per user, which needs two things:
 
 - **Who is asking.** Gemini Enterprise uses your identity provider (IdP) to
