@@ -1,0 +1,79 @@
+/* LMS design tokens (skills/lms-authoring-simulations/template), so the sim follows the host theme. */
+:root {
+  --bg: #ffffff; --fg: #0f172a; --muted: #475569; --surface: #f1f5f9;
+  --panel: #ffffff; --border: #cbd5e1; --inset: #f8fafc;
+  --primary: #2563eb; --primary-contrast: #ffffff;
+  --stale: #b45309; --current: #0f766e; --bad: #b91c1c; --ok: #15803d;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f172a; --fg: #f8fafc; --muted: #a5b1c2; --surface: #1e293b;
+    --panel: #1e293b; --border: #475569; --inset: #0f172a;
+    --primary: #60a5fa; --primary-contrast: #0b1220;
+    --stale: #fbbf24; --current: #2dd4bf; --bad: #fca5a5; --ok: #4ade80;
+  }
+}
+[data-theme="light"] {
+  --bg: #ffffff; --fg: #0f172a; --muted: #475569; --surface: #f1f5f9;
+  --panel: #ffffff; --border: #cbd5e1; --inset: #f8fafc;
+  --primary: #2563eb; --primary-contrast: #ffffff;
+  --stale: #b45309; --current: #0f766e; --bad: #b91c1c; --ok: #15803d;
+}
+[data-theme="dark"] {
+  --bg: #0f172a; --fg: #f8fafc; --muted: #a5b1c2; --surface: #1e293b;
+  --panel: #1e293b; --border: #475569; --inset: #0f172a;
+  --primary: #60a5fa; --primary-contrast: #0b1220;
+  --stale: #fbbf24; --current: #2dd4bf; --bad: #fca5a5; --ok: #4ade80;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+}
+#app { padding: 14px; }
+
+.question { margin: 0 0 10px; font-weight: 600; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: flex-end; margin-bottom: 12px; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.field select { font: inherit; font-size: 14px; color: var(--fg); padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); }
+input[type="range"] { width: 130px; accent-color: var(--primary); }
+.check { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--fg); }
+.check input { width: 16px; height: 16px; accent-color: var(--primary); }
+.nowrap { white-space: nowrap; }
+button {
+  font: inherit; padding: 7px 14px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface); color: var(--fg); cursor: pointer;
+}
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.readout { margin: 0 0 12px; padding: 8px 10px; border-radius: 8px; background: var(--surface); font-weight: 600; line-height: 1.45; }
+.readout.wrong { color: var(--bad); }
+.readout.right { color: var(--ok); }
+.readout .sub { display: block; font-weight: 400; color: var(--fg); font-size: 13px; }
+
+.ranked h2 { margin: 0 0 6px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.ranked ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.chunk { display: grid; grid-template-columns: 28px 1fr 74px; gap: 8px; align-items: start; padding: 7px 9px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
+.chunk.in { border-color: var(--primary); border-width: 2px; padding: 6px 8px; }
+.chunk.out { background: var(--inset); }
+.rank { font-weight: 700; color: var(--muted); font-size: 13px; }
+.doc { font-size: 12px; font-weight: 700; }
+.doc.stale { color: var(--stale); }
+.doc.current { color: var(--current); }
+.doc.other { color: var(--muted); }
+.text { display: block; font-size: 13px; line-height: 1.4; margin-top: 2px; }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; margin-left: 6px; color: var(--muted); }
+.tag.inctx { color: var(--primary); }
+.tag.filtered { color: var(--bad); }
+.score { font-size: 12px; color: var(--muted); text-align: right; }
+.bar { height: 6px; border-radius: 3px; background: var(--border); margin-top: 4px; overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--primary); }
+@media (max-width: 420px) {
+  .chunk { grid-template-columns: 22px 1fr; }
+  .score { grid-column: 2; text-align: left; }
+}
+.legend { margin: 10px 0 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
