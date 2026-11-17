@@ -1,0 +1,12 @@
+{
+  "id": "trajectory-match-explorer",
+  "title": "Trajectory match explorer",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-order-sensitivity",
+      "hint": "Reorder the actual calls (try Refund first) and compare which match modes still pass."
+    }
+  ]
+}

@@ -71,6 +71,54 @@
   "session": {
     "definition": "The record of one conversation between a user and an agent: its messages, the agent's events and its working state. A session service is where an agent stores sessions."
   },
+  "prompt injection": {
+    "definition": "Input crafted to override an LLM application's instructions. In a direct injection the person using the application writes it; in an indirect one it arrives in content the application reads."
+  },
+  "indirect prompt injection": {
+    "definition": "A prompt injection carried by content an agent reads rather than by the person using it: a web page, a document, an email or a tool's output. It can be invisible to humans."
+  },
+  "excessive agency": {
+    "definition": "An agent holding more than its task needs: more tools, broader permissions or more freedom to act without a check. It decides how much damage a manipulation or a model mistake can do."
+  },
+  "agent identity": {
+    "definition": "A dedicated identity for each agent on Google Cloud, based on SPIFFE, with its own certificate-bound credentials. You grant roles to it directly, and audit logs name the agent."
+  },
+  "spiffe": {
+    "definition": "An open standard for identifying software workloads with cryptographic identities, such as X.509 certificates, rather than shared secrets."
+  },
+  "principal access boundary": {
+    "definition": "An IAM policy that defines which resources a principal is eligible to access. It can block access regardless of the principal's role grants (for the permissions it supports), but it never grants access."
+  },
+  "agent gateway": {
+    "definition": "Google Cloud's managed gateway for agent traffic, including calls to MCP servers. It enforces access policies on that traffic, can screen it with Model Armor, and records it so it can be monitored."
+  },
+  "agent registry": {
+    "definition": "Google Cloud's catalogue of registered agents, MCP servers, endpoints and skills. It gives each one identifiers for discovery and for the policies and route rules that govern it."
+  },
+  "oauth 2.0": {
+    "definition": "An authorisation framework that lets an application obtain limited access to an HTTP service with access tokens, either on behalf of a user who approves it or on its own behalf."
+  },
+  "openid connect": {
+    "definition": "An identity layer on top of OAuth 2.0. It adds an ID token with claims about how the user signed in, so an application can know who the user is."
+  },
+  "authconfig": {
+    "definition": "In ADK, the object that pairs a tool's AuthScheme (how the API expects credentials) with its AuthCredential (the initial information to start the flow)."
+  },
+  "span": {
+    "definition": "One timed operation in a trace, such as a model call or a tool call, nested under the span of the operation that started it. Its length shows where the time went."
+  },
+  "reasoning loop": {
+    "definition": "An agent failure in which the model repeats the same tool call or step, often with the same arguments, without making progress, until a cap or timeout stops it."
+  },
+  "drift": {
+    "definition": "A deployed agent's quality degrading over time as the model, prompts, tools, data or users change, while the service stays up and fast."
+  },
+  "tool trajectory match": {
+    "definition": "Comparing an agent's actual tool calls (name and arguments) with the expected ones, in one of three modes: exact, in-order (extra calls allowed) or any-order (extra calls and any order allowed)."
+  },
+  "gen ai evaluation service": {
+    "definition": "Agent Platform's managed evaluation for models and agents, with rubric-based (including adaptive), computation-based and custom function metrics scored where needed by a judge model."
+  },
   "context window": {
     "definition": "The tokens a model sees in one call: instructions, tool declarations, history, recalled memory, retrieved content and the new message. Its size is a limit, and every token in it costs time and money."
   },
@@ -109,9 +157,6 @@
   },
   "mcp toolbox for databases": {
     "definition": "An open-source MCP server that exposes database queries as agent tools, each defined in configuration with a fixed statement and typed parameters."
-  },
-  "agent registry": {
-    "definition": "Google Cloud's catalogue of agents, MCP servers and their tools, and endpoints, used for discovery and for access policies that govern which agents may use them."
   },
   "rag": {
     "definition": "Retrieval-augmented generation: before the model answers, the system retrieves relevant passages from your documents and puts them in the model's context."
