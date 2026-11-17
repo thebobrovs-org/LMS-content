@@ -229,5 +229,8 @@
   },
   "memory bank": {
     "definition": "Agent Platform's managed long-term memory: it extracts facts from conversations with an LLM, consolidates them with what it already holds, keeps them isolated per scope (such as agent and user), and returns the relevant ones in later sessions."
+  },
+  "confused deputy": {
+    "definition": "A program with legitimate authority that is tricked by a less-privileged party into using that authority on the party's behalf, for example an agent whose own credentials carry out a request planted in its input."
   }
 }
