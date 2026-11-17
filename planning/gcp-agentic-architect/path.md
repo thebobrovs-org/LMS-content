@@ -101,7 +101,7 @@ sign-off between each, core first, then one exam section at a time.
 
 | ID | Level | Topic (`id`) | One-line objective | Visual / lab | Status |
 |----|-------|--------------|--------------------|--------------|--------|
-| 4.1 | 100 | `agent-quality-basics` | Name the dimensions of agent quality and an example failure for each. | figure | plan-approved |
+| 4.1 | 100 | `agent-quality-basics` | Name the dimensions of agent quality and an example failure for each. | figure | on staging |
 | 4.2 | 200 | `agent-eval-datasets` | Build a golden dataset with expected trajectories and responses. | figure + codelab | plan-approved |
 | 4.3 | 200 | `deploying-agents` | Choose Agent Runtime, Cloud Run or GKE from requirements. | figure | plan-approved |
 | 4.4 | 300 | `agent-eval-criteria` | Predict whether a trajectory passes exact, in-order or any-order matching. | **sim `trajectory-match-explorer`** | plan-approved |
