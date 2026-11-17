@@ -145,6 +145,19 @@ test("a date must be a real calendar day, not only shaped like one", () => {
   assert.equal(check(TopicFrontmatterSchema, { ...topic, updated: "2024-02-29" }).ok, true);
 });
 
+test("IsoDate rejects non-string types with quoted-date reminder and malformed strings (#137)", () => {
+  for (const badType of [new Date(0), 42, true, {}, []]) {
+    const r = check(TopicFrontmatterSchema, { ...topic, updated: badType }, "t.mdx");
+    assert.equal(r.ok, false);
+    assert.deepEqual(r.problems, ["t.mdx: updated: must be a quoted YYYY-MM-DD string (an unquoted date parses as a Date)"]);
+  }
+  for (const badFormat of ["", "2026", "2026-9-1", "not-a-date"]) {
+    const r = check(TopicFrontmatterSchema, { ...topic, updated: badFormat }, "t.mdx");
+    assert.equal(r.ok, false);
+    assert.ok(r.problems.includes("t.mdx: updated: must be a quoted YYYY-MM-DD string"));
+  }
+});
+
 test("learning objectives: declared on the topic, referenced by items; ids are slugs and unique (LMS-content#83)", () => {
   const withObjectives = {
     ...topic,
