@@ -3,9 +3,9 @@ id: claim/agent-gateway-supported-runtimes
 type: claim
 status: proposed
 title: "Agent Gateway runtime support and policy availability, as of November 2026"
-scope: "Google Cloud Agent Gateway as documented on 2026-11-17. Read through a fetch summary of the overview page, not verbatim text; a reviewer must confirm before any of it is taught or quizzed"
+scope: "Google Cloud Agent Gateway as documented on 2026-11-17. The author read the overview page through a fetch summary; the PR #159 reviewer confirmed the runtime availability and the coming-soon policies on the page itself. Not taught, by the plan's choice"
 sources:
-  - "Google Cloud, Agent Gateway overview, docs.cloud.google.com/gemini-enterprise-agent-platform/govern/gateways/agent-gateway-overview (last updated 2026-11-16 per a fetch summary, retrieved 2026-11-17: available for agents on Gemini Enterprise Agent Platform and GKE; Limited Preview for agents on Cloud Run and on Kubernetes clusters outside Google Cloud; support for token management policies and extension bindings is coming soon; policy types include IAM unified access policies linking an agent's identity to approved tools and endpoints in Agent Registry)"
+  - "Google Cloud, Agent Gateway overview, docs.cloud.google.com/gemini-enterprise-agent-platform/govern/gateways/agent-gateway-overview (last updated 2026-11-16 per a fetch summary, retrieved 2026-11-17; Deployment models paragraph and policy section confirmed from the page body by the PR #159 reviewer: available for agents on Gemini Enterprise Agent Platform and GKE; Limited Preview for agents on Cloud Run and on Kubernetes clusters outside Google Cloud; support for token management policies and extension bindings is coming soon; policy types include IAM unified access policies linking an agent's identity to approved tools and endpoints in Agent Registry)"
 touches:
   - agentic-ai/agent-gateway-and-registry
 tags: [agents, security, governance]
@@ -20,4 +20,4 @@ review-by: 2027-02-15
 
 **Claim.** As of November 2026, Agent Gateway is available for agents on Gemini Enterprise Agent Platform and GKE, and in Limited Preview for agents on Cloud Run and on Kubernetes outside Google Cloud. Token management policies and extension bindings are listed as coming soon.
 
-**Limits.** This came from a fetch summary of the page's later sections, not verbatim text, and the plan lists these as open questions from exam preparation. The lesson states no runtime or launch stage for this reason. Review every 90 days.
+**Limits.** Runtime availability, launch stages and the coming-soon policies were confirmed by the PR #159 reviewer; the policy-type detail rests on the author's fetch summary. The lesson states no runtime or launch stage, because stages change. Review every 90 days.
