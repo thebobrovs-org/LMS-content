@@ -1,6 +1,6 @@
 ---
 name: lms-authoring-simulations
-description: Build an LMS simulation — a small, self-contained interactive web app a lesson embeds in a sandboxed iframe via <Simulation id>. Use when creating, editing, or wiring up a lesson's interactive demo. Covers the DESIGN STANDARD (compact, on-theme, one concept, one checkpoint — no quests/dashboards), the package layout, sim.config.json, the postMessage SDK (init/theme/props ↔ ready/resize/checkpoint/event), the CRITICAL classic-scripts rule, and build/embed/validate.
+description: Build an LMS simulation — a small, self-contained interactive web app a lesson embeds in a sandboxed iframe via <Simulation id>. Use when creating, editing, or wiring up a lesson's interactive demo. Covers the PROCESS (concept note, then a clickable preview the PO approves before any push), the DESIGN STANDARD (a picture of the idea, a predict step, one concept, one checkpoint — no quests/dashboards), the package layout, sim.config.json, the postMessage SDK (init/theme/props ↔ ready/resize/checkpoint/event), the CRITICAL classic-scripts rule, and build/embed/validate.
 ---
 
 # Building a simulation
@@ -10,20 +10,101 @@ step) that runs in a sandboxed iframe and talks to the host lesson via a
 `postMessage` SDK. The simulation is the **centerpiece** of a lesson: the prose
 sets it up and interprets it. Make it small, focused, and genuinely interactive.
 
-## The design standard (match these — they are the house style)
+## Before any code: the concept, then a preview
 
-The richness exemplar is **`systolic-array`** — a real visualization (weight grid
-+ streaming activations + incoming queue) with live metrics (cycle, utilization),
-Step / Auto / Reset, and a short event log. Other exemplars: **`moe-factory`**
-(routing → % compute), **`consistent-hash-ring`** (remap fraction), **`lru-cache`**
-(eviction). New sims should match this level and look.
+Most sims used to start from the same stepper (controls, a list of rows, Step/Auto/Reset)
+and ended up looking alike. Start from the idea instead: **what picture would make this
+idea obvious?** Choose the picture before you choose the controls.
+
+1. **Write a concept note** and get the PO's yes before you build. Use this brief (the
+   ones in [`simulations/BRIEFS.md`](../../simulations/BRIEFS.md) already fill in most of it):
+
+   ```
+   objective:        Given <scenario>, the learner can <choose / predict / diagnose> <X>.
+   knowledge type:   concept | procedure | decision | troubleshooting | trade-off
+   misconception:    <the one wrong belief the sim should break>
+   picture:          <the metaphor or drawing, and what moves in it>
+   predict step:     <the question the learner answers before acting, and its choices>
+   aha checkpoint:   observe-<thing> (fires once, when the learner sees it)
+   running example:  <the lesson's own scenario and numbers>
+   retain:           <one sentence the learner can say after closing it>
+   sources:          <docs with retrieval date>; anything scripted is labelled illustrative
+   ```
+
+2. **Build it, then share a clickable preview.** `node scripts/sim-preview.mjs <id> > preview.html`
+   writes one self-contained page (style, code and an SDK stub inlined) that opens straight in a
+   browser. Share it wherever you can host a page, and put light and dark screenshots (and a GIF
+   if you can) in the PR.
+3. **The PO approves the preview**, then you finish the tests and the lesson text and the
+   cross-review starts (below). Nothing merges without the PO's yes on both the concept and
+   the preview.
+
+**Patterns by knowledge type (a starting point, not a rule).** Creativity comes first: a
+metaphor that fits beats a pattern that matches. Reach for this table only when nothing
+better comes to mind.
+
+| Knowledge type | Often works | Examples here |
+|---|---|---|
+| Concept | Manipulate one thing and watch two linked views change | `vector-basis-explorer`, `capacity-constraint-explorer` |
+| Hierarchy or scale | A ladder you step up and down | `scale-hierarchy` |
+| Procedure | Step through it, with the state on show | `agent-loop-stepper` |
+| Decision | The same input run through both options side by side | `approval-gate-explorer` (two tracks) |
+| Troubleshooting | Break it on purpose, then trace the symptom to the cause | `capacity-constraint-explorer` |
+| Quantitative trade-off | A calculator with a threshold line | `arithmetic-intensity-calculator` |
+
+**Sim or image?** Build a sim only when the learner must decide, predict, sequence or
+diagnose, and the answer changes with an input. A lookup table, an overview read once, or
+a "click to reveal the next box" stays a static image. **Don't keep an image and a sim
+that tell the same story** in one lesson: retire one.
+
+## Three agents, one backlog
+
+Codex, agy (Antigravity) and Claude build sims in parallel from
+[`simulations/BRIEFS.md`](../../simulations/BRIEFS.md). Each brief has an id (`B01`, `B02`, …).
+
+**Claim a brief** so two agents never take the same one:
+
+1. List the open PRs. A brief is taken when any open PR's title starts with `[sim:<id>]`,
+   or when its row in BRIEFS.md names an owner and isn't `open`.
+2. Take the first `open` brief nobody has claimed. Create the branch `<agent>/sim-<id>-<slug>`
+   (for example `codex/sim-B07-oauth-flow`), set the brief's status to `concept` and its owner
+   to your name in BRIEFS.md, commit only that change, and open a **draft PR** titled
+   `[sim:<id>] <title>` at once. The draft PR is the claim: if two drafts appear for one
+   brief, the older one keeps it and the newer one closes.
+3. Put the concept note in the PR description and ask the PO for a yes on it.
+
+**Statuses** (update the row in your own PR as you go): `open` → `concept` (draft PR up, waiting
+for the PO) → `building` (concept approved) → `preview` (preview shared, waiting for the PO) →
+`review` (PO approved the preview; cross-review running) → `merged`.
+
+**Cross-review.** When a PR reaches `review`, the other two agents each review it against the
+design checklist below and the brief. All three agents may post under one GitHub account, so a
+review is a PR comment that starts with `Review by <agent>: APPROVE` or
+`Review by <agent>: CHANGES`, followed by the checklist items that fail, each with the file and
+line and what to change. Check the product claims against their sources, run `npm run gate` on the
+branch, and open the preview. The author fixes the problems and asks the reviewer to look again.
+A PR is ready to merge when **both** other agents have posted `APPROVE` on its latest commit, the gate is
+green, and the PO has approved the concept and the preview. **Only the PO merges.** agy's
+technical-accuracy review (AGENTS.md) still applies as before.
+
+**Keep PRs small:** one brief per PR, touching that sim's package, its tests, its lesson's
+text and its BRIEFS.md row. Shared files (the test registry in `scroll-regions.test.mjs`,
+`knowledge/index.json`) change by single lines, so rebases stay easy. Don't touch another
+agent's sim; if you find a problem in it, review it.
+
+## The design standard
+
+The exemplars show the bar for richness, not a look to copy: **`approval-gate-explorer`**
+(two parallel tracks, a no-return line, a predict step), **`neuron-explorer`** (what a neuron learns), and
+**`systolic-array`** (a real visualization with live metrics).
 
 1. **One concept, one checkpoint.** A sim teaches a *single* idea and fires
    exactly one `observe-*` checkpoint the moment the learner sees the key insight.
    **No quest chains, no score, no "Completed!" modal, no game.** (We removed those
    on purpose.)
-2. **Aim high, then strip the cruft.** Be genuinely rich — a real visualization,
-   live metrics, Step/Auto/Reset, brief narration; a real instrument, not a toy.
+2. **Aim high, then strip the cruft.** Be genuinely rich: a real drawing (SVG or canvas)
+   that moves when the learner acts, brief narration, a real instrument, not a toy.
+   Step/Auto/Reset is one option, not a requirement.
    The thing we *don't* want isn't ambition, it's cruft: off-brand themes, CDN
    frameworks, quest games, and runaway height. Pure explanation/comparison
    belongs in the **lesson prose**, not padded into the sim.
@@ -39,28 +120,52 @@ Step / Auto / Reset, and a short event log. Other exemplars: **`moe-factory`**
 5. **A measurable readout.** Show one live line that makes the trade-off concrete
    (% compute, remap fraction, hit rate, cycle count). This is the takeaway in
    numbers — keep it to a line, not a sprawling telemetry panel.
-6. **Standard anatomy, top→bottom:** `controls` → visualization → `readout`
-   (the result) → optional short log → one-line `legend`.
-7. **Deterministic core.** Derive behavior from inputs/props (e.g. a small hash),
+6. **A predict step the learner commits to.** Before the key action, the learner picks an
+   answer (chips in the sim, or a `<Quiz>` right before the embed, as
+   `precision-and-memory` does). A sentence of "predict first" prose doesn't count. In the
+   sim, show their pick beside the outcome and say why it was right or wrong.
+7. **Anatomy.** Usually predict → drawing → caption (`role="status"`) → controls →
+   readout → one-line `legend`. Change the order when the idea needs it.
+8. **Deterministic core.** Derive behavior from inputs/props (e.g. a small hash),
    not runtime randomness, so results are reproducible and explainable.
-8. **Interaction & a11y.** One primary action + a few controls + **Reset**;
-   keyboard-operable; always-visible focus ring; honor `reducedMotion` (no
-   essential motion-only cue).
+9. **Interaction & a11y.** One primary action + a few controls + **Reset**;
+   keyboard-operable (every drag has a button alternative); always-visible focus ring;
+   honor `reducedMotion` (no essential motion-only cue).
+
+## The lesson around the sim
+
+- **Lead-in:** what to predict and what to try, in the lesson's words.
+- **After it:** an "Explain it" prompt, then a **"Put it together"** `<Steps>` block whose
+  steps name the sim and ask for a specific setting (see `precision-and-memory`).
+- One flashcard or quiz item about the sim's outcome.
+- The sim's `title` in `sim.config.json` is a human title, and the lesson names it that way,
+  never by its slug.
 
 ### Design checklist (must pass before promoting)
 
-- [ ] One concept; one `observe-*` checkpoint; no quests/score/modal.
-- [ ] Rich enough to be an instrument (viz + live metrics + Step/Auto/Reset) — see `systolic-array`.
+- [ ] The PO approved the concept note and the preview; the other two agents posted `APPROVE`.
+- [ ] One concept; one `observe-*` checkpoint that fires once; no quests/score/modal.
+- [ ] A drawing that shows the idea, not a list of rows; a predict step the learner commits to.
+- [ ] The misconception is reachable in three actions or fewer.
 - [ ] Self-sizing (grows to content via `sim.resize`); no clipping or runaway scroll; no page chrome.
-- [ ] Token theme (copied block); correct in light + dark; respects reduced motion.
+- [ ] Token theme (copied block); correct in light + dark.
 - [ ] Every text colour reads at **4.5:1** on what it sits on, in both modes (3:1 for
       marks and lines); no text faded with `opacity`; ink on a fill is the fill's
       `*-contrast` token, never a bare `#fff`. `simulations/tests/palette-contrast.test.mjs`
       checks the token block; the hub's audit (`hyperstack/docs/audits/tools`) checks the rendered sim.
-- [ ] Plain HTML/CSS/JS — no CSS framework or CDN.
-- [ ] A measurable readout that states the takeaway.
-- [ ] `controls → viz → readout → legend`; keyboard + focus ring.
-- [ ] Deterministic core; classic scripts; `sim.resize` after render.
+- [ ] Not colour alone: every state also has a word, an icon or a shape.
+- [ ] Keyboard-only works; the verdict is in `role="status"`; the drawing has `role="img"` and
+      a sentence-long `aria-label` that changes with it.
+- [ ] Reduced motion (both `prefers-reduced-motion` and `init.reducedMotion`): every end state
+      is reachable with no animation; nothing animates while idle or when the tab is hidden.
+- [ ] Phone width (360 px): controls wrap; a wide drawing scrolls inside a focusable, named
+      region (register it as a `WIDTH_GUARD` in `simulations/tests/scroll-regions.test.mjs`);
+      no hover-only reveals; touch targets as close to 44 px as the layout allows.
+- [ ] Plain HTML/CSS/JS, no CSS framework or CDN; classic scripts; main.js under about 25 KB.
+- [ ] Deterministic; every product claim traces to the lesson or a dated doc; scripted
+      numbers are labelled illustrative.
+- [ ] Renders without host `init` (the 300 ms fallback), with no console errors.
+- [ ] Tests in `simulations/tests/` drive the key path through `sim-dom.mjs`.
 
 ## Where it goes
 
