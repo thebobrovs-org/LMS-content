@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 400" width="760" height="400" role="img" aria-label="Three retrieval backends side by side, from most managed to most control. Agent Search manages the whole pipeline. RAG Engine manages the pipeline but lets you set chunking, the embedding model, the vector database and reranking. Vector Search gives you only the vector index; you build ingestion, chunking, embeddings and ranking yourself.">
+  <rect width="760" height="400" fill="#ffffff"/>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <g font-family="Inter, system-ui, sans-serif">
+    <text x="380" y="28" text-anchor="middle" font-size="16" font-weight="600" fill="#0f172a">Who runs each stage of the pipeline?</text>
+    <line x1="150" y1="50" x2="740" y2="50" stroke="#475569" stroke-width="1.5" marker-end="url(#ar)"/>
+    <text x="150" y="44" font-size="11" fill="#475569">More managed</text>
+    <text x="736" y="44" text-anchor="end" font-size="11" fill="#475569">More control, more work</text>
+
+    <!-- column headers -->
+    <g font-size="13.5" font-weight="600" fill="#0f172a" text-anchor="middle">
+      <text x="248" y="80">Agent Search</text>
+      <text x="446" y="80">RAG Engine</text>
+      <text x="644" y="80">Vector Search</text>
+    </g>
+
+    <!-- row labels -->
+    <g font-size="12" fill="#334155">
+      <text x="20" y="130">Ingest and parse</text>
+      <text x="20" y="176">Chunk</text>
+      <text x="20" y="222">Embed</text>
+      <text x="20" y="268">Index (vector store)</text>
+      <text x="20" y="314">Retrieve and rerank</text>
+    </g>
+
+    <!-- managed cells: blue; configurable: amber; you build: grey -->
+    <g font-size="11.5" text-anchor="middle">
+      <!-- Agent Search -->
+      <rect x="160" y="110" width="176" height="220" rx="10" fill="#dbeafe" stroke="#2563eb"/>
+      <text x="248" y="210" fill="#1e3a8a" font-weight="600">Managed end to end</text>
+      <text x="248" y="228" fill="#1e3a8a">(out-of-the-box RAG,</text>
+      <text x="248" y="244" fill="#1e3a8a">answers with citations)</text>
+
+      <!-- RAG Engine -->
+      <rect x="358" y="110" width="176" height="36" rx="8" fill="#dbeafe" stroke="#2563eb"/>
+      <text x="446" y="132" fill="#1e3a8a">Managed</text>
+      <rect x="358" y="156" width="176" height="36" rx="8" fill="#fef3c7" stroke="#b45309"/>
+      <text x="446" y="178" fill="#78350f">You set size and overlap</text>
+      <rect x="358" y="202" width="176" height="36" rx="8" fill="#fef3c7" stroke="#b45309"/>
+      <text x="446" y="224" fill="#78350f">You pick the model</text>
+      <rect x="358" y="248" width="176" height="36" rx="8" fill="#fef3c7" stroke="#b45309"/>
+      <text x="446" y="270" fill="#78350f">You pick the vector DB</text>
+      <rect x="358" y="294" width="176" height="36" rx="8" fill="#fef3c7" stroke="#b45309"/>
+      <text x="446" y="316" fill="#78350f">You set top-k, reranker</text>
+
+      <!-- Vector Search -->
+      <rect x="556" y="110" width="176" height="128" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-dasharray="5 4"/>
+      <text x="644" y="170" fill="#334155" font-weight="600">You build</text>
+      <text x="644" y="188" fill="#334155">(your own embeddings)</text>
+      <rect x="556" y="248" width="176" height="36" rx="8" fill="#dbeafe" stroke="#2563eb"/>
+      <text x="644" y="270" fill="#1e3a8a">Managed vector index</text>
+      <rect x="556" y="294" width="176" height="36" rx="8" fill="#f1f5f9" stroke="#64748b" stroke-dasharray="5 4"/>
+      <text x="644" y="316" fill="#334155">You build query and ranking</text>
+    </g>
+
+    <!-- legend -->
+    <g font-size="11" fill="#334155">
+      <rect x="160" y="352" width="14" height="14" rx="3" fill="#dbeafe" stroke="#2563eb"/>
+      <text x="180" y="363">Google runs it</text>
+      <rect x="290" y="352" width="14" height="14" rx="3" fill="#fef3c7" stroke="#b45309"/>
+      <text x="310" y="363">Google runs it, you configure it</text>
+      <rect x="500" y="352" width="14" height="14" rx="3" fill="#f1f5f9" stroke="#64748b" stroke-dasharray="3 2"/>
+      <text x="520" y="363">You build and run it</text>
+    </g>
+    <text x="380" y="390" text-anchor="middle" font-size="11" fill="#475569">Start from the left, and move right only for control you need.</text>
+  </g>
+</svg>
