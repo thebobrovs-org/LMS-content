@@ -177,7 +177,7 @@ part.
 
 <Figure
   src="/media/context-budget.svg"
-  alt="Panel A: illustrative tokens per turn for a support agent, as stacked bars by component. Before any cut: instructions 3k, tool declarations 10k, history 18k, memory 6k, retrieved chunks 10k, total 47,000. Filtering tools to the ones the step needs cuts tool declarations to 2k, total 39,000. Compacting history cuts it to 4k, total 25,000. Recalling memory on demand cuts memory to 1.5k, total 20,500. Panel B: with context caching the turn is still 20,500 tokens; the stable 5k prefix of instructions and tool declarations is cached, so it costs less and is processed faster, but it still counts in the context window."
+  alt="Panel A: illustrative tokens per turn for a support agent, as stacked bars by component. Before any cut: instructions 3k, tool declarations 10k, history 18k, memory 6k, retrieved chunks 10k, total 47,000. Filtering tools to the ones the step needs cuts tool declarations to 2k, total 39,000. Compacting history cuts it to 4k, total 25,000. Recalling memory on demand cuts memory to about 1.5k, assuming compaction soon summarises each recall, total 20,500. Panel B: with context caching the turn is still 20,500 tokens; the stable 5k prefix of instructions and tool declarations is cached, so it costs less and is processed faster, but it still counts in the context window."
   caption="Each cut shrinks one component, and each subsection below explains one row. Caching shrinks nothing; it makes the repeated prefix cheaper."
 />
 
@@ -258,9 +258,18 @@ lasts for one session. ADK offers two ways to bring memory into a turn. The
 every model call and adds the results, so what it adds changes from turn to
 turn. The `load_memory` tool lets the model search memory only when it
 judges a turn needs it. If most turns are about the current order, preloading
-spends memory tokens on every call for nothing; `load_memory` spends them only
-on the turns that ask. In the example, if about one turn in four calls
-`load_memory`, memory averages about 1,500 tokens per turn instead of 6,000.
+spends memory tokens on every call for nothing; `load_memory` fetches them only
+on the turns that ask.
+
+Fetching less often is not the whole story. Preloaded memory is added to each
+call and not kept, but a `load_memory` result is an ordinary tool result, so it
+stays in the history and rides along on later calls until compaction
+summarises it. Count both the newly fetched tokens and the recalled tokens
+still in history, and measure prompt totals over several turns rather than
+inferring them from how often the tool is called. In the example, assume one
+turn in four recalls memory and compaction summarises each recall within a
+turn or so: memory then costs about 1,500 tokens per late turn instead of
+6,000. That is an assumption to check with measurements, not a rule.
 
 ### Retrieved content: pass fewer, better chunks
 
@@ -275,9 +284,9 @@ it.
   id="pick-the-cut"
   objective="context-budget"
   question="In the support agent above, which cut alone removes the most tokens per late turn?"
-  choices={["Filtering tools from 40 to 8 (10,000 to 2,000 tokens)", "Compacting history (18,000 to 4,000 tokens)", "Recalling memory on demand (6,000 to about 1,500 tokens)", "Reranking and passing five chunks instead of ten (10,000 to 5,000 tokens)"]}
+  choices={["Filtering tools from 40 to 8 (10,000 to 2,000 tokens)", "Compacting history (18,000 to 4,000 tokens)", "Recalling memory on demand (6,000 to about 1,500 tokens, under the stated assumption)", "Reranking and passing five chunks instead of ten (10,000 to 5,000 tokens)"]}
   answer={1}
-  explanation="Compaction removes 14,000 tokens, against 8,000 for tool filtering, about 4,500 for on-demand memory and 5,000 for a smaller top-k. History was the largest component, so cutting it saves the most."
+  explanation="Compaction removes 14,000 tokens, against 8,000 for tool filtering, about 4,500 for on-demand memory (under the lesson's compaction assumption) and 5,000 for a smaller top-k. History was the largest component, so cutting it saves the most."
 />
 
 ## Context caching: cheaper, not smaller
@@ -288,8 +297,8 @@ every call (instructions and tool declarations) form its front, or
 
 **<Term id="context caching">Context caching</Term>** reuses the processing
 of a prefix that repeats across calls. It cuts the cost and latency of that
-prefix. It does not cut the context: the cached tokens are still sent, still
-count in the context window, and are still in front of the model.
+prefix. It does not cut the context: the cached tokens still form part of the input
+context, still count in the context window, and are still in front of the model.
 
 - **Implicit caching** is on by default for Gemini 2.5 and newer models. It
   applies when a request's prefix matches an earlier one and is above a
