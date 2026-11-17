@@ -268,5 +268,8 @@
   },
   "gke agent sandbox": {
     "definition": "Isolated execution of untrusted agent-generated code on GKE: each sandbox is a Pod with its own kernel boundary (gVisor or a microVM), handed out from warm pools, with a controller you install on the cluster."
+  },
+  "agents cli": {
+    "definition": "Google's command-line tool and set of skills that teach a coding agent the agent lifecycle on Google Cloud: scaffold, evaluate, deploy, publish and observe. It is a tool for coding agents, not a coding agent itself."
   }
 }

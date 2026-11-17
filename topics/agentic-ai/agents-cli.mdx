@@ -1,0 +1,271 @@
+---
+title: "Agents CLI: the agent lifecycle from a coding agent"
+summary: Agents CLI gives a coding agent the skills and commands to scaffold, evaluate, deploy and observe agents on Google Cloud. Learn what it adds, which skill covers each lifecycle phase, and when a coding agent, a person or an unattended pipeline should drive each step.
+tags: [agentic-ai, coding-agents, agents-cli, adk, deployment]
+difficulty: advanced
+estimatedMinutes: 20
+level: 300
+prerequisites: [agentic-ai/customizing-coding-agents]
+objectives:
+  - id: agents-cli-role
+    statement: "Explain what Agents CLI adds to a coding agent."
+  - id: choose-driver
+    statement: "Choose whether a coding agent, a person or an unattended pipeline drives a lifecycle step, and run the CLI to match."
+  - id: cli-skills
+    statement: "Use the bundled skills and commands to run the agent lifecycle."
+flashcards:
+  - id: agents-cli-is
+    objective: agents-cli-role
+    front: What is Agents CLI, and what is it not?
+    back: "A command-line tool plus seven skills that teach a coding agent (Antigravity CLI, Claude Code, Codex, Cursor and others) how to build, evaluate, deploy and observe agents on Google Cloud. It is not a coding agent itself: the coding agent reads the skills and runs the CLI's commands."
+  - id: three-drivers
+    objective: choose-driver
+    front: Who can drive an Agents CLI step, and how does each run the CLI?
+    back: "A coding agent, which reads the skills and picks the command; a person typing, often with -i for interactive prompts; or an unattended pipeline, which passes every choice as a flag (such as --yes and --project) and gates on exit codes."
+  - id: lifecycle-commands
+    objective: cli-skills
+    front: Which commands cover the main lifecycle phases?
+    back: "create (scaffold a project), run and playground (try the agent locally), eval run (generate responses and grade them against metrics), deploy (to Agent Runtime, Cloud Run or GKE) and publish gemini (register it with Gemini Enterprise). Observability has no command: generated projects send traces to Cloud Trace by default, and the observability skill covers tracing, logging and analytics."
+quiz:
+  - id: what-it-adds
+    objective: agents-cli-role
+    question: "A team already uses Claude Code. What does installing Agents CLI add?"
+    choices:
+      - "A second coding agent that takes over from Claude Code for agent projects on Google Cloud"
+      - "A hosted runtime that runs the team's agents without needing a Google Cloud project"
+      - "A web console for designing agents visually, without the team writing any code"
+      - "Skills and commands that teach Claude Code the agent lifecycle on Google Cloud"
+    answer: 3
+    explanation: "Agents CLI is a tool for coding agents, not a coding agent: setup installs its seven skills into the coding agents it finds, and those skills tell the agent which CLI command to run at each phase. It deploys to Google Cloud runtimes such as Agent Runtime and Cloud Run, which need a project, and it is a CLI, not a low-code console."
+  - id: eval-gate
+    objective: cli-skills
+    question: "In a CI pipeline, the eval config sets a threshold for each metric, and eval run finishes with one metric below its threshold. What happens, and why does it matter?"
+    choices:
+      - "The CLI exits 1, so the pipeline can stop before deploying"
+      - "The CLI retries the evaluation until the metric passes"
+      - "The CLI prints a warning but exits 0, so the pipeline carries on"
+      - "The CLI rolls back the last deployment of the agent"
+    answer: 0
+    explanation: "With thresholds set in the eval config, eval run exits 1 when a metric misses one, so CI can gate the deploy on the exit code. Without thresholds a low score does not fail the run. It does not retry, warn and continue, or touch deployments."
+  - id: unattended-pipeline
+    objective: choose-driver
+    question: "A nightly CI job should evaluate the team's committed agent project and deploy it to a staging project with no one watching. How should it run Agents CLI?"
+    choices:
+      - "Through a coding agent, so the agent can answer any prompts and no one reviews its choices"
+      - "With every choice passed as flags, and the job failing when eval run fails"
+      - "With -i on each command, so the CLI asks for anything that is missing"
+      - "Without --project, so the deploy uses whatever gcloud is set to on the runner"
+    answer: 1
+    explanation: "An unattended job must never stop at a prompt, so it passes everything as flags (such as --project) and gates on exit codes, so a failed evaluation stops the job. A coding agent adds a model's judgement where none is wanted, -i asks questions no one will answer, and without --project the deploy stops to confirm the project."
+  - id: deploy-skill
+    objective: cli-skills
+    question: "A coding agent needs to roll back a bad release and check which service account the running agent uses in Google Cloud. Which bundled skill covers that?"
+    choices:
+      - "google-agents-cli-deploy"
+      - "google-agents-cli-workflow"
+      - "google-agents-cli-eval"
+      - "google-agents-cli-observability"
+    answer: 0
+    explanation: "The deploy skill covers deployment targets, service accounts, rollback and production infrastructure. The workflow skill walks the overall lifecycle, eval covers metrics and datasets, and observability covers tracing and logging."
+  - id: dry-run-first
+    objective: choose-driver
+    question: "A coding agent proposes deploying to a shared project. Before approving, the developer wants to know whether the deploy would work, without changing anything. What should the agent run?"
+    choices:
+      - "agents-cli deploy --project with the shared project's id"
+      - "agents-cli run with a test message"
+      - "agents-cli deploy --dry-run"
+      - "agents-cli eval run against the shared project"
+    answer: 2
+    explanation: "deploy --dry-run runs the pre-flight checks and read-only Google Cloud checks without deploying, so the person can approve the real deploy with evidence. deploy --project deploys for real, run sends a test message to an agent without checking whether a deploy would succeed, and eval run measures quality, not deployability."
+  - id: local-without-gcp
+    objective: agents-cli-role
+    question: "A developer without a Google Cloud project wants to try a scaffolded ADK agent locally and evaluate it. What is true?"
+    choices:
+      - "Nothing works until a Google Cloud project with billing is linked"
+      - "A Gemini API key covers playground, run and eval, but deploying needs a project"
+      - "A Gemini API key covers everything, including deploying to Agent Runtime"
+      - "Only the Claude Agent SDK template runs without a Google Cloud project"
+    answer: 1
+    explanation: "With a Gemini API key from AI Studio, the ADK and LangChain templates run locally (playground, run and eval) with no Google Cloud project. Deploying needs a project with billing and the IAM permissions of the target. The Claude Agent SDK template is the exception the other way: it needs Google Cloud credentials even locally."
+  - id: who-approves
+    objective: choose-driver
+    question: "A team lets its coding agent drive Agents CLI. Which step most needs a person to approve it first?"
+    choices:
+      - "Running the agent locally with a test message"
+      - "Running eval run in the developer's own project"
+      - "Deploying the agent to the production project"
+      - "Scaffolding a prototype with create --prototype"
+    answer: 2
+    explanation: "Deploying to production changes shared resources that users reach (so does publishing to Gemini Enterprise), so a person should approve it, using the coding agent's permission prompts and checks such as deploy --dry-run. Local runs, evaluation in your own project and a prototype scaffold are cheap to redo, which is where letting the agent drive saves the most time."
+updated: "2026-11-17"
+status: draft
+---
+
+## What Agents CLI adds to a coding agent
+
+Topic 2.2 showed how <Term id="skill">skills</Term> give a coding agent know-how
+for a kind of task. <Term id="agents cli">Agents CLI</Term> applies that idea to
+one job: building agents on Google Cloud. It is a command-line tool plus a set
+of skills, and its README is explicit that it is "a tool *for* coding agents,
+not a coding agent itself".
+
+```bash
+uvx google-agents-cli setup
+```
+
+Setup (`uvx` comes with the uv Python tool) installs the `agents-cli` command
+and seven skills into every coding agent it finds on the machine, such as
+Antigravity CLI, Claude Code, Codex or Cursor. The skills tell the coding agent
+what to do at each phase and which command to run; the commands do the work. A
+coding agent without them can still write an agent, but it has to guess the
+project layout, the evaluation format and the deployment steps.
+
+Agents CLI builds agents with <Term id="adk">ADK</Term> by default, and has
+templates for LangChain and the Claude Agent SDK. It does not handle the coding
+agent's own sign-in; each coding agent authenticates as it always does.
+
+## The lifecycle, phase by phase
+
+Agents CLI splits building an agent into phases, each with a skill, and most
+with a command. The `google-agents-cli-workflow` skill is always active and
+walks the coding agent through them in order.
+
+| Phase | Skill | Command |
+|---|---|---|
+| Spec: agree what the agent should do | `google-agents-cli-workflow` | None (writes a spec file) |
+| Scaffold the project | `google-agents-cli-scaffold` | `agents-cli create` |
+| Build the agent's tools and orchestration | `google-agents-cli-adk-code` | `agents-cli run` and `playground` to try it (the coding agent writes the code) |
+| Evaluate against a dataset and metrics | `google-agents-cli-eval` | `agents-cli eval run` |
+| Deploy to a runtime (targets, service accounts, rollback) | `google-agents-cli-deploy` | `agents-cli deploy` |
+| Publish to Gemini Enterprise | `google-agents-cli-publish` | `agents-cli publish gemini` |
+| Observe traces and logs | `google-agents-cli-observability` | None (built-in tracing) |
+
+The figure merges Deploy and Publish into one stage, and shows the two loops
+back to Build.
+
+<Figure
+  src="/media/agents-cli-lifecycle.svg"
+  alt="A loop of six phases, each with its skill and, where there is one, its command. Spec, with the workflow skill. Scaffold, with the scaffold skill and agents-cli create. Build and run, with the adk-code skill and agents-cli run or playground. Evaluate, with the eval skill and agents-cli eval run. Deploy and publish, with the deploy and publish skills and agents-cli deploy and publish gemini. An arrow from Evaluate back to Build is labelled fix and re-run. Observe, with the observability skill and built-in tracing to Cloud Trace, feeds what production traces show back into Build. A note says the workflow skill is always active and walks the coding agent through the loop."
+  caption="Evaluation failures and production traces both loop back to Build."
+/>
+
+Here is how that runs for an order-support agent that looks up orders and
+books carrier pickups, with a developer asking their coding agent to build it in
+a development project:
+
+1. **Spec.** The workflow skill has the coding agent ask the developer what the
+   agent should do, one question at a time, and write the answers to a spec
+   file before any code exists.
+2. **Scaffold.** The coding agent runs
+   `agents-cli create order-support -d agent_runtime`, which lays out an ADK
+   project set up to deploy to <Term id="agent runtime">Agent Runtime</Term> and
+   records that target in the project's manifest file. A `--prototype` flag
+   skips the CI/CD and Terraform files for a quick start.
+3. **Build and run.** Guided by the adk-code skill, the coding agent writes the
+   tools, then tries them with `agents-cli run "Where is order 1042?"` or the
+   local `agents-cli playground`.
+4. **Evaluate.** `agents-cli eval run` generates the order-support agent's
+   responses to a dataset and grades them against the chosen metrics, some
+   scored by an LLM acting as judge. Failures send the coding agent back to
+   step 3.
+   In a Python project the dataset lives in `tests/eval/datasets/` (for
+   example `basic-dataset.json`) in the GenAI Eval SDK's `EvaluationDataset`
+   format, not ADK's evalset format: the eval commands no longer read
+   `*.evalset.json` files, so a project that has them migrates first.
+   `agents-cli scaffold upgrade` detects and converts them, leaving the old
+   folder in place; check the result before deleting it.
+5. **Deploy and publish.** The coding agent shows the developer the result of
+   `agents-cli deploy --dry-run`, and once the developer approves, runs
+   `agents-cli deploy`, which reads the target from the manifest.
+   `agents-cli publish gemini` then registers the deployed agent with
+   <Term id="gemini enterprise">Gemini Enterprise</Term> so users can reach it.
+6. **Observe.** Generated projects send traces to Cloud Trace (Google Cloud's
+   tracing service) by default, and `--otel-to-cloud` exports a local `run` or
+   `playground`'s traces and logs to Google Cloud. Prompt-response logging needs
+   a logs bucket, which the Terraform behind
+   `agents-cli infra single-project --apply` creates (a bare `agents-cli deploy`
+   does not), so run it before the first deploy; BigQuery Agent Analytics is opt-in with
+   `create --bq-analytics`. The observability skill helps read the
+   results, and what production shows feeds the next round of building.
+
+For local work a Gemini API key from AI Studio is enough: `playground`, `run`
+and `eval` work with the ADK and LangChain templates without a Google Cloud
+project. The Claude Agent SDK template is the exception: it needs Google Cloud
+credentials even locally. Deploying needs a project with billing and the
+permissions the target requires.
+
+## Who drives each step
+
+The CLI's documentation describes two ways to drive it: the coding agent "reads
+the skills and picks the right CLI command at the right phase", or you skip the
+coding agent, since "every command works standalone". It names no "agent mode"
+or "human mode". This lesson splits the standalone path in two, because a person
+typing and an unattended pipeline need different flags.
+
+- **A coding agent** drives through the skills. It asks you the questions a
+  command needs rather than guessing, and it acts within its own permission
+  settings, so you can let it run local commands freely and approve the rest.
+- **A person typing** can ask the CLI to prompt for choices: `create -i`
+  enables "interactive prompts for human use".
+- **An unattended pipeline** must never stop at a prompt, so it passes every
+  choice as a flag. `create --yes` skips prompts and uses defaults. `deploy`
+  takes `--project` explicitly, since without it the deploy reads the project
+  from gcloud and "stops to ask you to confirm it", and `-d` when there is no
+  manifest to read the target from. The pipeline gates on exit codes: with
+  thresholds set in the eval config, `eval run` exits 1 when a metric misses
+  one, and the run also fails if any case errors.
+
+Once the order-support project, with its manifest and an eval config that sets
+thresholds, is committed, a nightly job with the `agents-cli` command installed
+runs from the project folder:
+
+```bash
+set -euo pipefail                            # stop at the first command that fails
+agents-cli install --locked                  # project dependencies; fail if the lock file is out of date
+agents-cli eval run                          # exits 1 on a missed threshold, so the deploy never runs
+agents-cli deploy --project my-staging-project
+```
+
+The first line matters: a plain Bash script carries on after a failed command,
+so without `set -e` (or chaining the commands with `&&`) the deploy would run
+even after the evaluation failed.
+
+The runner also needs credentials: a Google Cloud identity for the deploy (for
+example a service account through workload identity federation), and a Gemini
+API key or Google Cloud credentials for metrics that an LLM judges.
+
+Choose the driver by what a mistake would cost. Let the coding agent drive the
+inner loop of scaffolding, building, running and evaluating in a development
+project, where every step is cheap to redo. Put repeatable steps that need no
+judgement, such as a nightly evaluation and staging deploy, in a pipeline.
+
+Keep a person approving steps that change shared resources, such as a deploy to
+production or publishing to users. `agents-cli deploy --dry-run` runs the
+pre-flight and read-only Google Cloud checks without deploying, and exits
+non-zero if a check fails, which gives that person evidence before they
+approve.
+
+<Callout type="note">Commands, flags and skills in this lesson are as documented in November 2026 and change often.</Callout>
+
+## Recap
+
+- Agents CLI is a command-line tool plus seven skills that a coding agent uses;
+  it is not a coding agent itself.
+- Each lifecycle phase pairs a skill with, mostly, a command: `create`, `run`
+  and `playground`, `eval run`, `deploy` and `publish gemini`. Tracing to Cloud
+  Trace is built in, and the observability skill helps read it.
+- A coding agent drives through the skills, a person can use `-i` prompts, and a
+  pipeline passes every choice as flags and gates on exit codes.
+- Let the coding agent drive cheap, local steps; keep a person approving deploys
+  and publishing to shared resources, with `deploy --dry-run` as evidence.
+
+## Sources
+
+- Agents CLI README, github.com/google/agents-cli ("a tool for coding agents, not a coding agent itself"; uvx google-agents-cli setup; seven skills; works with Antigravity CLI, Claude Code and Codex).
+- Agents CLI documentation, "Getting started", google.github.io/agents-cli/guide/getting-started/ (setup installs the CLI and the skills for the coding agents it finds; ADK, LangChain or the Claude Agent SDK; build with or without a coding agent).
+- Agents CLI documentation, "Lifecycle", google.github.io/agents-cli/guide/lifecycle/ (phases Spec, Scaffold, Build and Orchestrate, Evaluate, Deploy, Publish, Observe, with their skills and commands; "Two ways to drive it").
+- Agents CLI documentation, "Skills reference", google.github.io/agents-cli/reference/skills/ (seven skills; google-agents-cli-workflow always active; what each skill covers, including deploy's service accounts and rollback).
+- Agents CLI documentation, "CLI reference", google.github.io/agents-cli/cli/ (create -a, -d agent_runtime|cloud_run|gke|none, --prototype, -i "Enable interactive prompts for human use", -y "Non-interactive: skip prompts and use defaults"; run and playground --otel-to-cloud; eval grade --fail-under; deploy --dry-run runs pre-flight and read-only Google Cloud checks; deploy reads its target from agents-cli-manifest.yaml, and -d overrides it or deploys without one).
+- Agents CLI documentation, "Development", "Deployment", "Evaluation", "CI/CD" and "Observability: Cloud Trace" guides, google.github.io/agents-cli/guide/ and google.github.io/agents-cli/guide/observability/cloud-trace/ (keyless CI authentication through workload identity federation; a coding agent asks the questions one at a time; without --project the deploy stops to confirm the project; eval run exits 1 when a metric misses its threshold so CI can gate on it; generated projects export traces to Cloud Trace with no configuration; prompt-response logging needs a logs bucket provisioned by infra single-project --apply before the first deploy; BigQuery Agent Analytics with create --bq-analytics; a run also fails when any case errored).
+- Agents CLI documentation, "Migrate eval datasets", google.github.io/agents-cli/reference/eval-dataset-migration/ (eval generate and related commands no longer read tests/eval/evalsets/*.evalset.json; agents-cli scaffold upgrade converts them to tests/eval/datasets/*-dataset.json in the EvaluationDataset format).
+- Agents CLI documentation, "Authentication", google.github.io/agents-cli/guide/authentication/ (Gemini API key needs no Google Cloud project and covers playground, run and eval for ADK and LangChain templates; the Claude Agent SDK template needs Google Cloud credentials even locally; deployment needs a project with billing; Agents CLI does not control coding agent authentication).
