@@ -94,5 +94,14 @@
   },
   "agent registry": {
     "definition": "Google Cloud's catalogue of registered agents, MCP servers, endpoints and skills. It gives each one identifiers for discovery and for the policies and route rules that govern it."
+  },
+  "oauth 2.0": {
+    "definition": "An authorisation framework that lets an application obtain limited access to an HTTP service with access tokens, either on behalf of a user who approves it or on its own behalf."
+  },
+  "openid connect": {
+    "definition": "An identity layer on top of OAuth 2.0. It adds an ID token with claims about how the user signed in, so an application can know who the user is."
+  },
+  "authconfig": {
+    "definition": "In ADK, the object that pairs a tool's AuthScheme (how the API expects credentials) with its AuthCredential (the initial information to start the flow)."
   }
 }
