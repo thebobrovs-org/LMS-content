@@ -9,6 +9,8 @@ prerequisites: [agentic-ai/agent-auth-oauth, agentic-ai/agent-gateway-and-regist
 objectives:
   - id: model-armor
     statement: "Configure Model Armor templates, floor settings and enforcement."
+  - id: semantic-governance
+    statement: "Check proposed tool calls against the user's request with semantic governance policies."
   - id: sdp
     statement: "Choose basic or advanced Sensitive Data Protection."
   - id: hitl
@@ -38,14 +40,14 @@ flashcards:
     back: "So the data source applies the user's own permissions. If the agent retrieves with its own broad identity and filters afterwards, one injected instruction or bug can return data the user was never allowed to see."
 quiz:
   - id: summarise-not-send
-    objective: model-armor
-    question: "An agent asked to summarise unread email proposes a send_email call, prompted by an instruction hidden in one email that Model Armor missed. Which control checks the proposed call against what the user actually asked for?"
+    objective: semantic-governance
+    question: "An agent asked to summarise unread email proposes a send_email call, prompted by an instruction hidden in one email. Which control checks the proposed call against what the user actually asked for?"
     choices:
       - "A Model Armor template on the agent's replies"
       - "A semantic governance policy on Agent Gateway"
-      - "A floor setting at the organisation level"
+      - "An Agent Gateway access policy that allows send_email"
     answer: 1
-    explanation: "Semantic governance checks each proposed tool call against the user's request, the conversation and plain-text policies before it runs; the user asked for a summary, so a send is denied. A Model Armor template screens text for injection, harmful content or sensitive data, and the call's text has none of those. A floor setting only sets the minimum strictness of Model Armor templates."
+    explanation: "Semantic governance checks each proposed tool call against the user's request, the conversation and plain-text policies before it runs; the user asked for a summary, so a send is denied. A Model Armor template screens text for injection, harmful content or sensitive data, and the call's text has none of those. An access policy decides whether the agent may call the tool at all, not whether this user asked for this call."
   - id: refund-confirmation
     objective: hitl
     question: "A support agent's issue_refund tool must get a person's approval for refunds over $500, and run on its own below that. How do you build this in ADK?"
@@ -158,8 +160,8 @@ arguments: no injection phrasing, no card numbers, nothing for a filter to flag.
 
 <Term id="semantic governance policy">Semantic governance policies</Term> close
 that gap. They are plain-text rules about allowed and prohibited behaviour,
-such as "Disallow automated processing of refund requests for amounts in excess
-of $75", enforced on Agent Gateway. After the model proposes a tool call and
+such as the documentation's example "Disallow automated processing of refund
+requests for amounts in excess of $75", enforced on Agent Gateway. After the model proposes a tool call and
 before it runs, a check compares the call with the user's request, the
 conversation so far and the policies. A violating call is denied and removed
 from the model's response, and the agent gets a denial with a reason it can pass
