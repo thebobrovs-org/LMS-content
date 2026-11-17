@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 490" width="760" height="490" role="img" aria-label="Blast radius of a hijacked agent under a shared service account, under its own identity with narrow roles, and with a Principal Access Boundary added.">
+<rect width="760" height="490" fill="#ffffff"/>
+<g font-family="Inter, system-ui, sans-serif">
+<text x="380.0" y="28" text-anchor="middle" font-size="16" font-weight="600" fill="#0f172a">What a hijacked invoice agent can reach</text>
+<rect x="20.0" y="48" width="232" height="392" rx="10" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="34.0" y="74" font-size="13" font-weight="700" fill="#0f172a">1. Shared service account</text>
+<text x="34.0" y="96" font-size="12" fill="#475569">Runs as a service account</text>
+<text x="34.0" y="113" font-size="12" fill="#475569">with broad roles in many projects</text>
+<rect x="36.0" y="136" width="200" height="34" rx="6" fill="#fef2f2" stroke="#b91c1c"/>
+<text x="48.0" y="158" font-size="12" fill="#0f172a">Invoices bucket</text>
+<text x="224.0" y="158" text-anchor="end" font-size="11.5" font-weight="600" fill="#991b1b">can reach</text>
+<rect x="36.0" y="182" width="200" height="34" rx="6" fill="#fef2f2" stroke="#b91c1c"/>
+<text x="48.0" y="204" font-size="12" fill="#0f172a">Finance dataset</text>
+<text x="224.0" y="204" text-anchor="end" font-size="11.5" font-weight="600" fill="#991b1b">can reach</text>
+<rect x="36.0" y="228" width="200" height="34" rx="6" fill="#fef2f2" stroke="#b91c1c"/>
+<text x="48.0" y="250" font-size="12" fill="#0f172a">HR database</text>
+<text x="224.0" y="250" text-anchor="end" font-size="11.5" font-weight="600" fill="#991b1b">can reach</text>
+<rect x="36.0" y="274" width="200" height="34" rx="6" fill="#fef2f2" stroke="#b91c1c"/>
+<text x="48.0" y="296" font-size="12" fill="#0f172a">Payroll secrets</text>
+<text x="224.0" y="296" text-anchor="end" font-size="11.5" font-weight="600" fill="#991b1b">can reach</text>
+<rect x="36.0" y="320" width="200" height="34" rx="6" fill="#fef2f2" stroke="#b91c1c"/>
+<text x="48.0" y="342" font-size="12" fill="#0f172a">Production VMs</text>
+<text x="224.0" y="342" text-anchor="end" font-size="11.5" font-weight="600" fill="#991b1b">can reach</text>
+<rect x="36.0" y="366" width="200" height="34" rx="6" fill="#fef2f2" stroke="#b91c1c"/>
+<text x="48.0" y="388" font-size="12" fill="#0f172a">Other projects</text>
+<text x="224.0" y="388" text-anchor="end" font-size="11.5" font-weight="600" fill="#991b1b">can reach</text>
+<rect x="264.0" y="48" width="232" height="392" rx="10" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="278.0" y="74" font-size="13" font-weight="700" fill="#0f172a">2. Own identity, narrow roles</text>
+<text x="278.0" y="96" font-size="12" fill="#475569">Runs as the agent's own</text>
+<text x="278.0" y="113" font-size="12" fill="#475569">principal, two read roles</text>
+<rect x="280.0" y="136" width="200" height="34" rx="6" fill="#ecfdf5" stroke="#047857"/>
+<text x="292.0" y="158" font-size="12" fill="#0f172a">Invoices bucket</text>
+<text x="468.0" y="158" text-anchor="end" font-size="11.5" font-weight="600" fill="#065f46">can read</text>
+<rect x="280.0" y="182" width="200" height="34" rx="6" fill="#ecfdf5" stroke="#047857"/>
+<text x="292.0" y="204" font-size="12" fill="#0f172a">Finance dataset</text>
+<text x="468.0" y="204" text-anchor="end" font-size="11.5" font-weight="600" fill="#065f46">can read</text>
+<rect x="280.0" y="228" width="200" height="34" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="292.0" y="250" font-size="12" fill="#0f172a">HR database</text>
+<text x="468.0" y="250" text-anchor="end" font-size="11.5" font-weight="600" fill="#475569">no role</text>
+<rect x="280.0" y="274" width="200" height="34" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="292.0" y="296" font-size="12" fill="#0f172a">Payroll secrets</text>
+<text x="468.0" y="296" text-anchor="end" font-size="11.5" font-weight="600" fill="#475569">no role</text>
+<rect x="280.0" y="320" width="200" height="34" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="292.0" y="342" font-size="12" fill="#0f172a">Production VMs</text>
+<text x="468.0" y="342" text-anchor="end" font-size="11.5" font-weight="600" fill="#475569">no role</text>
+<rect x="280.0" y="366" width="200" height="34" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="292.0" y="388" font-size="12" fill="#0f172a">Other projects</text>
+<text x="468.0" y="388" text-anchor="end" font-size="11.5" font-weight="600" fill="#475569">no role</text>
+<rect x="508.0" y="48" width="232" height="392" rx="10" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="522.0" y="74" font-size="13" font-weight="700" fill="#0f172a">3. Plus a boundary</text>
+<text x="522.0" y="96" font-size="12" fill="#475569">Same roles, and a Principal</text>
+<text x="522.0" y="113" font-size="12" fill="#475569">Access Boundary on finance</text>
+<rect x="516.0" y="130" width="216" height="108" rx="8" fill="none" stroke="#1d4ed8" stroke-dasharray="5 4" stroke-width="1.5"/>
+<text x="726.0" y="232" text-anchor="end" font-size="11" fill="#1d4ed8">boundary: finance project</text>
+<rect x="524.0" y="136" width="200" height="34" rx="6" fill="#ecfdf5" stroke="#047857"/>
+<text x="536.0" y="158" font-size="12" fill="#0f172a">Invoices bucket</text>
+<text x="712.0" y="158" text-anchor="end" font-size="11.5" font-weight="600" fill="#065f46">can read</text>
+<rect x="524.0" y="182" width="200" height="34" rx="6" fill="#ecfdf5" stroke="#047857"/>
+<text x="536.0" y="204" font-size="12" fill="#0f172a">Finance dataset</text>
+<text x="712.0" y="204" text-anchor="end" font-size="11.5" font-weight="600" fill="#065f46">can read</text>
+<rect x="524.0" y="252" width="200" height="34" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="536.0" y="274" font-size="12" fill="#0f172a">HR database</text>
+<text x="712.0" y="274" text-anchor="end" font-size="11.5" font-weight="600" fill="#475569">blocked</text>
+<rect x="524.0" y="298" width="200" height="34" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="536.0" y="320" font-size="12" fill="#0f172a">Payroll secrets</text>
+<text x="712.0" y="320" text-anchor="end" font-size="11.5" font-weight="600" fill="#475569">blocked</text>
+<rect x="524.0" y="344" width="200" height="34" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="536.0" y="366" font-size="12" fill="#0f172a">Production VMs</text>
+<text x="712.0" y="366" text-anchor="end" font-size="11.5" font-weight="600" fill="#475569">blocked</text>
+<rect x="524.0" y="390" width="200" height="34" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="536.0" y="412" font-size="12" fill="#0f172a">Other projects</text>
+<text x="712.0" y="412" text-anchor="end" font-size="11.5" font-weight="600" fill="#475569">blocked</text>
+<text x="136.0" y="462" text-anchor="middle" font-size="11.5" fill="#334155">Every resource the account can touch.</text>
+<text x="136.0" y="478" text-anchor="middle" font-size="11.5" fill="#334155">One injection reaches all of it.</text>
+<text x="380.0" y="462" text-anchor="middle" font-size="11.5" fill="#334155">Only what its tools need. A mistaken</text>
+<text x="380.0" y="478" text-anchor="middle" font-size="11.5" fill="#334155">broad grant would widen it again.</text>
+<text x="624.0" y="462" text-anchor="middle" font-size="11.5" fill="#334155">A later broad grant still cannot</text>
+<text x="624.0" y="478" text-anchor="middle" font-size="11.5" fill="#334155">reach past the boundary.</text>
+</g></svg>

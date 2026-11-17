@@ -79,5 +79,14 @@
   },
   "excessive agency": {
     "definition": "An agent holding more than its task needs: more tools, broader permissions or more freedom to act without a check. It decides how much damage a manipulation or a model mistake can do."
+  },
+  "agent identity": {
+    "definition": "A dedicated identity for each agent on Google Cloud, based on SPIFFE, with its own certificate-bound credentials. You grant roles to it directly, and audit logs name the agent."
+  },
+  "spiffe": {
+    "definition": "An open standard for identifying software workloads with cryptographic identities, such as X.509 certificates, rather than shared secrets."
+  },
+  "principal access boundary": {
+    "definition": "An IAM policy that defines which resources a principal is eligible to access. It can block access regardless of the principal's role grants, but it never grants access."
   }
 }
