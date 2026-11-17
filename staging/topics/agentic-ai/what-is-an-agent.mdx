@@ -46,7 +46,7 @@ quiz:
     explanation: "The path cannot be designed in advance, which is exactly where an agent earns its cost. A workflow with branches is still the designer's path, and it handles only the cases someone foresaw and wrote conditions for. A chatbot cannot run checks or open tickets on its own. Here the model has to direct the investigation itself, choosing each next check from what the last one found."
   - id: classify-hr-faq
     objective: agent-vs-workflow
-    question: "An HR assistant answers employees' policy questions. Each reply is a single answer drawn from the policy documents. It changes nothing in any system, and whatever happens next is up to the employee. What is it?"
+    question: "An HR assistant answers employees' policy questions. Each reply is a single answer drawn from the policy documents. It changes nothing in any system. What is it?"
     choices:
       - "A chatbot, because it replies and then waits for the user"
       - "A workflow, because its answers follow the policy documents"
@@ -58,7 +58,7 @@ quiz:
     question: "You replace a fixed workflow with an agent that picks its own steps. What do you give up?"
     choices:
       - "Answer quality, because agents are less accurate than workflows"
-      - "Some predictability, so you need path-level evals and guardrails"
+      - "Predictability, so you need path-level evals and guardrails"
       - "Tool use, because an agent can call tools only inside a workflow"
     answer: 1
     explanation: "Autonomy buys flexibility at the price of predictability, latency, cost and testing effort, so you must check the path the agent took, not just its answer. Agents are not inherently less accurate; on open-ended tasks they can do better than a fixed path. And calling tools is what agents do, in a loop the model directs, with no workflow step required."
@@ -85,10 +85,10 @@ quiz:
     question: "An agent that can issue refunds must never refund more than $100 without a manager's approval. Which design actually enforces that limit?"
     choices:
       - "The system prompt says never to refund over $100 without a manager"
-      - "A final-answer eval checks that replies mention the $100 policy"
+      - "A trajectory eval confirms the agent stayed under $100 in testing"
       - "The refund tool rejects amounts over $100 unless a manager approved"
     answer: 2
-    explanation: "Only a check outside the model enforces the limit. A rule in the prompt is guidance the model can get wrong or be manipulated into ignoring, so it is not a guardrail. A final-answer eval runs on test cases before launch and looks at what the agent said, not at the actions it took in production."
+    explanation: "Only a check outside the model enforces the limit. A rule in the prompt is guidance the model can get wrong or be manipulated into ignoring, so it is not a guardrail. An eval, even one that checks the agent's trajectory, measures behaviour on the cases it sees; it does not block an action when the agent runs."
 status: draft
 updated: "2026-11-17"
 ---
@@ -128,7 +128,7 @@ each turn build on the last.
 
 <Callout type="note">The model never runs a tool itself. It asks for a call, and your code, the agent runtime or the provider's tool service executes it. A later topic, the agent loop, follows one request through this cycle.</Callout>
 
-<Flashcard id="agent-loop-inline" objective="define-agent" front="In an agent's loop, who executes a tool call?" back="The runtime or your code. The model only proposes the call and reads the result." />
+<Flashcard id="agent-loop-inline" objective="define-agent" front="In an agent's loop, who executes a tool call?" back="The runtime or your code (or, for built-in tools, the provider's service). The model only proposes the call and reads the result." />
 
 ## Chatbot, workflow or agent
 

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 330" width="760" height="330" role="img" aria-label="A spectrum from chatbot to workflow to agent, showing who controls the path and what each design gains and costs">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 330" width="760" height="330" role="img" aria-label="A spectrum ordered by system autonomy, from chatbot to workflow to agent, showing who controls the path and what each design gains and costs">
   <rect width="760" height="330" fill="#ffffff"/>
   <text x="380" y="32" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="16" font-weight="600" fill="#0f172a">Who controls the path?</text>
 

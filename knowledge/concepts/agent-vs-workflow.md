@@ -28,6 +28,8 @@ review-by: 2027-11-17
 
 **The rule.** Use the least autonomy that solves the task: a workflow when the steps are known, an agent only where they are not. Real systems mix them (deterministic steps around an agentic one).
 
+**Router vs agent.** A router makes one choice among branches the designer wired; an agent chooses again and again in a loop, each choice informed by the last result.
+
 **Two meanings of workflow.** ADK's docs call any application with more than one agent or executable node a workflow, including LLM agents that route between themselves. Name which sense you mean.
 
 **Canonical terms.** workflow, chatbot, assistant, agent, determinism spectrum.
