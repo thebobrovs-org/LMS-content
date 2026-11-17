@@ -191,16 +191,22 @@ it.
 
 ### Try it: which values survive a new session?
 
+The app is drawn as a building. Each user has an apartment, each session is a
+room in it, and the agent works at a desk in the current room. A key's prefix
+decides where the tool's note goes: the desk whiteboard (`temp:`), the room
+wall (no prefix), the apartment fridge (`user:`) or the lobby noticeboard
+(`app:`). Whatever the agent can read right now is lit.
+
 Before you press anything, predict: a tool writes `language = "fr"` once with no
 prefix and once as `user:language`. In a new session for the same user, which
 of the two does the agent still read? And for a different user?
 
-Write both, open a new session, then switch users. Then compare restarts:
-with `DatabaseSessionService`, write a `user:` value and press Restart process.
-Switch the session service to `InMemorySessionService` (which starts the
-exercise again with an empty store), write the same value, and restart again.
-Scope decides who reads a key, but only a persistent service keeps it across a
-restart.
+Stick both notes, open a new session, then switch users. Then compare restarts.
+In the brick building (`DatabaseSessionService`), stick a note on the fridge
+and press Restart process. Then switch to the tent (`InMemorySessionService`),
+which starts the exercise again with an empty store. Stick the same note and
+restart again. Scope decides who reads a key, but only a persistent service
+keeps it across a restart.
 
 <Simulation id="state-scope-explorer" />
 
