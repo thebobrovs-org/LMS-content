@@ -1,0 +1,313 @@
+---
+title: Orchestrating multiple agents
+summary: Choose sequential, parallel, loop, graph or LLM-routed orchestration for a task, keep parallel branches from overwriting each other's state, and give every loop an exit condition and a cap.
+tags: [agentic-ai, adk, multi-agent, workflows]
+difficulty: advanced
+estimatedMinutes: 30
+level: 400
+prerequisites: [agentic-ai/adk-agents-and-tools]
+objectives:
+  - id: pick-pattern
+    statement: "Choose sequential, parallel, loop, graph or LLM-routed orchestration for a task."
+  - id: shared-state
+    statement: "Avoid parallel branches overwriting shared state."
+  - id: loop-exit
+    statement: "Design a loop with an exit condition and an iteration cap."
+flashcards:
+  - id: patterns-card
+    objective: pick-pattern
+    front: Name the orchestration patterns and when each fits.
+    back: "Sequential: steps in a fixed order, each using the last one's result. Parallel: independent steps run at once, then joined. Loop: repeat steps until a condition or a cap. Graph: fixed nodes and edges with branches, joins and loops. LLM-routed: a model picks the next agent when the order cannot be known in advance."
+  - id: parallel-state-rule
+    objective: shared-state
+    front: What rule keeps parallel branches from losing each other's results?
+    back: "Every branch writes its own state key (or returns its output to a join), and no branch reads a key another branch is still writing. All branches share one session state, so two branches writing the same key leave only the last writer's value."
+  - id: loop-rule
+    objective: loop-exit
+    front: What two things does every agent loop need?
+    back: "An exit condition that ends it when the work is done (for example a reviewer's approval) and a cap on iterations that ends it when the work never gets done."
+quiz:
+  - id: invoice-pipeline
+    objective: pick-pattern
+    question: "An invoice agent always extracts the fields, then validates them against the purchase order, then posts the invoice. Which orchestration fits?"
+    choices:
+      - "A coordinator agent whose model decides which step runs next"
+      - "A sequential workflow that runs the three steps in that order"
+      - "A parallel workflow that runs the three steps at the same time"
+      - "A loop that repeats all three steps until the invoice posts"
+    answer: 1
+    explanation: "The order is known and each step needs the previous step's result, so a fixed sequence is cheaper, faster and more predictable than asking a model to choose. Running the steps in parallel would validate fields before they exist. A loop repeats work that should run once."
+  - id: trip-lookups
+    objective: pick-pattern
+    question: "A travel agent must look up flights, hotels and the weather for one trip. None of the lookups needs another's result, and the user is waiting. Which orchestration fits?"
+    choices:
+      - "A sequential workflow, so each lookup can read the one before"
+      - "A coordinator agent that transfers to each lookup agent in turn"
+      - "A loop that runs one lookup per iteration until all three are done"
+      - "A parallel fan-out to the three lookups, joined before the reply"
+    answer: 3
+    explanation: "Independent steps can run at once, so the wait is the slowest lookup rather than the sum of all three; a join collects the results for the reply. A sequence or a loop adds the lookups' times together, and a model-driven coordinator adds model calls to decide an order that does not matter."
+  - id: open-ended-desk
+    objective: pick-pattern
+    question: "A help desk gets open-ended requests. Some need billing, some need technical support, some need both, and the right specialist only becomes clear partway through the conversation. Which orchestration fits?"
+    choices:
+      - "A coordinator agent that delegates to specialist sub-agents"
+      - "A sequential workflow through billing, then technical support"
+      - "A parallel workflow that always runs both specialists"
+      - "A graph workflow with a fixed router node that sends each request to billing, technical, or both"
+    answer: 0
+    explanation: "When the next step depends on the conversation and cannot be fixed in advance, let a model route: a coordinator delegates to specialists by their descriptions. A fixed sequence or an always-parallel run sends every request through specialists it may not need. A fixed router must choose at the start, before the conversation has shown which specialist is needed."
+  - id: classify-then-route
+    objective: pick-pattern
+    question: "Support tickets are classified as bug, billing or other, and each class follows its own fixed steps. A bug report that fails a check goes back for one more attempt. Which orchestration fits?"
+    choices:
+      - "A coordinator agent whose model reads each ticket and decides which steps to run, including any retry"
+      - "A sequential workflow with a classification step, then a check that re-runs the whole pipeline on failure"
+      - "A graph workflow: a router picks each class's branch, and a routed back-edge retries a failed check"
+      - "A parallel workflow that runs all three classes' steps at once"
+    answer: 2
+    explanation: "Known branches, each with fixed steps, plus a conditional retry are what a graph expresses: a router node picks the branch and a routed back-edge loops. A model choosing every step adds cost and unpredictability where the paths are already known. A sequence that re-runs the whole pipeline repeats steps that already succeeded, and running every class's steps in parallel does work the ticket does not need."
+  - id: lost-branch-result
+    objective: shared-state
+    question: "Two parallel branches each end with an agent whose output_key is \"result\". The summary step sometimes misses one branch's finding. What is the cause and fix?"
+    choices:
+      - "The summary runs too early; add a delay before it starts"
+      - "Both write one key, so the later one wins; give each its own key"
+      - "Parallel branches cannot write state; return results to the user"
+      - "The model forgets; tell the summary agent to read both branches"
+    answer: 1
+    explanation: "All branches share one session state, so two writes to result leave only the one that finished last. Give each branch its own key (fraud_result, policy_result) or collect the outputs at a join. A delay changes nothing about the overwrite, branches can write state, and no instruction can recover a value that was overwritten."
+  - id: cross-branch-read
+    objective: shared-state
+    question: "In a parallel workflow, branch B's instruction uses a value that branch A writes to state. Sometimes B sees the value and sometimes it does not. What should change?"
+    choices:
+      - "Give branch B a larger model so it waits for the value"
+      - "Give the two branches the same output key so they stay in sync"
+      - "Retry branch B until the value appears in state"
+      - "Run A before B in sequence, since B depends on A's result"
+    answer: 3
+    explanation: "B depends on A, so they are not independent and should not be parallel: run A first, or pass A's output to B through a join. Whether A has finished when B reads is a race. A larger model cannot wait for a value, a shared key makes one overwrite the other, and retrying until the value appears hides the dependency and wastes calls."
+  - id: endless-review
+    objective: loop-exit
+    question: "A Python LoopAgent alternates a writer and a reviewer. No max_iterations is set, and the reviewer has no way to end the loop. What happens on a draft the reviewer never approves?"
+    choices:
+      - "It keeps looping until something outside it, such as a run limit, stops it"
+      - "It stops after three iterations, which is ADK's default cap"
+      - "It stops as soon as the reviewer's model returns a rejection"
+      - "It stops when the writer produces the same draft twice"
+    answer: 0
+    explanation: "In ADK Python, max_iterations defaults to None, so the loop stops only when a sub-agent escalates. With no exit tool and no cap it runs until something outside it stops it, such as the run's LLM call limit (500 by default), spending calls the whole time. Set max_iterations and give the reviewer a way to end the loop, such as the exit_loop tool. There is no default cap of three, and a rejection or a repeated draft does not end it."
+  - id: loop-exit-signal
+    objective: loop-exit
+    question: "In an ADK LoopAgent, how does the reviewer end the loop once the draft is approved?"
+    choices:
+      - "It writes approved to a state key, which the loop checks by default"
+      - "It replies with the word DONE, which the loop watches for"
+      - "It calls a tool that escalates, such as the built-in exit_loop"
+      - "It transfers control to the writer agent one final time"
+    answer: 2
+    explanation: "A LoopAgent ends early when a sub-agent escalates: a tool sets tool_context.actions.escalate to true, and the built-in exit_loop tool does exactly that. The loop does not inspect state keys or reply text on its own, and a transfer does not end the loop."
+  - id: graph-cycle-bound
+    objective: loop-exit
+    question: "A graph workflow loops through a back-edge: a router returns RETRY until a check passes, then DONE. What limits the number of iterations if the check never passes?"
+    choices:
+      - "The graph engine stops every cycle after ten iterations"
+      - "Nothing in the graph engine: keep a retry counter in state and exit at the cap"
+      - "The routed edge itself, since conditional edges run only once"
+      - "The JoinNode on the back-edge, which counts arrivals and stops the cycle at a limit"
+    answer: 1
+    explanation: "A graph cycle must contain a routed edge, but the engine does not bound it. Keep an attempts counter in state and have the router return DONE (or an escalation route) when it reaches the cap. The run's LLM call limit would eventually stop a cycle that calls a model, but that is a last-resort backstop, not a design. There is no built-in limit of ten, a routed edge can be taken many times, and a JoinNode gathers parallel branches; it does not bound loops."
+updated: "2026-11-17"
+status: draft
+---
+
+## More agents is not the goal
+
+Splitting a task across several agents helps when the parts are distinct: each
+agent gets a short instruction and only the tools it needs, independent parts
+can run at once, and one part can check another. It hurts when the split adds
+model calls, latency and places for results to get lost.
+
+The question to answer first is: **do you know the order of the steps?**
+
+- If you do, wire it up deterministically: the workflow runs the steps in the
+  order you wrote, with no model deciding what comes next. That is cheaper,
+  faster, testable and repeatable.
+- If you do not, because the next step depends on what the user says, let a
+  model route: a coordinator agent delegates to specialist sub-agents by their
+  descriptions (topic 3.2).
+
+A common failure is an LLM router in front of steps that always run in the same
+order. Each request then pays for routing calls and sometimes takes the wrong
+path.
+
+<Flashcard id="router-or-workflow" objective="pick-pattern" front="When should a model route between agents, and when should a fixed workflow?" back="Use a fixed (deterministic) workflow whenever the order of steps is known in advance. Use a model to route only when the next step depends on the conversation and cannot be fixed beforehand." />
+
+## The patterns
+
+All the agents in one run share the **session state**, a key-value store for
+the conversation: one agent writes a key (in ADK, an `LlmAgent` with an
+`output_key` saves its final response under that key) and later agents read it,
+for example through a `{key}` placeholder in their instruction.
+
+| Pattern | Shape | Use it when |
+|---|---|---|
+| <Term id="sequential agent">Sequential</Term> | A, then B, then C | Each step needs the previous step's result |
+| <Term id="parallel agent">Parallel</Term> | A, B and C at once (a fan-out), then a join that waits for all of them | The steps are independent and latency matters |
+| <Term id="loop agent">Loop</Term> | Repeat A and B until done or capped | Work improves by iteration, such as draft and review |
+| <Term id="graph workflow">Graph</Term> | Nodes and edges, with routed branches, joins and back-edges | The paths are known but branch or loop |
+| LLM-routed | A coordinator's model picks the next agent | The order cannot be known in advance |
+
+### Graphs: branches and back-edges
+
+A graph workflow is a set of **nodes** (agents or plain functions) joined by
+**edges**. A plain edge always runs the next node. A **router** is a node whose
+code returns a route name, such as `BUG` or `BILLING`, and a **routed edge** is
+taken only when that name is returned, so one router can send work down
+different branches. A **back-edge** is a routed edge that points to an earlier
+node, which is how a graph loops: the router returns `RETRY` to go round again
+and `DONE` to leave.
+
+Sequential, parallel and loop are special cases of a graph. In ADK 2.0 you
+express all of them as graph workflows; the older `SequentialAgent`, `ParallelAgent` and
+`LoopAgent` classes still run in Python but are deprecated and scheduled for
+removal.
+
+## Run the refund task three ways
+
+The simulation prepares a refund decision. An order agent loads the order; a
+fraud check and a policy check assess it; a summary agent decides. Run it as a
+sequential workflow, then as a parallel one, then try the parallel run with both
+checks writing the **same** state key. Finally switch to a loop, where a writer
+drafts the refund note and a reviewer approves or rejects it, and turn the
+reviewer's ability to end the loop off.
+
+<Simulation id="orchestration-patterns" height={900} />
+
+What you should see:
+
+- **Parallel is faster.** The two checks do not depend on each other, so running
+  them at once cuts the run from 8 to 6 seconds.
+- **A shared key loses a result.** When both checks write `check_result`, the
+  policy check finishes first and the fraud check overwrites it a second later.
+  The summary sees only "low risk", cannot confirm the return window and
+  hands the refund to a person: the run finished faster, without the result it
+  needed.
+- **A loop without an exit runs to its cap.** With the reviewer unable to end
+  the loop, the writer keeps drafting after approval until the cap stops it.
+  With the exit on but a cap of 1 or 2, the loop stops before the note is
+  approved.
+
+<Quiz
+  id="sim-collision"
+  objective="shared-state"
+  question="In the simulation's shared-key run, why did the summary agent hand the refund to a person instead of approving it?"
+  choices={["The fraud check found the order high risk", "The parallel run took longer than the sequential run, so the summary timed out", "The summary agent ran before either check had finished", "The fraud check overwrote the policy check's result in the same key"]}
+  answer={3}
+  explanation="Both branches wrote check_result. The policy check finished at 4 seconds and the fraud check overwrote it at 5, so the summary never saw the return-window result. The fraud check said low risk, the parallel run was faster, and the summary waited for both branches."
+/>
+
+## Parallel branches and shared state
+
+Parallel branches run against the same session state. Two rules keep them safe:
+
+1. **Each branch writes its own key**, such as `fraud_result` and
+   `policy_result`, or returns its output to a join node, which passes the
+   collected outputs to the next step keyed by the name of each node that feeds it.
+2. **No branch reads a key another branch is writing.** If B needs A's result,
+   B depends on A, and they belong in sequence.
+
+Here is the refund workflow as an ADK 2.0 graph, with the two checks fanned out
+and joined:
+
+```python
+from google.adk import Agent, Workflow
+from google.adk.workflow import JoinNode
+
+fraud_check = Agent(
+    name="fraud_check",
+    model="gemini-flash-latest",
+    instruction="Assess the fraud risk of this refund: {order}",
+    output_key="fraud_result",   # its own key
+)
+policy_check = Agent(
+    name="policy_check",
+    model="gemini-flash-latest",
+    instruction="Check this refund against the 30-day return policy: {order}",
+    output_key="policy_result",  # a different key
+)
+summary_agent = Agent(
+    name="summary_agent",
+    model="gemini-flash-latest",
+    instruction="Decide on the refund. Fraud: {fraud_result}. Policy: {policy_result}.",
+)
+
+join_checks = JoinNode(name="join_checks")
+
+root_agent = Workflow(
+    name="refund_workflow",
+    edges=[
+        ("START", fraud_check, join_checks),
+        ("START", policy_check, join_checks),
+        (join_checks, summary_agent),
+    ],
+)
+```
+
+The two rows that start at `START` fan out, so the checks run at once;
+`join_checks` waits for both before `summary_agent` runs. (Here the order is
+assumed to be in state already as `order`.)
+
+## Every loop needs an exit and a cap
+
+A loop repeats work until it is good enough, such as a writer and a reviewer
+taking turns. It needs two ways to stop:
+
+- **An exit condition** for success. In a `LoopAgent`, a sub-agent ends the loop
+  by escalating, which signals the parent workflow to stop: a tool sets `tool_context.actions.escalate = True`, and the
+  built-in `exit_loop` tool does exactly that. In a graph, a router returns a
+  `DONE` route instead of the back-edge's `RETRY` route.
+- **A cap** for failure. In Python, a `LoopAgent`'s `max_iterations` defaults to
+  none, so without an escalation it never stops on its own. A graph cycle is not
+  bounded automatically either: count attempts in state and route out at the
+  cap.
+
+Here is the review loop as a graph, with both stops in the router:
+
+```python
+from google.adk import Context, Event, Workflow
+
+MAX_ATTEMPTS = 3
+
+def review_router(ctx: Context, node_input: str):
+    attempts = ctx.state.get("attempts", 0) + 1
+    if "APPROVED" in node_input:
+        return Event(route="DONE", state={"attempts": attempts})      # exit condition
+    if attempts >= MAX_ATTEMPTS:
+        return Event(route="GIVE_UP", state={"attempts": attempts})   # cap
+    return Event(route="RETRY", state={"attempts": attempts})
+
+root_agent = Workflow(
+    name="refund_note_loop",
+    edges=[
+        ("START", draft_writer, reviewer, review_router),
+        (review_router, {"RETRY": draft_writer, "DONE": send_note, "GIVE_UP": hand_to_person}),
+    ],
+)
+```
+
+ADK's run-level limit on model calls (`max_llm_calls` in the run configuration,
+topic 3.1) is a last-resort backstop, not a loop design: by the time it fires,
+the loop has already spent its budget.
+
+<Callout type="note">ADK's workflow APIs changed in 2.0: graph workflows replaced the template agents in Python, and some details, such as using a Workflow as an LlmAgent's sub-agent, are still settling. The patterns in this lesson hold whichever API you use.</Callout>
+
+## Sources
+
+- Google, Agent Development Kit documentation, "Workflow agents", github.com/google/adk-docs/blob/main/docs/agents/workflow-agents/index.md (template workflows deprecated in favour of graph-based and dynamic workflows; deterministic execution without consulting a model).
+- Google, Agent Development Kit documentation, "Workflow patterns", github.com/google/adk-docs/blob/main/docs/workflows/patterns.md (in Python and TypeScript, SequentialAgent, ParallelAgent and LoopAgent are deprecated and scheduled for removal; sub-agents write results to distinct keys in shared session state).
+- Google, Agent Development Kit documentation, "Parallel agents", github.com/google/adk-docs/blob/main/docs/agents/workflow-agents/parallel-agents.md (session state is shared across branches; give each sub-agent an output_key; do not rely on reading a key another branch is still writing).
+- Google, Agent Development Kit documentation, "Loop agents", github.com/google/adk-docs/blob/main/docs/agents/workflow-agents/loop-agents.md (max_iterations defaults to None in Python; escalate via tool_context.actions.escalate; the exit_loop tool).
+- Google, Agent Development Kit documentation, "Graph workflows" and "Routes", github.com/google/adk-docs/blob/main/docs/graphs/index.md and docs/graphs/routes.md (Workflow with edges; routed edges; JoinNode fan-out and join; loops as back-edges, a cycle must contain a routed edge and is not bounded automatically).
+- Google, Agent Development Kit documentation, "Data handling", github.com/google/adk-docs/blob/main/docs/graphs/data-handling.md (state across nodes; instruction placeholders read session state; output_key).
+- Google, Agent Development Kit, adk-python source, src/google/adk/agents/sequential_agent.py (SequentialAgent is deprecated in favour of Workflow).
