@@ -19,5 +19,14 @@
   },
   "online monitoring": {
     "definition": "Measuring a deployed agent's quality on live traffic, through traces, logs and metrics, to catch what the offline dataset missed and what changes after launch."
+  },
+  "golden dataset": {
+    "definition": "A curated, fixed set of inputs with the outputs you would accept (for an agent, the expected tool calls as well as the expected reply), run on every version so results can be compared."
+  },
+  "evalset": {
+    "definition": "An ADK file of eval cases, each a session with its own id and initial state, often multi-turn, used for integration-style evaluation of an agent."
+  },
+  "user simulation": {
+    "definition": "An evaluation method in which a model plays the user, generating each user turn from a starting prompt, a conversation plan and optionally a persona, so branching conversations can be tested."
   }
 }
