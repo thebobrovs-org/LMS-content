@@ -61,5 +61,14 @@
   },
   "callback": {
     "definition": "A function ADK runs at a fixed point in the loop: before or after an agent, a model call or a tool call. It can let the step proceed, skip it with its own result, or replace the output."
+  },
+  "min instances": {
+    "definition": "The number of instances a service keeps running even with no traffic, so requests avoid cold starts; you pay for them while they wait."
+  },
+  "container concurrency": {
+    "definition": "The number of requests one instance of a service handles at the same time."
+  },
+  "session": {
+    "definition": "The record of one conversation between a user and an agent: its messages, the agent's events and its working state. A session service is where an agent stores sessions."
   }
 }
