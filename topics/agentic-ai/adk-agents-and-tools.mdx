@@ -13,6 +13,33 @@ objectives:
     statement: "Add sub-agents or wrap an agent as an AgentTool, and say how control differs."
   - id: use-callbacks
     statement: "Use a callback to validate or modify a model or tool call."
+videos:
+  - youtubeId: 0Z0GUDakR_A
+    title: "Intro to multi-agent systems with ADK"
+    channel: "Google Cloud Tech"
+    duration: "11:52"
+    published: "2026-06-08"
+    why: "Current ADK walkthrough: an LlmAgent with model, instruction and tools, then composition with sub-agents."
+    note: "Doesn't go deep on AgentTool versus sub-agents."
+    chapters:
+      - at: "1:26"
+        label: "First agent"
+      - at: "3:31"
+        label: "Equipping agents with tools"
+      - at: "8:23"
+        label: "Multi-agent systems"
+  - youtubeId: lESnbB9KO34
+    title: "Using Model Armor in ADK callbacks"
+    channel: "Google Cloud Tech"
+    duration: "3:53"
+    published: "2026-02-13"
+    why: "Uses ADK before and after callbacks for deterministic checks, which is the lesson's 'put deterministic checks in callbacks'."
+    note: "Shows callbacks only for Model Armor checks."
+    chapters:
+      - at: "0:48"
+        label: "Input guardrail"
+      - at: "1:14"
+        label: "Output validation guardrail"
 flashcards:
   - id: subagent-vs-agenttool
     objective: compose-agents

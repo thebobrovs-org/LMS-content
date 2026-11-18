@@ -13,6 +13,26 @@ objectives:
     statement: "Choose 2-legged or 3-legged OAuth for a tool call."
   - id: adk-auth
     statement: "Configure ADK tool authentication and handle the consent pause and resume."
+videos:
+  - youtubeId: QpMweHAiE4o
+    title: "Agent Sessions and Tool Authentication"
+    channel: "Google Cloud Tech"
+    duration: "3:34"
+    published: "2025-10-16"
+    why: "ADK authenticated tools and sessions: tools acting on a user's authority with their credentials."
+    note: "A 3.5-minute intro: it doesn't step through the adk_request_credential consent pause."
+  - youtubeId: jZXvqEqJT7o
+    title: "How to secure your AI Agents: A Technical Deep-dive"
+    channel: "Google for Developers"
+    duration: "24:00"
+    published: "2025-12-03"
+    why: "Agent-to-tool auth flow segment: the agent's own authority vs the user's delegated authority."
+    note: "Watch only the auth chapters; OAuth versus OIDC isn't covered."
+    chapters:
+      - at: "12:43"
+        label: "Authentication and authorization patterns"
+      - at: "13:44"
+        label: "Agent-to-tool authentication flow"
 flashcards:
   - id: oauth-vs-oidc-card
     objective: oauth-vs-oidc

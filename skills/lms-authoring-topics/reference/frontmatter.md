@@ -25,13 +25,22 @@ Frontmatter is YAML between `---` fences at the top of the `.mdx` file.
 
 ## Nested shapes
 
-**Video**
+**Video** (a suggested video: the app lists a topic's `videos` under "Suggested videos" after the lesson)
 ```yaml
 videos:
-  - youtubeId: dQw4w9WgXcQ   # required
-    title: Hashing explained # optional
-    start: 90                # optional, seconds, integer ≥ 0
+  - youtubeId: NWF5Jo0-ziY              # required, the 11-character id from the watch URL
+    title: "Intro to Agents: What's new and what we've learned"   # the video's title on YouTube
+    channel: "Google Cloud Tech"        # the publishing channel, as YouTube shows it
+    duration: "7:40"                    # "m:ss" or "h:mm:ss", quoted
+    published: "2026-02-18"             # quoted YYYY-MM-DD
+    why: "Defines an agent by its parts, matching the lesson's 'parts of an agent' section."
+    note: "Its linked samples use LangGraph, not ADK."   # optional caveat for the learner
+    chapters:                           # optional; each renders as a chip that plays from that moment
+      - at: "2:24"                      # quoted, increasing, before the end
+        label: "Components of an agent"
+    start: 90                           # optional, seconds: where the play button starts (default 0)
 ```
+Only `youtubeId` is required, but a suggested video should carry `title`, `channel`, `duration`, `published` and `why`. See "Suggested videos" in the skill for how to choose them.
 
 **Flashcard**
 ```yaml

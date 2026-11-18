@@ -6,7 +6,7 @@ import { test } from "node:test";
 import { z } from "zod";
 import {
   DIFFICULTIES, GlossarySchema, MDX_COMPONENTS, PathFrontmatterSchema, ResourcesSchema, SCHEMA_VERSION, STATUSES, SimConfigSchema,
-  TopicFrontmatterSchema, check, isCalendarDate,
+  TopicFrontmatterSchema, check, isCalendarDate, timestampSeconds,
 } from "./content-schema.mjs";
 
 const topic = {
@@ -18,7 +18,7 @@ const topic = {
   level: 100,
   prerequisites: [],
   relatedTo: ["data-structures/hash-tables"],
-  videos: [{ youtubeId: "abc123", start: 30 }],
+  videos: [{ youtubeId: "dQw4w9WgXcQ", start: 30 }],
   flashcards: [{ front: "Index cost", back: "O(1)" }],
   quiz: [{ question: "Cost?", choices: ["O(1)", "O(n)"], answer: 0, explanation: "Arithmetic on the base." }],
   status: "published",
@@ -39,6 +39,11 @@ test("the baseline review's fixtures all fail", () => {
   const bad = {
     "a numeric title": { ...topic, title: 42 },
     "a video without youtubeId": { ...topic, videos: [{ title: "Intro" }] },
+    "a video id that isn't 11 characters": { ...topic, videos: [{ youtubeId: "abc123" }] },
+    "a video chapter with an unquoted (numeric) time": { ...topic, videos: [{ youtubeId: "dQw4w9WgXcQ", chapters: [{ at: 145, label: "x" }] }] },
+    "video chapters out of order": { ...topic, videos: [{ youtubeId: "dQw4w9WgXcQ", chapters: [{ at: "2:00", label: "b" }, { at: "1:00", label: "a" }] }] },
+    "a video chapter past the video's end": { ...topic, videos: [{ youtubeId: "dQw4w9WgXcQ", duration: "3:00", chapters: [{ at: "3:10", label: "x" }] }] },
+    "an unknown key on a video": { ...topic, videos: [{ youtubeId: "dQw4w9WgXcQ", caveat: "x" }] },
     "a flashcard without back": { ...topic, flashcards: [{ front: "only" }] },
     "an unquoted date (YAML gives a Date)": { ...topic, updated: new Date("2026-09-11") },
     "a frontmatter id overriding the path-derived id": { ...topic, id: "other/topic" },
@@ -222,4 +227,24 @@ test("the enum tuples and the MDX component list are the contract's literals", (
   assert.deepEqual(STATUSES, ["draft", "published"]);
   assert.deepEqual(DIFFICULTIES, ["beginner", "intermediate", "advanced"]);
   assert.deepEqual(MDX_COMPONENTS, ["YouTube", "Callout", "Simulation", "Flashcard", "Quiz", "Steps", "Step", "Figure", "Tip", "Term"]);
+});
+
+test("a suggested video carries its metadata and chapters", () => {
+  const video = {
+    youtubeId: "NWF5Jo0-ziY",
+    title: "Intro to Agents",
+    channel: "Google Cloud Tech",
+    duration: "7:40",
+    published: "2026-02-18",
+    why: "Defines an agent by its parts.",
+    note: "Overview only.",
+    chapters: [{ at: "2:25", label: "Components of an agent" }, { at: "1:04:48", label: "Later" }],
+  };
+  const long = { ...video, duration: "1:24:50" };
+  const r = check(TopicFrontmatterSchema, { ...topic, videos: [long] }, "t.mdx");
+  assert.deepEqual(r.problems, []);
+  assert.deepEqual(check(TopicFrontmatterSchema, { ...topic, videos: [{ youtubeId: "NWF5Jo0-ziY" }] }).value.videos[0].chapters, []);
+  assert.match(check(TopicFrontmatterSchema, { ...topic, videos: [video] }).problems[0], /past the video's end \(7:40\)/);
+  assert.equal(timestampSeconds("1:02:03"), 3723);
+  assert.equal(timestampSeconds("2:25"), 145);
 });
