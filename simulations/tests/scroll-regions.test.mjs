@@ -35,6 +35,7 @@ const WIDTH_GUARDS = {
   "hybrid-agent-flow": [".scroll"],
   "gateway-registry-flow": [".scroll"],
   "continuous-eval-loop": [".scroll"],
+  "guardrail-layers-flow": [".scroll"],
   "platform-map-explorer": [".scroll"],
   "workflow-canvas-flow": [".scroll"],
   "enterprise-data-flow": [".scroll"],

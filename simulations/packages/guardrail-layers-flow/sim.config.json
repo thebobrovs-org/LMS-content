@@ -1,0 +1,12 @@
+{
+  "id": "guardrail-layers-flow",
+  "title": "Guardrail layers, step by step",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-guardrail-layers",
+      "hint": "Predict which layer catches a card number in the reply, then step the support turn to the card-number step: Sensitive Data Protection inside Model Armor catches it, not the prompt screen or a rule in the system prompt."
+    }
+  ]
+}

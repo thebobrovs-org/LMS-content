@@ -150,11 +150,11 @@ The identity, access and gateway lessons built the outer layers. This lesson
 adds the guardrails nearest the agent, around a support agent that answers order
 questions, searches a knowledge base and issues refunds.
 
-<Figure
-  src="/media/agent-guardrail-layers.svg"
-  alt="A table of five threats to a support agent, with the guardrail layer and mechanism for each. Prompt injection in a message or a tool's output: Model Armor on prompts and tool output, using the prompt injection and jailbreak detection filter. Harmful content in a reply: Model Armor on responses, using the responsible AI filters. Card numbers or credentials leaking in or out: Sensitive Data Protection inside Model Armor; basic inspects six infoTypes, advanced uses templates and can de-identify. An irreversible refund issued by mistake: human confirmation before the tool runs, using ADK tool confirmation, always or above a threshold. Retrieval returns data the user may not see: act with the user's identity when acting for a user, so the data source applies the user's own permissions. Footer: each layer catches what another misses; none of them is a line in the system prompt."
-  caption="Each threat has its own layer, enforced outside the model."
-/>
+In **Guardrail layers, step by step**, predict first: a card number appears in
+the agent's reply, so which layer catches it? Then step through one support turn
+and watch each threat stop at its own layer, enforced outside the model.
+
+<Simulation id="guardrail-layers-flow" />
 
 ## Model Armor: screen what goes in and out
 

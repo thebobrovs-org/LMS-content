@@ -36,6 +36,7 @@ export const FIT = [
   "cx-route-resolver",
   "gateway-registry-flow",
   "eval-case-explorer",
+  "guardrail-layers-flow",
   "hybrid-agent-flow",
   "model-requirement-picker",
   "oauth-consent-pause",
