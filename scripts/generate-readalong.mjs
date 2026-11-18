@@ -243,7 +243,7 @@ async function samples(opts, apiKey) {
   const text = paragraphs[n];
   if (!text) throw new Error(`${file} has no paragraph ${n}`);
   const voices = (opts.voices ?? SAMPLE_VOICES.join(",")).split(",").map((v) => v.trim()).filter(Boolean);
-  const model = opts.model ?? process.env.READALONG_MODEL ?? DEFAULT_MODEL;
+  const model = opts.model ?? (process.env.READALONG_MODEL || undefined) ?? DEFAULT_MODEL;
   summary(`Voice samples: ${path.basename(file)}, paragraph ${n} (${text.length} characters × ${voices.length} voices = ${text.length * voices.length})\n\n> ${text}\n`);
   if (opts["dry-run"]) return;
   const dir = path.join(opts.out, "samples");
@@ -264,9 +264,9 @@ async function main(args) {
   if (!dryRun && !apiKey) throw new Error("Missing ELEVENLABS_API_KEY.");
   if (opts.sample) return samples(opts, apiKey);
 
-  const voice = opts.voice ?? process.env.READALONG_VOICE ?? DEFAULT_VOICE;
-  const model = opts.model ?? process.env.READALONG_MODEL ?? DEFAULT_MODEL;
-  const bucket = opts.bucket ?? process.env.AUDIO_BUCKET ?? "";
+  const voice = opts.voice ?? (process.env.READALONG_VOICE || undefined) ?? DEFAULT_VOICE;
+  const model = opts.model ?? (process.env.READALONG_MODEL || undefined) ?? DEFAULT_MODEL;
+  const bucket = opts.bucket ?? (process.env.AUDIO_BUCKET || undefined) ?? "";
   const maxChars = Number(opts["max-chars"] ?? 9000);
   const budget = Number(opts.budget ?? 60000);
   if (!dryRun && !bucket) throw new Error("No bucket: pass --bucket or set AUDIO_BUCKET (audio/<id>.json needs the MP3's https URL).");
