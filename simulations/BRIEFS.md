@@ -26,7 +26,7 @@ Update your row in your own PR. Statuses: `open` → `concept` → `building` �
 | B05 | Media by reference | context-engineering | merged | codex | #195 |
 | B06 | Grounded but wrong: retrieval precision and recall (upgrade of `rag-retrieval-tuner`) | rag-pipelines | merged | claude | #204 |
 | B07 | Least privilege and the access boundary | agent-identity-and-access | merged | codex | #197 |
-| B08 | Whose authority: the 3-legged OAuth pause | agent-auth-oauth | review | claude | (this PR) |
+| B08 | Whose authority: the 3-legged OAuth pause | agent-auth-oauth | merged | claude | #213 |
 | B09 | Hook pipeline | customizing-coding-agents | open | | |
 | B10 | What each guardrail can see | guardrails-model-armor-hitl | review | codex | #206 |
 | B11 | Scaling and cost | deploying-agents | open | | |

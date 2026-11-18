@@ -7,7 +7,7 @@ cd "$(dirname "$0")/.."
 step() { printf '\n▶ %s\n' "$1"; }
 
 step "unit tests"
-node --test schema/*.test.mjs pipeline/*.test.mjs scripts/schema-declarations.test.mjs scripts/notify-app.test.mjs scripts/merge-plan.test.mjs scripts/generate-readalong.test.mjs simulations/tests/*.test.mjs
+node --test schema/*.test.mjs pipeline/*.test.mjs scripts/schema-declarations.test.mjs scripts/notify-app.test.mjs scripts/merge-plan.test.mjs scripts/generate-readalong.test.mjs scripts/sim-fit.test.mjs simulations/tests/*.test.mjs
 
 step "schema declarations are generated from the implementation"
 node scripts/schema-declarations.mjs --check
@@ -27,6 +27,9 @@ if [ -n "$BASE" ]; then
   step "items without an id whose prompt changed since $BASE, published and staged (warnings)"
   node pipeline/validate.mjs --staging --base "$BASE"
 fi
+
+step "sims fit a 1280x720 laptop screen (Chromium; skills/lms-authoring-simulations \"Fit the screen\")"
+node scripts/sim-fit.mjs
 
 step "dependency audit"
 node --test scripts/audit-gate.test.mjs
