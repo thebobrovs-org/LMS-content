@@ -30,8 +30,8 @@ function render() {
       ${done ? `Target reached: ${count} / ${target}.` : `Count: ${count} / ${target}.`}
     </p>
     <div class="controls">
-      <button id="inc">Click me</button>
-      <button id="reset" class="secondary">Reset</button>
+      <button id="inc" class="primary">Click me</button>
+      <button id="reset">Reset</button>
     </div>`;
 
   app.querySelector("#inc").addEventListener("click", increment);
