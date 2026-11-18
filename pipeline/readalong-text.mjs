@@ -24,7 +24,7 @@ const UNSPOKEN_SECTION = /^(?:sources?|references?|bibliography|citations?|credi
 function dropUnspokenSections(text) {
   const kept = [];
   let skipping = 0; // the level of the heading being skipped, or 0
-  for (const line of text.split("\n")) {
+  for (const line of text.split(/\r?\n/)) {
     const heading = /^(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$/.exec(line);
     if (heading) {
       const level = heading[1].length;

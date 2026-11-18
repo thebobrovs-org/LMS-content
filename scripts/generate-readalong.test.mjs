@@ -168,7 +168,7 @@ test("a list item wrapped over several lines is read as one sentence, not cut at
 });
 
 test("Sources, Suggested videos and similar sections are not narrated, up to the next heading of their level", () => {
-  const out = extractSpokenText(`---
+  const raw = `---
 title: T
 ---
 Intro prose.
@@ -204,7 +204,10 @@ Closing prose.
 ## Resources at scale
 
 Read: a title that only starts like a skipped one.
-`);
+`;
+  const out = extractSpokenText(raw);
+  // Windows line endings narrate the same.
+  assert.equal(extractSpokenText(raw.replaceAll("\n", "\r\n")), out);
   assert.equal(
     out,
     "Intro prose.\n\nWhy it matters.\n\nBody prose.\n\nPut it together.\n\nClosing prose.\n\nResources at scale.\n\nRead: a title that only starts like a skipped one.",
