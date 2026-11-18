@@ -32,6 +32,7 @@ const TEXT_REGIONS = {
 /** Wrappers that scroll only when their drawing is wider than the screen: each is a focusable, named region too. */
 const WIDTH_GUARDS = {
   "guardrail-visibility": [".scroll"],
+  "hybrid-agent-flow": [".scroll"],
   "access-boundary-explorer": [".scroll"],
   "context-budget-explorer": [".scroll"],
   "media-reference-explorer": [".scroll"],
