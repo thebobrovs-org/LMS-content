@@ -130,11 +130,13 @@ tools can be configured to send one.
 
 ## Two legs or three
 
-<Figure
-  src="/media/agent-oauth-2lo-3lo.svg"
-  alt="Two sequence diagrams. Top, two-legged OAuth, where the agent acts as itself: 1, the agent built with ADK sends its own client credentials to the authorisation server; 2, the server returns an access token; 3, the agent calls the API with the token; 4, the API returns the agent's own resources. Bottom, three-legged OAuth, where the agent acts for a user with consent: 1, the agent pauses and sends adk_request_credential to the agent client app; 2, the app opens the consent page for the user; 3, the user signs in and consents at the authorisation server, the only place the password goes; 4, the server redirects to the client app with an authorisation code; 5, the app sends the auth response back to the agent; 6, the agent exchanges the code for a token at the authorisation server; 7, the server returns an access token with the user's scopes; 8, the agent retries the tool call to the API with the token."
-  caption="Two-legged OAuth uses the agent's own authority; three-legged uses a user's, with their consent."
-/>
+### Try it: OAuth consent pause
+
+Before you step through **OAuth consent pause**, predict who handles the user's password when an agent drafts replies in an employee's mailbox. Then step through **3LO: User mailbox** from `adk_request_credential` to the scoped retry, and switch to **2LO: Agent bucket** to see what disappears when no user data is involved.
+
+<Simulation id="oauth-consent-pause" />
+
+**Explain it:** Why does `3LO: User mailbox` pause and route the user's password outside the amber Credential Boundary instead of letting the ADK agent collect it directly?
 
 **Two-legged OAuth (2LO)** and **three-legged OAuth (3LO)** are common
 shorthand, used in Google's documentation, for two OAuth grants.
