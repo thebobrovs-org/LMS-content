@@ -117,11 +117,6 @@ the account.
 
 Three changes shrink that blast radius, and they build on each other.
 
-<Figure
-  src="/media/agent-blast-radius.svg"
-  alt="Three panels showing what a hijacked invoice agent can reach. Panel 1, shared service account with broad roles in many projects: it can reach the invoices bucket, the finance dataset, the HR database, payroll secrets, production VMs and other projects; one injection reaches all of it. Panel 2, the agent's own principal with two read roles: it can read the invoices bucket and the finance dataset and has no role on the other four; a mistaken broad grant would widen it again. Panel 3, the same roles plus a Principal Access Boundary on the finance project: it can read the invoices bucket and the finance dataset inside the boundary, and the other four are blocked; a later broad grant still cannot reach past the boundary."
-  caption="The same injected instruction, three designs: a shared account, the agent's own identity with narrow roles, and a boundary on top."
-/>
 
 ## Step 1: give the agent its own identity
 
@@ -208,6 +203,65 @@ holds only if every policy that applies allows only finance.
   explanation="Only the boundary limits what a future grant can reach. A narrow role today does not stop a broad one being added later, and Agent Identity makes the agent its own principal but does not cap what it is granted."
 />
 
+## Try it: which doors can the agent open?
+
+In **Which doors can the agent open?**, an invoice contains an injected request
+for Finance exports, HR payroll and Production backups. The agent attempts
+those reads as well as its intended invoice read. These attempts are scripted:
+IAM checks permissions; it does not decide whether the text is malicious.
+
+Start with an invoices-only read grant and the Finance boundary on. Predict
+which doors will open if someone adds an organization-wide read grant. Choose
+an answer, then press **Add broad read grant**. Next, press **Remove all grants**
+and watch what happens while the boundary stays in place.
+
+<Simulation id="access-boundary-explorer" />
+
+**Explain it:** Why did the broad grant open Exports but leave Payroll closed?
+Why did Invoices close when you removed all grants, even though it stayed
+inside the Finance outline?
+
+This fixture uses four private Cloud Storage buckets in three projects under
+one organization. The read role is `roles/storage.objectViewer`, granted on
+the Invoices bucket or inherited from the organization. Each attempt reads one
+existing object using `storage.objects.get`, which PAB enforcement version 1
+covers. Uniform bucket-level access is enabled; there are no public grants,
+ACL grants, other role grants, deny policies or conditional bindings. The map
+shows these object reads, not every permission in the role or every IAM check.
+
+There is exactly one applicable Finance PAB when the boundary is on, and none
+when it is off. With several applicable PABs, eligible resources combine by
+**union**: another policy can make HR eligible. The outline represents resource
+eligibility, not a network firewall.
+
+### Put it together
+
+<Steps>
+  <Step id="compare-finance-grants" title="See what a broad grant adds">
+    In Which doors can the agent open?, press Reset, choose a prediction, and
+    press Add broad read grant with the Finance boundary on. Name the newly
+    readable bucket and the two buckets that remain outside the boundary.
+  </Step>
+  <Step id="remove-boundary-grants" title="Separate eligibility from permission">
+    Keep the Finance boundary on and press Remove all grants. Explain why
+    zero buckets are readable even though two remain eligible.
+  </Step>
+  <Step id="compare-boundary-off" title="Choose the narrow grant">
+    Press Restore invoices-only grant, then Add broad read grant and turn the
+    Finance boundary Off. Compare four readable buckets with two when it is
+    On. Press Reset to return to the grant needed by the invoice tool alone.
+  </Step>
+</Steps>
+
+<Quiz
+  id="broad-grant-inside-finance"
+  objective="pab"
+  question="In Which doors can the agent open?, why does adding the organization-wide read grant change access from one bucket to two, even with the Finance boundary on?"
+  choices={["The boundary grants a read role to every Finance bucket", "The new grant adds Exports inside the eligible Finance resources; the boundary still excludes HR and Production", "The injected request bypasses the boundary for one extra bucket"]}
+  answer={1}
+  explanation="A boundary does not keep every grant minimal. In this fixture it caps eligible resources at Finance, so the broad grant still adds Exports. Removing all grants closes both Finance doors: eligibility alone gives no access."
+/>
+
 ## Recap
 
 - Give each agent its own identity: per-agent grants, per-agent audit, an
@@ -219,7 +273,13 @@ holds only if every policy that applies allows only finance.
 
 ## Sources
 
-- Google Cloud, "Agent Identity overview", docs.cloud.google.com/iam/docs/agent-identity-overview (retrieved 2026-11-17: a cryptographic identity per agent based on the SPIFFE standard; X.509 certificates auto-provisioned and managed on the agent; access tokens bound to the agent's certificates to prevent token theft; "not shared by multiple workloads by default, can't be impersonated, and don't allow developers to generate long-lived service account keys"; audit logs record the agent and the delegating user; permissions granted directly to the agent's identifier; supported by Agent Runtime, Gemini Enterprise, Cloud Run and GKE).
-- Google Cloud, "Context-Aware Access for agents", docs.cloud.google.com/access-context-manager/docs/caa-agent-security (retrieved 2026-11-17: certificate-bound workload access tokens; mTLS to Google Cloud APIs and Agent Gateway; DPoP per RFC 9449 beyond the gateway; "compromised tokens are useless outside of their intended, trusted runtimes").
-- Google Cloud, "Principal Access Boundary policies", docs.cloud.google.com/iam/docs/principal-access-boundary-policies (retrieved 2026-11-17: PAB policies "let you define the resources that principals can access"; they "can only block or not block access—they can't grant access"; by default principals are eligible to access any resource; an ineligible principal's access is limited "regardless of the roles they've been granted"; only supported permissions are blocked; when several policies apply to a principal, the principal is eligible for the resources any of them allows, per the "Principal access boundary policy evaluation" section).
-- OWASP GenAI Security Project, "LLM06:2025 Excessive Agency", github.com/OWASP/www-project-top-10-for-large-language-model-applications/blob/main/2_0_vulns/LLM06_ExcessiveAgency.md (retrieved 2026-11-17: minimise extension permissions).
+- Google Cloud, [Agent Identity overview](https://docs.cloud.google.com/iam/docs/agent-identity-overview) (retrieved 2026-11-17: a cryptographic identity per agent based on the SPIFFE standard; X.509 certificates auto-provisioned and managed on the agent; access tokens bound to the agent's certificates to prevent token theft; "not shared by multiple workloads by default, can't be impersonated, and don't allow developers to generate long-lived service account keys"; audit logs record the agent and the delegating user; permissions granted directly to the agent's identifier; supported by Agent Runtime, Gemini Enterprise, Cloud Run and GKE).
+- Google Cloud, [Context-Aware Access for agents](https://docs.cloud.google.com/access-context-manager/docs/caa-agent-security) (retrieved 2026-11-17: certificate-bound workload access tokens; mTLS to Google Cloud APIs and Agent Gateway; DPoP per RFC 9449 beyond the gateway; "compromised tokens are useless outside of their intended, trusted runtimes").
+- Google Cloud, [Principal Access Boundary policies](https://docs.cloud.google.com/iam/docs/principal-access-boundary-policies) (retrieved 2026-11-17: PAB policies "let you define the resources that principals can access"; they "can only block or not block access—they can't grant access"; by default principals are eligible to access any resource; an ineligible principal's access is limited "regardless of the roles they've been granted"; only supported permissions are blocked; when several policies apply to a principal, the principal is eligible for the resources any of them allows, per the "Principal access boundary policy evaluation" section).
+- OWASP GenAI Security Project, [LLM06:2025 Excessive Agency](https://github.com/OWASP/www-project-top-10-for-large-language-model-applications/blob/main/2_0_vulns/LLM06_ExcessiveAgency.md) (retrieved 2026-11-17: minimise extension permissions).
+
+- Google Cloud, [Policy types](https://docs.cloud.google.com/iam/docs/policy-types) (retrieved 2026-11-17: allow policies grant access; PAB policies limit eligible resources).
+- Google Cloud, [Resource hierarchy access control](https://docs.cloud.google.com/iam/docs/resource-hierarchy-access-control) (retrieved 2026-11-17: descendants inherit grants from organization and project ancestors).
+- Google Cloud, [Cloud Storage IAM roles](https://docs.cloud.google.com/storage/docs/access-control/iam-roles) (retrieved 2026-11-17: Storage Object Viewer includes object reads).
+- Google Cloud, [Read objects](https://docs.cloud.google.com/storage/docs/reading-objects) (retrieved 2026-11-17: reading an object requires `storage.objects.get`).
+- Google Cloud, [Permissions blocked by principal access boundaries](https://docs.cloud.google.com/iam/docs/pab-blocked-permissions) (retrieved 2026-11-17: PAB enforcement version 1 covers `storage.googleapis.com/objects.get`).

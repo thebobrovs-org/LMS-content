@@ -28,11 +28,13 @@ const TEXT_REGIONS = {
 };
 /** Wrappers that scroll only when their drawing is wider than the screen: each is a focusable, named region too. */
 const WIDTH_GUARDS = {
+  "access-boundary-explorer": [".scroll"],
   "context-budget-explorer": [".scroll"],
   "media-reference-explorer": [".scroll"],
   "approval-gate-explorer": [".scroll"],
   "backprop-explorer": [".diagram"],
   "neuron-explorer": [".diagram"],
+  "rag-retrieval-tuner": [".scroll"],
   "state-scope-explorer": [".scroll"],
   "systolic-array": [".grid-panel"],
   "tpu-ocs-explorer": [".canvas-wrap"],
