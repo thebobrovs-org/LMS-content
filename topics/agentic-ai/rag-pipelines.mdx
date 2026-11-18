@@ -235,31 +235,73 @@ above, for reranking.
 
 ## Try it: a stale policy in the corpus
 
-The simulation asks one question, "How many days do I have to return an item?",
-over a small corpus that holds two versions of the same policy: a 2024 FAQ (60
-days, now superseded) and the current 2026 policy (30 days, with a final-sale
-exception). Change the chunk size, top-k and reranking, and switch on a metadata filter
-that keeps only documents marked current. Watch which chunks reach the model
-and what it answers. An answer drawn from the retrieved chunks is called
-**grounded**; the question is whether grounded also means right.
+Two numbers tell you whether retrieval found the right material. Call the
+chunks a correct answer needs the **relevant** ones. Then, for the top-k chunks
+that reach the model:
 
-<Simulation id="rag-retrieval-tuner" height={760} />
+- **Precision@k** is the share of those k chunks that are relevant: how clean
+  the catch is.
+- **Recall@k** is the share of all relevant chunks that made the top k: how
+  complete it is.
+
+Both are standard information-retrieval measures, and they pull against each
+other: a bigger k can only keep or raise recall, and usually lowers precision.
+
+In **Grounded but wrong: the right catch**, the corpus is a pond and every
+chunk is a fish, ranked by how similar its meaning is to one question: "How
+many days do I have to return an item?" Two versions of the same policy swim
+there: a 2024 FAQ (60 days, now superseded) and the current 2026 policy (30
+days, with a final-sale exception). The net is your top-k, the bucket is what
+the model reads, and the precision and recall meters are drawn as the fish you
+caught. An answer drawn from the retrieved chunks is called **grounded**; the
+question is whether grounded also means right.
+
+Before you cast, predict: the default net catches the top 3 medium chunks, and
+the current 30-day policy is among them. What will the agent answer?
+
+<Simulation id="rag-retrieval-tuner" height={1000} />
 
 What you should see:
 
-- **The default answer is grounded but wrong.** With medium chunks and a top-k
-  of 3, both versions are already in the context, but the 2024 FAQ ranks first:
-  it repeats the question's own words. The model follows the higher-ranked
-  chunk, cites it faithfully and says 60 days.
+- **The default answer is grounded but wrong.** Recall is 1 of 1: the 2026
+  policy is in the bucket. But precision is 1 of 3, and the 2024 FAQ ranks
+  first, because it is about exactly this question and similarity measures
+  meaning, not which version is current. The model reads it first, cites it
+  faithfully and says 60 days.
 - **Reranking does not save you.** The old FAQ answers the question just as
   directly as the new policy, so a reranker keeps it on top.
-- **More chunks do not save you either.** Raising top-k adds chunks and tokens
-  to every call, but the old FAQ still ranks first.
-- **The metadata filter fixes it.** Keep only current documents and the 2026
-  policy answers: 30 days, except final-sale items.
-- **Chunk size matters after the fix.** With small chunks, the final-sale rule
-  sits in its own chunk and can miss the top-k, so the answer is right but
-  incomplete. Reranking lifts that chunk back in.
+- **A bigger net does not save you either.** Raising top-k adds chunks and
+  tokens to every call, but the old FAQ still ranks first.
+- **The metadata filter fixes it.** Throw superseded documents back before the
+  search and the 2026 policy is the first one the model reads: 30 days, except
+  final-sale items. Precision can stay low; in this exercise the off-topic
+  chunks left in the net only cost tokens.
+- **Chunk size moves recall.** With small chunks, the final-sale rule sits in
+  its own chunk, so there are two relevant chunks. At top 3 without reranking
+  it misses the net: recall is 1 of 2 and the answer is right but incomplete.
+  Reranking lifts it back in.
+
+Explain it: at the default setting recall was perfect, so why was the answer
+wrong, and why did the filter fix it when a bigger net did not?
+
+### Put it together
+
+<Steps>
+  <Step id="see-grounded-wrong" title="See high recall ground a wrong answer">
+    In Grounded but wrong: the right catch, keep medium chunks and a net of
+    top 3, choose a prediction and cast. Read the two meters and name the fish
+    the model reads first.
+  </Step>
+  <Step id="try-more-and-rerank" title="Try a bigger net and a reranker">
+    Raise the net to top 6, then turn on Rerank the catch. Check whether the
+    answer changes and which fish stays first.
+  </Step>
+  <Step id="filter-and-complete" title="Fix it at the source, then complete it">
+    Turn on Throw back superseded fish, then switch to small chunks and watch
+    recall drop to 1 of 2. Use Rerank the catch to bring the final-sale rule
+    back into the net.
+  </Step>
+</Steps>
 
 <Quiz
   id="reranker-latency"
@@ -366,4 +408,5 @@ to search and the runtime runs it.
 - Google Cloud, "Agent Retrieval (formerly Vector Search 2.0) overview", docs.cloud.google.com/vertex-ai/docs/vector-search-2/overview (documents stored with vectors; embeddings generated by built-in models or supplied).
 - Google Cloud, "Agent Retrieval reranking", docs.cloud.google.com/gemini-enterprise-agent-platform/build/vector-search-2/query-search/reranking (semantic reranking powered by the ranking API; RRF as the primary ranker that fuses semantic and text results).
 - Google Cloud, "Try Agent Retrieval", docs.cloud.google.com/gemini-enterprise-agent-platform/build/vector-search-2/try-it (semantic, text or both for hybrid search, merged with Reciprocal Rank Fusion; RRF alpha from 1.0, pure semantic, to 0.0, pure keyword; the Gemini Enterprise Agent Platform Ranking API).
+- Manning, Raghavan and Schütze, *Introduction to Information Retrieval* (Cambridge University Press, 2008), "Evaluation of unranked retrieval sets", nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-unranked-retrieval-sets-1.html, and "Evaluation of ranked retrieval results", nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-ranked-retrieval-results-1.html (retrieved 2026-11-18: precision is "the fraction of retrieved documents that are relevant"; recall is "the fraction of relevant documents that are retrieved"; precision measured at a fixed number of retrieved results is "Precision at k").
 - Google Cloud, "About hybrid search", docs.cloud.google.com/gemini-enterprise-agent-platform/build/vector-search/about-hybrid-search (RRF sums the reciprocal ranks of each item across the ranked lists).
