@@ -1,0 +1,12 @@
+{
+  "id": "gateway-registry-flow",
+  "title": "Two calls through Agent Gateway",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-gateway-refusal",
+      "hint": "Predict what happens to the call to pdf-tools-online, then step to the end: the gateway's access policy finds no registry entry, refuses the call and records the attempt."
+    }
+  ]
+}
