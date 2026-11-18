@@ -5,8 +5,9 @@
 # When it runs:
 # - the label "audio" on a pull request, and each push to it while the label is on: narrates the
 #   lessons whose text, voice or model changed (an unchanged lesson costs nothing);
-# - the label "audio-samples": reads one paragraph in each sample voice and attaches the MP3s to
-#   the run as an artifact, to choose a voice by ear (nothing is committed or uploaded);
+# - the label "audio-samples": reads one paragraph in each sample voice, attaches the MP3s to the
+#   run as an artifact and copies them to the bucket's samples/<run id>/ for a playable link
+#   (nothing is committed);
 # - by hand (Actions → Read-along audio → Run workflow), either mode, on any branch.
 #
 # This repo is public, so the ElevenLabs key and the bucket are guarded:
@@ -21,7 +22,7 @@
 # Settings it reads (Settings → Secrets and variables → Actions):
 #   secret   ELEVENLABS_API_KEY
 #   vars     AUDIO_BUCKET, GCP_WIF_PROVIDER, GCP_SERVICE_ACCOUNT, and optionally READALONG_VOICE
-#            (default Bella) and READALONG_MODEL (default eleven_multilingual_v2)
+#            (default Nichalia, XfNU2rGpBa01ckF309OY) and READALONG_MODEL (default eleven_multilingual_v2)
 name: Read-along audio
 
 on:
@@ -110,7 +111,8 @@ jobs:
           git add -- audio
           git commit -m "chore(audio): narrate lessons for <ReadAlong />"
           git push "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "HEAD:refs/heads/${BRANCH}"
-          # CI runs from the default branch's copy of ci.yml; before that copy has workflow_dispatch, say so instead.
+          # CI runs from the default branch's copy of ci.yml. A dispatched run shows the result but doesn't satisfy
+          # the pull request's required gate check: the next push to the branch does.
           gh workflow run ci.yml --repo "$REPO" --ref "$BRANCH" \
             || echo "Couldn't start CI on the new commit; push to the branch, or re-run CI, to check it." >> "$GITHUB_STEP_SUMMARY"
 
@@ -125,6 +127,7 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
+      id-token: write # Workload Identity Federation → the bucket's service account, to share the samples by link
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -145,3 +148,22 @@ jobs:
           name: voice-samples
           path: .readalong-out/samples/*.mp3
           retention-days: 14
+      # The same MP3s at public links (samples/<run id>/), to play straight from a chat or a PR.
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+      - name: Share the samples by link
+        env:
+          AUDIO_BUCKET: ${{ vars.AUDIO_BUCKET }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          gcloud storage cp --cache-control="public, max-age=3600" .readalong-out/samples/*.mp3 "gs://${AUDIO_BUCKET}/samples/${RUN_ID}/"
+          {
+            echo ""
+            echo "Listen:"
+            for f in .readalong-out/samples/*.mp3; do
+              echo "- https://storage.googleapis.com/${AUDIO_BUCKET}/samples/${RUN_ID}/$(basename "$f")"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
