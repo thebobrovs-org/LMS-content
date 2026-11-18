@@ -188,6 +188,10 @@ Step through the sales-quote design one path at a time. Decide first what happen
 
 <Simulation id="hybrid-agent-flow" />
 
+**Explain it:** the last path in the simulation reaches the same ADK agent as
+step 3 without passing through the workflow. Why does that path need its own
+identity, evaluation and screening, and why can't the workflow's settings cover it?
+
 <Flashcard id="hybrid-normal" objective="hybrid-design" front="In a hybrid agent, what usually stays low-code and what moves to code?" back="The experience people use (the workflow, the chat, the approvals) stays low-code; the hard logic (a tested calculation, a multi-agent investigation, a private integration) moves to code-built agents or tools that the low-code side calls." />
 
 ## Decide early where evaluation and identity live
@@ -216,6 +220,28 @@ these will live for every part of the system.
   answer={1}
   explanation="The old agent's test cases don't run against the new one, so rebuild them as an evaluation set and score both agents on the same cases until the switch. Copied instructions and a few chats by hand don't show the agent behaves the same across cases. Watching errors after a full rollout finds regressions only once users have hit them."
 />
+
+### Put it together
+
+<Steps>
+<Step id="hybrid-sim-predict-direct" title="Predict, then follow the direct path">
+In A hybrid agent, step by step, pick whether the console's Model Armor setting
+screens a direct conversation with the registered agent, then step through all
+five paths. At step 5, check your pick against the verdict, and name the two
+arrows the direct path takes.
+</Step>
+<Step id="hybrid-sim-sort-parts" title="Sort the parts">
+Step through again and read the line under the controls at each step. List the
+parts that run inside the platform's sign-in and sharing, and the parts that need
+their own identity, evaluation and screening.
+</Step>
+<Step id="hybrid-apply-helpdesk" title="Apply it to another design">
+The IT helpdesk from the scenarios grows: password resets stay with the low-code
+agent, but laptop orders now go to a code-built ADK agent registered in Gemini
+Enterprise. Sketch its parts as the simulation draws them, and say where identity,
+evaluation and screening must be decided for the new agent before it ships.
+</Step>
+</Steps>
 
 ## Sources
 

@@ -137,9 +137,13 @@ details.more[open] > summary { margin-bottom: 8px; }
 .fk-readout { margin: 0; font-size: 13px; font-weight: 600; }
 .stage .side { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
 .stage .side .caption, .stage .side .controls { margin: 0; }
-.view svg { max-width: 100%; }
+.view svg { max-width: 100%; margin: 0 auto; }
 @media (min-width: 900px) {
   .stage { grid-template-columns: minmax(0, 1fr) 300px; } /* a wider drawing column, so boxes with icons fit at full size */
   .stage .side { margin-top: 0; }
+  /* The kit sets .fk-stack when the drawing fits only at full width: drawing above, controls below. */
+  .stage.fk-stack { display: block; }
+  .stage.fk-stack .side { margin-top: 12px; }
+  .stage.fk-stack svg { max-height: none; }
 }
 /* end flow-kit v1 */

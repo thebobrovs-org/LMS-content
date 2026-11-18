@@ -29,6 +29,9 @@ export const ON_FLOW = ["hybrid-agent-flow"];
 const LAPTOP_COLUMN = (() => { const inner = 1100 - 2 * 14 - 2 * 15; return Math.floor(inner - 16 - 300); })();
 const LAPTOP_HEIGHT = 380;
 const NARROW = [360 - 58, 286 - 58];
+// Frames between the laptop and the phone: two columns from 900 px (where the kit may stack the drawing above the
+// controls instead), one below.
+const FRAMES = [1280, 1000, 900, 899, 768, 600];
 
 const kit = () => {
   const ctx = vm.createContext({});
@@ -45,6 +48,14 @@ function specOf(id) {
   assert.ok(spec, `${id}: main.js never calls FlowKit.mount(SPEC)`);
   return spec;
 }
+
+test("a zone inside itself, directly or through another zone, is reported, not followed forever", () => {
+  const FlowKit = kit();
+  const base = { nodes: [{ id: "n", label: "N", zone: "a", at: [0, 0] }], edges: [], steps: [{ label: "S", text: "T", edges: [] }], checkpoint: { id: "c", step: 1 } };
+  const run = (zones) => vm.runInContext("FlowKit.check(spec)", vm.createContext({ FlowKit, spec: { ...base, zones } }), { timeout: 500 });
+  assert.match([...run([{ id: "a", title: "A", in: "a" }])].join("\n"), /zone a sits inside itself: a in a/);
+  assert.match([...run([{ id: "a", title: "A", in: "b" }, { id: "b", title: "B", in: "a" }])].join("\n"), /sits inside itself: a in b in a/);
+});
 
 test("the flow kit opens with its marker line and closes with its end marker", () => {
   assert.match(KIT_JS, /^\/\* flow-kit v\d+:/);
@@ -98,6 +109,59 @@ for (const id of ON_FLOW) {
     assert.ok(L.width <= LAPTOP_COLUMN, `${id}: the drawing is ${L.width} px wide, over the ${LAPTOP_COLUMN} px column, so it would shrink; narrow cellWidth`);
     assert.ok(L.height <= LAPTOP_HEIGHT, `${id}: the drawing is ${L.height} px tall, over ${LAPTOP_HEIGHT}, so it would shrink; use fewer rows`);
     fitsBoxes(FlowKit, spec, L, `${id} (laptop)`);
+  });
+
+  for (const frame of FRAMES) {
+    test(`${id}: in a ${frame} px frame the drawing is never scaled down`, () => {
+      const FlowKit = kit();
+      const spec = specOf(id);
+      const two = frame >= 900;
+      const where = FlowKit.plan(spec, frame - 58, two);
+      const L = FlowKit.layout(spec, where.column);
+      assert.ok(L.width <= where.column, `${id}: the drawing is ${L.width} px wide in a ${where.column} px column, so its labels would shrink`);
+      if (two && !where.stack) assert.ok(L.height <= LAPTOP_HEIGHT, `${id}: beside the controls the drawing is ${L.height} px tall, over ${LAPTOP_HEIGHT}, so it would shrink`);
+      fitsBoxes(FlowKit, spec, L, `${id} (${frame} px frame)`);
+    });
+  }
+
+  test(`${id}: the checkpoint and the verdict need a prediction made before the reveal`, async () => {
+    const spec = specOf(id);
+    const fired = (sim) => sim.events.filter((e) => e.startsWith("checkpoint:")).length;
+    const text = (sim, sel) => sim.find(sel).textContent.replace(/\s+/g, " ").trim();
+    // Jumping straight to the reveal with no pick reveals nothing and earns nothing.
+    let sim = await loadSim(id);
+    await sim.press(`[data-step="${spec.predict.revealAt}"]`);
+    assert.equal(fired(sim), 0);
+    assert.match(text(sim, "#verdict"), /Make your prediction above first/);
+    assert.doesNotMatch(text(sim, "#verdict"), new RegExp(spec.predict.why.slice(0, 30)));
+    // A pick made after seeing the reveal needs a new run.
+    await sim.press(`[data-predict="${spec.predict.answer}"]`);
+    assert.equal(fired(sim), 0);
+    assert.match(text(sim, "#verdict"), /Step back and run to here again/);
+    await sim.press("#back");
+    await sim.press("#step");
+    assert.equal(fired(sim), 1);
+    assert.match(text(sim, "#verdict"), /Right\./);
+    // Picking first, then jumping to the reveal, earns it once.
+    sim = await loadSim(id);
+    await sim.press(`[data-predict="${spec.predict.answer}"]`);
+    await sim.press(`[data-step="${spec.checkpoint.step}"]`);
+    await sim.press("#back");
+    await sim.press("#step");
+    assert.equal(fired(sim), 1);
+  });
+
+  test(`${id}: the verdict is announced and the drawing's name follows the step`, async () => {
+    const spec = specOf(id);
+    const sim = await loadSim(id);
+    assert.equal(sim.find("#verdict").getAttribute("aria-live"), "polite");
+    assert.match(sim.find("#svg").getAttribute("aria-label"), /Overview/);
+    await sim.press("#step");
+    const s = spec.steps[0];
+    const label = sim.find("#svg").getAttribute("aria-label");
+    assert.match(label, new RegExp(`Step 1 of ${spec.steps.length}, ${s.label}:`));
+    const reached = spec.nodes.find((n) => n.id === s.at);
+    if (reached) assert.match(label, new RegExp(`Reached: ${reached.label}`));
   });
 
   for (const w of NARROW) {

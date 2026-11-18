@@ -11,7 +11,7 @@ var FlowKit = (function () {
   "use strict";
 
   var NODE_H = 46, MARGIN = 12, PAD = 9, HEAD = 22, GAP_X = 20, GAP_Y = 26, CHANNEL = 18;
-  var SIDE = 26, NARROW_BELOW = 480, MAX_CELL = 168, MIN_CELL = 124;
+  var SIDE = 26, SIDE_COLUMN = 300, NARROW_BELOW = 480, MAX_CELL = 168, MIN_CELL = 124;
   var HUES = ["primary", "violet", "teal", "green", "red", "amber", "orange", "rose", "gold", "neutral"];
 
   // ---- Text measure: average glyph widths of the kit's system sans (Inter, Segoe UI, SF) --------------
@@ -57,6 +57,16 @@ var FlowKit = (function () {
     (spec.zones || []).forEach(function (z) {
       if (z.in && !zones[z.in]) out.push("zone " + z.id + " sits in an unknown zone " + z.in);
     });
+    // Zones nest as a tree: following `in` from any zone must end, never come back to a zone it passed.
+    var cyclic = false;
+    (spec.zones || []).forEach(function (z) {
+      var seen = [z.id];
+      for (var k = zones[z.in]; k; k = zones[k.in]) {
+        if (seen.indexOf(k.id) >= 0) { out.push("zone " + z.id + " sits inside itself: " + seen.concat(k.id).join(" in ")); cyclic = true; break; }
+        seen.push(k.id);
+      }
+    });
+    if (cyclic) return out;
     var cells = {};
     (spec.nodes || []).forEach(function (n) {
       if (ids[n.id]) out.push("node " + n.id + " is listed twice");
@@ -108,7 +118,8 @@ var FlowKit = (function () {
     var byId = {};
     (spec.zones || []).forEach(function (z) { byId[z.id] = z; });
     var chain = [];
-    for (var z = byId[zoneId]; z; z = byId[z.in]) chain.unshift(z.id);
+    // Stop at a zone already in the chain, so a cycle (which check() reports) can't loop forever.
+    for (var z = byId[zoneId]; z && chain.indexOf(z.id) < 0; z = byId[z.in]) chain.unshift(z.id);
     return chain;
   }
 
@@ -146,9 +157,10 @@ var FlowKit = (function () {
    * NARROW_BELOW or more the spec's own grid is used; below it the boxes reflow into one or two columns.
    */
   function layout(spec, width) {
-    if (width >= NARROW_BELOW) {
-      var at = {};
-      spec.nodes.forEach(function (n) { at[n.id] = n.at; });
+    // The spec's own grid whenever it fits the width as drawn; otherwise reflow, so labels never shrink.
+    var at = {};
+    spec.nodes.forEach(function (n) { at[n.id] = n.at; });
+    if (width >= NARROW_BELOW && geometry(spec, at, spec.cellWidth || 150, MARGIN, false, false).width <= width) {
       return geometry(spec, at, spec.cellWidth || 150, MARGIN, false, true);
     }
     // Narrow: two columns when the widest label fits, else one; the boxes take the width that is left.
@@ -159,6 +171,23 @@ var FlowKit = (function () {
       if (cols === 2 && (cellW < MIN_CELL || cellW < widest(spec))) continue;
       return geometry(spec, cells, cellW, SIDE, true, true);
     }
+  }
+
+  /**
+   * Where the drawing goes in a stage `content` px wide (inside its padding): beside the controls when
+   * `two` (the kit's two columns, from 900 px) and the spec's grid fits the column there; stacked above
+   * them, full width, when the grid only fits that way; else beside them, reflowed. Returns the column
+   * width the drawing is laid out for, and whether to stack.
+   */
+  function plan(spec, content, two) {
+    var at = {};
+    spec.nodes.forEach(function (n) { at[n.id] = n.at; });
+    var wide = geometry(spec, at, spec.cellWidth || 150, MARGIN, false, false).width;
+    var beside = content - SIDE_COLUMN - 16;
+    if (!two) return { stack: false, column: content };
+    if (wide <= beside) return { stack: false, column: beside };
+    if (wide <= content) return { stack: true, column: content };
+    return { stack: false, column: beside };
   }
 
   function geometry(spec, at, cellW, mx, narrow, withRoutes) {
@@ -497,7 +526,7 @@ var FlowKit = (function () {
   function mount(spec) {
     var app = document.getElementById("app");
     var steps = spec.steps;
-    var state = { step: 0, picked: null, fired: false, reduced: false, mode: null, anim: 0, playing: false, timer: 0, speed: 1 };
+    var state = { step: 0, picked: null, armed: false, fired: false, reduced: false, mode: null, anim: 0, playing: false, timer: 0, speed: 1 };
     var L = null;
     var els = {};
     var sim = window.createSim({
@@ -524,7 +553,7 @@ var FlowKit = (function () {
       app.innerHTML =
         (p ? '<details class="panel predict" open><summary class="q">' + esc(p.question) + '</summary><div class="chips" role="group" aria-label="Your prediction">' +
           p.options.map(function (o) { return '<button class="chip" type="button" data-predict="' + esc(o.id) + '" aria-pressed="false">' + esc(o.label) + "</button>"; }).join("") +
-          '</div><p class="verdict" id="verdict"></p></details>' : "") +
+          '</div><p class="verdict" id="verdict" aria-live="polite"></p></details>' : "") +
         '<section class="panel stage"><div class="view scroll" tabindex="0" role="region" aria-label="Diagram"><svg id="svg" role="img" aria-label="' + esc(spec.title) + '"></svg></div>' +
         '<div class="side"><p class="caption" id="caption" role="status"><strong class="fk-cap-h" id="cap-h"></strong><span id="cap-t"></span></p>' +
         '<nav class="fk-steps" aria-label="Steps"><button class="pill" type="button" data-step="0">Overview</button>' + steps.map(function (s, i) { return '<button class="pill" type="button" data-step="' + (i + 1) + '">' + (i + 1) + " · " + esc(s.label) + "</button>"; }).join("") + "</nav>" +
@@ -543,7 +572,7 @@ var FlowKit = (function () {
       els.speed = app.querySelector("#speed");
       app.querySelector("#step").addEventListener("click", function () { stop(); go(Math.min(steps.length, state.step + 1)); });
       app.querySelector("#back").addEventListener("click", function () { stop(); go(Math.max(0, state.step - 1)); });
-      app.querySelector("#reset").addEventListener("click", function () { stop(); state.picked = null; go(0); });
+      app.querySelector("#reset").addEventListener("click", function () { stop(); state.picked = null; state.armed = false; go(0); });
       els.play.addEventListener("click", function () { if (state.playing) stop(); else play(); });
       els.speed.addEventListener("click", function () {
         var speeds = [1, 1.5, 2, 0.5];
@@ -552,22 +581,37 @@ var FlowKit = (function () {
         els.speed.setAttribute("aria-label", "Speed " + state.speed + "x");
       });
       els.pills.forEach(function (b) { b.addEventListener("click", function () { stop(); go(+b.getAttribute("data-step")); }); });
-      els.chips.forEach(function (b) { b.addEventListener("click", function () { state.picked = b.getAttribute("data-predict"); update(); }); });
+      // A pick counts once the learner runs to the reveal after making it: picked before the reveal step, or
+      // picked after it and then stepped back before it again.
+      els.chips.forEach(function (b) {
+        b.addEventListener("click", function () {
+          state.picked = b.getAttribute("data-predict");
+          state.armed = !spec.predict || state.step < spec.predict.revealAt;
+          update();
+        });
+      });
       document.addEventListener("visibilitychange", function () { if (document.hidden) { stop(); finishMotion(); } });
-      if (typeof ResizeObserver === "function") new ResizeObserver(function () { draw(false); }).observe(els.view);
+      if (typeof ResizeObserver === "function") new ResizeObserver(function () { draw(false); }).observe(app.querySelector(".stage"));
       draw(true);
       update();
     }
 
     /** Lay out for the drawing's width; redraw only when the layout mode changes. */
     function draw(force) {
-      var w = (els.view && els.view.clientWidth) || 700;
-      var mode = w < NARROW_BELOW ? "narrow:" + Math.round(w / 8) : "wide";
+      // Two columns only when the spec's grid fits beside the controls at full size; else stack (flow-kit.css).
+      var stage = app.querySelector(".stage");
+      var two = !!(window.matchMedia && window.matchMedia("(min-width: 900px)").matches);
+      var where = plan(spec, Math.max(0, ((stage && stage.clientWidth) || 728) - 28), two);
+      if (stage) stage.classList.toggle("fk-stack", where.stack);
+      var w = Math.min(where.column, (els.view && els.view.clientWidth) || where.column);
+      var next = layout(spec, w);
+      var mode = next.narrow ? "narrow:" + next.width + "x" + next.height : "wide";
       if (!force && mode === state.mode) return;
       state.mode = mode;
-      L = layout(spec, w);
+      L = next;
       els.svg.setAttribute("viewBox", "0 0 " + L.width + " " + L.height);
       els.svg.setAttribute("width", String(L.width));
+      els.svg.style.maxWidth = "min(100%, " + L.width + "px)"; // never drawn larger than laid out, so labels stay 12 px
       els.svg.innerHTML = drawSvg(spec, L);
       paint();
       reportSize();
@@ -576,9 +620,22 @@ var FlowKit = (function () {
     function go(n) {
       var from = state.step;
       state.step = n;
+      if (spec.predict && state.picked && n < spec.predict.revealAt) state.armed = true;
       update();
       if (n > from && n === from + 1) animate(steps[n - 1]);
       else finishMotion();
+    }
+
+    /** The drawing's accessible name: the diagram, then the step on screen, the arrows it runs and the box it reaches. */
+    function describe() {
+      var s = steps[state.step - 1];
+      if (!s) return spec.title + ". Overview: no step yet.";
+      var name = function (id) { return spec.nodes.filter(function (n) { return n.id === id; }).map(function (n) { return n.label; })[0] || id; };
+      var arrows = (s.edges || []).map(function (id) {
+        var e = spec.edges.filter(function (x) { return x.id === id; })[0];
+        return e ? name(e.from) + " to " + name(e.to) : id;
+      });
+      return spec.title + ". Step " + state.step + " of " + steps.length + ", " + s.label + ": " + arrows.join(", then ") + (s.at ? ". Reached: " + name(s.at) + "." : ".");
     }
 
     /** Edge and box states for the current step: now, seen (an earlier step), or neither. */
@@ -617,14 +674,18 @@ var FlowKit = (function () {
       });
       els.chips.forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-predict") === state.picked)); });
       var p = spec.predict;
+      var revealed = !p || (state.step >= p.revealAt && state.picked && state.armed);
       if (els.verdict) {
         if (p && state.step >= p.revealAt) {
-          var right = state.picked === p.answer;
           var pick = p.options.filter(function (o) { return o.id === state.picked; })[0];
-          els.verdict.textContent = (pick ? "You picked: " + pick.label + ". " + (right ? "Right. " : "Not so. ") : "") + p.why;
+          if (!pick) els.verdict.textContent = "Make your prediction above first, then step to here again to check it.";
+          else if (!state.armed) els.verdict.textContent = "You picked: " + pick.label + ". Step back and run to here again to check it.";
+          else els.verdict.textContent = "You picked: " + pick.label + ". " + (state.picked === p.answer ? "Right. " : "Not so. ") + p.why;
         } else els.verdict.textContent = "";
       }
-      if (!state.fired && state.step === spec.checkpoint.step) {
+      els.svg.setAttribute("aria-label", describe());
+      // The checkpoint: the learner reached the step with a prediction committed before it.
+      if (!state.fired && revealed && state.step >= spec.checkpoint.step) {
         state.fired = true;
         sim.checkpoint(spec.checkpoint.id);
       }
@@ -693,7 +754,7 @@ var FlowKit = (function () {
     }
   }
 
-  return { mount: mount, layout: layout, check: check, textWidth: textWidth, textRoom: textRoom, icons: Object.keys(ICONS), NARROW_BELOW: NARROW_BELOW, NODE_H: NODE_H };
+  return { mount: mount, layout: layout, plan: plan, SIDE_COLUMN: SIDE_COLUMN, check: check, textWidth: textWidth, textRoom: textRoom, icons: Object.keys(ICONS), NARROW_BELOW: NARROW_BELOW, NODE_H: NODE_H };
 })();
 /* end flow-kit v1 */
 
