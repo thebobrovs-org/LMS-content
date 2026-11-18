@@ -22,7 +22,7 @@
 # Settings it reads (Settings → Secrets and variables → Actions):
 #   secret   ELEVENLABS_API_KEY
 #   vars     AUDIO_BUCKET, GCP_WIF_PROVIDER, GCP_SERVICE_ACCOUNT, and optionally READALONG_VOICE
-#            (default Bella) and READALONG_MODEL (default eleven_multilingual_v2)
+#            (default Nichalia, XfNU2rGpBa01ckF309OY) and READALONG_MODEL (default eleven_multilingual_v2)
 name: Read-along audio
 
 on:

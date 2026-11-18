@@ -211,7 +211,7 @@ the narration text, and the sentence cues. Never write that file by hand:
 
 To choose a voice, add the label **`audio-samples`** (or run the workflow by hand in
 *samples* mode): it reads one paragraph in Bella, Alice and River and attaches the MP3s
-to the run. The default voice is Bella (`hpp4J3VqNfWAUOO0d1Us`); the repo variable
+to the run. The default voice is Nichalia (`XfNU2rGpBa01ckF309OY`); the repo variable
 `READALONG_VOICE` changes it, and the next run re-narrates every lesson in the new voice.
 
 By hand: `node scripts/generate-readalong.mjs topics/<dir>/<name>.mdx --dry-run` prints the
