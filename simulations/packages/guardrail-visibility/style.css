@@ -1,0 +1,137 @@
+/* sim-kit v1: copied verbatim from simulations/kit/sim-kit.css. Edit it there, never here. */
+/* One look for every sim (skills/lms-authoring-simulations/SKILL.md, "One visual style").
+   Hues: primary = now / your action; violet = the model; teal = the runtime or a tool;
+   green = pass, kept, allowed; red = fail, lost, denied; amber = a limit or a line not to
+   cross; orange, rose, gold = extra categories a sim needs (use in that order). */
+:root {
+  --bg: #ffffff; --fg: #0f172a; --muted: #475569; --surface: #f1f5f9;
+  --panel: #ffffff; --border: #cbd5e1; --inset: #f8fafc;
+  --primary: #2563eb; --primary-contrast: #ffffff;
+  --violet: #6d28d9; --teal: #0f766e; --green: #15803d; --red: #b91c1c;
+  --amber: #b45309; --orange: #9a3412; --rose: #be123c; --gold: #854d0e;
+  --r-sm: 4px; --r-md: 8px; --r-lg: 14px; --dur: .6s;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+  --bg: #0f172a; --fg: #f8fafc; --muted: #a5b1c2; --surface: #1e293b;
+  --panel: #1e293b; --border: #475569; --inset: #0f172a;
+  --primary: #60a5fa; --primary-contrast: #0b1220;
+  --violet: #c4b5fd; --teal: #2dd4bf; --green: #4ade80; --red: #fca5a5;
+  --amber: #fbbf24; --orange: #fb923c; --rose: #fda4af; --gold: #fde047;
+  }
+}
+[data-theme="light"] {
+  --bg: #ffffff; --fg: #0f172a; --muted: #475569; --surface: #f1f5f9;
+  --panel: #ffffff; --border: #cbd5e1; --inset: #f8fafc;
+  --primary: #2563eb; --primary-contrast: #ffffff;
+  --violet: #6d28d9; --teal: #0f766e; --green: #15803d; --red: #b91c1c;
+  --amber: #b45309; --orange: #9a3412; --rose: #be123c; --gold: #854d0e;
+}
+[data-theme="dark"] {
+  --bg: #0f172a; --fg: #f8fafc; --muted: #a5b1c2; --surface: #1e293b;
+  --panel: #1e293b; --border: #475569; --inset: #0f172a;
+  --primary: #60a5fa; --primary-contrast: #0b1220;
+  --violet: #c4b5fd; --teal: #2dd4bf; --green: #4ade80; --red: #fca5a5;
+  --amber: #fbbf24; --orange: #fb923c; --rose: #fda4af; --gold: #fde047;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 14px; }
+#app { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+h2 { font-size: 13px; margin: 0 0 8px; color: var(--muted); font-weight: 600; }
+
+/* Controls: pills for choices (aria-pressed), one primary button for the main action */
+button { font: inherit; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--fg); cursor: pointer; }
+button.primary { background: var(--primary); border-color: var(--primary); color: var(--primary-contrast); font-weight: 600; }
+.chip, .pill { padding: 6px 12px; font-size: 13px; }
+.chip[aria-pressed="true"], .pill[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--primary-contrast); font-weight: 600; }
+input[type="range"] { width: 200px; max-width: 100%; accent-color: var(--primary); }
+.controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-top: 12px; }
+.chips, .seg, .buttons { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.seglabel { font-size: 12px; color: var(--muted); margin-right: 4px; }
+
+/* The frame: predict card, stage (drawing + caption + controls), result panels, legend */
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 14px; }
+.predict .q { margin: 0 0 10px; line-height: 1.45; }
+.verdict { margin: 8px 0 0; font-weight: 600; }
+.verdict:empty { display: none; }
+.scroll { overflow-x: auto; }
+.stage svg { width: 100%; height: auto; display: block; }
+.caption { margin: 8px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--surface); line-height: 1.5; min-height: 3em; }
+.legend { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+/* Drawing: flat 2-D shapes, hue stroke over a light tint of the same hue */
+.k-title { fill: var(--fg); font-size: 13px; font-weight: 700; }
+.k-label { fill: var(--fg); font-size: 12px; font-weight: 600; }
+.k-small { fill: var(--muted); font-size: 10.5px; }
+.k-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.k-box { fill: var(--panel); stroke: var(--border); stroke-width: 1.5; }
+.k-now { stroke: var(--primary); stroke-width: 3; }
+.k-off { fill: var(--surface); stroke: var(--border); stroke-dasharray: 4 4; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+.reduced *, .reduced *::before, .reduced *::after { transition: none !important; animation: none !important; }
+/* end sim-kit v1 */
+
+/* Guardrail visibility: the approved two-window comparison. */
+
+    
+    #app *{box-sizing:border-box}
+    #app .b-sim{background:var(--bg);padding:0;display:grid;gap:12px}
+    #app .b-panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px}
+    #app .b-q{margin:0 0 12px;padding-right:54px}
+    #app .b-chips,#app .b-controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    #app button,#app select{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:9px 13px;min-height:42px;max-width:100%}
+    #app button[aria-pressed=true],#app .b-primary{background:var(--primary);color:var(--primary-contrast);border-color:var(--primary)}
+    #app .b-verdict{margin:10px 0 0;font-weight:600}
+    #app .b-verdict:empty{display:none}
+    #app .b-label{font-size:12px;color:var(--muted);font-weight:600}
+    #app .b-source{margin-top:14px;padding:12px 16px;border:2px solid var(--violet);border-radius:8px;background:color-mix(in srgb,var(--violet) 7%,var(--panel))}
+    #app .b-source strong{display:block;margin:3px 0}
+    #app .b-source code{font:12px/1.5 ui-monospace,monospace;overflow-wrap:anywhere;color:var(--fg);background:transparent}
+    #app .b-fork{height:28px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    #app .b-fork span{width:2px;height:100%;background:var(--muted);justify-self:center;position:relative}
+    #app .b-fork span:after{content:"";position:absolute;bottom:0;left:-4px;width:10px;height:10px;border-bottom:2px solid var(--muted);border-right:2px solid var(--muted);transform:rotate(45deg)}
+    #app .b-windows{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    #app .b-window{border:1.5px solid var(--teal);border-radius:8px;padding:12px;min-width:0;display:flex;flex-direction:column;gap:10px}
+    #app .b-head{display:flex;align-items:center;gap:8px;font-weight:600}
+    #app .b-head svg{width:18px;height:18px;color:var(--teal)}
+    #app .b-scan{position:relative;min-height:100px;background:var(--surface);border-radius:4px;padding:13px;display:flex;flex-direction:column;justify-content:center;gap:8px;overflow:hidden}
+    #app .b-scan-line{position:absolute;left:12px;right:12px;top:14px;height:2px;background:var(--teal)}
+    #app .b-scan b{font-weight:500;overflow-wrap:anywhere}
+    #app .b-compare{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    #app .b-compare span{padding:6px;border:1px solid var(--border);border-radius:4px;text-align:center;flex:1;font-size:13px}
+    #app .b-compare strong{font-size:22px;color:var(--muted);font-weight:500}
+    #app .b-badge{font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;color:var(--muted);min-height:23px}
+    #app .b-badge:before{content:"○";font-size:17px}
+    #app [data-outcome=pass]{color:var(--green)}
+    #app [data-outcome=pass]:before{content:"✓"}
+    #app [data-outcome=stop]{color:var(--red)}
+    #app [data-outcome=stop]:before{content:"×"}
+    #app [data-outcome=log]{color:var(--amber)}
+    #app [data-outcome=log]:before{content:"!"}
+    #app .b-floor{font-size:11px;color:var(--muted);border-left:3px solid var(--amber);padding-left:8px}
+    #app .b-bottom{margin-top:14px;padding:10px 12px;background:var(--surface);border-radius:8px;display:flex;align-items:center;gap:10px}
+    #app .b-barrier{height:28px;width:5px;flex:none;background:var(--muted);border-radius:2px}
+    #app .b-controls{margin-top:14px}
+    #app .b-setting{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+    #app .b-setting select{font-size:12px;padding:7px 10px;min-height:38px}
+    #app .b-setting input{accent-color:var(--primary);width:17px;height:17px}
+    #app .b-readout{margin:12px 0 0;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+    #app .b-legend{font-size:11px;color:var(--muted);margin:0}
+    #app .b-animate .b-scan-line{animation:b10scan .6s ease-out both}
+    @keyframes b10scan{from{top:14px}to{top:86px}}
+    @media(prefers-reduced-motion:reduce){#app .b-animate .b-scan-line{animation:none}}
+    @media(max-width:480px){#app{padding:0}#app .b-sim{padding:0}#app .b-panel{padding:12px}#app .b-windows{grid-template-columns:1fr;gap:10px}#app .b-fork{height:20px;grid-template-columns:1fr}#app .b-fork span+span{display:none}#app .b-scan{min-height:84px}#app .b-q{padding-right:36px}}
+  
+.stage .outcome-track { min-width: 520px; }
+#app .b-sim { min-width: 0; grid-template-columns: minmax(0, 1fr); }
+#app .panel, #app .scroll { min-width: 0; }
+.packet { fill:var(--violet); stroke:var(--violet); stroke-width:2; transition:transform var(--dur) ease-out; }
+.packet rect { fill-opacity:.12; }
+.packet path { fill:none; }
+#app .b-primary { font-weight:600; }
+#app .b-head { margin:0; color:var(--fg); font-size:14px; }
