@@ -165,19 +165,19 @@ test("workflow-vs-agent-stepper: with the expected result both change the addres
   assert.ok(!sim.events.includes("checkpoint:observe-who-decides"));
 });
 
-test("rag-retrieval-tuner: recall 1/1 and still 60 days; the reranker makes it worse", async () => {
+test("rag-retrieval-tuner: recall 1/1 and still 60 days; a bigger net or the reranker does not fix it", async () => {
   const sim = await loadSim("rag-retrieval-tuner");
   await sim.press('[data-predict="right"]');
   assert.equal(text(sim, "#verdict"), "", "no verdict before the first cast");
   await sim.press("#cast");
-  assert.match(text(sim, "#verdict"), /^Not quite: the agent said 60 days/);
+  assert.match(text(sim, "#verdict"), /^Not quite: on your first cast the agent said 60 days/);
   assert.match(text(sim, "#caption"), /^Grounded, cited and wrong/);
   assert.match(text(sim, "#caption"), /recall 1\/1/);
   assert.match(text(sim, "#caption"), /precision 1\/3/);
   await sim.press("#topk", "6");
   assert.match(text(sim, "#caption"), /bigger net/);
   await sim.press("#rerank");
-  assert.match(text(sim, "#caption"), /reranker made it worse/);
+  assert.match(text(sim, "#caption"), /reranker still doesn't fix it/);
   assert.ok(!sim.events.includes("checkpoint:observe-stale-grounding"));
 });
 
@@ -213,4 +213,34 @@ test("rag-retrieval-tuner: the verdict grades the first cast as it was set, not 
   await sim.press("#cast");
   assert.match(text(sim, "#verdict"), /^Right: on your first cast the agent said 30 days/);
   assert.equal(sim.find("#verdict").getAttribute("role"), "status");
+});
+
+test("rag-retrieval-tuner: with top 1 the narration never claims the current policy was caught", async () => {
+  const sim = await loadSim("rag-retrieval-tuner");
+  await sim.press("#topk", "1");
+  assert.match(text(sim, "#question"), /top 1 medium chunks\. What will/);
+  await sim.press('[data-predict="wrong"]');
+  await sim.press("#cast");
+  assert.match(text(sim, "#caption"), /too small to reach the current policy \(recall 0\/1\)/);
+  assert.doesNotMatch(text(sim, "#caption"), /is in the bucket/);
+  assert.match(text(sim, "#verdict"), /^Right: .*only reached the superseded FAQ/);
+  await sim.press("#topk", "2");
+  assert.match(text(sim, "#caption"), /too small to reach the current policy/);
+});
+
+test("rag-retrieval-tuner: Reset restarts the prediction cycle but the checkpoint fires once", async () => {
+  const sim = await loadSim("rag-retrieval-tuner");
+  await sim.press('[data-predict="right"]');
+  await sim.press("#cast");
+  await sim.press("#filter");
+  assert.ok(sim.events.includes("checkpoint:observe-stale-grounding"));
+  await sim.press("#reset");
+  assert.equal(text(sim, "#verdict"), "");
+  assert.equal(text(sim, "#cast"), "Cast the net");
+  assert.match(text(sim, "#caption"), /Make your prediction/);
+  await sim.press("#filter");
+  await sim.press('[data-predict="right"]');
+  await sim.press("#cast");
+  assert.match(text(sim, "#verdict"), /^Right: on your first cast the agent said 30 days/);
+  assert.equal(sim.events.filter((e) => e === "checkpoint:observe-stale-grounding").length, 1);
 });

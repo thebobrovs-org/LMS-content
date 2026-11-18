@@ -62,7 +62,7 @@ const START = { chunk: "medium", topK: 3, rerank: false, filter: false };
 let pick = { ...START };
 let prediction = null;
 let cast = false; // the first cast has happened; after it every change re-casts
-let firstResult = null;
+let firstResult = null; // { kind, policyCaught } from the first cast after a prediction cycle starts
 let sawWrong = false;
 let reported = false;
 let els = {};
@@ -231,7 +231,7 @@ function drawScene(r, a) {
 function build() {
   app.innerHTML = `
     <div class="panel predict">
-      <p class="q"><strong>Predict first.</strong> A customer asks: “${esc(QUESTION)}” The net catches the top 3 chunks, and the current 2026 policy (30 days) is among them. What will the agent answer?</p>
+      <p class="q" id="question"></p>
       <div class="chips" role="group" aria-label="Your prediction">
         ${Object.entries(PREDICT).map(([k, v]) => `<button type="button" class="chip" data-predict="${k}" aria-pressed="false">${esc(v)}</button>`).join("")}
       </div>
@@ -257,7 +257,7 @@ function build() {
     </div>
     <p class="legend">Green: a fish the right answer needs. Red: the superseded 2024 FAQ. Grey: off-topic. Precision@k = wanted fish in the net ÷ fish in the net; recall@k = wanted fish in the net ÷ all wanted fish. Scores are illustrative, scripted for this exercise: vector similarity, or reranker relevance when the catch is reranked.</p>`;
   els = {};
-  for (const id of ["svg", "dock", "verdict", "caption", "topk", "kval", "rerank", "filter", "cast", "reset"]) els[id] = app.querySelector(`#${id}`);
+  for (const id of ["svg", "dock", "question", "verdict", "caption", "topk", "kval", "rerank", "filter", "cast", "reset"]) els[id] = app.querySelector(`#${id}`);
   buildScene();
   app.querySelectorAll("[data-predict]").forEach((b) => b.addEventListener("click", () => { prediction = b.dataset.predict; sim.event("predicted", { prediction }); render(false); }));
   app.querySelectorAll("[data-chunk]").forEach((b) => b.addEventListener("click", () => change("chunk", b.dataset.chunk)));
@@ -265,7 +265,8 @@ function build() {
   els.rerank.addEventListener("click", () => change("rerank", !pick.rerank));
   els.filter.addEventListener("click", () => change("filter", !pick.filter));
   els.cast.addEventListener("click", () => { cast = true; render(true); });
-  els.reset.addEventListener("click", () => { pick = { ...START }; render(); });
+  // Reset restarts the exercise; only the once-per-session checkpoint latch survives.
+  els.reset.addEventListener("click", () => { pick = { ...START }; cast = false; prediction = null; firstResult = null; sawWrong = false; render(); });
 }
 
 function change(key, value) {
@@ -279,25 +280,35 @@ function captionText(r, a) {
   const R = `recall ${r.hit.length}/${r.want.length}`;
   if (a.kind === "wrong") {
     const why = pick.rerank
-      ? "The reranker made it worse: it judges how well a chunk answers the question, and the superseded FAQ answers it most directly. Relevance is not freshness."
+      ? "The reranker still doesn't fix it: it judges how well a chunk answers the question, and the superseded FAQ answers it most directly. Relevance is not freshness."
       : pick.topK > 3
         ? "A bigger net only adds fish behind it; the superseded FAQ is still the first policy the model reads."
         : "The superseded FAQ ranks first: its meaning is closest to the question, and similarity can't tell an old policy from the current one.";
-    return `Grounded, cited and wrong. The current policy is in the bucket (${R}), but ${P}, and the stale fish is the first policy the model reads, so it faithfully quotes 60 days. ${why} Throw it back before search.`;
+    const where = r.hit.length ? `The current policy is in the bucket (${R}), but ${P}, and the stale fish` : `The net is too small to reach the current policy (${R}), and the stale fish`;
+    return `Grounded, cited and wrong. ${where} is the first policy the model reads, so it faithfully quotes 60 days. ${why} Throw it back before search.`;
   }
   if (a.kind === "none") return `No policy fish in the net (${R}): the model honestly says it can't find the answer. Widen the net.`;
   if (a.kind === "partial") return `Right window, but the final-sale rule is still in the pond (${R}). The filter removed the wrong answer; to complete it, rerank the catch or widen the net.`;
-  return `Correct and complete (${P}, ${R}). The filter threw the superseded fish back before search, so the first policy the model reads is the current one.${r.hit.length < r.net.length ? " The grey fish left in the net are harmless noise: low precision costs tokens, but a stale fish costs the answer." : ""}`;
+  return `Correct and complete (${P}, ${R}). The filter threw the superseded fish back before search, so the first policy the model reads is the current one.${r.hit.length < r.net.length ? " In this exercise the model ignores the grey fish left in the net, so here low precision only costs tokens; the stale fish cost the answer. Real models can be distracted by off-topic context too." : ""}`;
+}
+
+// The question describes the net exactly as it is set for the cast the learner is about to make.
+function questionHtml(r) {
+  const net = `the top ${pick.topK} ${pick.chunk === "large" ? "whole documents" : `${SIZES[pick.chunk].toLowerCase()} chunks`}${pick.rerank ? " after reranking" : ""}${pick.filter ? ", with superseded documents filtered out" : ""}`;
+  const policy = r.net.some((c) => c.role === "current") ? ", and the current 2026 policy (30 days) is among them" : "";
+  return `<strong>Predict first.</strong> A customer asks: “${esc(QUESTION)}” The net will catch ${net}${policy}. What will the agent answer?`;
 }
 
 function verdictText() {
   if (!prediction || !firstResult) return "";
-  const said = { right: "30 days", partial: "30 days", wrong: "60 days", none: "that it can't find it" }[firstResult];
-  const hit = prediction === firstResult || (prediction === "right" && firstResult === "partial");
-  if (firstResult === "wrong") {
-    return hit
-      ? "Right: the agent said 60 days. The 30-day policy was in the net, but the superseded FAQ ranked above it."
-      : "Not quite: the agent said 60 days. The 30-day policy was in the net, but the superseded FAQ ranked above it and grounded the answer.";
+  const { kind, policyCaught } = firstResult;
+  const said = { right: "30 days", partial: "30 days", wrong: "60 days", none: "that it can't find it" }[kind];
+  const hit = prediction === kind || (prediction === "right" && kind === "partial");
+  if (kind === "wrong") {
+    const why = policyCaught
+      ? "The 30-day policy was in the net, but the superseded FAQ ranked above it and grounded the answer."
+      : "The net only reached the superseded FAQ, so it grounded the answer.";
+    return `${hit ? "Right" : "Not quite"}: on your first cast the agent said 60 days. ${why}`;
   }
   return `${hit ? "Right" : "Not quite"}: on your first cast the agent said ${said}.`;
 }
@@ -316,8 +327,9 @@ function render(animate) {
   const a = answer(r.net);
   drawScene(r, a);
   els.caption.textContent = captionText(r, a);
+  if (!cast) els.question.innerHTML = questionHtml(r);
   if (cast) {
-    if (!firstResult) firstResult = a.kind;
+    if (!firstResult) firstResult = { kind: a.kind, policyCaught: r.net.some((c) => c.role === "current") };
     if (a.kind === "wrong") sawWrong = true;
     if (animate !== false) sim.event("retrieve", { chunk: pick.chunk, topK: pick.topK, rerank: pick.rerank, filter: pick.filter, result: a.kind });
     if (pick.filter && sawWrong && (a.kind === "right" || a.kind === "partial") && !reported) {
