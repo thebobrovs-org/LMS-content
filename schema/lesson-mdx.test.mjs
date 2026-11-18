@@ -131,3 +131,38 @@ test("Flashcard and Step identity, former-ids and objectives are collected, and 
     assert.match(res.reason, reason, mdx);
   }
 });
+
+test("a <ReadAlong> with an https or /media/ src and literal cues compiles, and its src is collected", async () => {
+  const cues = '[{ start: 0, end: 1.2, text: "Why cache?", paragraph: 0 }, { start: 1.3, end: 4, text: "A cache stores work.", paragraph: 1 }]';
+  for (const src of ["https://storage.googleapis.com/hyperstack-audio/topics/x.mp3", "/media/audio/x.mp3"]) {
+    const r = await run(`<ReadAlong title="Listen" src="${src}" cues={${cues}} />`);
+    assert.equal(r.ok, true, r.reason);
+    assert.deepEqual(r.urls, [src]);
+  }
+  const r = await run('<ReadAlong src="/media/audio/x.mp3" cues={[{ start: 0, end: 1, text: "Hi." }]} />');
+  assert.equal(r.ok, true, r.reason);
+});
+
+test("a <ReadAlong> with a missing or unsafe src, or missing, code or malformed cues, is refused", async () => {
+  const ok = '[{ start: 0, end: 1, text: "Hi." }]';
+  for (const [mdx, reason] of [
+    [`<ReadAlong cues={${ok}} />`, /needs a src string/],
+    [`<ReadAlong src="javascript:alert(1)" cues={${ok}} />`, /not "javascript:"/],
+    [`<ReadAlong src={audio} cues={${ok}} />`, /may carry only literal data/],
+    ['<ReadAlong src="/media/a.mp3" />', /must be a non-empty array/],
+    ['<ReadAlong src="/media/a.mp3" cues="[]" />', /must be a non-empty array/],
+    ['<ReadAlong src="/media/a.mp3" cues={[]} />', /must be a non-empty array/],
+    ['<ReadAlong src="/media/a.mp3" cues={cues} />', /may carry only literal data/],
+    ['<ReadAlong src="/media/a.mp3" cues={["Hi."]} />', /cue 0 must be an object/],
+    ['<ReadAlong src="/media/a.mp3" cues={[{ start: 2, end: 1, text: "Hi." }]} />', /0 <= start <= end/],
+    ['<ReadAlong src="/media/a.mp3" cues={[{ start: "0", end: 1, text: "Hi." }]} />', /0 <= start <= end/],
+    ['<ReadAlong src="/media/a.mp3" cues={[{ start: 0, end: 1, text: " " }]} />', /non-empty text/],
+    ['<ReadAlong src="/media/a.mp3" cues={[{ start: 0, end: 1, text: "Hi.", paragraph: 1.5 }]} />', /paragraph must be a whole number/],
+    ['<ReadAlong src="/media/a.mp3" cues={[{ start: 0, end: 1, text: "Hi.", speaker: "x" }]} />', /unknown key "speaker"/],
+    ['<ReadAlong src="/media/a.mp3" cues={[{ start: 2, end: 3, text: "B." }, { start: 1, end: 2, text: "A." }]} />', /cue 1 starts before/],
+  ]) {
+    const r = await run(mdx);
+    assert.equal(r.ok, false, `accepted: ${mdx}`);
+    assert.match(r.reason, reason, mdx);
+  }
+});

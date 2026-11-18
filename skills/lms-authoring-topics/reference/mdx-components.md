@@ -191,16 +191,19 @@ Step ids derive from a hash of the **title**, so keep titles stable once publish
 
 Synchronized audio read-along player with sentence-level highlighting and click-to-seek.
 Use `scripts/generate-readalong.mjs` to convert lesson prose via ElevenLabs and emit
-the MP3 + cues literal. Host MP3s in GCS (`https://storage.googleapis.com/<bucket>/...`)
-rather than committing large binary audio files to git.
+the MP3 + cues literal (`--dry-run` first: it prints the narration and its character count).
+Host MP3s in GCS (`https://storage.googleapis.com/<bucket>/...`) rather than committing
+large binary audio files to git; with `--bucket` the script uploads the MP3 under a name
+that carries a hash of its content, so regenerating a lesson gives a new URL and a cached
+old MP3 never plays against new cues. The bucket must be public-read.
 
 ```mdx
 <ReadAlong
   title="Listen to this section"
-  src="https://storage.googleapis.com/hyperstack-audio/topics/systems/caching.mp3"
+  src="https://storage.googleapis.com/hyperstack-audio/topics/systems/caching.3f9a1c2e.mp3"
   cues={[
-    { start: 0.035, end: 0.917, text: "Why cache?" },
-    { start: 1.196, end: 10.356, text: "A cache stores the result of expensive work..." }
+    { start: 0.035, end: 0.917, text: "Why cache?", paragraph: 0 },
+    { start: 1.196, end: 10.356, text: "A cache stores the result of expensive work...", paragraph: 1 }
   ]}
 />
 ```
@@ -208,6 +211,5 @@ rather than committing large binary audio files to git.
 | Prop | Type | Notes |
 |------|------|-------|
 | `src` | string (required) | HTTPS URL (e.g. GCS bucket) or `/media/...` path to the MP3. |
-| `cues` | `{ start: number, end: number, text: string }[]` (required) | Literal array of sentence cues in seconds. |
-| `title` | string | Optional label shown in the player header. |
-
+| `cues` | `{ start: number, end: number, text: string, paragraph?: number }[]` (required) | Literal, non-empty array of sentence cues in seconds, sorted by `start`, each with `0 <= start <= end`. `paragraph` (a whole number) groups consecutive cues into one paragraph. Content CI refuses anything else. |
+| `title` | string | Label shown in the player header and as the section's accessible name. Give each `<ReadAlong>` on a page its own. |
