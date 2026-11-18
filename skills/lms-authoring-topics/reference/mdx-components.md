@@ -186,3 +186,53 @@ Before inserting, say which bucket a new key will hit, then verify.
 
 Step ids derive from a hash of the **title**, so keep titles stable once published
 (changing a title resets that step's completion). Titles may contain apostrophes.
+
+## `<ReadAlong>`
+
+Synchronized audio read-along player with sentence-level highlighting and click-to-seek.
+
+**The usual way: put `<ReadAlong />` in the lesson and let the workflow narrate it.**
+
+```mdx
+<ReadAlong title="Listen to this lesson" />
+```
+
+With no `src` and no `cues`, the player renders the lesson's `audio/<topic id>.json`
+(`ReadAlongAudioSchema`): the MP3's URL in the audio bucket, the voice and model, a hash of
+the narration text, and the sentence cues. Never write that file by hand:
+
+1. Add `<ReadAlong />` to the lesson (one per lesson) and open the PR.
+2. Add the label **`audio`** to the PR. The *Read-along audio* workflow
+   (`.github/workflows/readalong.yml`) narrates the lesson with ElevenLabs
+   (`scripts/generate-readalong.mjs`), uploads the MP3 and commits `audio/<id>.json` to the PR.
+   While the label is on, each push re-narrates only lessons whose text changed.
+3. Review the cues like any other change. Content CI fails when the file is missing, and
+   warns when the lesson's prose has changed since the audio was made.
+
+To choose a voice, add the label **`audio-samples`** (or run the workflow by hand in
+*samples* mode): it reads one paragraph in Bella, Alice and River and attaches the MP3s
+to the run. The default voice is Bella (`hpp4J3VqNfWAUOO0d1Us`); the repo variable
+`READALONG_VOICE` changes it, and the next run re-narrates every lesson in the new voice.
+
+By hand: `node scripts/generate-readalong.mjs topics/<dir>/<name>.mdx --dry-run` prints the
+narration and its cost in characters (about one credit each); drop `--dry-run` and pass
+`--bucket` with `ELEVENLABS_API_KEY` set and `gcloud` signed in to write the file.
+
+**Inline, for a one-off clip:** give both `src` and `cues` instead.
+
+```mdx
+<ReadAlong
+  title="Listen to this section"
+  src="https://storage.googleapis.com/hyperstack-lms-audio/topics/systems/caching.3f9a1c2e.mp3"
+  cues={[
+    { start: 0.035, end: 0.917, text: "Why cache?", paragraph: 0 },
+    { start: 1.196, end: 10.356, text: "A cache stores the result of expensive work...", paragraph: 1 }
+  ]}
+/>
+```
+
+| Prop | Type | Notes |
+|------|------|-------|
+| `src` | string | Inline only, with `cues`: HTTPS URL or `/media/...` path to the MP3. |
+| `cues` | `{ start: number, end: number, text: string, paragraph?: number }[]` | Inline only, with `src`: a literal, non-empty array of sentence cues in seconds, sorted by `start`, each with `0 <= start <= end`. `paragraph` (a whole number) groups consecutive cues into one paragraph. |
+| `title` | string | Label shown in the player header and as the section's accessible name. Give each `<ReadAlong>` on a page its own. |

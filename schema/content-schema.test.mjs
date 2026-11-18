@@ -226,7 +226,7 @@ test("stable ids (ADR 0004): optional id and formerIds on flashcards and quiz it
 test("the enum tuples and the MDX component list are the contract's literals", () => {
   assert.deepEqual(STATUSES, ["draft", "published"]);
   assert.deepEqual(DIFFICULTIES, ["beginner", "intermediate", "advanced"]);
-  assert.deepEqual(MDX_COMPONENTS, ["YouTube", "Callout", "Simulation", "Flashcard", "Quiz", "Steps", "Step", "Figure", "Tip", "Term"]);
+  assert.deepEqual(MDX_COMPONENTS, ["YouTube", "Callout", "Simulation", "Flashcard", "Quiz", "Steps", "Step", "Figure", "Tip", "Term", "ReadAlong"]);
 });
 
 test("a suggested video carries its metadata and chapters", () => {

@@ -459,3 +459,31 @@ test("knowledge: a disputed record touching a simulation or a checkpoint that a 
   }));
   assert.equal(draftOnly.code, 0, draftOnly.out);
 });
+
+test("read-along audio: a prop-less <ReadAlong /> needs a valid audio/<id>.json; stale text warns; a file nobody renders fails", async () => {
+  const { extractSpokenText, narrationHash } = await import("./readalong-text.mjs");
+  const lesson = `${TOPIC}\n<ReadAlong title="Listen" />\n`;
+  const audio = (patch = {}) =>
+    JSON.stringify({
+      src: "https://storage.googleapis.com/hyperstack-lms-audio/topics/fundamentals/arrays.abc.mp3",
+      voice: "hpp4J3VqNfWAUOO0d1Us",
+      model: "eleven_multilingual_v2",
+      textHash: narrationHash(extractSpokenText(lesson)),
+      cues: [{ start: 0, end: 1, text: "Arrays.", paragraph: 0 }],
+      ...patch,
+    });
+  const ok = run(tree({ "topics/fundamentals/arrays.mdx": lesson, "audio/fundamentals/arrays.json": audio() }));
+  assert.equal(ok.code, 0, ok.out);
+  assert.doesNotMatch(ok.out, /no longer holds/);
+
+  const stale = run(tree({ "topics/fundamentals/arrays.mdx": lesson, "audio/fundamentals/arrays.json": audio({ textHash: "0".repeat(64) }) }));
+  assert.equal(stale.code, 0, stale.out);
+  assert.match(stale.out, /audio\/fundamentals\/arrays\.json was narrated from text this lesson no longer holds/);
+
+  assert.match(fails("missing audio file", { "topics/fundamentals/arrays.mdx": lesson }), /<ReadAlong \/> needs audio\/fundamentals\/arrays\.json/);
+  assert.match(fails("javascript src", { "topics/fundamentals/arrays.mdx": lesson, "audio/fundamentals/arrays.json": audio({ src: "javascript:alert(1)" }) }), /src: must be an https URL or a \/media\/ path/);
+  assert.match(fails("unsorted cues", { "topics/fundamentals/arrays.mdx": lesson, "audio/fundamentals/arrays.json": audio({ cues: [{ start: 2, end: 3, text: "B." }, { start: 0, end: 1, text: "A." }] }) }), /cues must be sorted by start/);
+  assert.match(fails("two players", { "topics/fundamentals/arrays.mdx": `${lesson}\n<ReadAlong />\n`, "audio/fundamentals/arrays.json": audio() }), /only one prop-less <ReadAlong \/> per lesson/);
+  assert.match(fails("orphan", { "audio/fundamentals/arrays.json": audio() }), /audio\/fundamentals\/arrays\.json: no prop-less <ReadAlong \/> in topic "fundamentals\/arrays"; remove the file/);
+  assert.match(fails("orphan of no topic", { "audio/gone/topic.json": audio() }), /audio\/gone\/topic\.json: no topic "gone\/topic"/);
+});
