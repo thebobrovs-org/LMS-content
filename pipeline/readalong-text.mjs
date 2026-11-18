@@ -15,15 +15,38 @@ const SELF_CLOSING_DROPPED = new RegExp(String.raw`<(?:${DROPPED})\b${ATTRS}\/>`
 const STEP_OPEN = new RegExp(String.raw`<Step\b(${ATTRS})(?<!\/)>`, "g");
 const ANY_TAG = new RegExp(String.raw`<\/?[A-Za-z][\w.-]*\b${ATTRS}\/?>`, "g");
 
+// Sections that list where a lesson comes from or what to look at next, not the lesson itself: a
+// heading with one of these titles is skipped with everything under it, up to the next heading of
+// the same or a higher level.
+const UNSPOKEN_SECTION = /^(?:sources?|references?|bibliography|citations?|credits|acknowledg(?:e)?ments?|further reading|(?:suggested|recommended) (?:videos?|reading|resources)|resources|see also|learn more)$/i;
+
+/** `text` without the sections UNSPOKEN_SECTION names. Code blocks are already gone, so a `#` there can't count. */
+function dropUnspokenSections(text) {
+  const kept = [];
+  let skipping = 0; // the level of the heading being skipped, or 0
+  for (const line of text.split("\n")) {
+    const heading = /^(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$/.exec(line);
+    if (heading) {
+      const level = heading[1].length;
+      if (skipping && level <= skipping) skipping = 0;
+      const title = heading[2].replace(/[*_`]/g, "").replace(/[.:]$/, "").trim();
+      if (!skipping && UNSPOKEN_SECTION.test(title)) skipping = level;
+    }
+    if (!skipping) kept.push(line);
+  }
+  return kept.join("\n");
+}
+
 const sentence = (s) => (/[.!?:]["')\]”’]?$/.test(s) ? s : `${s}.`);
 
 /**
- * Strip YAML frontmatter, interactive MDX components, code blocks, tables and Markdown syntax,
+ * Strip YAML frontmatter, Sources and similar sections, interactive MDX components, code blocks, tables and Markdown syntax,
  * keeping the prose a learner would hear, one paragraph per blank-line-separated block.
  */
 export function extractSpokenText(raw) {
   let text = raw.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, "");
   text = text.replace(/^(`{3,}|~{3,})[^\n]*\n[\s\S]*?^\1[ \t]*$/gm, "");
+  text = dropUnspokenSections(text);
   // Paired first: a non-greedy self-closing match could otherwise run from <Quiz …> to a later `/>`.
   text = text.replace(PAIRED_DROPPED, "");
   text = text.replace(SELF_CLOSING_DROPPED, "");
