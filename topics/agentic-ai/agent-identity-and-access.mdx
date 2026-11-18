@@ -13,6 +13,24 @@ objectives:
     statement: "Grant an agent the narrowest roles its tools need."
   - id: pab
     statement: "Use a Principal Access Boundary policy to cap an agent's reach."
+videos:
+  - youtubeId: 859oJ0-xfVg
+    title: "Use agent identity with Secret Manager"
+    channel: "Google Cloud Tech"
+    duration: "3:21"
+    published: "2026-03-09"
+    why: "Short, current explanation of why an agent should have its own identity rather than a shared service account."
+    note: "Doesn't cover least-privilege role design."
+    chapters:
+      - at: "0:29"
+        label: "Service accounts vs agent identity"
+  - youtubeId: 7l-uAjO8hNE
+    title: "Agent Identity as the backbone for secure AI innovation"
+    channel: "Google Cloud Events"
+    duration: "46:41"
+    published: "2026-07-07"
+    why: "Next '26 session on Agent Identity as a first-class, SPIFFE-based principal with its own governance."
+    note: "47 minutes with no chapters, and Principal Access Boundary isn't covered."
 flashcards:
   - id: roles-vs-boundary
     objective: pab

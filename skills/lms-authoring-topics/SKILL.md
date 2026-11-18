@@ -94,7 +94,7 @@ Plain Markdown plus a **whitelisted** set of components (no arbitrary scripts):
 
 - `<Simulation id="…" height={…} props={{…}} />` — embed an interactive sim. The
   `id` must be a package in `simulations/packages/<id>/` (build sims first).
-- `<YouTube id="…" start={…} title="…" />` — privacy-friendly lazy video.
+- `<YouTube id="…" start={…} title="…" />` — privacy-friendly lazy video at one point in the lesson (for videos to watch after it, see Suggested videos).
 - `<Callout type="tip|note|warning">…</Callout>` — styled aside.
 - `<Flashcard front="…" back="…" />` — inline recall card (also schedulable).
 - `<Quiz question="…" choices={[…]} answer={0} explanation="…" />` — inline MCQ.
@@ -106,6 +106,27 @@ Plain Markdown plus a **whitelisted** set of components (no arbitrary scripts):
 
 Put a check (flashcard/quiz/step) right after the thing it tests — "do it, then
 recall it."
+
+## Suggested videos
+
+A lesson may list videos for learners who want to see the idea explained or demoed, in the frontmatter's
+`videos` (field contract: [reference/frontmatter.md](reference/frontmatter.md)). The app renders them after the
+lesson body under "Suggested videos", behind a "Show N videos" toggle like the sources: a thumbnail that loads the
+privacy-friendly youtube-nocookie player only when the learner presses play, the channel, length and date, the
+`why` and the `note`, and each chapter as a chip that plays the video from that moment. Use `<YouTube>` in the body
+instead when the video belongs at one point in the lesson.
+
+- **Official sources first**: Google, Google Cloud Tech, Google for Developers and the like for a Google product;
+  the publisher's own channel otherwise. Open the watch page and confirm the id, title, channel, length and date.
+- **One to three per lesson**, the best first. Prefer a short, current video to a long, broad one.
+- **Chapters are the point for a long video.** Copy the times from the video's own chapter list (the description or
+  the player's chapter menu), as YouTube shows them, quoted: `at: "13:16"`. Pick the two to five chapters that
+  match the lesson, and label them in a few words.
+- **`why`** says in one sentence what the video adds to this lesson, by naming the section or decision it matches.
+- **`note`** is the caveat a learner needs before watching, in one short sentence: an older product name the
+  video still uses ("Uses the older Vertex AI Agent Engine name (now Agent Runtime)."), a partial match, a long
+  video with no chapters. Don't recommend a video that teaches an outdated name without saying so here. Leave
+  out anything only authors care about.
 
 ## Sources (every lesson ends with them)
 

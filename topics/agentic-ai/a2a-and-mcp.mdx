@@ -13,6 +13,49 @@ objectives:
     statement: "Explain what an agent card advertises and how agents are discovered."
   - id: local-vs-remote
     statement: "Choose a local sub-agent, AgentTool or remote A2A agent."
+videos:
+  - youtubeId: ks4M8b9Ul6E
+    title: "Stop using MCP for everything! (RAG vs. A2A vs. Sub-agents)"
+    channel: "Google Cloud Tech"
+    duration: "9:22"
+    published: "2026-02-12"
+    why: "Decides between RAG, MCP, sub-agents and A2A on one worked example, which is the lesson's 'local sub-agent vs AgentTool vs remote A2A' choice."
+    note: "May predate the A2A v1.0 details."
+    chapters:
+      - at: "5:38"
+        label: "Sub-agents"
+      - at: "6:57"
+        label: "A2A"
+      - at: "8:16"
+        label: "When to use each"
+  - youtubeId: Fbr_Solax1w
+    title: "Introduction to Agent2Agent (A2A) Protocol"
+    channel: "Google Cloud Tech"
+    duration: "7:59"
+    published: "2026-02-06"
+    why: "Official A2A intro: agent cards, tasks and streaming, plus how A2A differs from MCP."
+    note: "Recorded before A2A v1.0, which renamed some fields and methods: check names against the v1.0 spec."
+    chapters:
+      - at: "2:40"
+        label: "Agent discovery (agent card)"
+      - at: "4:28"
+        label: "Task management"
+      - at: "6:05"
+        label: "A2A vs MCP"
+  - youtubeId: W3h_-eCcmqc
+    title: "A2A and MCP explained: with ADK"
+    channel: "Google for Developers"
+    duration: "24:53"
+    published: "2025-12-09"
+    why: "Code walkthrough of exposing an ADK agent over A2A and calling it through a remote agent, with a real agent card."
+    note: "Uses a pre-v1.0 A2A SDK. An optional deeper dive."
+    chapters:
+      - at: "6:18"
+        label: "Client A2A agent"
+      - at: "9:00"
+        label: "Remote A2A agent"
+      - at: "11:06"
+        label: "Agent card"
 flashcards:
   - id: a2a-vs-mcp-card
     objective: a2a-vs-mcp
