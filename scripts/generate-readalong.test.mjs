@@ -2,7 +2,7 @@
 // character timings become the sentence cues <ReadAlong> renders. Run by `npm run gate`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildSentenceCues, chunkParagraphs, extractSpokenText, mergeChunks, mp3Duration, staleReason, topicIdOf, usesAudioFile } from "./generate-readalong.mjs";
+import { buildSentenceCues, chunkParagraphs, extractSpokenText, mergeChunks, mp3Duration, setting, staleReason, topicIdOf, usesAudioFile } from "./generate-readalong.mjs";
 import { narrationHash } from "../pipeline/readalong-text.mjs";
 
 /** A fake alignment: one character per 0.1 s. */
@@ -153,4 +153,11 @@ test("only a prop-less <ReadAlong /> opts a lesson into audio files, and topic i
   assert.equal(topicIdOf("topics/math-infra/what-is-a-tensor.mdx"), "math-infra/what-is-a-tensor");
   assert.equal(topicIdOf("staging/topics/agentic-ai/x.mdx"), "agentic-ai/x");
   assert.throws(() => topicIdOf("paths/p.mdx"), /not a lesson/);
+});
+
+test("a setting is the flag, else the environment, else the default; empty counts as unset", () => {
+  assert.equal(setting("flagVoice", "envVoice", "default"), "flagVoice");
+  assert.equal(setting(undefined, "envVoice", "default"), "envVoice");
+  assert.equal(setting(undefined, "", "default"), "default");
+  assert.equal(setting(undefined, undefined, "default"), "default");
 });
