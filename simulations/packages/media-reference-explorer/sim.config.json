@@ -1,0 +1,7 @@
+{
+  "id": "media-reference-explorer",
+  "title": "Same photos, smaller envelope",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [{"id": "observe-reference-vs-resolution", "hint": "Predict what a reference changes, compare it with inline photos, then lower the image resolution and compare the token budget."}]
+}
