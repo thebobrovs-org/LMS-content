@@ -97,7 +97,7 @@ export const DIFFICULTIES: readonly ["beginner", "intermediate", "advanced"];
  * (LMS components/mdx/mdx-components.tsx). Content CI rejects any other JSX tag,
  * and any JavaScript (expressions, imports, exports): lessons are prose plus these.
  */
-export const MDX_COMPONENTS: readonly ["YouTube", "Callout", "Simulation", "Flashcard", "Quiz", "Steps", "Step", "Figure", "Tip", "Term"];
+export const MDX_COMPONENTS: readonly ["YouTube", "Callout", "Simulation", "Flashcard", "Quiz", "Steps", "Step", "Figure", "Tip", "Term", "ReadAlong"];
 /** The `type` a `<Callout>` may carry (the app's Callout component); anything else renders as a plain note. */
 export const CALLOUT_TYPES: readonly ["tip", "note", "warning"];
 /** A topic file's frontmatter (`topics/<dir>/<name>.mdx`). The app adds `id` from the path. */

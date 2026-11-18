@@ -86,6 +86,54 @@ export function stringArrayValue(attribute) {
   return out;
 }
 
+/** The JavaScript value of a literal-data ESTree node (see isLiteralData); undefined for anything else. */
+export function literalValue(node) {
+  if (!isLiteralData(node)) return undefined;
+  switch (node.type) {
+    case "Literal":
+      return node.value;
+    case "TemplateLiteral":
+      return node.quasis[0]?.value.cooked ?? "";
+    case "UnaryExpression":
+      return node.operator === "-" ? -node.argument.value : node.argument.value;
+    case "ArrayExpression":
+      return node.elements.map(literalValue);
+    case "ObjectExpression":
+      return Object.fromEntries(node.properties.map((p) => [p.key.type === "Identifier" ? p.key.name : String(p.key.value), literalValue(p.value)]));
+  }
+  return undefined;
+}
+
+const READALONG_CUE_KEYS = new Set(["start", "end", "text", "paragraph"]);
+/**
+ * What is wrong with a `<ReadAlong>`'s props, or null: `src` is a string (its URL is checked like any
+ * other), and `cues` a non-empty literal array of `{ start, end, text, paragraph? }` in seconds, each with
+ * 0 <= start <= end, sorted by start, non-empty text and a whole, non-negative paragraph. The app renders
+ * the cues as the transcript and seeks by them, so a malformed list would fail the app's build.
+ */
+export function readAlongProblem(attributes) {
+  const attr = (name) => attributes?.find((x) => x.type === "mdxJsxAttribute" && x.name === name);
+  const src = attr("src");
+  if (!src || typeof stringValue(src) !== "string") return "<ReadAlong> needs a src string (the MP3's https URL or /media/ path)";
+  const cuesAttr = attr("cues");
+  const cues = cuesAttr && cuesAttr.value && typeof cuesAttr.value === "object" ? literalValue(literalOf(cuesAttr.value.data?.estree)) : undefined;
+  if (!Array.isArray(cues) || cues.length === 0) return "<ReadAlong cues={…}> must be a non-empty array of { start, end, text } cues";
+  let previous = -Infinity;
+  for (const [i, cue] of cues.entries()) {
+    const where = `<ReadAlong> cue ${i}`;
+    if (!cue || typeof cue !== "object" || Array.isArray(cue)) return `${where} must be an object { start, end, text }`;
+    const extra = Object.keys(cue).find((k) => !READALONG_CUE_KEYS.has(k));
+    if (extra) return `${where} has an unknown key "${extra}" (start, end, text, paragraph)`;
+    const { start, end, text, paragraph } = cue;
+    if (typeof start !== "number" || typeof end !== "number" || !Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end < start) return `${where} needs numbers 0 <= start <= end (seconds)`;
+    if (start < previous) return `${where} starts before the cue above it; cues are sorted by start`;
+    if (typeof text !== "string" || text.trim() === "") return `${where} needs non-empty text`;
+    if (paragraph !== undefined && !(Number.isInteger(paragraph) && paragraph >= 0)) return `${where} paragraph must be a whole number >= 0`;
+    previous = start;
+  }
+  return null;
+}
+
 /**
  * A remark plugin that enforces what a lesson may hold (AGENTS.md: prose plus the
  * documented components, no JavaScript) and collects every URL it references:
@@ -95,6 +143,7 @@ export function stringArrayValue(attribute) {
  * - a link or image URL, Markdown or JSX, has no scheme other than http(s) or mailto,
  *   and no whitespace or control character a browser would drop before reading it;
  *   `src` and `href` are strings.
+ * - a `<ReadAlong>` carries a src string and well-formed cues (readAlongProblem).
  * `urls` receives the URLs of every image, link, definition and `src`/`href`; `sims` the
  * `id` of every `<Simulation>`, however it is written.
  */
@@ -148,6 +197,10 @@ export function lessonRules(urls = [], sims = [], objectives = [], identities = 
               else objectives.push(value);
             }
           }
+        }
+        if (node.name === "ReadAlong") {
+          const problem = readAlongProblem(node.attributes);
+          if (problem) vfile.fail(problem, node);
         }
         // A rendered check or step and its identity (ADR 0004): the prompt the app hashes, and the
         // `id` / `former-ids` it may carry. Checked against the topic's other items afterwards.
