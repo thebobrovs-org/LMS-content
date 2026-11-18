@@ -7,7 +7,10 @@
 //   - on a 360 px phone and in a lesson's 286 px frame the boxes reflow into narrow columns that fit the width as drawn;
 //   - in every layout no arrow crosses a box, and every label fits its box.
 // Then it drives the real main.js in the small DOM of sim-dom.mjs: steps, the predict verdict, the one checkpoint,
-// and motion that stops (and doesn't start under reduced motion). Run by `npm run gate`.
+// and motion that stops (and doesn't start under reduced motion). An explore sim (no steps: boxes open cards and
+// one question asks "which box?") may stack its drawing full width above the card, so on a laptop it must fit the 1042 px
+// stage at full size and at most EXPLORE_HEIGHT tall; its tests drive clicks, keys, the question and the one checkpoint, and
+// check that every card's "Covered in" names a real lesson by its title. Run by `npm run gate`.
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
@@ -21,13 +24,16 @@ const KIT_JS = fs.readFileSync(path.join(ROOT, "kit/flow-kit.js"), "utf8");
 const KIT_CSS = fs.readFileSync(path.join(ROOT, "kit/flow-kit.css"), "utf8");
 const SIM_KIT = fs.readFileSync(path.join(ROOT, "kit/sim-kit.css"), "utf8");
 /** The flow sims. A package whose main.js starts with the kit's marker must be listed here too. */
-export const ON_FLOW = ["hybrid-agent-flow"];
+export const ON_FLOW = ["hybrid-agent-flow", "platform-map-explorer"];
 
 // The 1100 px frame: #app pads 14 px, the stage panel 14 px plus a 1 px border; from 900 px the stage is two columns,
 // the right one 300 px in a flow sim (flow-kit.css), with a 16 px gap. Phones: 360 px less the same padding, and the
 // lesson's narrowest frame (286 px, LMS-content#130) less it too.
 const LAPTOP_COLUMN = (() => { const inner = 1100 - 2 * 14 - 2 * 15; return Math.floor(inner - 16 - 300); })();
 const LAPTOP_HEIGHT = 380;
+// Stacked (explore mode): the drawing takes the stage's full content width, and the card row sits under it.
+const LAPTOP_STAGE = 1100 - 2 * 14 - 2 * 15;
+const EXPLORE_HEIGHT = 400;
 const NARROW = [360 - 58, 286 - 58];
 // Frames between the laptop and the phone: two columns from 900 px (where the kit may stack the drawing above the
 // controls instead), one below.
@@ -78,7 +84,7 @@ const fitsBoxes = (FlowKit, spec, L, where) => {
   for (const n of spec.nodes) {
     const b = L.boxes[n.id];
     const room = FlowKit.textRoom(n, b.w, L.icons);
-    assert.ok(FlowKit.textWidth(n.label, 12, true) <= room, `${where}: "${n.label}" doesn't fit the ${room} px its box leaves for text`);
+    for (const line of FlowKit.lines(n.label)) assert.ok(FlowKit.textWidth(line, 12, true) <= room, `${where}: "${line}" doesn't fit the ${room} px its box leaves for text`);
     if (n.sub) assert.ok(FlowKit.textWidth(n.sub, 10.5, false) <= room, `${where}: "${n.sub}" doesn't fit the ${room} px its box leaves for text`);
   }
   for (const z of spec.zones || []) {
@@ -100,16 +106,30 @@ for (const id of ON_FLOW) {
     assert.deepEqual([...kit().check(specOf(id))], []);
   });
 
-  test(`${id}: on a laptop the drawing fits its ${LAPTOP_COLUMN} x ${LAPTOP_HEIGHT} px column at full size, arrows clear of boxes`, () => {
-    const FlowKit = kit();
-    const spec = specOf(id);
-    const L = FlowKit.layout(spec, LAPTOP_COLUMN);
-    assert.equal(L.narrow, false);
-    if (spec.nodes.some((n) => n.icon)) assert.equal(L.icons, true, `${id}: the boxes are too narrow for their icons on a laptop; shorten the labels or widen cellWidth`);
-    assert.ok(L.width <= LAPTOP_COLUMN, `${id}: the drawing is ${L.width} px wide, over the ${LAPTOP_COLUMN} px column, so it would shrink; narrow cellWidth`);
-    assert.ok(L.height <= LAPTOP_HEIGHT, `${id}: the drawing is ${L.height} px tall, over ${LAPTOP_HEIGHT}, so it would shrink; use fewer rows`);
-    fitsBoxes(FlowKit, spec, L, `${id} (laptop)`);
-  });
+  if (kit().isExplore(specOf(id))) {
+    test(`${id}: on a laptop the drawing fits the ${LAPTOP_STAGE} px stage at full size, at most ${EXPLORE_HEIGHT} px tall`, () => {
+      const FlowKit = kit();
+      const spec = specOf(id);
+      const where = FlowKit.plan(spec, LAPTOP_STAGE, true);
+      const L = FlowKit.layout(spec, where.column);
+      assert.equal(L.narrow, false, `${id}: the drawing reflows on a laptop; narrow cellWidth`);
+      assert.ok(L.width <= where.column, `${id}: the drawing is ${L.width} px wide in a ${where.column} px column, so it would shrink`);
+      assert.ok(L.height <= EXPLORE_HEIGHT, `${id}: the drawing is ${L.height} px tall, over ${EXPLORE_HEIGHT}, so the card row would fall below the frame`);
+      fitsBoxes(FlowKit, spec, L, `${id} (laptop)`);
+    });
+  } else {
+    test(`${id}: on a laptop the drawing fits its ${LAPTOP_COLUMN} x ${LAPTOP_HEIGHT} px column at full size, arrows clear of boxes`, () => {
+      const FlowKit = kit();
+      const spec = specOf(id);
+      const L = FlowKit.layout(spec, LAPTOP_COLUMN);
+      assert.equal(L.narrow, false);
+      if (spec.nodes.some((n) => n.icon)) assert.equal(L.icons, true, `${id}: the boxes are too narrow for their icons on a laptop; shorten the labels or widen cellWidth`);
+      assert.ok(L.width <= LAPTOP_COLUMN, `${id}: the drawing is ${L.width} px wide, over the ${LAPTOP_COLUMN} px column, so it would shrink; narrow cellWidth`);
+      assert.ok(L.height <= LAPTOP_HEIGHT, `${id}: the drawing is ${L.height} px tall, over ${LAPTOP_HEIGHT}, so it would shrink; use fewer rows`);
+      fitsBoxes(FlowKit, spec, L, `${id} (laptop)`);
+    });
+
+  }
 
   for (const frame of FRAMES) {
     test(`${id}: in a ${frame} px frame the drawing is never scaled down`, () => {
@@ -122,6 +142,11 @@ for (const id of ON_FLOW) {
       if (two && !where.stack) assert.ok(L.height <= LAPTOP_HEIGHT, `${id}: beside the controls the drawing is ${L.height} px tall, over ${LAPTOP_HEIGHT}, so it would shrink`);
       fitsBoxes(FlowKit, spec, L, `${id} (${frame} px frame)`);
     });
+  }
+
+  if (kit().isExplore(specOf(id))) {
+    exploreTests(id);
+    continue;
   }
 
   test(`${id}: the checkpoint and the verdict need a prediction made before the reveal`, async () => {
@@ -230,5 +255,80 @@ for (const id of ON_FLOW) {
     assert.notDeepEqual(mid, end, "the token moves along the arrows");
     await sim.advance(3000);
     assert.deepEqual([sim.find("#fk-token").getAttribute("cx"), sim.find("#fk-token").getAttribute("cy")], end, "and then rests");
+  });
+}
+
+/** Tests for an explore sim: boxes and zone titles are buttons that open a card, and one question asks "which box?". */
+function exploreTests(id) {
+  const text = (sim, sel) => sim.find(sel).textContent.replace(/\s+/g, " ").trim();
+  const fired = (sim) => sim.events.filter((e) => e.startsWith("checkpoint:"));
+  const key = async (sim, el, k) => { el.focus(); el.dispatch("keydown", { key: k }); await sim.advance(0); };
+
+  test(`${id}: every box and zone title with a card is a focusable button, and the card is announced`, async () => {
+    const spec = specOf(id);
+    const sim = await loadSim(id);
+    const picks = sim.doc.querySelectorAll("[data-pick]");
+    const want = spec.nodes.length + (spec.zones || []).filter((z) => z.info).length;
+    assert.equal(picks.length, want, `${id}: ${picks.length} buttons on the drawing, ${want} items with cards`);
+    for (const g of picks) {
+      assert.equal(g.getAttribute("role"), "button");
+      assert.equal(g.getAttribute("tabindex"), "0");
+      assert.equal(g.getAttribute("aria-pressed"), "false");
+      assert.match(g.getAttribute("aria-label"), /more info$/);
+    }
+    assert.equal(sim.find("#card").getAttribute("aria-live"), "polite");
+    assert.equal(sim.find("#caption").getAttribute("role"), "status");
+  });
+
+  test(`${id}: Enter opens a box's card, Escape closes it, and the arrows move between boxes`, async () => {
+    const spec = specOf(id);
+    const sim = await loadSim(id);
+    const first = spec.nodes[0];
+    const el = () => sim.find(`[data-pick="${first.id}"]`);
+    await key(sim, el(), "Enter");
+    assert.equal(sim.find("#card h3").textContent, first.label.replace(/\n/g, " "));
+    assert.equal(el().getAttribute("aria-pressed"), "true");
+    await key(sim, el(), "Escape");
+    assert.equal(el().getAttribute("aria-pressed"), "false");
+    assert.equal(text(sim, "#card"), spec.intro);
+    await key(sim, el(), "ArrowDown");
+    const below = sim.doc.activeElement.getAttribute("data-pick");
+    assert.ok(below && below !== first.id, `${id}: ArrowDown from ${first.id} goes nowhere`);
+    await key(sim, sim.doc.activeElement, "ArrowUp");
+    assert.equal(sim.doc.activeElement.getAttribute("data-pick"), first.id, `${id}: ArrowUp from ${below} doesn't come back to ${first.id}`);
+  });
+
+  test(`${id}: a wrong box says so, the right one explains why, and the one checkpoint fires once`, async () => {
+    const spec = specOf(id);
+    const sim = await loadSim(id);
+    assert.ok(text(sim, "#caption").startsWith(spec.ask.question));
+    const wrong = spec.nodes.find((n) => n.id !== spec.ask.answer);
+    await sim.press(`[data-pick="${wrong.id}"]`);
+    assert.match(text(sim, "#caption"), /Not .*Read its card, then try another box\./);
+    assert.equal(sim.find("#card h3").textContent, wrong.label.replace(/\n/g, " "), "a wrong box still opens its card");
+    assert.deepEqual(fired(sim), []);
+    await sim.press(`[data-pick="${spec.ask.answer}"]`);
+    assert.match(text(sim, "#caption"), /^Right: /);
+    assert.ok(text(sim, "#caption").includes(spec.ask.why), `${id}: the caption doesn't explain why`);
+    assert.deepEqual(fired(sim), [`checkpoint:${spec.checkpoint.id}`]);
+    await sim.press(`[data-pick="${wrong.id}"]`);
+    assert.match(text(sim, "#caption"), /^Right: /, "once found, other boxes just open their cards");
+    await sim.press("#reset");
+    assert.ok(text(sim, "#caption").startsWith(spec.ask.question));
+    await sim.press(`[data-pick="${spec.ask.answer}"]`);
+    assert.equal(fired(sim).length, 1, "the checkpoint fires once, not again after Reset");
+  });
+
+  test(`${id}: every card's "Covered in" names a lesson that exists, by its title`, () => {
+    const spec = specOf(id);
+    const items = [...spec.nodes, ...(spec.zones || []).filter((z) => z.info)];
+    for (const it of items) {
+      const c = it.info.covered;
+      if (!c) continue;
+      const file = path.join(ROOT, "..", "topics", `${c.topic}.mdx`);
+      assert.ok(fs.existsSync(file), `${id}: ${it.id} is covered in ${c.topic}, which has no topics/${c.topic}.mdx`);
+      const title = (fs.readFileSync(file, "utf8").match(/^title:\s*["']?(.+?)["']?\s*$/m) || [])[1];
+      assert.equal(title, c.title, `${id}: ${it.id} names ${c.topic} "${c.title}", but the lesson's title is "${title}"`);
+    }
   });
 }

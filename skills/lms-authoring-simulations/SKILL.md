@@ -206,6 +206,19 @@ is the worked example.
   The kit's own `check()` refuses unknown ids, shared cells and a predict answer that isn't an option.
 - **Draw the whole flow.** Every step the caption describes is an arrow the token runs. Don't write in
   the caption what isn't drawn.
+- **Explore mode (kit v2): a map the learner clicks.** A spec with no `steps` is an explorer: every box
+  (and any zone with `info`) is a button that opens a card beside or under the drawing. Each node carries
+  `info: { text, formerly?, facts?: [[term, value]], covered?: { topic, title } }`: at most 60 words of
+  text, at most 3 facts, and `covered` names the lesson by its id and exact title (the gate checks both).
+  Instead of a predict card, one `ask` (`question`, `answer` a node id, `why`) is the learner's
+  prediction: they answer by clicking a box, a wrong box opens its card and says so, and the right one
+  fires the one `observe-*` checkpoint. One ask, never a chain. Tab reaches every box, Enter opens it,
+  Escape closes the card, and the arrow keys move to the box that lines up next. v2 also adds
+  `density: "compact"` (36 px boxes, tighter gaps), `span` (a box across several columns), two-line
+  labels (`"\n"`, no `sub` then) and zones titled on their left (`titleSide: "left"`, with an optional
+  `sub`, for stacked layers; `zoneTitleWidth` sets the room). When the grid doesn't fit beside the card
+  it stacks full width above it, so on the laptop it must fit the 1042 px stage and 400 px of height.
+  [`platform-map-explorer`](../../simulations/packages/platform-map-explorer/main.js) is the worked example.
 
 ## Fit the screen
 

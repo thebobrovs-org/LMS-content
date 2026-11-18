@@ -1,4 +1,4 @@
-/* flow-kit v1: copied verbatim from simulations/kit/flow-kit.css, right after the sim kit. Edit it there, never here. */
+/* flow-kit v2: copied verbatim from simulations/kit/flow-kit.css, right after the sim kit. Edit it there, never here. */
 /* The drawing of a flow sim (simulations/kit/flow-kit.js). Hue means what the sim kit says it means;
    --primary is the step you are on, so zones and boxes take the other hues. */
 .fk-h-primary { color: var(--primary); } .fk-h-violet { color: var(--violet); } .fk-h-teal { color: var(--teal); }
@@ -45,4 +45,32 @@
   .stage.fk-stack .side { margin-top: 12px; }
   .stage.fk-stack svg { max-height: none; }
 }
-/* end flow-kit v1 */
+/* Explore mode (v2): boxes and zone titles are buttons that open a card. */
+.fk-pick, .fk-zpick { cursor: pointer; }
+.fk-pick:focus, .fk-zpick:focus { outline: none; }
+.fk-pick:hover .fk-box { stroke-width: 2.5; }
+.fk-pick:focus-visible .fk-box { stroke: var(--primary); stroke-width: 3; stroke-dasharray: 5 3; }
+.fk-hit { fill: transparent; }
+.fk-zpick:hover .fk-hit { fill: var(--surface); }
+.fk-zpick:focus-visible .fk-hit { stroke: var(--primary); stroke-width: 2; stroke-dasharray: 4 3; }
+.fk-zpick.fk-here .fk-hit { fill: var(--surface); stroke: var(--primary); stroke-width: 2; }
+.fk-cards { display: grid; }
+.fk-cards > .fk-card { grid-area: 1 / 1; }
+.fk-sizer { visibility: hidden; }
+.fk-card { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--inset); line-height: 1.45; align-self: start; }
+.fk-card-h { margin: 0; font-size: 15px; }
+.fk-card-was { margin: 0; font-size: 12px; color: var(--muted); font-style: italic; }
+.fk-card-t { margin: 4px 0 0; }
+.fk-card-f { margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 2px 16px; font-size: 13px; }
+.fk-card-f div { display: flex; gap: 6px; }
+.fk-card-f dt { color: var(--muted); }
+.fk-card-f dd { margin: 0; font-weight: 600; }
+.fk-card-intro .fk-card-h:empty { display: none; }
+.fk-sizer .fk-card-h:empty { display: none; }
+.fk-ask { display: flex; flex-direction: column; gap: 10px; }
+.fk-ask .caption { margin: 0; }
+@media (min-width: 900px) {
+  /* Stacked explore: the card and the question share the row under the drawing. */
+  .stage.fk-explore.fk-stack .side { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 12px; align-items: start; }
+}
+/* end flow-kit v2 */

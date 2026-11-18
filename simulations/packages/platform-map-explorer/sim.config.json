@@ -1,0 +1,12 @@
+{
+  "id": "platform-map-explorer",
+  "title": "The agent platform, box by box",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-managed-search",
+      "hint": "Click the box that answers questions over a team's own documents as a managed service: Agent Search, not Agent Retrieval."
+    }
+  ]
+}
