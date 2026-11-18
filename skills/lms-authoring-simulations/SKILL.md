@@ -189,7 +189,7 @@ is the worked example.
   `scripts/sim-fit.mjs`. As with the sim kit, change the kit in `simulations/kit/`, bump its version and
   recopy it everywhere in the same PR.
 - **The spec.** `zones` (`id`, `title`, an optional `short` title for phones, a kit `hue`, and `in` to nest
-  one zone in another), `nodes` (`id`, `label`, `sub`, `zone`, `at: [column, row]`, an optional `hue`),
+  one zone in another), `nodes` (`id`, `label`, `sub`, `zone`, `at: [column, row]`, an optional `hue` and an optional `icon` from the kit's inline set: person, people, server, database, agent, bot, shield, chip, cloud, flow, tool, key, lock, doc, globe, chat, check),
   `edges` (`id`, `from`, `to`, an optional short `label`), `steps` (`label` for its pill, `edges` the token
   runs in order, `at` the box it stops on, `text` for the caption, an optional `readout` line), an optional
   `predict` (`question`, `options`, `answer`, `revealAt` step, `why`), the `checkpoint` (`id`, `step`), an
@@ -198,9 +198,10 @@ is the worked example.
 - **Hue means what the kit says.** Blue is the step you're on, so zones and boxes take the other hues:
   violet for the model, teal for code, the runtime or a tool, and orange, rose or gold as plain categories,
   named in the legend.
-- **The gate checks the drawing.** On the laptop frame the drawing must fit its 692 × 380 px column
+- **What the kit adds on its own.** Each arrow's label carries the number of the step that first runs it; the box a step reaches gets a green check when the token arrives; the steps have an Overview pill, Play (steps to the end on its own; any other control stops it) and a speed button.
+- **The gate checks the drawing.** On the laptop frame (the flow kit makes the side column 300 px) the drawing must fit its 726 × 380 px column
   without being scaled down, so labels show at 12 px. Fewer rows, or a narrower `cellWidth`, if it
-  doesn't. Below 480 px the kit reflows the same boxes into one or two columns at full size, and the gate
+  doesn't. With icons, a box leaves 50 px less for its text, and on the laptop the icons must fit. Below 480 px the kit reflows the same boxes into one or two columns at full size, and the gate
   lays it out at 302 and 228 px too. Everywhere, no arrow may cross a box and every label must fit its box.
   The kit's own `check()` refuses unknown ids, shared cells and a predict answer that isn't an option.
 - **Draw the whole flow.** Every step the caption describes is an arrow the token runs. Don't write in
