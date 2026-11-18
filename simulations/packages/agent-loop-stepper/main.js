@@ -199,7 +199,7 @@ function build() {
     </section>
     <section class="transcript" aria-labelledby="tr-h">
       <h2 id="tr-h">The loop, step by step</h2>
-      <ol id="rows"></ol>
+      <div class="logbox" id="logbox" tabindex="0" role="region" aria-label="The loop, step by step"><ol id="rows"></ol></div>
     </section>
     <p class="legend">Model rows propose; runtime rows execute. Token counts are illustrative.</p>`;
   els = {
@@ -212,6 +212,7 @@ function build() {
     reset: app.querySelector("#reset"),
     decls: app.querySelector("#decls"),
     rows: app.querySelector("#rows"),
+    logbox: app.querySelector("#logbox"),
     readout: app.querySelector("#readout"),
   };
   els.request.value = request;
@@ -239,6 +240,8 @@ function renderRun() {
     rows.push(`<li class="pending">Next: ${next}. Press Step or Auto.</li>`);
   }
   els.rows.innerHTML = rows.join("");
+  // Fit the screen: the transcript scrolls in its own region; keep its newest row in view.
+  els.logbox.scrollTop = els.logbox.scrollHeight;
   renderDecls();
   els.capval.textContent = String(cap);
   const counts = `Model calls: ${modelCalls} of ${cap} · tool calls run: ${toolCalls} · tokens so far: ${tokens.toLocaleString("en-US")}`;
