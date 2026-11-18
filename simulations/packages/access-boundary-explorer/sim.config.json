@@ -1,0 +1,12 @@
+{
+  "id": "access-boundary-explorer",
+  "title": "Which doors can the agent open?",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-boundary-caps",
+      "hint": "Predict, observe a broad read grant capped at Finance, then remove all grants while keeping the boundary."
+    }
+  ]
+}
