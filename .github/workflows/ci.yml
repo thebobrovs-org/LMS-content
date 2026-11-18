@@ -34,8 +34,9 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci --no-audit --no-fund
-      # The gate's fit check (scripts/sim-fit.mjs) loads each sim in Chromium at the laptop frame size.
-      - run: npx playwright install --with-deps chromium
+      # The gate's fit check (scripts/sim-fit.mjs) loads each sim in Chromium at the laptop frame size,
+      # measuring text in Inter so the result doesn't depend on the runner's default font.
+      - run: npx playwright install --with-deps chromium && sudo apt-get install -y --no-install-recommends fonts-inter
       # A pull request's base, so the gate can warn when a prompt changes on an item without an id (ADR 0004).
       - if: github.event_name == 'pull_request'
         env:

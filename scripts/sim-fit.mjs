@@ -5,8 +5,12 @@
 // and its controls on that screen. Loads each package in Chromium with a stand-in for the sim SDK, as
 // scripts/sim-preview.mjs does, from a temporary copy of the package. Run by `npm run gate`; CI installs the browser first.
 //   node scripts/sim-fit.mjs [sim-id...]
+// Text is measured in Inter (Debian/Ubuntu package fonts-inter), whose widths are close to the system fonts
+// learners' laptops use (Segoe UI, San Francisco). Without it, Linux falls back to a much wider face (DejaVu
+// Sans) and the same sim measures 10% taller, so the result would depend on the machine, not the sim.
 // SIM_FIT_CHROMIUM=<path> launches that Chromium instead of Playwright's own download;
 // SIM_FIT_SHOTS=<dir> saves a screenshot of each sim after its run.
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
@@ -97,11 +101,34 @@ export function problems(id, when, m) {
   return out;
 }
 
+/** A fontconfig file that makes the sans-serif families the sims ask for resolve to Inter. */
+function fontConfig(root) {
+  const families = ["system-ui", "ui-sans-serif", "-apple-system", "Segoe UI", "Roboto", "sans-serif", "sans"];
+  // prepend_first puts Inter ahead of whatever the system's own rules already put first (an <alias> would land behind them).
+  const alias = (f) => `<match target="pattern"><test name="family" qual="any"><string>${f}</string></test><edit name="family" mode="prepend_first" binding="strong"><string>Inter</string></edit></match>`;
+  const file = path.join(root, "fonts.conf");
+  fs.writeFileSync(file, `<?xml version="1.0"?>\n<!DOCTYPE fontconfig SYSTEM "fonts.dtd">\n<fontconfig><include ignore_missing="yes">/etc/fonts/fonts.conf</include>${families.map(alias).join("")}</fontconfig>\n`);
+  return file;
+}
+
+function hasInter() {
+  try {
+    return /\bInter\b/.test(execFileSync("fc-list", [":family=Inter", "family"], { encoding: "utf8" }));
+  } catch {
+    return false;
+  }
+}
+
 async function main() {
+  if (!hasInter()) {
+    console.error("sim-fit measures text in Inter: install it first (apt-get install fonts-inter).");
+    process.exit(1);
+  }
   const ids = process.argv.slice(2).length ? process.argv.slice(2) : FIT;
-  const browser = await chromium.launch(process.env.SIM_FIT_CHROMIUM ? { executablePath: process.env.SIM_FIT_CHROMIUM } : {});
   const failures = [];
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "sim-fit-"));
+  const env = { ...process.env, FONTCONFIG_FILE: fontConfig(root) };
+  const browser = await chromium.launch({ env, ...(process.env.SIM_FIT_CHROMIUM ? { executablePath: process.env.SIM_FIT_CHROMIUM } : {}) });
   try {
     for (const id of ids) {
       const p = await browser.newPage({ viewport: { width: FRAME_WIDTH, height: 720 }, reducedMotion: "reduce" });
