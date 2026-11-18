@@ -186,3 +186,28 @@ Before inserting, say which bucket a new key will hit, then verify.
 
 Step ids derive from a hash of the **title**, so keep titles stable once published
 (changing a title resets that step's completion). Titles may contain apostrophes.
+
+## `<ReadAlong>`
+
+Synchronized audio read-along player with sentence-level highlighting and click-to-seek.
+Use `scripts/generate-readalong.mjs` to convert lesson prose via ElevenLabs and emit
+the MP3 + cues literal. Host MP3s in GCS (`https://storage.googleapis.com/<bucket>/...`)
+rather than committing large binary audio files to git.
+
+```mdx
+<ReadAlong
+  title="Listen to this section"
+  src="https://storage.googleapis.com/hyperstack-audio/topics/systems/caching.mp3"
+  cues={[
+    { start: 0.035, end: 0.917, text: "Why cache?" },
+    { start: 1.196, end: 10.356, text: "A cache stores the result of expensive work..." }
+  ]}
+/>
+```
+
+| Prop | Type | Notes |
+|------|------|-------|
+| `src` | string (required) | HTTPS URL (e.g. GCS bucket) or `/media/...` path to the MP3. |
+| `cues` | `{ start: number, end: number, text: string }[]` (required) | Literal array of sentence cues in seconds. |
+| `title` | string | Optional label shown in the player header. |
+
