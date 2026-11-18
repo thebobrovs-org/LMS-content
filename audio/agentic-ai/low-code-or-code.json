@@ -1,404 +1,488 @@
 {
-  "src": "https://storage.googleapis.com/hyperstack-lms-audio/topics/agentic-ai/low-code-or-code.eb252c9bc83f.mp3",
+  "src": "https://storage.googleapis.com/hyperstack-lms-audio/topics/agentic-ai/low-code-or-code.f5c8e84b964c.mp3",
   "voice": "XfNU2rGpBa01ckF309OY",
   "model": "eleven_multilingual_v2",
-  "textHash": "07577b59cc9221099aa901d6bc3acea11e8ed2ef899ae60a2f9ee65706376f00",
+  "textHash": "8af1a05bbe10f32740f0516d39caf4f8d57b3058573a621d42d8168e9cc24ff8",
   "cues": [
     {
       "start": 0,
-      "end": 1.869,
+      "end": 1.985,
       "text": "Real systems mix both.",
       "paragraph": 0
     },
     {
-      "start": 2.252,
-      "end": 5.503,
+      "start": 2.798,
+      "end": 6.2,
       "text": "Production agent systems often mix low-code and code.",
       "paragraph": 1
     },
     {
-      "start": 5.828,
-      "end": 12.968,
+      "start": 6.803,
+      "end": 13.886,
       "text": "A common shape is a low-code experience that people use every day, in front of code-built agents and tools that do the hard parts.",
       "paragraph": 1
     },
     {
-      "start": 13.781,
-      "end": 22.105,
+      "start": 14.698,
+      "end": 22.721,
       "text": "Scenario questions test the judgement behind that split: when to stay low-code, when to move to code, and how to join the two.",
       "paragraph": 1
     },
     {
-      "start": 22.616,
-      "end": 40.623,
+      "start": 23.417,
+      "end": 41.505,
       "text": "Low-code here means Gemini Enterprise's Workflow Builder (chat agents and workflows built visually) and CX Agent Studio (customer-facing conversational agents, with flows: fixed conversation paths, reused from Dialogflow CX, for deterministic logic).",
       "paragraph": 2
     },
     {
-      "start": 41.133,
-      "end": 48.297,
+      "start": 42.109,
+      "end": 49.214,
       "text": "Code means the Agent Development Kit (ADK), deployed to Agent Runtime, Cloud Run or GKE.",
       "paragraph": 2
     },
     {
-      "start": 48.808,
-      "end": 51.525,
+      "start": 49.597,
+      "end": 52.523,
       "text": "Start low-code; move to code for control.",
       "paragraph": 3
     },
     {
-      "start": 51.734,
-      "end": 54.392,
+      "start": 53.335,
+      "end": 56.331,
       "text": "Start low-code when the platform covers the need.",
       "paragraph": 4
     },
     {
-      "start": 54.996,
-      "end": 64.69,
+      "start": 57.027,
+      "end": 66.49,
       "text": "Its steps, connectors and tools do the job, the people who own the process can maintain it, and you get Gemini Enterprise's sharing and governance without building them.",
       "paragraph": 4
     },
     {
-      "start": 65.805,
-      "end": 69.532,
+      "start": 67.094,
+      "end": 70.182,
       "text": "Move to code when you need control the platform cannot give.",
       "paragraph": 4
     },
     {
-      "start": 69.706,
-      "end": 71.18,
+      "start": 70.507,
+      "end": 71.796,
       "text": "The limits are concrete.",
       "paragraph": 5
     },
     {
-      "start": 72.132,
-      "end": 78.576,
+      "start": 72.04,
+      "end": 77.926,
       "text": "Workflow Builder, for example, runs a chat agent's sub-agents one at a time and only one level deep.",
       "paragraph": 5
     },
     {
-      "start": 78.901,
-      "end": 86.239,
+      "start": 78.367,
+      "end": 86.064,
       "text": "A design that needs specialists working in parallel, or a planner that delegates to agents that delegate again, has outgrown it.",
       "paragraph": 5
     },
     {
-      "start": 86.935,
-      "end": 89.315,
+      "start": 87.016,
+      "end": 89.222,
       "text": "Evaluation is the other common trigger.",
       "paragraph": 5
     },
     {
-      "start": 89.826,
-      "end": 96.873,
+      "start": 89.919,
+      "end": 96.768,
       "text": "Workflow Builder is tested by running simulations by hand, with no documented API for automated tests.",
       "paragraph": 5
     },
     {
-      "start": 97.57,
-      "end": 107.566,
+      "start": 97.721,
+      "end": 107.74,
       "text": "CX Agent Studio is further along: its test cases can be run through an API (in beta), but they test the CX agent, not code you own.",
       "paragraph": 5
     },
     {
-      "start": 108.378,
-      "end": 124.365,
+      "start": 108.437,
+      "end": 124.54,
       "text": "If logic you own must pass trajectory tests (checks of the tool calls the agent made) in a pipeline on every change, that logic needs to live in code beside its evaluation sets: files of test cases with the expected answers and tool calls.",
       "paragraph": 5
     },
     {
-      "start": 124.969,
-      "end": 139.667,
+      "start": 124.923,
+      "end": 139.656,
       "text": "The migration signals: logic the steps can't express, orchestration beyond the platform's limits, evaluation that must run in CI, control of deployment or networking, and an integration no connector or tool covers.",
       "paragraph": 6
     },
     {
-      "start": 140.108,
-      "end": 142.465,
+      "start": 140.167,
+      "end": 142.895,
       "text": "A wish for better instructions is not one of them.",
       "paragraph": 6
     },
     {
-      "start": 142.976,
-      "end": 144.195,
+      "start": 143.847,
+      "end": 145.171,
       "text": "Three scenarios.",
       "paragraph": 7
     },
     {
-      "start": 144.404,
-      "end": 147.051,
+      "start": 145.774,
+      "end": 148.503,
       "text": "IT helpdesk: stay low-code.",
       "paragraph": 8
     },
     {
-      "start": 147.655,
-      "end": 158.928,
+      "start": 148.944,
+      "end": 160.496,
       "text": "Employees ask how to reset a password or request a laptop, and the agent answers from the IT knowledge base and files a ServiceNow ticket through a connector (write actions pause for a person's review).",
       "paragraph": 8
     },
     {
-      "start": 159.74,
-      "end": 163.862,
+      "start": 161.192,
+      "end": 165.058,
       "text": "The platform covers every part, and the IT team can maintain it.",
       "paragraph": 8
     },
     {
-      "start": 164.303,
-      "end": 167.182,
+      "start": 165.662,
+      "end": 168.634,
       "text": "Code would add a build and deploy pipeline for nothing.",
       "paragraph": 8
     },
     {
-      "start": 167.693,
-      "end": 170.294,
+      "start": 169.145,
+      "end": 171.328,
       "text": "Insurance claims triage: code.",
       "paragraph": 8
     },
     {
-      "start": 170.898,
-      "end": 177.585,
+      "start": 171.931,
+      "end": 178.63,
       "text": "Three specialist agents check policy, damage photos and fraud signals at the same time, then a fourth decides.",
       "paragraph": 8
     },
     {
-      "start": 178.189,
-      "end": 181.602,
+      "start": 179.234,
+      "end": 182.485,
       "text": "Every release must pass evaluation sets in CI.",
       "paragraph": 8
     },
     {
-      "start": 182.113,
-      "end": 190.066,
+      "start": 183.298,
+      "end": 191.448,
       "text": "Parallel specialists and CI-gated evaluation are both beyond the low-code limits, so this is an ADK multi-agent system.",
       "paragraph": 8
     },
     {
-      "start": 190.762,
-      "end": 192.747,
+      "start": 192.144,
+      "end": 193.794,
       "text": "Sales quotes: hybrid.",
       "paragraph": 8
     },
     {
-      "start": 193.351,
-      "end": 200.572,
+      "start": 194.397,
+      "end": 201.236,
       "text": "Sales staff live in Gemini Enterprise, but pricing is a complex, tested calculation the finance engineers own.",
       "paragraph": 8
     },
     {
-      "start": 201.176,
-      "end": 212.159,
+      "start": 201.746,
+      "end": 212.498,
       "text": "Keep the quote workflow in Workflow Builder, put pricing behind an MCP server, and call a registered ADK agent from an existing-agent step for the drafting that needs many tools.",
       "paragraph": 8
     },
     {
-      "start": 212.762,
-      "end": 214.806,
-      "text": "The figure below shows this design.",
+      "start": 213.008,
+      "end": 216.898,
+      "text": "The simulation in the next section steps through this design.",
       "paragraph": 8
     },
     {
-      "start": 215.189,
-      "end": 216.327,
+      "start": 217.409,
+      "end": 218.558,
       "text": "Hybrid designs.",
       "paragraph": 9
     },
     {
-      "start": 216.837,
-      "end": 221.586,
+      "start": 218.941,
+      "end": 223.968,
       "text": "A hybrid agent keeps the experience low-code and puts the hard logic in code.",
       "paragraph": 10
     },
     {
-      "start": 222.19,
-      "end": 224.976,
+      "start": 224.479,
+      "end": 226.963,
       "text": "Google documents several joins; the main ones:",
       "paragraph": 10
     },
     {
-      "start": 225.302,
-      "end": 227.867,
+      "start": 226.998,
+      "end": 229.587,
       "text": "A low-code agent calls code-built tools.",
       "paragraph": 11
     },
     {
-      "start": 228.192,
-      "end": 234.555,
+      "start": 230.029,
+      "end": 236.228,
       "text": "Workflow Builder has MCP steps, and a Gemini agent step can be given MCP tools to choose from.",
       "paragraph": 11
     },
     {
-      "start": 235.251,
-      "end": 255.209,
+      "start": 236.832,
+      "end": 258.089,
       "text": "CX Agent Studio can call OpenAPI tools, and MCP servers that use streamable HTTP (MCP's HTTP transport; the older SSE transport isn't supported); for a server on Cloud Run, Google recommends authenticating with the CX service agent's ID token, granted the Cloud Run Invoker role.",
       "paragraph": 11
     },
     {
-      "start": 255.812,
-      "end": 262.906,
+      "start": 258.902,
+      "end": 266.042,
       "text": "Put your logic behind an MCP server or an API, on Cloud Run for example, and the low-code agent calls it.",
       "paragraph": 11
     },
     {
-      "start": 263.348,
-      "end": 265.751,
+      "start": 266.646,
+      "end": 269.339,
       "text": "A low-code agent calls a code-built agent.",
       "paragraph": 11
     },
     {
-      "start": 266.192,
-      "end": 276.955,
+      "start": 270.036,
+      "end": 281.925,
       "text": "Workflow Builder's existing-agent step runs an ADK or A2A agent that has been published (registered) in Gemini Enterprise and shared with you, as one step of the workflow.",
       "paragraph": 11
     },
     {
-      "start": 277.767,
-      "end": 284.048,
+      "start": 282.737,
+      "end": 289.576,
       "text": "CX Agent Studio can delegate a task to a remote ADK or A2A agent through an A2A tool.",
       "paragraph": 11
     },
     {
-      "start": 284.489,
-      "end": 287.16,
+      "start": 290.017,
+      "end": 292.722,
       "text": "A code-built agent appears in Gemini Enterprise.",
       "paragraph": 11
     },
     {
-      "start": 287.543,
-      "end": 298.689,
+      "start": 293.105,
+      "end": 303.972,
       "text": "Deploy an ADK agent to Agent Runtime and register it as a custom agent, or register an A2A agent by its agent card (the description an A2A agent publishes of itself).",
       "paragraph": 11
     },
     {
-      "start": 299.641,
-      "end": 303.286,
+      "start": 304.785,
+      "end": 308.686,
       "text": "A2A registration is in preview, not yet generally available.",
       "paragraph": 11
     },
     {
-      "start": 303.89,
-      "end": 306.641,
+      "start": 309.383,
+      "end": 312.506,
       "text": "Users then find the agent beside the low-code ones.",
       "paragraph": 11
     },
     {
-      "start": 306.85,
-      "end": 309.95,
-      "text": "Decide early where evaluation and identity live.",
+      "start": 313.016,
+      "end": 316.476,
+      "text": "Step through the sales-quote design one path at a time.",
       "paragraph": 12
     },
     {
-      "start": 310.333,
-      "end": 312.493,
+      "start": 316.917,
+      "end": 319.53,
+      "text": "Decide first what happens on the last path.",
+      "paragraph": 12
+    },
+    {
+      "start": 319.808,
+      "end": 327.981,
+      "text": "Explain it: the last path in the simulation reaches the same ADK agent as step 3 without passing through the workflow.",
+      "paragraph": 13
+    },
+    {
+      "start": 328.678,
+      "end": 335.597,
+      "text": "Why does that path need its own identity, evaluation and screening, and why can't the workflow's settings cover it?",
+      "paragraph": 13
+    },
+    {
+      "start": 336.294,
+      "end": 339.823,
+      "text": "Decide early where evaluation and identity live.",
+      "paragraph": 14
+    },
+    {
+      "start": 340.636,
+      "end": 342.784,
       "text": "Migrations rarely break the prompt.",
-      "paragraph": 13
-    },
-    {
-      "start": 312.667,
-      "end": 314.432,
-      "text": "They break what was wrapped around it:",
-      "paragraph": 13
-    },
-    {
-      "start": 314.757,
-      "end": 315.72,
-      "text": "Evaluation.",
-      "paragraph": 14
-    },
-    {
-      "start": 316.231,
-      "end": 320.643,
-      "text": "Test cases written for a low-code agent don't run against an ADK agent.",
-      "paragraph": 14
-    },
-    {
-      "start": 321.026,
-      "end": 326.785,
-      "text": "Rebuild them as evaluation sets, and keep the old and new agents scoring the same cases until the switch.",
-      "paragraph": 14
-    },
-    {
-      "start": 327.737,
-      "end": 328.491,
-      "text": "Identity.",
-      "paragraph": 14
-    },
-    {
-      "start": 328.933,
-      "end": 332.636,
-      "text": "A low-code agent acts inside the platform's sign-in and sharing.",
-      "paragraph": 14
-    },
-    {
-      "start": 333.077,
-      "end": 339.625,
-      "text": "A code-built agent needs its own: whose permissions it uses, and an OAuth setup if it must act for the user.",
-      "paragraph": 14
-    },
-    {
-      "start": 340.438,
-      "end": 341.274,
-      "text": "Governance.",
-      "paragraph": 14
-    },
-    {
-      "start": 341.877,
-      "end": 344.524,
-      "text": "Settings can quietly stop applying.",
-      "paragraph": 14
-    },
-    {
-      "start": 345.128,
-      "end": 361.348,
-      "text": "Google documents that Model Armor settings in the Gemini Enterprise console don't automatically protect registered ADK or A2A agents (they configure screening in their own code), and that traffic to a registered A2A agent bypasses Agent Gateway.",
-      "paragraph": 14
-    },
-    {
-      "start": 361.951,
-      "end": 368.964,
-      "text": "So when a design starts low-code but may grow, decide at the start where each of these will live for every part of the system.",
       "paragraph": 15
     },
     {
-      "start": 369.347,
-      "end": 369.951,
-      "text": "Sources.",
+      "start": 342.935,
+      "end": 344.711,
+      "text": "They break what was wrapped around it:",
+      "paragraph": 15
+    },
+    {
+      "start": 345.036,
+      "end": 346.139,
+      "text": "Evaluation.",
       "paragraph": 16
     },
     {
-      "start": 370.02,
-      "end": 386.019,
+      "start": 346.464,
+      "end": 350.899,
+      "text": "Test cases written for a low-code agent don't run against an ADK agent.",
+      "paragraph": 16
+    },
+    {
+      "start": 351.41,
+      "end": 357.587,
+      "text": "Rebuild them as evaluation sets, and keep the old and new agents scoring the same cases until the switch.",
+      "paragraph": 16
+    },
+    {
+      "start": 358.19,
+      "end": 358.957,
+      "text": "Identity.",
+      "paragraph": 16
+    },
+    {
+      "start": 359.34,
+      "end": 363.31,
+      "text": "A low-code agent acts inside the platform's sign-in and sharing.",
+      "paragraph": 16
+    },
+    {
+      "start": 363.694,
+      "end": 370.137,
+      "text": "A code-built agent needs its own: whose permissions it uses, and an OAuth setup if it must act for the user.",
+      "paragraph": 16
+    },
+    {
+      "start": 371.089,
+      "end": 371.948,
+      "text": "Governance.",
+      "paragraph": 16
+    },
+    {
+      "start": 372.761,
+      "end": 375.454,
+      "text": "Settings can quietly stop applying.",
+      "paragraph": 16
+    },
+    {
+      "start": 376.151,
+      "end": 393.194,
+      "text": "Google documents that Model Armor settings in the Gemini Enterprise console don't automatically protect registered ADK or A2A agents (they configure screening in their own code), and that traffic to a registered A2A agent bypasses Agent Gateway.",
+      "paragraph": 16
+    },
+    {
+      "start": 393.705,
+      "end": 400.764,
+      "text": "So when a design starts low-code but may grow, decide at the start where each of these will live for every part of the system.",
+      "paragraph": 17
+    },
+    {
+      "start": 401.205,
+      "end": 402.111,
+      "text": "Put it together.",
+      "paragraph": 18
+    },
+    {
+      "start": 402.436,
+      "end": 404.955,
+      "text": "Predict, then follow the direct path.",
+      "paragraph": 19
+    },
+    {
+      "start": 406.07,
+      "end": 417.018,
+      "text": "In A hybrid agent, step by step, pick whether the console's Model Armor setting screens a direct conversation with the registered agent, then step through all five paths.",
+      "paragraph": 20
+    },
+    {
+      "start": 417.401,
+      "end": 423.601,
+      "text": "At step 5, check your pick against the verdict, and name the two arrows the direct path takes.",
+      "paragraph": 20
+    },
+    {
+      "start": 424.553,
+      "end": 425.772,
+      "text": "Sort the parts.",
+      "paragraph": 21
+    },
+    {
+      "start": 426.468,
+      "end": 430.474,
+      "text": "Step through again and read the line under the controls at each step.",
+      "paragraph": 22
+    },
+    {
+      "start": 431.17,
+      "end": 438.787,
+      "text": "List the parts that run inside the platform's sign-in and sharing, and the parts that need their own identity, evaluation and screening.",
+      "paragraph": 22
+    },
+    {
+      "start": 439.17,
+      "end": 440.714,
+      "text": "Apply it to another design.",
+      "paragraph": 23
+    },
+    {
+      "start": 441.318,
+      "end": 452.904,
+      "text": "The IT helpdesk from the scenarios grows: password resets stay with the low-code agent, but laptop orders now go to a code-built ADK agent registered in Gemini Enterprise.",
+      "paragraph": 24
+    },
+    {
+      "start": 453.415,
+      "end": 462.203,
+      "text": "Sketch its parts as the simulation draws them, and say where identity, evaluation and screening must be decided for the new agent before it ships.",
+      "paragraph": 24
+    },
+    {
+      "start": 462.714,
+      "end": 463.434,
+      "text": "Sources.",
+      "paragraph": 25
+    },
+    {
+      "start": 463.875,
+      "end": 479.747,
       "text": "Google Cloud, Professional Agentic Architect exam guide, services.google.com/fh/files/misc/professional_agentic_architect_exam_guide_english.pdf (objectives 1.1, 1.2 and 3.1).",
-      "paragraph": 17
+      "paragraph": 26
     },
     {
-      "start": 386.53,
-      "end": 418.179,
+      "start": 480.13,
+      "end": 509.978,
       "text": "Google Cloud, Workflow Builder documentation, docs.cloud.google.com/gemini/enterprise/docs/workflow-builder (overview), /workflow-builder/connect-mcp-servers (MCP steps and MCP tools), /workflow-builder/add-existing-agents (registered, shared ADK and A2A agents), /workflow-builder/quotas-and-limits (sub-agents one level deep and run one at a time) and /workflow-builder/simulate-workflows (manual simulation).",
-      "paragraph": 17
+      "paragraph": 26
     },
     {
-      "start": 418.991,
-      "end": 447.424,
+      "start": 510.768,
+      "end": 539.537,
       "text": "Google Cloud, CX Agent Studio documentation, docs.cloud.google.com/gemini-enterprise-cx/cx-agent-studio/flow (flows for deterministic logic), /tool/mcp (streamable HTTP only; Cloud Run authentication by service agent ID token), /tool/a2a-protocol (delegating to remote agents) and /evaluation (test cases, runnable through the v1beta runEvaluation API).",
-      "paragraph": 17
+      "paragraph": 26
     },
     {
-      "start": 448.109,
-      "end": 468.252,
+      "start": 540.234,
+      "end": 561.155,
       "text": "Google Cloud, Gemini Enterprise, \"Register and manage ADK agents hosted on Agent Runtime\", docs.cloud.google.com/gemini/enterprise/docs/register-and-manage-an-adk-agent (custom agent via Agent Runtime; console Model Armor settings don't automatically protect ADK agents).",
-      "paragraph": 17
+      "paragraph": 26
     },
     {
-      "start": 468.763,
-      "end": 488.361,
+      "start": 562.107,
+      "end": 581.16,
       "text": "Google Cloud, Gemini Enterprise, \"Register and manage A2A agents\", docs.cloud.google.com/gemini/enterprise/docs/register-and-manage-an-a2a-agent (preview; traffic bypasses Agent Gateway; console Model Armor settings don't automatically protect A2A agents).",
-      "paragraph": 17
+      "paragraph": 26
     },
     {
-      "start": 488.965,
-      "end": 501.689,
+      "start": 581.856,
+      "end": 593.64,
       "text": "Google, Agent Development Kit, adk.dev (parallel and graph workflows, evaluation at adk.dev/evaluate, deployment to Agent Runtime, Cloud Run or GKE).",
-      "paragraph": 17
+      "paragraph": 26
     }
   ]
 }
