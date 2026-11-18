@@ -111,7 +111,8 @@ jobs:
           git add -- audio
           git commit -m "chore(audio): narrate lessons for <ReadAlong />"
           git push "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "HEAD:refs/heads/${BRANCH}"
-          # CI runs from the default branch's copy of ci.yml; before that copy has workflow_dispatch, say so instead.
+          # CI runs from the default branch's copy of ci.yml. A dispatched run shows the result but doesn't satisfy
+          # the pull request's required gate check: the next push to the branch does.
           gh workflow run ci.yml --repo "$REPO" --ref "$BRANCH" \
             || echo "Couldn't start CI on the new commit; push to the branch, or re-run CI, to check it." >> "$GITHUB_STEP_SUMMARY"
 

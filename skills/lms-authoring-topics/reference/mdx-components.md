@@ -206,6 +206,9 @@ the narration text, and the sentence cues. Never write that file by hand:
    (`.github/workflows/readalong.yml`) narrates the lesson with ElevenLabs
    (`scripts/generate-readalong.mjs`), uploads the MP3 and commits `audio/<id>.json` to the PR.
    While the label is on, each push re-narrates only lessons whose text changed.
+   The workflow's commit starts a CI run by dispatch, which shows the result but doesn't count as
+   the PR's required `gate` check: before merging, push any commit to the branch (or use
+   **Update branch**) so CI runs on the PR itself.
 3. Review the cues like any other change. Content CI fails when the file is missing, and
    warns when the lesson's prose has changed since the audio was made.
 
