@@ -25,7 +25,7 @@ Update your row in your own PR. Statuses: `open` → `concept` → `building` �
 | B04 | Rails or a driver (redesign of `workflow-vs-agent-stepper`) | what-is-an-agent | building | claude | |
 | B05 | Media by reference | context-engineering | preview | codex | #195 |
 | B06 | Grounded but wrong: retrieval precision and recall (upgrade of `rag-retrieval-tuner`) | rag-pipelines | open | | |
-| B07 | Least privilege and the access boundary | agent-identity-and-access | building | codex | #197 |
+| B07 | Least privilege and the access boundary | agent-identity-and-access | preview | codex | #197 |
 | B08 | Whose authority: the 3-legged OAuth pause | agent-auth-oauth | open | | |
 | B09 | Hook pipeline | customizing-coding-agents | open | | |
 | B10 | What each guardrail can see | guardrails-model-armor-hitl | open | | |

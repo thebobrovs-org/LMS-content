@@ -78,7 +78,6 @@ input[type="range"] { width: 200px; max-width: 100%; accent-color: var(--primary
 
 /* B07: flat resource map. Policy outcomes are always written as well as coloured. */
 #app { max-width: 960px; margin: auto; }
-button { min-height: 44px; }
 .note { margin: 9px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .verdict { font-size: 13px; line-height: 1.5; }
 .stage svg { min-width: 680px; }
@@ -89,14 +88,14 @@ button { min-height: 44px; }
 .next { font-size: 14px; line-height: 1.5; margin: 0; }
 svg text { font-family: inherit; }
 .boundary { fill: none; stroke-width: 2.5; }
-.boundary.on { stroke: var(--amber); }
+.boundary.on { stroke: var(--amber); stroke-dasharray: 7 4; }
 .boundary.off { stroke: var(--muted); stroke-dasharray: 5 5; }
 .boundary-label-bg { fill: var(--panel); }
 .boundary-label { fill: var(--amber); font-size: 13px; font-weight: 700; }
 .boundary.off + .boundary-label-bg + .boundary-label { fill: var(--muted); }
 .attempts { stroke: var(--muted); stroke-width: 1.5; fill: none; }
-.agent-box { stroke: var(--teal); stroke-width: 1.5; fill: var(--panel); }
-.agent-icon { fill: none; stroke: var(--teal); stroke-width: 2.5; stroke-linecap: round; }
+.agent-box { stroke: var(--violet); stroke-width: 1.5; fill: var(--panel); }
+.agent-icon { fill: none; stroke: var(--violet); stroke-width: 2.5; stroke-linecap: round; }
 .key { fill: none; stroke: var(--primary); stroke-width: 2; }
 .grant-label { fill: var(--fg); font-size: 12px; font-weight: 600; }
 .resource-box { fill: var(--panel); stroke: var(--muted); stroke-width: 1.5; }
@@ -109,3 +108,7 @@ svg text { font-family: inherit; }
 .status-dot { fill: none; stroke: currentColor; stroke-width: 1.5; }
 .status-mark { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .status-text { fill: currentColor; font-size: 12px; font-weight: 600; }
+
+.outside { color: var(--muted); }
+.outside .door-frame, .outside .door-leaf { stroke-dasharray: 4 4; }
+.request { margin: 0 0 10px; padding: 10px 12px; border-left: 3px solid var(--amber); background: var(--surface); line-height: 1.5; }
