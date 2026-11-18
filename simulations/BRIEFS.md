@@ -27,7 +27,7 @@ Update your row in your own PR. Statuses: `open` → `concept` → `building` �
 | B06 | Grounded but wrong: retrieval precision and recall (upgrade of `rag-retrieval-tuner`) | rag-pipelines | open | | |
 | B07 | Least privilege and the access boundary | agent-identity-and-access | open | | |
 | B08 | Whose authority: the 3-legged OAuth pause | agent-auth-oauth | open | | |
-| B09 | Hook pipeline | customizing-coding-agents | open | | |
+| B09 | Hook pipeline | customizing-coding-agents | concept | agy | |
 | B10 | What each guardrail can see | guardrails-model-armor-hitl | open | | |
 | B11 | Scaling and cost | deploying-agents | open | | |
 | B12 | Trace detective | agent-observability-troubleshooting | open | | |
