@@ -36,7 +36,7 @@ const MODEL_ID = flag("--model", "eleven_multilingual_v2");
 const BUCKET = flag("--bucket", process.env.AUDIO_BUCKET || "");
 const OUT_DIR = flag("--out", path.join(process.cwd(), ".readalong-out"));
 
-/** Strip YAML frontmatter, interactive MDX components, code blocks, and markdown syntax. */
+/** Strip YAML frontmatter, interactive MDX components, code blocks, and markdown syntax while preserving paragraph breaks. */
 export function extractSpokenText(raw) {
   let text = raw.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, "");
   text = text.replace(/```[\s\S]*?```/g, "");
@@ -47,21 +47,49 @@ export function extractSpokenText(raw) {
   text = text.replace(/^#{1,6}\s+(.+)$/gm, (_, h) => (/[.!?]$/.test(h.trim()) ? h.trim() : `${h.trim()}.`));
   text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
   text = text.replace(/[*_`~]/g, "");
-  return text.replace(/\r?\n+/g, " ").replace(/\s{2,}/g, " ").trim();
+  return text
+    .split(/\r?\n\s*\r?\n/)
+    .map((p) => p.replace(/\r?\n+/g, " ").replace(/\s{2,}/g, " ").trim())
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 const ABBREVIATIONS = /(?:e\.g|i\.e|etc|vs|Dr|Mr|Ms|Prof|Fig|Eq|approx)\./i;
 
-/** Group ElevenLabs character-level alignment into sentence-level cues. */
+/** Group ElevenLabs character-level alignment into paragraph-aware sentence-level cues. */
 export function buildSentenceCues(alignment) {
   const { characters, character_start_times_seconds: starts, character_end_times_seconds: ends } = alignment;
   const cues = [];
   let buf = "";
   let cueStart = null;
   let cueEnd = null;
+  let paragraph = 0;
+
+  const flush = () => {
+    if (buf.trim().length > 0 && cueStart !== null) {
+      cues.push({
+        start: Number(cueStart.toFixed(3)),
+        end: Number(cueEnd.toFixed(3)),
+        text: buf.trim(),
+        paragraph,
+      });
+    }
+    buf = "";
+    cueStart = null;
+    cueEnd = null;
+  };
 
   for (let i = 0; i < characters.length; i++) {
     const ch = characters[i];
+    if (ch === "\n") {
+      if (characters[i + 1] === "\n") {
+        flush();
+        paragraph += 1;
+        i += 1;
+      }
+      continue;
+    }
+
     if (cueStart === null && ch.trim() !== "") cueStart = starts[i];
     buf += ch;
     if (ch.trim() !== "") cueEnd = ends[i];
@@ -71,24 +99,11 @@ export function buildSentenceCues(alignment) {
     const isAbbrev = ch === "." && ABBREVIATIONS.test(buf.trim().slice(-10));
 
     if (isEndPunct && !isAbbrev && buf.trim().length > 0) {
-      cues.push({
-        start: Number(cueStart.toFixed(3)),
-        end: Number(cueEnd.toFixed(3)),
-        text: buf.trim(),
-      });
-      buf = "";
-      cueStart = null;
-      cueEnd = null;
+      flush();
     }
   }
 
-  if (buf.trim().length > 0 && cueStart !== null) {
-    cues.push({
-      start: Number(cueStart.toFixed(3)),
-      end: Number(cueEnd.toFixed(3)),
-      text: buf.trim(),
-    });
-  }
+  flush();
   return cues;
 }
 
