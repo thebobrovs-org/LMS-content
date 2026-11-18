@@ -17,6 +17,43 @@ objectives:
     statement: "Require human confirmation for irreversible tool calls with ADK."
   - id: identity-propagation
     statement: "Propagate user identity so retrieval respects the user's permissions."
+videos:
+  - youtubeId: ZZWucnh3wuo
+    title: "We tried to jailbreak our AI (and Model Armor stopped it)"
+    channel: "Google Cloud Tech"
+    duration: "10:04"
+    published: "2025-10-30"
+    why: "Model Armor screening both prompts and responses, the lesson's first layer."
+    chapters:
+      - at: "1:46"
+        label: "Jailbreak demo"
+      - at: "3:23"
+        label: "Redact vs block"
+      - at: "5:11"
+        label: "Sanitize prompts"
+      - at: "5:21"
+        label: "Sanitize responses"
+  - youtubeId: MHEnuw9if3Y
+    title: "Secure AI: De-identifying data with SDP"
+    channel: "Google Cloud Tech"
+    duration: "4:39"
+    published: "2025-10-02"
+    why: "Sensitive Data Protection de-identification for prompts and data, and how it complements Model Armor."
+    note: "Doesn't explain basic versus advanced SDP settings in Model Armor."
+    chapters:
+      - at: "0:25"
+        label: "What is SDP"
+      - at: "2:35"
+        label: "SDP for generative AI prompts"
+      - at: "3:22"
+        label: "Model Armor"
+  - youtubeId: nb4rqOisSoU
+    title: "What is the human-in-the-loop pattern?"
+    channel: "Google Cloud Tech"
+    duration: "0:46"
+    published: "2026-02-04"
+    why: "Short explainer of the human-in-the-loop checkpoint before an action proceeds."
+    note: "A 46-second short. ADK tool confirmation and trusted-UI approval aren't covered."
 flashcards:
   - id: template-vs-floor
     objective: model-armor

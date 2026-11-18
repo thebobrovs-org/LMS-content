@@ -38,6 +38,7 @@ const WIDTH_GUARDS = {
   "systolic-array": [".grid-panel"],
   "tpu-ocs-explorer": [".canvas-wrap"],
   "tpu-vm-anatomy": [".stage-scroll"],
+  "workflow-vs-agent-stepper": [".scroll"],
 };
 
 /** The index just past the quoted string that starts at `i`, a backslash escaping the character after it. */

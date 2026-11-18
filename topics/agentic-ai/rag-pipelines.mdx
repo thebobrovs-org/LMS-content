@@ -15,6 +15,33 @@ objectives:
     statement: "Choose Agent Search, RAG Engine or Vector Search (Agent Retrieval) for a scenario."
   - id: grounded-but-wrong
     statement: "Diagnose a grounded but wrong answer and fix it at the data layer."
+videos:
+  - youtubeId: sGvXO7CVwc0
+    title: "Advanced RAG techniques for developers"
+    channel: "Google Cloud Tech"
+    duration: "8:16"
+    published: "2024-10-31"
+    why: "Covers the exact pipeline the lesson traces: chunking, retrieval, reranking, then grounding the LLM call."
+    note: "Older (2024), and doesn't name precision or recall."
+    chapters:
+      - at: "1:03"
+        label: "Pre-processing and storage (chunking)"
+      - at: "3:53"
+        label: "Retrieval"
+      - at: "4:47"
+        label: "Reranking"
+  - youtubeId: -L5khDHrQSE
+    title: "Give your app search superpowers: Agent Retrieval (Vector Search 2.0)"
+    channel: "Google Cloud Tech"
+    duration: "6:13"
+    published: "2026-07-16"
+    why: "Current Agent Retrieval (Vector Search 2.0) demo of the managed retrieval step."
+    note: "A product demo: no chunk-size or top-k tuning."
+    chapters:
+      - at: "0:45"
+        label: "Why semantic search"
+      - at: "2:28"
+        label: "Code walkthrough"
 flashcards:
   - id: rag-stages-card
     objective: rag-stages

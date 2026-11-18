@@ -143,3 +143,22 @@ test("context-budget-explorer: lean and passing fires the checkpoint; caching cu
   assert.match(text(sim, "#r-total"), /^20,500/, "caching doesn't shrink the context");
   assert.match(text(sim, "#r-billed"), /16,000 uncached/);
 });
+
+test("workflow-vs-agent-stepper: on a partly shipped order the tram hands off and the car redirects a part", async () => {
+  const sim = await loadSim("workflow-vs-agent-stepper");
+  await sim.press('[data-v="tram"][data-predict="help"]');
+  for (let i = 0; i < 6; i++) await sim.press("#step");
+  const caption = text(sim, "#caption");
+  assert.match(caption, /Handed to a person; nothing changed, with 1 model call/);
+  assert.match(caption, /Part A1234-2 will go to your new address/);
+  assert.match(text(sim, "#verdict"), /Workflow: right/);
+  assert.ok(sim.events.includes("checkpoint:observe-who-decides"));
+});
+
+test("workflow-vs-agent-stepper: with the expected result both change the address, and only the unexpected run fires the checkpoint", async () => {
+  const sim = await loadSim("workflow-vs-agent-stepper");
+  await sim.press('[data-result="expected"]');
+  for (let i = 0; i < 6; i++) await sim.press("#step");
+  assert.match(text(sim, "#caption"), /Same outcome\. The rails used 1 model call, the driver 3/);
+  assert.ok(!sim.events.includes("checkpoint:observe-who-decides"));
+});

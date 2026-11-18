@@ -13,6 +13,31 @@ objectives:
     statement: "Map a symptom (latency, a reasoning loop, drift, errors, hallucination, cost) to its likely cause and the signal that confirms it."
   - id: optimize
     statement: "Choose a fix that addresses the cause of latency, loops, drift or cost."
+videos:
+  - youtubeId: EPXswl3X1ek
+    title: "Debugging agents at scale"
+    channel: "Google Cloud"
+    duration: "5:20"
+    published: "2026-04-27"
+    why: "Next '26 demo of debugging a misbehaving agent with Google Cloud AI Observability, going from symptom to signal to fix."
+    note: "A short demo with no trace-waterfall walkthrough."
+    chapters:
+      - at: "1:13"
+        label: "Incident investigation"
+      - at: "2:02"
+        label: "Root cause analysis"
+  - youtubeId: wPdoZRbvaF4
+    title: "Why Your AI Agent Fails in Production (And How to Catch It)"
+    channel: "Google Cloud Tech"
+    duration: "26:07"
+    published: "2026-09-30"
+    why: "Uses agent traces to measure quality, latency and token cost, matching the lesson's traces/metrics/logs section."
+    note: "The demo agent is built with LangGraph, not ADK."
+    chapters:
+      - at: "3:40"
+        label: "Making traces evaluation-ready"
+      - at: "17:14"
+        label: "Measuring quality, latency and tokens"
 flashcards:
   - id: span-definition
     objective: read-trace

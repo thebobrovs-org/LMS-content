@@ -1,6 +1,8 @@
 // Generated from schema/content-schema.mjs by scripts/schema-declarations.mjs. Do not edit.
 /** Whether `YYYY-MM-DD` names a real calendar day (leap years included). */
 export function isCalendarDate(s: any): boolean;
+/** Seconds in a TimestampSchema string: `"1:02:03"` is 3723. */
+export function timestampSeconds(t: any): any;
 /**
  * Validate `value` against `schema`, naming `file`: the parsed value (the schema's
  * output type, with defaults filled in), or a list of problems as
@@ -25,10 +27,31 @@ export function check<S extends z.ZodTypeAny>(schema: S, value: unknown, file?: 
 export const SCHEMA_VERSION: 2;
 /** An id in the content tree: kebab-case segments, `dir/name` for a topic. */
 export const ContentIdSchema: z.ZodString;
+/** A video timestamp, `m:ss` or `h:mm:ss`, quoted in YAML (an unquoted `2:25` can parse as a sexagesimal number). */
+export const TimestampSchema: z.ZodString;
+/** A moment in a video worth jumping to: the app renders it as a chip that starts or seeks the player there. */
+export const VideoChapterSchema: z.ZodObject<{
+    at: z.ZodString;
+    label: z.ZodString;
+}, z.core.$strict>;
+/**
+ * A suggested video (a topic's `videos`): the app lists them under "Suggested videos", each a privacy-friendly
+ * lazy youtube-nocookie player with its chapters as chips. Only `youtubeId` is required; `why` says what it adds
+ * to the lesson and `note` is a short caveat for the learner (an older product name, a partial match).
+ */
 export const VideoSchema: z.ZodObject<{
     youtubeId: z.ZodString;
     title: z.ZodOptional<z.ZodString>;
     start: z.ZodOptional<z.ZodNumber>;
+    channel: z.ZodOptional<z.ZodString>;
+    duration: z.ZodOptional<z.ZodString>;
+    published: z.ZodOptional<z.ZodString>;
+    why: z.ZodOptional<z.ZodString>;
+    note: z.ZodOptional<z.ZodString>;
+    chapters: z.ZodDefault<z.ZodArray<z.ZodObject<{
+        at: z.ZodString;
+        label: z.ZodString;
+    }, z.core.$strict>>>;
 }, z.core.$strict>;
 /**
  * A learning objective's id (LMS-content#83): lowercase, digits and hyphens, unique within
@@ -99,6 +122,15 @@ export const TopicFrontmatterSchema: z.ZodObject<{
         youtubeId: z.ZodString;
         title: z.ZodOptional<z.ZodString>;
         start: z.ZodOptional<z.ZodNumber>;
+        channel: z.ZodOptional<z.ZodString>;
+        duration: z.ZodOptional<z.ZodString>;
+        published: z.ZodOptional<z.ZodString>;
+        why: z.ZodOptional<z.ZodString>;
+        note: z.ZodOptional<z.ZodString>;
+        chapters: z.ZodDefault<z.ZodArray<z.ZodObject<{
+            at: z.ZodString;
+            label: z.ZodString;
+        }, z.core.$strict>>>;
     }, z.core.$strict>>>;
     flashcards: z.ZodDefault<z.ZodArray<z.ZodObject<{
         id: z.ZodOptional<z.ZodString>;
@@ -117,8 +149,8 @@ export const TopicFrontmatterSchema: z.ZodObject<{
         objective: z.ZodOptional<z.ZodString>;
     }, z.core.$strict>>>;
     status: z.ZodDefault<z.ZodEnum<{
-        draft: "draft";
         published: "published";
+        draft: "draft";
     }>>;
     updated: z.ZodOptional<z.ZodString>;
     authors: z.ZodDefault<z.ZodArray<z.ZodString>>;
@@ -138,8 +170,8 @@ export const PathFrontmatterSchema: z.ZodObject<{
         topics: z.ZodArray<z.ZodString>;
     }, z.core.$strict>>;
     status: z.ZodDefault<z.ZodEnum<{
-        draft: "draft";
         published: "published";
+        draft: "draft";
     }>>;
 }, z.core.$strict>;
 /** `glossary/<pathId>.json`: term → entry. */

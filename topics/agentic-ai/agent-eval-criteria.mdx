@@ -15,6 +15,36 @@ objectives:
     statement: "Choose ADK evaluation, the Gen AI evaluation service or a custom metric for an evaluation need."
   - id: continuous-eval
     statement: "Design continuous evaluation across a CI gate before release, scheduled runs and online monitoring after release."
+videos:
+  - youtubeId: GatM9XV0gOw
+    title: "Building a custom evaluation for your agent"
+    channel: "Google Cloud Tech"
+    duration: "13:01"
+    published: "2026-11-12"
+    why: "Matches the lesson closely: pick a deterministic check vs a model judge, configure ADK eval criteria, and gate CI."
+    chapters:
+      - at: "1:56"
+        label: "Comparators"
+      - at: "3:45"
+        label: "Deterministic code vs LLM judge"
+      - at: "8:00"
+        label: "ADK eval config"
+      - at: "11:00"
+        label: "CI/CD"
+  - youtubeId: WRU7-4bpZkg
+    title: "How to build a continuous evaluation pipeline for multi-agent systems with Gemini"
+    channel: "Google Cloud Tech"
+    duration: "1:24:50"
+    published: "2026-06-30"
+    why: "Continuous evaluation from metrics and graders to CI gates and shadow deployment in production."
+    note: "An 85-minute livestream: jump to the chapters."
+    chapters:
+      - at: "13:40"
+        label: "Evaluation metrics"
+      - at: "21:31"
+        label: "Graders and judging"
+      - at: "57:35"
+        label: "CI/CD and shadow deployment"
 flashcards:
   - id: three-match-modes
     objective: trajectory-modes

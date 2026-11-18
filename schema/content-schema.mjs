@@ -36,13 +36,49 @@ const IsoDate = z
   .regex(/^\d{4}-\d{2}-\d{2}$/, "must be a quoted YYYY-MM-DD string")
   .refine(isCalendarDate, "must be a real calendar date");
 
+/** A video timestamp, `m:ss` or `h:mm:ss`, quoted in YAML (an unquoted `2:25` can parse as a sexagesimal number). */
+export const TimestampSchema = z
+  .string({ error: (iss) => (iss.input === undefined ? undefined : 'must be a quoted "m:ss" or "h:mm:ss" string') })
+  .regex(/^(?:\d+:)?[0-5]?\d:[0-5]\d$/, 'must be "m:ss" or "h:mm:ss"');
+
+/** Seconds in a TimestampSchema string: `"1:02:03"` is 3723. */
+export function timestampSeconds(t) {
+  return t.split(":").reduce((s, part) => s * 60 + Number(part), 0);
+}
+
+/** A moment in a video worth jumping to: the app renders it as a chip that starts or seeks the player there. */
+export const VideoChapterSchema = z.object({ at: TimestampSchema, label: nonEmpty }).strict();
+
+/**
+ * A suggested video (a topic's `videos`): the app lists them under "Suggested videos", each a privacy-friendly
+ * lazy youtube-nocookie player with its chapters as chips. Only `youtubeId` is required; `why` says what it adds
+ * to the lesson and `note` is a short caveat for the learner (an older product name, a partial match).
+ */
 export const VideoSchema = z
   .object({
-    youtubeId: nonEmpty,
+    youtubeId: z.string().regex(/^[A-Za-z0-9_-]{11}$/, "must be an 11-character YouTube video id"),
     title: z.string().optional(),
     start: z.number().int().nonnegative().optional(),
+    /** The publishing channel, as YouTube shows it. */
+    channel: z.string().min(1).optional(),
+    /** The video's length, as YouTube shows it. */
+    duration: TimestampSchema.optional(),
+    published: IsoDate.optional(),
+    why: z.string().min(1).optional(),
+    note: z.string().min(1).optional(),
+    chapters: z.array(VideoChapterSchema).default([]),
   })
-  .strict();
+  .strict()
+  .superRefine((v, ctx) => {
+    const end = v.duration === undefined ? Infinity : timestampSeconds(v.duration);
+    let prev = -1;
+    for (const [i, c] of v.chapters.entries()) {
+      const t = timestampSeconds(c.at);
+      if (t <= prev) ctx.addIssue({ code: "custom", path: ["chapters", i, "at"], message: "chapters must be in increasing time order" });
+      if (t >= end) ctx.addIssue({ code: "custom", path: ["chapters", i, "at"], message: `is past the video's end (${v.duration})` });
+      prev = t;
+    }
+  });
 
 /**
  * A learning objective's id (LMS-content#83): lowercase, digits and hyphens, unique within

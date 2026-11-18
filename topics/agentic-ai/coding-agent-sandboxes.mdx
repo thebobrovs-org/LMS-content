@@ -13,6 +13,35 @@ objectives:
     statement: "Set permission presets that require approval for risky commands."
   - id: safe-refactor
     statement: "Run a refactor or security patch through an agent with tests and human review before merge."
+videos:
+  - youtubeId: 5_R_Ixk8ENQ
+    title: "Agent sandbox and Pod snapshots: Supercharging agents on GKE | The Agent Factory Podcast"
+    channel: "Google Cloud Tech"
+    duration: "41:27"
+    published: "2025-12-02"
+    why: "Agent Sandbox on GKE for isolating LLM-generated code, the top rung of the lesson's isolation ladder."
+    note: "GKE-specific: it doesn't cover the Antigravity terminal sandbox or Cloud Workstations."
+    chapters:
+      - at: "2:22"
+        label: "Why GKE for agents"
+      - at: "15:20"
+        label: "Code execution agent"
+  - youtubeId: 4DJD3RHOnPA
+    title: "How to find & fix code vulnerabilities autonomously with Google CodeMender"
+    channel: "Google Cloud Tech"
+    duration: "2:14"
+    published: "2026-07-21"
+    why: "CodeMender's scan, verify, patch and human-review flow: the lesson's 'patch a vulnerability with review gates'."
+    note: "A 2-minute overview."
+    chapters:
+      - at: "0:42"
+        label: "Scan"
+      - at: "0:59"
+        label: "Verify (PoC exploit)"
+      - at: "1:14"
+        label: "Remediate"
+      - at: "1:23"
+        label: "Developer review"
 flashcards:
   - id: terminal-sandbox-protects
     objective: choose-sandbox
