@@ -107,6 +107,41 @@ Plain Markdown plus a **whitelisted** set of components (no arbitrary scripts):
 Put a check (flashcard/quiz/step) right after the thing it tests — "do it, then
 recall it."
 
+## Sources (every lesson ends with them)
+
+End the body with a `## Sources` heading and a Markdown list, one source per
+item, in this form:
+
+```mdx
+## Sources
+
+- Google Cloud, [Agent Gateway overview](https://docs.cloud.google.com/gemini-enterprise-agent-platform/govern/gateways/agent-gateway-overview) (retrieved 2026-11-17: centralizes access policies, mTLS and Model Armor for agent traffic).
+- Yao et al. (2022), [ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629) (the reason-act loop the lesson traces).
+```
+
+The app renders the list as a table behind a "Show N sources" toggle,
+collapsed by default: the **title** as a link, the **publisher**, and **what it
+supports** (LMS `lib/content/sources-table.mjs`). So each item is:
+
+1. **Publisher** (and series, if any) first, then a comma: `Google, Agent Development Kit documentation,`.
+2. **The title as a Markdown link** to the exact page, with a full `https://`
+   URL: `[Function tools](https://github.com/google/adk-docs/blob/main/docs/tools-custom/function-tools.md)`.
+   One link per item; the page title, not "here" or the raw URL.
+3. **One closing parenthetical** saying what the source supports in this
+   lesson, with the retrieval date for anything that changes (docs, pricing,
+   product pages): `(retrieved 2026-11-17: max_llm_calls, default 500 per run)`.
+   Inline `code` is fine inside it.
+
+Keep anything else (a version, an edition, "section 3.1") between the link and
+the parenthetical: it shows under the title. A source with no URL (a paper in
+print) keeps its title in quotes: `- Norm Hardy, "The Confused Deputy", ACM SIGOPS Operating Systems Review 22(4), 1988 (the term).`
+Don't put prose or notes in the list (it becomes a table row); write them as a
+paragraph above the list. Cite a `knowledge/` record's source with the same
+URL the record carries.
+
+The older plain form (`- Google, "Title", host/path (…)`, a quoted title and a
+bare domain) still renders, but write new and revised lessons with links.
+
 ## Voice & tone (match the brand)
 
 - **Plain, confident, teacherly.** Short declarative sentences that explain a

@@ -3,7 +3,8 @@
 // - approval-gate-explorer: the same refund rides two tracks; one denial keeps the money on the top track (approval
 //   before issue_refund) and is too late on the bottom one (review after it); a refund under the threshold is not asked.
 // - state-scope-explorer: a populated user: key survives a restart on DatabaseSessionService and is lost on
-//   InMemorySessionService; a session key is not read in a new session of the same user, a user: key is.
+//   InMemorySessionService; a session key is not read in a new session of the same user, a user: key is; a temp:
+//   key is gone next turn; an app: key reaches another user.
 // Run by `npm run gate`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -60,8 +61,7 @@ test("approval-gate-explorer: a refund under the threshold is never asked about"
 });
 
 async function writeUserKeyAndRestart(sim) {
-  await sim.press("#scope", "user");
-  await sim.press("#write");
+  await sim.press("#put-user");
   assert.match(text(sim, "#merged"), /"user:language": "fr"/, "the user: key is stored before the restart");
   await sim.press("#restart");
 }
@@ -74,25 +74,41 @@ test("state-scope-explorer: a stored user: key survives a restart on DatabaseSes
 
 test("state-scope-explorer: a stored user: key is lost on restart with InMemorySessionService", async () => {
   const sim = await loadSim("state-scope-explorer");
-  await sim.press("#service", "memory");
-  assert.match(text(sim, "#log"), /empty store/, "switching service says it resets the exercise");
+  await sim.press('[data-service="memory"]');
+  assert.match(text(sim, "#caption"), /empty store/, "switching service says it resets the exercise");
   await writeUserKeyAndRestart(sim);
+  assert.equal(text(sim, "#merged"), "{ }");
+});
+
+test("state-scope-explorer: a temp: key is gone on the next turn", async () => {
+  const sim = await loadSim("state-scope-explorer");
+  await sim.press("#put-temp");
+  assert.match(text(sim, "#merged"), /"temp:language": "fr"/);
+  await sim.press("#turn");
   assert.equal(text(sim, "#merged"), "{ }");
 });
 
 test("state-scope-explorer: a new session reads the user: key but not the session key", async () => {
   const sim = await loadSim("state-scope-explorer");
-  await sim.press("#write"); // language, no prefix
-  await sim.press("#scope", "user");
-  await sim.press("#write");
+  await sim.press("#put-session"); // language, no prefix
+  await sim.press("#put-user");
   assert.ok(!sim.events.includes("checkpoint:observe-user-scope"));
-  await sim.press("#session", "new");
+  await sim.press('[data-predict="fridge"]');
+  await sim.press("#new-session");
   const merged = text(sim, "#merged");
   assert.match(merged, /"user:language": "fr"/);
   assert.doesNotMatch(merged, /"language": "fr"/);
   assert.ok(sim.events.includes("checkpoint:observe-user-scope"));
-  await sim.press("#user", "Ben");
+  assert.match(text(sim, "#verdict"), /^Right/);
+  await sim.press('[data-user="Ben"]');
   assert.equal(text(sim, "#merged"), "{ }", "another user reads neither key");
+});
+
+test("state-scope-explorer: an app: key reaches every user", async () => {
+  const sim = await loadSim("state-scope-explorer");
+  await sim.press("#put-app");
+  await sim.press('[data-user="Ben"]');
+  assert.match(text(sim, "#merged"), /"app:language": "fr"/);
 });
 
 test("context-budget-explorer: compacting without pinning loses the order id and fails recall", async () => {
