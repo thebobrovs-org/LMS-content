@@ -33,6 +33,8 @@ const TEXT_REGIONS = {
 const WIDTH_GUARDS = {
   "guardrail-visibility": [".scroll"],
   "hybrid-agent-flow": [".scroll"],
+  "gateway-registry-flow": [".scroll"],
+  "continuous-eval-loop": [".scroll"],
   "platform-map-explorer": [".scroll"],
   "workflow-canvas-flow": [".scroll"],
   "enterprise-data-flow": [".scroll"],

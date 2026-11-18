@@ -1,0 +1,12 @@
+{
+  "id": "continuous-eval-loop",
+  "title": "The continuous evaluation loop",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-loop-closes",
+      "hint": "Predict where a production failure goes, then step to the end: it becomes a new eval case, and the CI gate tests every later change against it."
+    }
+  ]
+}
