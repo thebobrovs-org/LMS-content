@@ -16,7 +16,7 @@
  * Options:
  *   --dry-run           Say what would be narrated and how many characters it costs; call nothing
  *   --force             Regenerate even when the audio is up to date
- *   --voice <id>        ElevenLabs voice (default: READALONG_VOICE env, else Bella hpp4J3VqNfWAUOO0d1Us)
+ *   --voice <id>        ElevenLabs voice (default: READALONG_VOICE env, else Nichalia XfNU2rGpBa01ckF309OY)
  *   --model <id>        ElevenLabs model (default: READALONG_MODEL env, else eleven_multilingual_v2)
  *   --bucket <name>     GCS bucket for the MP3s (or AUDIO_BUCKET env); required to write audio files
  *   --max-chars <n>     Characters per request (default 9000, under the model's per-request limit)
@@ -38,10 +38,10 @@ import { ReadAlongAudioSchema, check } from "../schema/content-schema.mjs";
 
 export { extractSpokenText };
 
-export const DEFAULT_VOICE = "hpp4J3VqNfWAUOO0d1Us"; // Bella: crisp diction for long-form technical narration
+export const DEFAULT_VOICE = "XfNU2rGpBa01ckF309OY"; // Nichalia: clear, warm e-learning narration (chosen by ear, Nov 2026)
 export const DEFAULT_MODEL = "eleven_multilingual_v2";
 export const SAMPLE_VOICES = ["hpp4J3VqNfWAUOO0d1Us", "Xb7hH8MSUJpSbSDYk0k2", "SAz9YHcvj6GT2YYXdXww"]; // Bella, Alice, River
-const VOICE_NAMES = { hpp4J3VqNfWAUOO0d1Us: "bella", Xb7hH8MSUJpSbSDYk0k2: "alice", SAz9YHcvj6GT2YYXdXww: "river", XrExE9yKIg1WjnnlVkGX: "matilda", onwK4e9ZLuTAKqWW03F9: "daniel" };
+const VOICE_NAMES = { XfNU2rGpBa01ckF309OY: "nichalia", nPczCjzI2devNBz1zQrb: "brian", JBFqnCBsd6RMkjVDRZzb: "george", "4CrZuIW9am7gYAxgo2Af": "shelley", hpp4J3VqNfWAUOO0d1Us: "bella", Xb7hH8MSUJpSbSDYk0k2: "alice", SAz9YHcvj6GT2YYXdXww: "river", XrExE9yKIg1WjnnlVkGX: "matilda", onwK4e9ZLuTAKqWW03F9: "daniel" };
 const ROOT = process.cwd();
 const TREES = ["topics", path.join("staging", "topics")];
 
