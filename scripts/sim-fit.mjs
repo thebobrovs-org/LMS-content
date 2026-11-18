@@ -28,6 +28,7 @@ export const FIT = [
   "approval-gate-explorer",
   "context-budget-explorer",
   "cx-route-resolver",
+  "oauth-consent-pause",
   "orchestration-patterns",
   "rag-retrieval-tuner",
   "state-scope-explorer",
