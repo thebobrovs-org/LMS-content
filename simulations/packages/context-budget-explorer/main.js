@@ -243,7 +243,7 @@ function build() {
       <h2 id="rc-h">Receipt for one late turn</h2>
       <div class="rc"><span>Tokens the model reads</span><span class="mono" id="r-total"></span></div>
       <div class="rc"><span>Billed like</span><span class="mono" id="r-billed"></span></div>
-      <div class="controls"><button type="button" class="pill" id="cache" aria-pressed="false">Context caching on the stable prefix</button><button type="button" id="reset" class="secondary">Reset</button></div>
+      <div class="controls"><button type="button" class="pill" id="cache" aria-pressed="false">Context caching on the stable prefix</button><button type="button" id="reset">Reset</button></div>
     </section>
     <p class="legend">Token counts are the lesson's illustrative figures; chunk ranks are invented for the exercise. Hatching marks the cached prefix: still in the context window, billed at a tenth of the input rate.</p>`;
   els = {};
