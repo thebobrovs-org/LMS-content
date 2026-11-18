@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>What each guardrail can see</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main id="app" aria-label="What each guardrail can see simulation"></main>
+    <!-- CLASSIC (non-module) scripts. The sim runs in a sandboxed, opaque-origin
+         iframe (sandbox="allow-scripts", no allow-same-origin); ES module scripts
+         are CORS-blocked from a null origin and would render blank. The SDK
+         exposes a global `createSim`, so these load as plain scripts. -->
+    <script src="./sim-sdk.js"></script>
+    <script src="./main.js"></script>
+  </body>
+</html>

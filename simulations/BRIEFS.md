@@ -28,7 +28,7 @@ Update your row in your own PR. Statuses: `open` → `concept` → `building` �
 | B07 | Least privilege and the access boundary | agent-identity-and-access | merged | codex | #197 |
 | B08 | Whose authority: the 3-legged OAuth pause | agent-auth-oauth | open | | |
 | B09 | Hook pipeline | customizing-coding-agents | open | | |
-| B10 | What each guardrail can see | guardrails-model-armor-hitl | concept | codex | #206 |
+| B10 | What each guardrail can see | guardrails-model-armor-hitl | preview | codex | #206 |
 | B11 | Scaling and cost | deploying-agents | open | | |
 | B12 | Trace detective | agent-observability-troubleshooting | open | | |
 | B13 | Requirements to a model | choosing-a-model | open | | |
