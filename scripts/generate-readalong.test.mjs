@@ -161,3 +161,8 @@ test("a setting is the flag, else the environment, else the default; empty count
   assert.equal(setting(undefined, "", "default"), "default");
   assert.equal(setting(undefined, undefined, "default"), "default");
 });
+
+test("a list item wrapped over several lines is read as one sentence, not cut at the line break", () => {
+  const text = extractSpokenText("- **Tools** that let it read data or act: functions,\n  APIs, databases, even other agents.\n- A loop.\n  - nested item\n");
+  assert.equal(text, "Tools that let it read data or act: functions, APIs, databases, even other agents. A loop. nested item.");
+});
