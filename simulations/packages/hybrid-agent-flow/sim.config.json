@@ -1,0 +1,12 @@
+{
+  "id": "hybrid-agent-flow",
+  "title": "A hybrid agent, step by step",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-direct-path",
+      "hint": "Step the sales-quote design to the end: the registered ADK agent can also be opened directly, a path the workflow and the console's Model Armor settings don't cover."
+    }
+  ]
+}

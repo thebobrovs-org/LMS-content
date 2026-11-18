@@ -1,0 +1,48 @@
+/* flow-kit v1: copied verbatim from simulations/kit/flow-kit.css, right after the sim kit. Edit it there, never here. */
+/* The drawing of a flow sim (simulations/kit/flow-kit.js). Hue means what the sim kit says it means;
+   --primary is the step you are on, so zones and boxes take the other hues. */
+.fk-h-primary { color: var(--primary); } .fk-h-violet { color: var(--violet); } .fk-h-teal { color: var(--teal); }
+.fk-h-green { color: var(--green); } .fk-h-red { color: var(--red); } .fk-h-amber { color: var(--amber); }
+.fk-h-orange { color: var(--orange); } .fk-h-rose { color: var(--rose); } .fk-h-gold { color: var(--gold); }
+.fk-h-neutral { color: var(--muted); }
+.fk-zone rect { fill: currentColor; fill-opacity: .07; stroke: currentColor; stroke-width: 1.5; }
+.fk-zt { fill: var(--fg); paint-order: stroke; stroke: var(--panel); stroke-width: 4px; stroke-linejoin: round; }
+.fk-box { fill: var(--panel); stroke: currentColor; stroke-width: 1.5; }
+.fk-node text { text-anchor: middle; }
+.fk-node.fk-has-icon text { text-anchor: start; }
+.fk-well { fill: currentColor; fill-opacity: .12; }
+.fk-icon { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.fk-node.fk-been .fk-box { stroke-width: 2; }
+.fk-node.fk-here .fk-box { stroke: var(--primary); stroke-width: 3; }
+.fk-edge { color: var(--muted); }
+.fk-line { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+.fk-head { fill: currentColor; }
+.fk-edge.fk-seen { color: var(--primary); }
+.fk-edge.fk-now { color: var(--primary); }
+.fk-edge.fk-now .fk-line { stroke-width: 3; }
+.fk-lbl rect { fill: var(--panel); stroke: currentColor; stroke-width: 1; }
+.fk-lbl text { text-anchor: middle; fill: var(--fg); }
+.fk-num { fill: var(--panel); stroke: currentColor; stroke-width: 1.5; }
+.fk-lbl .fk-num-t { fill: currentColor; font-size: 10px; font-weight: 700; text-anchor: middle; }
+.fk-edge.fk-now .fk-num { fill: var(--primary); }
+.fk-edge.fk-now .fk-lbl .fk-num-t { fill: var(--primary-contrast); }
+.fk-check circle { fill: var(--green); stroke: var(--panel); stroke-width: 2; }
+.fk-check path { fill: none; stroke: var(--panel); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.fk-cap-h:empty { display: none; }
+.fk-cap-h { display: block; font-size: 13px; color: var(--muted); margin-bottom: 2px; }
+.fk-ctl button { padding: 6px 11px; }
+.fk-token { fill: var(--primary); stroke: var(--panel); stroke-width: 2; }
+.fk-steps { display: flex; flex-wrap: wrap; gap: 6px; }
+.fk-readout { margin: 0; font-size: 13px; font-weight: 600; }
+.stage .side { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.stage .side .caption, .stage .side .controls { margin: 0; }
+.view svg { max-width: 100%; margin: 0 auto; }
+@media (min-width: 900px) {
+  .stage { grid-template-columns: minmax(0, 1fr) 300px; } /* a wider drawing column, so boxes with icons fit at full size */
+  .stage .side { margin-top: 0; }
+  /* The kit sets .fk-stack when the drawing fits only at full width: drawing above, controls below. */
+  .stage.fk-stack { display: block; }
+  .stage.fk-stack .side { margin-top: 12px; }
+  .stage.fk-stack svg { max-height: none; }
+}
+/* end flow-kit v1 */
