@@ -43,8 +43,15 @@ const PREDICT = [
 ];
 const ANSWER = "flash-eu";
 
-const X = { reqX: 6, reqW: 262, reqH: 36, port: 360, l: 388, r: 668, c: 528, railL: 372, railR: 684 };
-const reqY = (i) => 6 + i * 44;
+// Two layouts. Wide (a drawing of 640 px or more): requirements on the left, wired to the rails.
+// Narrow (phones): the requirements stacked above the rails at 1:1 scale, so labels stay legible.
+const WIDE = { w: 700, h: 320, wires: true, reqX: 6, reqW: 262, reqH: 36, gap: 44, port: 360, l: 388, r: 668, c: 528, railL: 372, railR: 684,
+  ay: { size: 58, open: 158, serve: 258 }, rdy: 24, eu: (x, y) => [x, y + 44] };
+const NARROW = { w: 320, h: 586, wires: false, reqX: 4, reqW: 312, reqH: 34, gap: 40, port: 0, l: 24, r: 296, c: 160, railL: 12, railR: 308,
+  ay: { size: 340, open: 438, serve: 536 }, rdy: 38, eu: (x, y) => [100, y - 34] };
+let X = WIDE;
+const isNarrow = () => (window.innerWidth || 1100) < 700;
+const reqY = (i) => (X === WIDE ? 6 : 4) + i * X.gap;
 
 let ticked = new Set();
 let last = null;
@@ -101,7 +108,7 @@ function decide() {
 
 function wire(r, i) {
   const ym = reqY(i) + X.reqH / 2;
-  const ry = AXES[r.axis].y;
+  const ry = X.ay[r.axis];
   const x0 = X.reqX + X.reqW;
   const mid = (x0 + X.port) / 2;
   return `<path id="w-${r.id}" class="wire h-${AXES[r.axis].hue}" d="M${x0},${ym} C${mid},${ym} ${mid},${ry} ${X.port},${ry}"/>`;
@@ -113,26 +120,26 @@ function reqBox(r, i) {
       <rect class="rb" x="${X.reqX}" y="${y}" width="${X.reqW}" height="${X.reqH}" rx="8"/>
       <rect class="cb" x="${X.reqX + 10}" y="${y + 11}" width="14" height="14" rx="4"/>
       <path class="ck" d="M${X.reqX + 13},${y + 18} l3,3 l6,-7"/>
-      <text class="k-label" x="${X.reqX + 32}" y="${y + 16}">${r.label}</text>
-      <text class="k-small" x="${X.reqX + 32}" y="${y + 29}">acts on ${AXES[r.axis].title.toLowerCase()}</text>
+      <text class="k-label" x="${X.reqX + 32}" y="${y + (X === WIDE ? 16 : 15)}">${r.label}</text>
+      <text class="k-small" x="${X.reqX + 32}" y="${y + (X === WIDE ? 29 : 28)}">acts on ${AXES[r.axis].title.toLowerCase()}</text>
     </g>`;
 }
 
 function rail(key) {
   const a = AXES[key];
-  const y = a.y;
+  const y = X.ay[key];
   return `<g class="axis h-${a.hue}" id="a-${key}">
       <text class="k-title" x="${X.railL}" y="${y - 30}">${a.title}</text>
-      <circle class="port" cx="${X.port}" cy="${y}" r="4"/>
+      ${X.wires ? `<circle class="port" cx="${X.port}" cy="${y}" r="4"/>` : ""}
       <line class="rail" x1="${X.railL}" y1="${y}" x2="${X.railR}" y2="${y}"/>
       <line class="clash" id="clash-${key}" x1="${X.l}" y1="${y}" x2="${X.r}" y2="${y}"/>
       <circle class="end" cx="${X.l}" cy="${y}" r="4"/><circle class="end" cx="${X.r}" cy="${y}" r="4"/>
       <text class="endl" id="el-${key}" x="${X.railL}" y="${y + 24}">${a.left}</text>
-      <text class="endl" id="er-${key}" x="${X.railR}" y="${y + 24}" text-anchor="end">${a.right}</text>
+      <text class="endl" id="er-${key}" x="${X.railR}" y="${y + X.rdy}" text-anchor="end">${a.right}</text>
       <g class="puck" id="p1-${key}"><circle r="11"/></g>
       <g class="puck" id="p2-${key}"><circle r="11"/></g>
       <text class="pl" id="pl-${key}" x="${X.c}" y="${y - 16}" text-anchor="middle"></text>
-      ${key === "serve" ? `<g class="eu" id="eu" transform="translate(${X.l},${y + 44})"><rect x="-16" y="-11" width="76" height="20" rx="10"/><text x="22" y="3" text-anchor="middle">EU endpoint</text></g>` : ""}
+      ${key === "serve" ? `<g class="eu" id="eu" transform="translate(${X.eu(X.l, y).join(",")})"><rect x="-16" y="-11" width="76" height="20" rx="10"/><text x="22" y="3" text-anchor="middle">EU endpoint</text></g>` : ""}
     </g>`;
 }
 
@@ -146,13 +153,7 @@ function build() {
       <p class="verdict" id="verdict"></p>
     </details>
     <div class="panel stage">
-      <div class="scroll" tabindex="0" role="region" aria-label="Requirements wired to the three axes">
-        <svg viewBox="0 0 700 320" role="img" id="drawing" aria-label="">
-          <g class="wires">${REQS.map(wire).join("")}</g>
-          ${REQS.map(reqBox).join("")}
-          ${Object.keys(AXES).map(rail).join("")}
-        </svg>
-      </div>
+      <div class="scroll" tabindex="0" role="region" aria-label="Requirements wired to the three axes" id="scroll"></div>
       <p class="caption" id="caption" role="status"></p>
       <dl class="result" id="result" aria-label="Where your requirements lead">
         ${Object.keys(AXES).map((k) => `<div class="row h-${AXES[k].hue}"><dt>${AXES[k].title}</dt><dd id="res-${k}"></dd></div>`).join("")}
@@ -165,14 +166,8 @@ function build() {
       </div>
     </div>
     <p class="legend">Tick a requirement to wire it to the axis it acts on. Orange: size. Violet: openness. Teal: serving. A dashed marker means no requirement moves that axis yet.</p>`;
-  els = { drawing: app.querySelector("#drawing"), caption: app.querySelector("#caption"), verdict: app.querySelector("#verdict") };
-
-  app.querySelectorAll(".req").forEach((g) => {
-    g.addEventListener("click", () => toggle(g.dataset.req));
-    g.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(g.dataset.req); }
-    });
-  });
+  els = { scroll: app.querySelector("#scroll"), caption: app.querySelector("#caption"), verdict: app.querySelector("#verdict") };
+  drawSvg();
   app.querySelectorAll("[data-predict]").forEach((b) => b.addEventListener("click", () => {
     prediction = b.dataset.predict;
     app.querySelectorAll("[data-predict]").forEach((c) => c.setAttribute("aria-pressed", String(c === b)));
@@ -189,6 +184,29 @@ function build() {
   });
   app.querySelector("#clear").addEventListener("click", () => { ticked = new Set(); last = null; render(); });
 }
+
+// Writes the drawing for the current layout; called again only when the layout changes.
+function drawSvg() {
+  X = isNarrow() ? NARROW : WIDE;
+  els.scroll.innerHTML = `<svg viewBox="0 0 ${X.w} ${X.h}" role="img" id="drawing" class="${X === WIDE ? "wide" : "narrow"}" aria-label="">
+      ${X.wires ? `<g class="wires">${REQS.map(wire).join("")}</g>` : ""}
+      ${REQS.map(reqBox).join("")}
+      ${Object.keys(AXES).map(rail).join("")}
+    </svg>`;
+  els.drawing = els.scroll.querySelector("#drawing");
+  els.scroll.querySelectorAll(".req").forEach((g) => {
+    g.addEventListener("click", () => toggle(g.dataset.req));
+    g.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(g.dataset.req); }
+    });
+  });
+}
+
+window.addEventListener("resize", () => {
+  if (!els.scroll || (X === NARROW) === isNarrow()) return;
+  drawSvg();
+  render();
+});
 
 function toggle(id) {
   if (ticked.has(id)) ticked.delete(id); else ticked.add(id);
@@ -213,7 +231,7 @@ function place(key, st) {
   const p2 = app.querySelector(`#p2-${key}`);
   const pl = app.querySelector(`#pl-${key}`);
   const at = st.at;
-  const pos = (x) => `translate(${x}px, ${a.y}px)`;
+  const pos = (x) => `translate(${x}px, ${X.ay[key]}px)`;
   let x1 = X.c, x2 = X.c, label = "", show2 = false, idle = false;
   if (at === "left") { x1 = X.l; }
   else if (at === "right") { x1 = X.r; }
@@ -252,14 +270,14 @@ function render() {
     const g = app.querySelector(`#r-${r.id}`);
     g.setAttribute("aria-pressed", String(on));
     g.setAttribute("class", `req${on ? " on" : ""}`);
-    app.querySelector(`#w-${r.id}`).setAttribute("class", `wire h-${AXES[r.axis].hue}${on ? " on" : ""}`);
+    if (X.wires) app.querySelector(`#w-${r.id}`).setAttribute("class", `wire h-${AXES[r.axis].hue}${on ? " on" : ""}`);
   }
   place("size", d.size);
   place("open", d.open);
   place("serve", d.serve);
   const eu = app.querySelector("#eu");
   eu.setAttribute("class", `eu${d.eu ? "" : " gone"}`);
-  eu.setAttribute("transform", `translate(${d.serve.at === "right" ? X.r - 60 : X.l},${AXES.serve.y + 44})`);
+  eu.setAttribute("transform", `translate(${(X === WIDE ? [d.serve.at === "right" ? X.r - 60 : X.l, X.ay.serve + 44] : X.eu(0, X.ay.serve)).join(",")})`);
   for (const k of Object.keys(AXES)) app.querySelector(`#res-${k}`).textContent = d[k].text;
   els.caption.textContent = captionText(d);
   const picked = REQS.filter((r) => has(r.id)).map((r) => r.full.toLowerCase());

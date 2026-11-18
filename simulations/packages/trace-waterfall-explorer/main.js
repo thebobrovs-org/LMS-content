@@ -14,10 +14,17 @@
 const app = document.getElementById("app");
 
 const TARGET = 4;
-const SCALE = 31.4; // px per second
-const X0 = 238;
-const ROW0 = 30;
-const ROW_H = 24;
+// Two layouts. Wide (a drawing of 640 px or more): span names in a column left of the bars.
+// Narrow (phones): each span's name on its own line above its bar, drawn at 1:1 so text stays legible.
+const WIDE = { w: 700, scale: 31.4, x0: 238, row0: 30, rowH: 24, nameDy: 16, barDy: 3, barH: 18, nameX: 20, duRight: false };
+const NARROW = { w: 320, scale: 21, x0: 12, row0: 30, rowH: 34, nameDy: 12, barDy: 16, barH: 14, nameX: 12, duRight: true };
+let G = WIDE;
+let SCALE, X0, ROW0, ROW_H;
+const isNarrow = () => (window.innerWidth || 1100) < 700;
+function setGeom() {
+  G = isNarrow() ? NARROW : WIDE;
+  ({ scale: SCALE, x0: X0, row0: ROW0, rowH: ROW_H } = G);
+}
 
 // The figure's child spans, in order. group: "A" (the loop), "B" (the slow tool) or none.
 // cut: removed by the loop guard (the three repeat searches and the model calls that re-issued them).
@@ -95,19 +102,14 @@ const bothFixed = () => works("A") && works("B");
 function rowSvg(s, i) {
   const y = ROW0 + (i + 1) * ROW_H;
   return `<g class="span ${s.kind}" id="s-${i}" data-i="${i}" role="button" tabindex="0" aria-pressed="false" aria-label="${s.name}, ${s.d} seconds">
-      <rect class="hit" x="0" y="${y}" width="700" height="${ROW_H}"/>
-      <text class="nm k-code" x="${i === -1 ? 8 : 20}" y="${y + 16}">${s.name}</text>
-      <rect class="bar" id="b-${i}" y="${y + 3}" height="18" rx="4"/>
-      <text class="du" id="d-${i}" y="${y + 16}"></text>
+      <rect class="hit" x="0" y="${y}" width="${G.w}" height="${ROW_H}"/>
+      <text class="nm k-code" x="${G.nameX}" y="${y + G.nameDy}">${s.name}</text>
+      <rect class="bar" id="b-${i}" y="${y + G.barDy}" height="${G.barH}" rx="4"/>
+      <text class="du" id="d-${i}" y="${y + G.nameDy}"${G.duRight ? ` x="${G.w - 12}" text-anchor="end"` : ""}></text>
     </g>`;
 }
 
 function build() {
-  const ticks = [0, 2, 4, 6, 8, 10, 12, 14].map((t) => {
-    const x = X0 + t * SCALE;
-    return `<line class="grid" x1="${x}" y1="${ROW0 - 4}" x2="${x}" y2="${ROW0 + 12 * ROW_H}"/><text class="k-small" x="${x}" y="${ROW0 - 8}" text-anchor="middle">${t} s</text>`;
-  }).join("");
-  const tx = X0 + TARGET * SCALE;
   app.innerHTML = `
     <details class="panel predict" open id="predict">
       <summary class="q">Predict: which single fix gets this 13.6 s turn closest to the 4 s target?</summary>
@@ -117,22 +119,7 @@ function build() {
       <p class="verdict" id="verdict"></p>
     </details>
     <div class="panel stage">
-      <div class="scroll" tabindex="0" role="region" aria-label="The trace waterfall">
-        <svg viewBox="0 0 700 340" role="img" id="drawing" aria-label="">
-          ${ticks}
-          <g class="span root" id="s-root" data-i="root" role="button" tabindex="0" aria-pressed="false" aria-label="invoke_agent travel_agent, the whole turn">
-            <rect class="hit" x="0" y="${ROW0}" width="700" height="${ROW_H}"/>
-            <text class="nm k-code" x="8" y="${ROW0 + 16}">invoke_agent travel_agent</text>
-            <rect class="bar" id="b-root" x="${X0}" y="${ROW0 + 3}" height="18" rx="4"/>
-            <text class="du strong" id="d-root" y="${ROW0 + 16}"></text>
-          </g>
-          ${SPANS.map(rowSvg).join("")}
-          <line class="target" x1="${tx}" y1="${ROW0 - 4}" x2="${tx}" y2="${ROW0 + 12 * ROW_H + 4}"/>
-          <text class="tl" x="${tx + 4}" y="${ROW0 + 12 * ROW_H + 16}">4 s target</text>
-          <text class="tag" id="tag-A" x="0" y="0">A</text>
-          <text class="tag" id="tag-B" x="0" y="0">B</text>
-        </svg>
-      </div>
+      <div class="scroll" tabindex="0" role="region" aria-label="The trace waterfall" id="scroll"></div>
       <p class="caption" id="caption" role="status"></p>
       <div class="fixbox" id="fixbox">
         <h2 id="fixtitle"></h2>
@@ -149,13 +136,8 @@ function build() {
     </div>
     <p class="legend">User: "Move my Tuesday flight to Friday." Violet: model calls. Teal: tool calls. Amber dashed: the 4 s target. Durations are the figure's; a cache hit counts as 0 s here (illustrative).</p>`;
   els = {};
-  for (const id of ["drawing", "caption", "verdict", "fixbox", "fixtitle", "fix-0", "fix-1", "t-total", "t-gap"]) els[id] = app.querySelector(`#${id}`);
-
-  app.querySelectorAll(".span").forEach((g) => {
-    const pick = () => select(g.dataset.i === "root" ? "root" : Number(g.dataset.i));
-    g.addEventListener("click", pick);
-    g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
-  });
+  for (const id of ["scroll", "caption", "verdict", "fixbox", "fixtitle", "fix-0", "fix-1", "t-total", "t-gap"]) els[id] = app.querySelector(`#${id}`);
+  drawSvg();
   app.querySelectorAll("[data-fix]").forEach((b) => b.addEventListener("click", () => applyFix(Number(b.dataset.fix))));
   app.querySelectorAll("[data-predict]").forEach((b) => b.addEventListener("click", () => {
     prediction = b.dataset.predict;
@@ -166,6 +148,44 @@ function build() {
   }));
   app.querySelector("#reset").addEventListener("click", () => { selected = null; fixes = { A: null, B: null }; message = null; render(); });
 }
+
+// Writes the drawing for the current layout; called again only when the layout changes.
+function drawSvg() {
+  setGeom();
+  const ticks = [0, 2, 4, 6, 8, 10, 12, 14].map((t) => {
+    const x = X0 + t * SCALE;
+    return `<line class="grid" x1="${x}" y1="${ROW0 - 4}" x2="${x}" y2="${ROW0 + 12 * ROW_H}"/><text class="k-small" x="${x}" y="${ROW0 - 8}" text-anchor="middle">${t} s</text>`;
+  }).join("");
+  const tx = X0 + TARGET * SCALE;
+  els.scroll.innerHTML = `
+        <svg viewBox="0 0 ${G.w} ${ROW0 + 12 * ROW_H + 22}" role="img" id="drawing" class="${G === WIDE ? "wide" : "narrow"}" aria-label="">
+          ${ticks}
+          <g class="span root" id="s-root" data-i="root" role="button" tabindex="0" aria-pressed="false" aria-label="invoke_agent travel_agent, the whole turn">
+            <rect class="hit" x="0" y="${ROW0}" width="${G.w}" height="${ROW_H}"/>
+            <text class="nm k-code" x="${G === WIDE ? 8 : G.nameX}" y="${ROW0 + G.nameDy}">invoke_agent travel_agent</text>
+            <rect class="bar" id="b-root" x="${X0}" y="${ROW0 + G.barDy}" height="${G.barH}" rx="4"/>
+            <text class="du strong" id="d-root" y="${ROW0 + G.nameDy}"${G.duRight ? ` x="${G.w - 12}" text-anchor="end"` : ""}></text>
+          </g>
+          ${SPANS.map(rowSvg).join("")}
+          <line class="target" x1="${tx}" y1="${ROW0 - 4}" x2="${tx}" y2="${ROW0 + 12 * ROW_H + 4}"/>
+          <text class="tl" x="${tx + 4}" y="${ROW0 + 12 * ROW_H + 16}">4 s target</text>
+          <text class="tag" id="tag-A" x="0" y="0">A</text>
+          <text class="tag" id="tag-B" x="0" y="0">B</text>
+        </svg>
+`;
+  els.drawing = els.scroll.querySelector("#drawing");
+  els.scroll.querySelectorAll(".span").forEach((g) => {
+    const pick = () => select(g.dataset.i === "root" ? "root" : Number(g.dataset.i));
+    g.addEventListener("click", pick);
+    g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+  });
+}
+
+window.addEventListener("resize", () => {
+  if (!els.scroll || (G === NARROW) === isNarrow()) return;
+  drawSvg();
+  render();
+});
 
 const groupOf = () => (selected === null || selected === "root" ? null : SPANS[selected].group || null);
 
@@ -210,7 +230,7 @@ function render() {
     const w = gone ? 0 : s.d * SCALE;
     bar.setAttribute("x", x.toFixed(1));
     bar.setAttribute("width", Math.max(w, 0).toFixed(1));
-    du.setAttribute("x", (x + w + 4).toFixed(1));
+    if (!G.duRight) du.setAttribute("x", (x + w + 4).toFixed(1));
     du.textContent = gone ? (s.group === "B" ? "cache hit" : "removed") : s1(s.d);
     const blamed = !!s.group && (g === s.group || !!fixes[s.group]);
     const node = app.querySelector(`#s-${i}`);
@@ -225,7 +245,7 @@ function render() {
   const root = app.querySelector("#b-root");
   root.setAttribute("width", (tt * SCALE).toFixed(1));
   const dr = app.querySelector("#d-root");
-  dr.setAttribute("x", String(X0 + 6));
+  if (!G.duRight) dr.setAttribute("x", String(X0 + 6));
   dr.textContent = s1(tt);
   const rs = app.querySelector("#s-root");
   rs.setAttribute("class", `span root ${tt <= TARGET ? "ok" : "over"}${selected === "root" ? " sel" : ""}`);
@@ -235,8 +255,8 @@ function render() {
   for (const k of ["A", "B"]) {
     const tag = app.querySelector(`#tag-${k}`);
     const shown = g === k || !!fixes[k];
-    const rowY = k === "A" ? ROW0 + (works("A") ? 2 : 5) * ROW_H + 16 : ROW0 + 10 * ROW_H + 16;
-    const x = k === "A" && works("A") ? ends.A1 : ends[k];
+    const rowY = (k === "A" ? ROW0 + (works("A") ? 2 : 5) * ROW_H : ROW0 + 10 * ROW_H) + G.nameDy;
+    const x = G.duRight ? 226 : k === "A" && works("A") ? ends.A1 : ends[k];
     tag.setAttribute("x", x.toFixed(1));
     tag.setAttribute("y", String(rowY));
     tag.setAttribute("class", `tag t${k}${shown ? "" : " gone"}`);

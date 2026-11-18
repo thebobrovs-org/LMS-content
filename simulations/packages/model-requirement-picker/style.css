@@ -144,3 +144,6 @@ details.more[open] > summary { margin-bottom: 8px; }
   .stage .controls { flex-direction: row; }
   .stage .caption { font-size: 13px; line-height: 1.45; }
 }
+/* Phones: the narrow drawing is drawn at 1:1, so every label stays at 11 px or more. */
+#drawing.narrow { max-width: 420px; margin: 0 auto; }
+#drawing.narrow .k-small, #drawing.narrow .pl, #drawing.narrow .eu text { font-size: 11px; }
