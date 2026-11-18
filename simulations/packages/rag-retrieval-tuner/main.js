@@ -5,7 +5,8 @@
 // similar it is to the question: rank 1 swims nearest the net. The net is top-k. Green
 // fish are the ones a correct answer needs (the current returns policy and its final-sale
 // rule); the red one is the 2024 refund FAQ, superseded but still in the corpus, and it
-// restates the question word for word, so it ranks first. The bucket is what the model
+// answers exactly this question, so its meaning sits closest to the query and it ranks first;
+// similarity measures meaning, not which version is current. The bucket is what the model
 // reads; it answers from the first policy fish it finds. Two meters score the catch:
 // precision (wanted fish in the net / fish in the net) and recall (wanted fish in the net
 // / all wanted fish). The aha: recall can be perfect while the superseded fish grounds a
@@ -234,7 +235,7 @@ function build() {
       <div class="chips" role="group" aria-label="Your prediction">
         ${Object.entries(PREDICT).map(([k, v]) => `<button type="button" class="chip" data-predict="${k}" aria-pressed="false">${esc(v)}</button>`).join("")}
       </div>
-      <p class="verdict" id="verdict"></p>
+      <p class="verdict" id="verdict" role="status" aria-live="polite"></p>
     </div>
     <div class="panel stage">
       <div class="scene">
@@ -273,15 +274,15 @@ function change(key, value) {
 }
 
 function captionText(r, a) {
-  if (!cast) return "Green fish are what a correct answer needs. The red one is the 2024 refund FAQ: superseded, still in the corpus, and worded almost exactly like the question. Make your prediction, then cast the net.";
+  if (!cast) return "Green fish are what a correct answer needs. The red one is the 2024 refund FAQ: superseded, still in the corpus, and about exactly this question. Similarity measures meaning, not which version is current. Make your prediction, then cast the net.";
   const P = `precision ${r.hit.length}/${r.net.length || 0}`;
   const R = `recall ${r.hit.length}/${r.want.length}`;
   if (a.kind === "wrong") {
     const why = pick.rerank
-      ? "The reranker made it worse: the superseded FAQ restates the question, so it scores highest of all."
+      ? "The reranker made it worse: it judges how well a chunk answers the question, and the superseded FAQ answers it most directly. Relevance is not freshness."
       : pick.topK > 3
         ? "A bigger net only adds fish behind it; the superseded FAQ is still the first policy the model reads."
-        : "The superseded FAQ ranks first because it restates the question.";
+        : "The superseded FAQ ranks first: its meaning is closest to the question, and similarity can't tell an old policy from the current one.";
     return `Grounded, cited and wrong. The current policy is in the bucket (${R}), but ${P}, and the stale fish is the first policy the model reads, so it faithfully quotes 60 days. ${why} Throw it back before search.`;
   }
   if (a.kind === "none") return `No policy fish in the net (${R}): the model honestly says it can't find the answer. Widen the net.`;

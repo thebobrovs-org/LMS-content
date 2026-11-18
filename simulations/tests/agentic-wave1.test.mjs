@@ -205,3 +205,12 @@ test("rag-retrieval-tuner: small chunks split the final-sale rule out; recall 1/
   await sim.press("#rerank");
   assert.match(text(sim, "#caption"), /^No policy fish/);
 });
+
+test("rag-retrieval-tuner: the verdict grades the first cast as it was set, not the default scenario", async () => {
+  const sim = await loadSim("rag-retrieval-tuner");
+  await sim.press("#filter");
+  await sim.press('[data-predict="right"]');
+  await sim.press("#cast");
+  assert.match(text(sim, "#verdict"), /^Right: on your first cast the agent said 30 days/);
+  assert.equal(sim.find("#verdict").getAttribute("role"), "status");
+});
