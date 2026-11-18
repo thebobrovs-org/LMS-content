@@ -1,0 +1,12 @@
+{
+  "id": "guardrail-visibility",
+  "title": "What each guardrail can see",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-guardrail-blind-spot",
+      "hint": "Predict, then inspect the unrequested email with semantic governance enabled: the content passes but the action is denied."
+    }
+  ]
+}
