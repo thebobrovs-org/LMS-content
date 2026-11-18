@@ -295,8 +295,8 @@ function captionText(r, a) {
 // The question describes the net exactly as it is set for the cast the learner is about to make.
 function questionHtml(r) {
   const net = `the top ${pick.topK} ${pick.chunk === "large" ? "whole documents" : `${SIZES[pick.chunk].toLowerCase()} chunks`}${pick.rerank ? " after reranking" : ""}${pick.filter ? ", with superseded documents filtered out" : ""}`;
-  const policy = r.net.some((c) => c.role === "current") ? ", and the current 2026 policy (30 days) is among them" : "";
-  return `<strong>Predict first.</strong> A customer asks: “${esc(QUESTION)}” The net will catch ${net}${policy}. What will the agent answer?`;
+  const policy = r.net.some((c) => c.role === "current") ? ", current policy included" : "";
+  return `<strong>Predict first.</strong> “${esc(QUESTION)}” The net: ${net}${policy}. What will the agent answer?`;
 }
 
 function verdictText() {

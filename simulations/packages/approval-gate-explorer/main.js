@@ -323,7 +323,7 @@ function render() {
   els["t-top"].className = `tv mono${lanes.top.paid ? " neg" : " pos"}`;
   els["t-bottom"].textContent = eur(START - lanes.bottom.paid);
   els["t-bottom"].className = `tv mono${lanes.bottom.paid ? " neg" : " pos"}`;
-  els["t-call"].textContent = decision === "deny" ? "Denied" : decision === "approve" ? "Approved" : decision === "auto" ? "Not asked" : phase === "waiting" ? "Waiting for you" : "None yet";
+  els["t-call"].textContent = decision === "deny" ? "Denied" : decision === "approve" ? "Approved" : decision === "auto" ? "Not asked" : phase === "waiting" ? "Waiting" : "None yet";
   let verdict = "";
   if (decision === "deny" && prediction) {
     verdict = prediction === "top"

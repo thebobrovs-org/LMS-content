@@ -153,3 +153,16 @@ button.no { background: var(--red); border-color: var(--red); color: var(--prima
   .stage .tile { flex-direction: row; justify-content: space-between; align-items: baseline; padding: 6px 10px; text-align: left; }
 }
 @media (min-width: 900px) { .stage .tv { font-size: 16px; } }
+/* Fit the screen, after a refund too: the decision panel joins the side column, so the vault tiles
+   sit in one compact row and the side column is a little wider. */
+@media (min-width: 900px) {
+  .stage { grid-template-columns: minmax(0, 1fr) minmax(280px, 36%); }
+  .stage .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .stage .tile { flex-direction: column; align-items: flex-start; gap: 0; padding: 5px 8px; }
+  .stage .tl { font-size: 10.5px; }
+}
+@media (min-width: 900px) {
+  .stage .decide { padding: 8px 10px; gap: 8px; }
+  .stage .decide .who { flex-basis: 100%; }
+  .stage .tv { font-size: 15px; }
+}

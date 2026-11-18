@@ -176,3 +176,5 @@ details.more[open] > summary { margin-bottom: 8px; }
   .merged h2 { margin: 0; }
   .merged .readout { grid-column: 1 / -1; margin: 0; }
 }
+@media (min-width: 900px) { .stage svg { max-height: 300px; } }
+@media (min-width: 900px) { .stage .side { gap: 8px; } .stage .side .controls { gap: 7px; } }

@@ -347,7 +347,7 @@ function build() {
           <p class="mono" id="merged"></p>
           <p class="readout" id="readout"></p>
         </section>
-        <ol class="log" id="log" aria-label="What happened"></ol>
+        <details class="more" id="log-more" hidden><summary id="log-sum">Earlier steps</summary><ol class="log" id="log" aria-labelledby="log-sum"></ol></details>
       </div>
       <div class="side">
         <p class="caption" id="caption" role="status"></p>
@@ -381,7 +381,7 @@ function build() {
     </div>
     <p class="legend">Notes: amber <span class="mono">temp:</span>, teal no prefix, green <span class="mono">user:</span>, violet <span class="mono">app:</span>; a blue outline marks what the agent reads now. Memory Bank is a separate store: nothing here writes to it.</p>`;
   els = {};
-  for (const id of ["svg", "building", "caption", "rooms", "new-session", "turn", "restart", "reset", "merged", "readout", "log", "verdict"]) els[id] = app.querySelector(`#${id}`);
+  for (const id of ["svg", "building", "caption", "rooms", "new-session", "turn", "restart", "reset", "merged", "readout", "log", "log-more", "log-sum", "verdict"]) els[id] = app.querySelector(`#${id}`);
   app.querySelectorAll("[data-predict]").forEach((b) => b.addEventListener("click", () => {
     prediction = b.dataset.predict;
     sim.event("predicted", { prediction });
@@ -444,6 +444,8 @@ function render() {
   const stored = storedCount();
   els.readout.textContent = `${session().id}, turn ${session().turn} · the agent reads ${merged.length} ${merged.length === 1 ? "key" : "keys"} · ${stored} stored ${stored === 1 ? "key" : "keys"} in ${sessions.length} ${sessions.length === 1 ? "room" : "rooms"} · ${SERVICES[service].name}.`;
   els.log.innerHTML = log.slice(1).map((l) => `<li>${esc(l)}</li>`).join("");
+  els["log-more"].hidden = log.length < 2; // folded by default, so the sim keeps to one laptop screen
+  els["log-sum"].textContent = `Earlier steps (${log.length - 1})`;
   checkInsight();
   els.verdict.textContent = verdictText();
   reportSize();

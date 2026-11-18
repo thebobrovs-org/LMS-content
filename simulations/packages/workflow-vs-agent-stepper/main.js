@@ -214,7 +214,7 @@ function drawScene() {
 function build() {
   app.innerHTML = `
     <details class="panel predict" open>
-      <summary class="q"><strong>Predict first.</strong> The request: <em>“${esc(REQUEST)}”</em> The order turns out to be partly shipped. What does each one do?</summary>
+      <summary class="q"><strong>Predict first.</strong> <em>“${esc(REQUEST)}”</em> The order is partly shipped. What does each one do?</summary>
       ${["tram", "car"].map((v) => `<div class="chips" role="group" aria-label="${v === "tram" ? "The fixed workflow" : "The agent"}"><span class="seglabel">${v === "tram" ? "Workflow (tram)" : "Agent (car)"}</span>${Object.entries(PREDICT[v]).map(([k, l]) => `<button type="button" class="chip" data-v="${v}" data-predict="${k}" aria-pressed="false">${l}</button>`).join("")}</div>`).join("")}
       <p class="verdict" id="verdict"></p>
     </details>
