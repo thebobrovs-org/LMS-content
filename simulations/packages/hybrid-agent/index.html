@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>A hybrid agent: low-code front end, code-built parts</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main id="app" aria-label="A hybrid agent: low-code front end, code-built parts simulation">
+<div class="bf-player-shell" tabindex="0" id="bf-root" aria-label="A hybrid agent: low-code front end, code-built parts interactive flow player">
+    <div class="bf-topbar">
+      <div class="bf-step-pills" id="bf-pills"></div>
+      <div class="bf-controls">
+        <button class="bf-btn" id="bf-prev" title="Previous Scenario (Left Arrow)">&#9664; Prev</button>
+        <button class="bf-btn bf-btn-primary" id="bf-play" title="Simulate All Scenarios (Space)">&#9654; Simulate</button>
+        <button class="bf-btn" id="bf-next" title="Next Scenario (Right Arrow)">Next &#9654;</button>
+        <button class="bf-btn" id="bf-speed" title="Simulation Speed">1x</button>
+        <span class="bf-status-chip" id="bf-complete-badge">&#10003; All Verified</span>
+      </div>
+    </div>
+
+    <div class="bf-stage">
+      <svg id="bf-svg" viewBox="0 0 1179 668" xmlns="http://www.w3.org/2000/svg" style="font-family: Inter, Roboto, &quot;DejaVu Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;">
+        <defs>
+  <filter id="bf-card-shadow" x="-8%" y="-8%" width="116%" height="128%">
+    <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#0f172a" flood-opacity="0.065"/>
+  </filter>
+  <filter id="bf-packet-glow" x="-40%" y="-40%" width="180%" height="180%">
+    <feDropShadow dx="0" dy="2" stdDeviation="3.5" flood-color="#1d4ed8" flood-opacity="0.38"/>
+  </filter>
+  <marker id="bf-arr-1a73e8" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M 0 1.2 L 9.5 5 L 0 8.8 z" fill="#1a73e8"/></marker>
+  <marker id="bf-arr-0d9488" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M 0 1.2 L 9.5 5 L 0 8.8 z" fill="#0d9488"/></marker>
+  <marker id="bf-arr-64748b" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M 0 1.2 L 9.5 5 L 0 8.8 z" fill="#64748b"/></marker>
+</defs>
+<rect width="1179" height="668" fill="#ffffff"/>
+<g class="bf-zone" data-zone-id="z_users">
+  <rect x="20" y="20" width="1139" height="140" rx="12" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="36" y="45" font-size="14.5" font-weight="700" fill="#202124">Entry Point</text>
+</g>
+<g class="bf-zone" data-zone-id="z_lowcode">
+  <rect x="20" y="188" width="1139" height="170" rx="12" fill="#e8f0fe" stroke="#8ab4f8" stroke-width="1.5"/>
+  <text x="36" y="213" font-size="14.5" font-weight="700" fill="#202124">Low-code: Gemini Enterprise</text>
+</g>
+<g class="bf-zone" data-zone-id="z_code">
+  <rect x="20" y="386" width="1139" height="262" rx="12" fill="#e0f7fa" stroke="#4dd0e1" stroke-width="1.5"/>
+  <text x="36" y="411" font-size="14.5" font-weight="700" fill="#202124">Code-built: your project</text>
+</g>
+<g class="bf-subzone" data-subzone-id="sz_wb">
+  <rect x="369" y="228" width="768" height="108" rx="10" fill="#d2e3fc" stroke="#669df6" stroke-width="1"/>
+  <text x="381" y="249" font-size="12.5" font-weight="600" fill="#202124">Workflow Builder workflow</text>
+</g>
+<g class="bf-subzone" data-subzone-id="sz_mcp">
+  <rect x="286" y="426" width="270" height="200" rx="10" fill="#b2ebf2" stroke="#26c6da" stroke-width="1" stroke-dasharray="5 4"/>
+  <text x="298" y="447" font-size="12.5" font-weight="600" fill="#202124">MCP Backend</text>
+</g>
+<g class="bf-subzone" data-subzone-id="sz_runtime">
+  <rect x="644" y="472" width="250" height="108" rx="10" fill="#b2ebf2" stroke="#26c6da" stroke-width="1" stroke-dasharray="5 4"/>
+  <text x="656" y="493" font-size="12.5" font-weight="600" fill="#202124">Agent Runtime</text>
+</g>
+<g class="bf-card" data-card-id="employees" data-accent="#334155" transform="translate(499, 70)">
+  <rect width="182" height="58" rx="29" fill="#ffffff" stroke="#dadce0" stroke-width="1" filter="url(#bf-card-shadow)" class="bf-card-surface"/>
+  <rect class="bf-card-ring" x="-2" y="-2" width="186" height="62" rx="10" fill="none" stroke="#334155" stroke-width="2.5" opacity="0"/>
+  <rect x="10" y="13" width="32" height="32" rx="7" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.75"/>
+  <svg x="16" y="19" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+  <text x="50" y="25.5" font-size="13.5" font-weight="600" fill="#202124">Employees</text>
+  <text x="50" y="42.5" font-size="11" fill="#5f6368">Enterprise Users</text>
+  
+</g>
+<g class="bf-card" data-card-id="adk_reg" data-accent="#1a73e8" transform="translate(43, 253)">
+  <rect width="238" height="58" rx="8" fill="#ffffff" stroke="#dadce0" stroke-width="1" filter="url(#bf-card-shadow)" class="bf-card-surface"/>
+  <rect class="bf-card-ring" x="-2" y="-2" width="242" height="62" rx="10" fill="none" stroke="#1a73e8" stroke-width="2.5" opacity="0"/>
+  <rect x="10" y="13" width="32" height="32" rx="7" fill="#eff6ff" stroke="#8ab4f8" stroke-width="0.75"/>
+  <svg x="16" y="19" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4M22 5h-4"/></svg>
+  <text x="50" y="25.5" font-size="13.5" font-weight="600" fill="#202124">ADK agent, registered</text>
+  <text x="50" y="42.5" font-size="11" fill="#5f6368">users open it directly</text>
+  <rect x="190" y="6" width="41" height="15" rx="7.5" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1"/><text x="210.5" y="16.5" text-anchor="middle" font-size="9.5" font-weight="600" fill="#1d4ed8">Direct</text>
+</g>
+<g class="bf-card" data-card-id="mcp_step" data-accent="#1a73e8" transform="translate(385, 262)">
+  <rect width="182" height="58" rx="8" fill="#ffffff" stroke="#dadce0" stroke-width="1" filter="url(#bf-card-shadow)" class="bf-card-surface"/>
+  <rect class="bf-card-ring" x="-2" y="-2" width="186" height="62" rx="10" fill="none" stroke="#1a73e8" stroke-width="2.5" opacity="0"/>
+  <rect x="10" y="13" width="32" height="32" rx="7" fill="#eff6ff" stroke="#8ab4f8" stroke-width="0.75"/>
+  <svg x="16" y="19" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/></svg>
+  <text x="50" y="25.5" font-size="13.5" font-weight="600" fill="#202124">MCP step</text>
+  <text x="50" y="42.5" font-size="11" fill="#5f6368">calls an MCP server</text>
+  
+</g>
+<g class="bf-card" data-card-id="agent_step" data-accent="#1a73e8" transform="translate(655, 262)">
+  <rect width="196" height="58" rx="8" fill="#ffffff" stroke="#dadce0" stroke-width="1" filter="url(#bf-card-shadow)" class="bf-card-surface"/>
+  <rect class="bf-card-ring" x="-2" y="-2" width="200" height="62" rx="10" fill="none" stroke="#1a73e8" stroke-width="2.5" opacity="0"/>
+  <rect x="10" y="13" width="32" height="32" rx="7" fill="#eff6ff" stroke="#8ab4f8" stroke-width="0.75"/>
+  <svg x="16" y="19" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg>
+  <text x="50" y="25.5" font-size="13.5" font-weight="600" fill="#202124">Existing-agent step</text>
+  <text x="50" y="42.5" font-size="11" fill="#5f6368">calls an ADK agent</text>
+  
+</g>
+<g class="bf-card" data-card-id="approval" data-accent="#1a73e8" transform="translate(939, 262)">
+  <rect width="182" height="58" rx="8" fill="#ffffff" stroke="#dadce0" stroke-width="1" filter="url(#bf-card-shadow)" class="bf-card-surface"/>
+  <rect class="bf-card-ring" x="-2" y="-2" width="186" height="62" rx="10" fill="none" stroke="#1a73e8" stroke-width="2.5" opacity="0"/>
+  <rect x="10" y="13" width="32" height="32" rx="7" fill="#eff6ff" stroke="#8ab4f8" stroke-width="0.75"/>
+  <svg x="16" y="19" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+  <text x="50" y="25.5" font-size="13.5" font-weight="600" fill="#202124">Human approval</text>
+  <text x="50" y="42.5" font-size="11" fill="#5f6368">a person signs off</text>
+  
+</g>
+<g class="bf-card" data-card-id="mcp_server" data-accent="#00838f" transform="translate(302, 460)">
+  <rect width="238" height="58" rx="8" fill="#ffffff" stroke="#dadce0" stroke-width="1" filter="url(#bf-card-shadow)" class="bf-card-surface"/>
+  <rect class="bf-card-ring" x="-2" y="-2" width="242" height="62" rx="10" fill="none" stroke="#00838f" stroke-width="2.5" opacity="0"/>
+  <rect x="10" y="13" width="32" height="32" rx="7" fill="#ecfeff" stroke="#4dd0e1" stroke-width="0.75"/>
+  <svg x="16" y="19" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00838f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/></svg>
+  <text x="50" y="25.5" font-size="13.5" font-weight="600" fill="#202124">MCP server on Cloud Run</text>
+  <text x="50" y="42.5" font-size="11" fill="#5f6368">exposes pricing as tools</text>
+  
+</g>
+<g class="bf-card" data-card-id="pricing_api" data-accent="#00838f" transform="translate(302, 552)">
+  <rect width="238" height="58" rx="8" fill="#ffffff" stroke="#dadce0" stroke-width="1" filter="url(#bf-card-shadow)" class="bf-card-surface"/>
+  <rect class="bf-card-ring" x="-2" y="-2" width="242" height="62" rx="10" fill="none" stroke="#00838f" stroke-width="2.5" opacity="0"/>
+  <rect x="10" y="13" width="32" height="32" rx="7" fill="#ecfeff" stroke="#4dd0e1" stroke-width="0.75"/>
+  <svg x="16" y="19" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00838f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
+  <text x="50" y="25.5" font-size="13.5" font-weight="600" fill="#202124">Internal pricing API</text>
+  <text x="50" y="42.5" font-size="11" fill="#5f6368">enterprise pricing data</text>
+  
+</g>
+<g class="bf-card" data-card-id="adk_runtime" data-accent="#00838f" transform="translate(660, 506)">
+  <rect width="218" height="58" rx="8" fill="#ffffff" stroke="#dadce0" stroke-width="1" filter="url(#bf-card-shadow)" class="bf-card-surface"/>
+  <rect class="bf-card-ring" x="-2" y="-2" width="222" height="62" rx="10" fill="none" stroke="#00838f" stroke-width="2.5" opacity="0"/>
+  <rect x="10" y="13" width="32" height="32" rx="7" fill="#ecfeff" stroke="#4dd0e1" stroke-width="0.75"/>
+  <svg x="16" y="19" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00838f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/></svg>
+  <text x="50" y="25.5" font-size="13.5" font-weight="600" fill="#202124">ADK agent on Runtime</text>
+  <text x="50" y="42.5" font-size="11" fill="#5f6368">own tools &amp; large model</text>
+  
+</g>
+<g class="bf-edge" data-edge-id="e1" data-from="employees" data-to="mcp_step">
+  <path class="bf-edge-wire" data-edge-id="e1" d="M 597.0 128.0 L 597.0 168.5 Q 597.0 172.0 593.5 172.0 L 593.5 172.0 Q 590.0 172.0 586.9 173.6 L 585.0 174.5 Q 580.0 177.0 574.7 178.9 L 572.1 179.8 Q 566.0 182.0 559.5 182.0 L 559.5 182.0 Q 553.0 182.0 546.5 181.5 L 491.6 177.4 Q 486.0 177.0 481.0 174.5 L 481.0 174.5 Q 476.0 172.0 476.0 177.6 L 476.0 262.0" fill="none" stroke="#1a73e8" stroke-width="2" stroke-linecap="round" marker-end="url(#bf-arr-1a73e8)"/>
+  <rect x="478" y="170" width="83" height="20" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/><circle cx="488.5" cy="180" r="7.5" fill="#1a73e8"/><text x="488.5" y="183.2" text-anchor="middle" font-size="9" font-weight="700" fill="#ffffff">1</text><text x="526.5" y="183.8" text-anchor="middle" font-size="10.5" font-weight="600" fill="#334155">Start flow</text>
+  
+</g>
+<g class="bf-edge" data-edge-id="e2" data-from="mcp_step" data-to="mcp_server">
+  <path class="bf-edge-wire" data-edge-id="e2" d="M 476.0 320.0 L 476.0 438.0 Q 476.0 446.0 468.0 446.0 L 428.0 446.0 Q 421.0 446.0 421.0 453.0 L 421.0 460.0" fill="none" stroke="#0d9488" stroke-width="2" stroke-linecap="round" marker-end="url(#bf-arr-0d9488)"/>
+  <rect x="409" y="436" width="80" height="20" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/><circle cx="419.5" cy="446" r="7.5" fill="#0d9488"/><text x="419.5" y="449.2" text-anchor="middle" font-size="9" font-weight="700" fill="#ffffff">2</text><text x="456.0" y="449.8" text-anchor="middle" font-size="10.5" font-weight="600" fill="#334155">MCP tool</text>
+  
+</g>
+<g class="bf-edge" data-edge-id="e3" data-from="mcp_server" data-to="pricing_api">
+  <path class="bf-edge-wire" data-edge-id="e3" d="M 421.0 518.0 L 421.0 552.0" fill="none" stroke="#0d9488" stroke-width="2" stroke-linecap="round" marker-end="url(#bf-arr-0d9488)"/>
+  <rect x="388" y="515" width="67" height="20" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/><text x="421.5" y="528.8" text-anchor="middle" font-size="10.5" font-weight="600" fill="#334155">Query API</text>
+  
+</g>
+<g class="bf-edge" data-edge-id="e4" data-from="mcp_step" data-to="agent_step">
+  <path class="bf-edge-wire" data-edge-id="e4" d="M 567.0 291.0 L 655.0 291.0" fill="none" stroke="#1a73e8" stroke-width="2" stroke-linecap="round" marker-end="url(#bf-arr-1a73e8)"/>
+  <rect x="571" y="281" width="83" height="20" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/><circle cx="581.5" cy="291" r="7.5" fill="#1a73e8"/><text x="581.5" y="294.2" text-anchor="middle" font-size="9" font-weight="700" fill="#ffffff">3</text><text x="619.5" y="294.8" text-anchor="middle" font-size="10.5" font-weight="600" fill="#334155">Pass data</text>
+  
+</g>
+<g class="bf-edge" data-edge-id="e5" data-from="agent_step" data-to="adk_runtime">
+  <path class="bf-edge-wire" data-edge-id="e5" d="M 753.0 320.0 L 753.0 362.0 Q 753.0 370.0 761.0 370.0 L 768.0 370.0 Q 776.0 370.0 776.0 378.0 L 776.0 506.0" fill="none" stroke="#0d9488" stroke-width="2" stroke-linecap="round" marker-end="url(#bf-arr-0d9488)"/>
+  <rect x="707" y="335" width="93" height="20" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/><circle cx="717.5" cy="345" r="7.5" fill="#0d9488"/><text x="717.5" y="348.2" text-anchor="middle" font-size="9" font-weight="700" fill="#ffffff">4</text><text x="760.5" y="348.8" text-anchor="middle" font-size="10.5" font-weight="600" fill="#334155">Invoke ADK</text>
+  
+</g>
+<g class="bf-edge" data-edge-id="e6" data-from="agent_step" data-to="approval">
+  <path class="bf-edge-wire" data-edge-id="e6" d="M 851.0 291.0 L 939.0 291.0" fill="none" stroke="#1a73e8" stroke-width="2" stroke-linecap="round" marker-end="url(#bf-arr-1a73e8)"/>
+  <rect x="841" y="281" width="74" height="20" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/><circle cx="851.5" cy="291" r="7.5" fill="#1a73e8"/><text x="851.5" y="294.2" text-anchor="middle" font-size="9" font-weight="700" fill="#ffffff">5</text><text x="885.0" y="294.8" text-anchor="middle" font-size="10.5" font-weight="600" fill="#334155">Sign-off</text>
+  
+</g>
+<g class="bf-edge" data-edge-id="e7" data-from="employees" data-to="adk_reg">
+  <path class="bf-edge-wire" data-edge-id="e7" d="M 584.0 128.0 L 584.0 169.2 Q 584.0 172.0 582.0 170.0 L 582.0 170.0 Q 580.0 168.0 577.3 167.2 L 572.2 165.8 Q 566.0 164.0 559.5 164.0 L 559.5 164.0 Q 553.0 164.0 546.5 164.4 L 491.4 167.7 Q 486.0 168.0 481.0 170.0 L 481.0 170.0 Q 476.0 172.0 470.6 172.0 L 297.0 172.0 Q 289.0 172.0 289.0 180.0 L 289.0 231.0 Q 289.0 239.0 281.0 239.0 L 169.0 239.0 Q 162.0 239.0 162.0 246.0 L 162.0 253.0" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 4" marker-end="url(#bf-arr-64748b)"/>
+  <rect x="182" y="229" width="75" height="20" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/><text x="219.5" y="242.8" text-anchor="middle" font-size="10.5" font-weight="600" fill="#334155">Direct open</text>
+  
+</g>
+<g class="bf-edge" data-edge-id="e8" data-from="adk_reg" data-to="adk_runtime">
+  <path class="bf-edge-wire" data-edge-id="e8" d="M 162.0 311.0 L 162.0 362.0 Q 162.0 370.0 170.0 370.0 L 761.0 370.0 Q 769.0 370.0 769.0 378.0 L 769.0 489.0 Q 769.0 492.0 766.0 492.0 L 766.0 492.0 Q 763.0 492.0 763.0 495.0 L 763.0 506.0" fill="none" stroke="#0d9488" stroke-width="2" stroke-linecap="round" marker-end="url(#bf-arr-0d9488)"/>
+  <rect x="189" y="360" width="61" height="20" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/><text x="219.5" y="373.8" text-anchor="middle" font-size="10.5" font-weight="600" fill="#334155">Run ADK</text>
+  
+</g>
+        <g id="bf-packets-layer"></g>
+      </svg>
+    </div>
+
+    <div class="bf-narration-dock" aria-live="polite">
+      <div id="bf-overview-box">
+        <div class="bf-narration-title">
+          <span class="bf-narration-badge" id="bf-narr-step">Defense-in-Depth</span>
+          <span id="bf-narr-headline">A hybrid agent: low-code front end, code-built parts</span>
+        </div>
+        <div class="bf-narration-body" id="bf-narr-body">Decide early where identity, evaluation and Model Armor screening live for each part: those are what a later migration breaks.</div>
+      </div>
+      <div class="bf-hud-grid" id="bf-hud-grid">
+        <div class="bf-hud-cell bf-hud-cell-threat">
+          <div class="bf-hud-label">&#9888; Threat Simulated</div>
+          <div class="bf-hud-val" id="bf-hud-threat"></div>
+        </div>
+        <div class="bf-hud-cell" id="bf-hud-guard-cell">
+          <div class="bf-hud-label" id="bf-hud-guard-lbl">&#128737; Guardrail Layer</div>
+          <div class="bf-hud-val" id="bf-hud-guard"></div>
+        </div>
+        <div class="bf-hud-cell" id="bf-hud-mech-cell">
+          <div class="bf-hud-label">&#9881; Mechanism</div>
+          <div class="bf-hud-val" id="bf-hud-mech"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script id="bf-spec-data" type="application/json">{"flowId":"hybrid-agent","title":"A hybrid agent: low-code front end, code-built parts","subtitle":"Interactive simulation of Workflow Builder orchestration vs. direct registered ADK agent paths","footerNote":"Decide early where identity, evaluation and Model Armor screening live for each part: those are what a later migration breaks.","edges":[{"id":"e1","from":"employees","to":"mcp_step","sourceAnchor":"bottom","targetAnchor":"top","label":"Start flow","sequenceBadge":"1","color":"#1a73e8"},{"id":"e2","from":"mcp_step","to":"mcp_server","sourceAnchor":"bottom","targetAnchor":"top","label":"MCP tool","sequenceBadge":"2","color":"#0d9488"},{"id":"e3","from":"mcp_server","to":"pricing_api","sourceAnchor":"bottom","targetAnchor":"top","label":"Query API","color":"#0d9488"},{"id":"e4","from":"mcp_step","to":"agent_step","sourceAnchor":"right","targetAnchor":"left","label":"Pass data","sequenceBadge":"3","color":"#1a73e8"},{"id":"e5","from":"agent_step","to":"adk_runtime","sourceAnchor":"bottom","targetAnchor":"top","label":"Invoke ADK","sequenceBadge":"4","color":"#0d9488"},{"id":"e6","from":"agent_step","to":"approval","sourceAnchor":"right","targetAnchor":"left","label":"Sign-off","sequenceBadge":"5","color":"#1a73e8"},{"id":"e7","from":"employees","to":"adk_reg","sourceAnchor":"bottom","targetAnchor":"top","label":"Direct open","style":"dashed","color":"#64748b"},{"id":"e8","from":"adk_reg","to":"adk_runtime","sourceAnchor":"bottom","targetAnchor":"top","label":"Run ADK","color":"#0d9488"}],"steps":[{"stepNumber":1,"pillLabel":"1. Trigger","activeEdgeIds":["e1"],"packetLabel":"User Request","durationMs":1000,"narrationTitle":"Employee Starts Workflow","narrationBody":"An employee triggers the Gemini Enterprise Workflow Builder flow, entering at the MCP step."},{"stepNumber":2,"pillLabel":"2. MCP Tool","activeEdgeIds":["e2","e3"],"sequentialEdges":true,"packetLabel":"get_pricing()","durationMs":1400,"narrationTitle":"MCP Server Calls Internal Pricing API","narrationBody":"The low-code MCP step invokes your Cloud Run MCP server, which fetches live quotes from the internal pricing API."},{"stepNumber":3,"pillLabel":"3. ADK Step","activeEdgeIds":["e4","e5"],"sequentialEdges":true,"packetLabel":"Agent Context","durationMs":1400,"narrationTitle":"Workflow Invokes Registered ADK Agent","narrationBody":"The workflow passes pricing context to the Existing-agent step, which delegates reasoning to your ADK agent on Agent Runtime."},{"stepNumber":4,"pillLabel":"4. Approval","activeEdgeIds":["e6"],"packetLabel":"Sign-off","durationMs":1000,"narrationTitle":"Human-in-the-Loop Approval","narrationBody":"Before finalizing, the workflow pauses at Human approval so a person can review and sign off."},{"stepNumber":5,"pillLabel":"5. Direct Path","activeEdgeIds":["e7","e8"],"sequentialEdges":true,"packetLabel":"Direct Chat","durationMs":1400,"narrationTitle":"Alternative: Direct Access to Registered ADK Agent","narrationBody":"Employees can also open the registered ADK agent directly, bypassing Workflow Builder while still hitting the same Agent Runtime."}]}</script>
+    </main>
+    <script src="./sim-sdk.js"></script>
+    <script src="./main.js"></script>
+  </body>
+</html>

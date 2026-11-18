@@ -1,0 +1,141 @@
+{
+  "version": "1.0",
+  "title": "A hybrid agent: low-code front end, code-built parts",
+  "subtitle": "Interactive simulation of Workflow Builder orchestration vs. direct registered ADK agent paths",
+  "footerNote": "Decide early where identity, evaluation and Model Armor screening live for each part: those are what a later migration breaks.",
+  "canvas": {
+    "areas": [
+      "users   users   users",
+      "lowcode lowcode lowcode",
+      "code    code    code"
+    ],
+    "gap": 28,
+    "padding": 20,
+    "showOuterFrame": false
+  },
+  "zones": [
+    {
+      "id": "z_users",
+      "area": "users",
+      "title": "Entry Point",
+      "palette": "neutral",
+      "layout": "row",
+      "cards": [
+        { "id": "employees", "title": "Employees", "subtitle": "Enterprise Users", "icon": "User", "shape": "pill" }
+      ],
+      "subZones": []
+    },
+    {
+      "id": "z_lowcode",
+      "area": "lowcode",
+      "title": "Low-code: Gemini Enterprise",
+      "palette": "blue",
+      "layout": "row",
+      "subZones": [
+        {
+          "id": "sz_wb",
+          "title": "Workflow Builder workflow",
+          "layout": "row",
+          "dashed": false,
+          "cards": [
+            { "id": "mcp_step", "title": "MCP step", "subtitle": "calls an MCP server", "icon": "Plug" },
+            { "id": "agent_step", "title": "Existing-agent step", "subtitle": "calls an ADK agent", "icon": "Bot" },
+            { "id": "approval", "title": "Human approval", "subtitle": "a person signs off", "icon": "ShieldCheck" }
+          ]
+        }
+      ],
+      "cards": [
+        { "id": "adk_reg", "title": "ADK agent, registered", "subtitle": "users open it directly", "icon": "Sparkles", "badge": "Direct" }
+      ]
+    },
+    {
+      "id": "z_code",
+      "area": "code",
+      "title": "Code-built: your project",
+      "palette": "teal",
+      "layout": "row",
+      "subZones": [
+        {
+          "id": "sz_mcp",
+          "title": "MCP Backend",
+          "layout": "column",
+          "dashed": true,
+          "cards": [
+            { "id": "mcp_server", "title": "MCP server on Cloud Run", "subtitle": "exposes pricing as tools", "icon": "Server" },
+            { "id": "pricing_api", "title": "Internal pricing API", "subtitle": "enterprise pricing data", "icon": "Database" }
+          ]
+        },
+        {
+          "id": "sz_runtime",
+          "title": "Agent Runtime",
+          "layout": "column",
+          "dashed": true,
+          "cards": [
+            { "id": "adk_runtime", "title": "ADK agent on Runtime", "subtitle": "own tools & large model", "icon": "Cpu" }
+          ]
+        }
+      ],
+      "cards": []
+    }
+  ],
+  "edges": [
+    { "id": "e1", "from": "employees", "to": "mcp_step", "sourceAnchor": "bottom", "targetAnchor": "top", "label": "Start flow", "sequenceBadge": "1", "color": "#1a73e8" },
+    { "id": "e2", "from": "mcp_step", "to": "mcp_server", "sourceAnchor": "bottom", "targetAnchor": "top", "label": "MCP tool", "sequenceBadge": "2", "color": "#0d9488" },
+    { "id": "e3", "from": "mcp_server", "to": "pricing_api", "sourceAnchor": "bottom", "targetAnchor": "top", "label": "Query API", "color": "#0d9488" },
+    { "id": "e4", "from": "mcp_step", "to": "agent_step", "sourceAnchor": "right", "targetAnchor": "left", "label": "Pass data", "sequenceBadge": "3", "color": "#1a73e8" },
+    { "id": "e5", "from": "agent_step", "to": "adk_runtime", "sourceAnchor": "bottom", "targetAnchor": "top", "label": "Invoke ADK", "sequenceBadge": "4", "color": "#0d9488" },
+    { "id": "e6", "from": "agent_step", "to": "approval", "sourceAnchor": "right", "targetAnchor": "left", "label": "Sign-off", "sequenceBadge": "5", "color": "#1a73e8" },
+    { "id": "e7", "from": "employees", "to": "adk_reg", "sourceAnchor": "bottom", "targetAnchor": "top", "label": "Direct open", "style": "dashed", "color": "#64748b" },
+    { "id": "e8", "from": "adk_reg", "to": "adk_runtime", "sourceAnchor": "bottom", "targetAnchor": "top", "label": "Run ADK", "color": "#0d9488" }
+  ],
+  "steps": [
+    {
+      "stepNumber": 1,
+      "pillLabel": "1. Trigger",
+      "activeEdgeIds": ["e1"],
+      "packetLabel": "User Request",
+      "durationMs": 1000,
+      "narrationTitle": "Employee Starts Workflow",
+      "narrationBody": "An employee triggers the Gemini Enterprise Workflow Builder flow, entering at the MCP step."
+    },
+    {
+      "stepNumber": 2,
+      "pillLabel": "2. MCP Tool",
+      "activeEdgeIds": ["e2", "e3"],
+      "sequentialEdges": true,
+      "packetLabel": "get_pricing()",
+      "durationMs": 1400,
+      "narrationTitle": "MCP Server Calls Internal Pricing API",
+      "narrationBody": "The low-code MCP step invokes your Cloud Run MCP server, which fetches live quotes from the internal pricing API."
+    },
+    {
+      "stepNumber": 3,
+      "pillLabel": "3. ADK Step",
+      "activeEdgeIds": ["e4", "e5"],
+      "sequentialEdges": true,
+      "packetLabel": "Agent Context",
+      "durationMs": 1400,
+      "narrationTitle": "Workflow Invokes Registered ADK Agent",
+      "narrationBody": "The workflow passes pricing context to the Existing-agent step, which delegates reasoning to your ADK agent on Agent Runtime."
+    },
+    {
+      "stepNumber": 4,
+      "pillLabel": "4. Approval",
+      "activeEdgeIds": ["e6"],
+      "packetLabel": "Sign-off",
+      "durationMs": 1000,
+      "narrationTitle": "Human-in-the-Loop Approval",
+      "narrationBody": "Before finalizing, the workflow pauses at Human approval so a person can review and sign off."
+    },
+    {
+      "stepNumber": 5,
+      "pillLabel": "5. Direct Path",
+      "activeEdgeIds": ["e7", "e8"],
+      "sequentialEdges": true,
+      "packetLabel": "Direct Chat",
+      "durationMs": 1400,
+      "narrationTitle": "Alternative: Direct Access to Registered ADK Agent",
+      "narrationBody": "Employees can also open the registered ADK agent directly, bypassing Workflow Builder while still hitting the same Agent Runtime."
+    }
+  ]
+}

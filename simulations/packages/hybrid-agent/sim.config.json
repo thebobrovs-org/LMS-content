@@ -1,0 +1,12 @@
+{
+  "id": "hybrid-agent",
+  "title": "A hybrid agent: low-code front end, code-built parts",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "complete",
+      "hint": "Simulate or step through all paths in the diagram."
+    }
+  ]
+}
