@@ -181,7 +181,9 @@ the sim, and the LMS frame stops at 85% of the window. A sim the learner has to 
 both the control they just moved and what it changed doesn't teach anything. So:
 
 - **The whole sim fits in 600 px** at the laptop frame width (1100 px), at the start and after
-  the longest run. Measure it in the preview, not by eye.
+  the longest run, with the caption and controls on that screen. `npm run gate` checks it in
+  Chromium (`scripts/sim-fit.mjs`, which runs Step to the end or presses the primary button):
+  add a new sim to its `FIT` list. The preview (`scripts/sim-preview.mjs`) is 1100 px wide too.
 - **Controls beside the drawing from 900 px.** The kit (v2) makes `.panel.stage` two columns
   at 900 px and wider: the drawing (`.scroll`, `.scene` or a `.view` wrapper) on the left,
   capped at **380 px** tall, and the caption and controls in the right column. When a stage
