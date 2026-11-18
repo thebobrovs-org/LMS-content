@@ -305,7 +305,7 @@ function makeDocument() {
 
 // ---- A sim, running ---------------------------------------------------------------------------------------------------
 
-async function loadSim(id) {
+async function loadSim(id, props = {}) {
   const doc = makeDocument();
   const page = fs.readFileSync(path.join(PACKAGES, id, "index.html"), "utf8");
   doc.body.innerHTML = (page.match(/<body[^>]*>([\s\S]*)<\/body>/)?.[1] ?? "").replace(/<script[\s\S]*?<\/script>/g, "");
@@ -371,7 +371,7 @@ async function loadSim(id) {
   const file = path.join(PACKAGES, id, "main.js");
   vm.runInContext(fs.readFileSync(file, "utf8"), context, { filename: file });
   initialized = true;
-  init?.onInit?.({ theme: "light", props: {}, reducedMotion: false });
+  init?.onInit?.({ theme: "light", props, reducedMotion: false });
   await advance(400); // past the sims' 300 ms fallback render
 
   const find = (sel) => {

@@ -173,7 +173,7 @@ Three rules follow:
 2. **Isolate where it runs**, and keep production credentials out of reach.
 3. **Keep a person reviewing** every patch that ships.
 
-The options below, summarised as a ladder in the figure further down, differ in what
+The options below, summarised as a ladder in the simulation further down, differ in what
 they protect, and from what. Topic 2.2's hooks
 and tool lists limit what an agent tries; isolation limits the damage when
 something gets through.
@@ -309,11 +309,9 @@ identity.
 
 <Callout type="note">For architects comparing options: Google's documentation now suggests a newer project, Agent Substrate on GKE, for most agent workloads, because it packs more agents onto the same nodes. It is open source, needs GKE Standard, and shows no launch stage in its documentation; GKE Agent Sandbox remains the documented choice for a dedicated Pod per agent, GPUs or Autopilot.</Callout>
 
-<Figure
-  src="/media/coding-agent-isolation-ladder.svg"
-  alt="An isolation ladder with four rungs, from least to most isolated. Developer laptop, no sandbox: commands run with every file and credential on the machine. Antigravity terminal sandbox: commands confined to the workspace with no network by default and secrets such as ~/.ssh and .env blocked, but still on the laptop. Cloud Workstations: a dedicated VM per developer in a private cluster, reached through a private gateway, with no public VM IP addresses, a VPC Service Controls perimeter and a minimal service account, which keeps company credentials off laptops. GKE Agent Sandbox: a kernel-isolated Pod per run from a warm pool, with internal traffic and the metadata server blocked, for agent-generated code at scale. A side note says every rung still needs least-privilege credentials and human review before code ships."
-  caption="Each rung isolates more, and none replaces least privilege and review."
-/>
+The ladder below puts the options side by side, from a laptop with no sandbox up to GKE Agent Sandbox. Before you open the cards, predict the lowest rung that keeps company credentials off developers' laptops, then click each rung to see what it blocks, what it leaves open and who it's for.
+
+<Simulation id="sandbox-ladder-explorer" />
 
 ## Choose isolation by scenario
 

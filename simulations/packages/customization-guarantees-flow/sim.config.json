@@ -1,0 +1,12 @@
+{
+  "id": "customization-guarantees-flow",
+  "title": "Who runs the lint check?",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-hook-runs-every-edit",
+      "hint": "Predict whether the linter still runs when the model ignores the rule, then step to the hook: the harness runs it after every edit, whatever the model decided."
+    }
+  ]
+}

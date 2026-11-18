@@ -288,11 +288,10 @@ metrics for reply quality.
 Evaluation is not a one-off before launch. It runs before release and after
 it, and failures flow from production back into the evalset.
 
-<Figure
-  src="/media/agent-continuous-evaluation.svg"
-  alt="The continuous evaluation loop. Step 1: a change (a new prompt, model, tool or code) is committed. Step 2: the CI gate runs the evalset offline with trajectory match, rubrics and safety; a failure blocks the release. Step 3: the agent is deployed to production. Step 4: online monitoring samples live traces and scores them with reference-free checks, and watches latency, cost and errors. Step 5: failures found in production become new eval cases, which feed back into the CI gate's evalset. The evalset grows with every failure found, so the next change is tested against it."
-  caption="Reference-based checks run in CI, where expected answers exist. Live traffic has no reference, so online checks are reference-free. Scheduled runs, described below, replay the CI evalset without a change and are left out of the figure."
-/>
+Step one change around the loop. Before a failure turns up in production, predict
+where it goes next.
+
+<Simulation id="continuous-eval-loop" />
 
 - **The CI gate** runs the evalset on every change: a new prompt, a model
   version, a tool. Reference-based checks (trajectory and response match) and

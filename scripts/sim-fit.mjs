@@ -24,18 +24,37 @@ const MAX_STEPS = 40;
 
 /** Sims held to the rule. A new sim joins when it fits; the skill's design checklist asks for it. */
 export const FIT = [
+  "adk-anatomy-explorer",
   "agent-loop-stepper",
+  "agents-cli-loop",
   "approval-gate-explorer",
+  "capstone-architecture-explorer",
   "context-budget-explorer",
+  "continuous-eval-loop",
+  "customization-guarantees-flow",
+  "context-loading-flow",
   "cx-route-resolver",
+  "gateway-registry-flow",
+  "eval-case-explorer",
+  "guardrail-layers-flow",
   "hybrid-agent-flow",
+  "model-requirement-picker",
   "oauth-consent-pause",
   "orchestration-patterns",
   "platform-map-explorer",
+  "a2a-vs-mcp-flow",
+  "threat-defence-flow",
+  "sandbox-ladder-explorer",
+  "mcp-routes-explorer",
+  "memory-timeline-flow",
+  "rag-backend-lanes",
   "rag-retrieval-tuner",
   "state-scope-explorer",
+  "trace-waterfall-explorer",
   "trajectory-match-explorer",
   "workflow-vs-agent-stepper",
+  "workflow-canvas-flow",
+  "enterprise-data-flow",
 ];
 /** On-kit sims still taller than the screen, each with its owner, until they're refitted and move to FIT. */
 export const NOT_YET = {

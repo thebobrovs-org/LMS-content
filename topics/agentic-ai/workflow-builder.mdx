@@ -165,11 +165,10 @@ details are reviewed as a whole before anything is created.
 **As a workflow**, the request starts the process itself and every request goes
 through the same steps:
 
-<Figure
-  src="/media/agentic-workflow-canvas.svg"
-  alt="An annotated workflow canvas for a new-starter request, left to right. 1, Trigger: App event, Gmail, email received, with a subject filter; annotated: the trigger, not a step. 2, Gemini Agent step: extract name, role, start date and manager as JSON; annotated: instructions, knowledge, output format. 3, Condition: is a manager named? The yes branch continues to step 4; the no branch goes to a Gemini Agent step that replies asking for the manager, a write that also needs review, and that run ends. 4, Approval: a reviewer checks the details; annotated: before anything hard to undo. 5, Gemini Agent step: create the IT ticket and send the welcome email, as connector writes; annotated: each write also needs human review. A band underneath reads: the workflow guarantees the order; every request is extracted to a schema, checked, and approved by a person before anything is created for them."
-  caption="The same request as a workflow: a trigger, a Gemini Agent step with structured output, a condition, an approval, then the step that changes things."
-/>
+Step through the canvas below. First predict what happens when the request names no
+manager, then follow the condition down both of its branches.
+
+<Simulation id="workflow-canvas-flow" />
 
 1. **Trigger.** An event trigger watches Gmail for received emails, filtered to the
    new-starter subject line.

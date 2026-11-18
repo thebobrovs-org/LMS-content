@@ -266,11 +266,11 @@ time to live on memories. A default time to live is counted from each
 creation or update, so a memory that consolidation keeps updating stays longer
 than one written once.
 
-<Figure
-  src="/media/agent-memory-timeline.svg"
-  alt="One user across two sessions. Session 1 (Monday) holds its events (the user orders a desk lamp shipped to the Lyon office, the agent calls create_order and gets order B-77, the user asks for replies in French) and its state: order_id for this session only, user:language for every session of this user, temp:api_raw gone after the turn. Session 2 (Thursday) starts a new history; its state still has user:language, carried over, while order_id is not carried into it (it stays stored with session 1). After a turn or the session, Memory Bank generates memories: facts an LLM extracted and consolidated, isolated per agent and user, such as 'Ships work orders to the Lyon office'. At the start of a turn in session 2, the agent recalls the relevant memories."
-  caption="Events and plain state stay with their own session and are not carried into a new one, user: state follows the user, and Memory Bank keeps extracted facts for later sessions."
-/>
+Follow the same customer from Monday to Thursday. Before you step into session 2,
+predict whether `order_id` is still there, then watch which values cross into
+the new session and which facts Memory Bank brings back.
+
+<Simulation id="memory-timeline-flow" />
 
 So on Thursday the agent starts a new, empty conversation, yet still replies in
 French (a `user:` key its own tool wrote) and offers the Lyon office (a fact

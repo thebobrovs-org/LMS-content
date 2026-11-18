@@ -1,0 +1,12 @@
+{
+  "id": "eval-case-explorer",
+  "title": "One eval case, field by field",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-trajectory-catches",
+      "hint": "Click the field that records the tool calls the agent should make: the expected trajectory, which the trajectory criterion compares against. The final response alone would pass a guessed amount."
+    }
+  ]
+}

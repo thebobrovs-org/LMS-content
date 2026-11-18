@@ -146,6 +146,23 @@ test("context-budget-explorer: lean and passing fires the checkpoint; caching cu
   assert.match(text(sim, "#r-billed"), /16,000 uncached/);
 });
 
+test("context-budget-explorer: guided mode steps the figure's cuts to caching, with no challenge and its own checkpoint", async () => {
+  const sim = await loadSim("context-budget-explorer", { mode: "guided" });
+  assert.equal(sim.doc.querySelector("#cases"), null, "no evalset in guided mode");
+  const totals = [];
+  for (let i = 0; i < 5; i++) {
+    totals.push(text(sim, "#r-total").split(" ")[0]);
+    if (i < 4) await sim.press("#step");
+  }
+  assert.deepEqual(totals, ["47,000", "39,000", "25,000", "20,500", "20,500"]);
+  assert.match(text(sim, "#r-billed"), /16,000 uncached/);
+  assert.ok(!sim.events.includes("checkpoint:observe-cuts-then-cache"), "no checkpoint without a prediction");
+  await sim.press('[data-gpredict="same"]');
+  assert.match(text(sim, "#verdict"), /Right/);
+  assert.ok(sim.events.includes("checkpoint:observe-cuts-then-cache"));
+  assert.ok(!sim.events.includes("checkpoint:observe-evidence-survives"), "guided mode never fires the challenge's checkpoint");
+});
+
 test("workflow-vs-agent-stepper: on a partly shipped order the tram hands off and the car redirects a part", async () => {
   const sim = await loadSim("workflow-vs-agent-stepper");
   await sim.press('[data-v="tram"][data-predict="help"]');

@@ -1,0 +1,12 @@
+{
+  "id": "context-loading-flow",
+  "title": "What a coding agent loads, and when",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-script-output",
+      "hint": "Predict what of the skill's script enters the context, then step one cost review to the script: only its output enters the context, not its code."
+    }
+  ]
+}

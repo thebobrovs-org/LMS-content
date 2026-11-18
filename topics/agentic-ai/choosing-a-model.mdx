@@ -185,11 +185,11 @@ Google, partner and open models and the serving options each one offers.
 Each axis is pushed by different requirements. Read the requirement, find the
 axis it acts on, then choose.
 
-<Figure
-  src="/media/agentic-model-choice-table.svg"
-  alt="A decision table with three columns: requirement, axis it acts on, and usual lean. Low latency, or many simple steps: size, smaller model (Flash, Flash-Lite). Hard, multi-step reasoning: size, larger model (Pro). Hold and tune the weights yourself: openness, open weights (Gemma). Model must run only on infrastructure you operate: serving, self-deployed (endpoint or GKE). Data must be processed in the EU: serving, an EU endpoint, if the model's documented processing stays in the EU. Small team, spiky traffic, nothing to operate: serving, model as a service (MaaS). Steady, very high volume: serving, self-deploying may cost less; measure first. Footer: default, start with a managed model; self-deploy only for a stated need; combine rows for a real scenario."
-  caption="Each requirement acts on one axis. A scenario usually combines several rows."
-/>
+Predict which option survives the scenario in the question, then tick its three
+requirements and watch each one pull its axis. Tick two that pull one axis
+opposite ways to see the conflict.
+
+<Simulation id="model-requirement-picker" />
 
 Two rows deserve a closer look:
 

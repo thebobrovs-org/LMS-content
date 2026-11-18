@@ -1,0 +1,12 @@
+{
+  "id": "a2a-vs-mcp-flow",
+  "title": "MCP and A2A, step by step",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-opaque-remote",
+      "hint": "Predict, then step past the message to the fraud-review agent: its model, tools and state stay hidden; the support agent sees only the card, the task's state and the artifact."
+    }
+  ]
+}

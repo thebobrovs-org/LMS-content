@@ -174,3 +174,19 @@ details.more[open] > summary { margin-bottom: 8px; }
   .receipt .buttons { margin-top: 0; margin-left: auto; }
 }
 @media (min-width: 900px) { .evals ul { gap: 4px; } .side .controls { gap: 8px; } }
+
+/* Guided mode (props.mode "guided"): the figure's cuts as a ledger beside the backpack. The row on
+   show is blue (now); rows already applied are solid; rows still to come are dashed (not applied yet). */
+.gl-row rect { fill: var(--panel); stroke: var(--border); stroke-width: 1.5; }
+.gl-row.todo rect { fill: var(--surface); stroke-dasharray: 4 4; }
+.gl-row.now rect { stroke: var(--primary); stroke-width: 3; }
+.gl-l { fill: var(--fg); font-size: 13px; font-weight: 700; }
+.gl-d { fill: var(--muted); font-size: 11.5px; }
+.gl-t { fill: var(--fg); font-size: 15px; font-weight: 700; text-anchor: end; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.gl-row.todo .gl-l { fill: var(--muted); }
+.gl-row.todo .gl-t { display: none; } /* a total shows once its step is reached, so the last row never answers the predict card early */
+.gl-note { fill: var(--muted); font-size: 11.5px; }
+.cap-h { display: block; font-size: 13px; color: var(--muted); margin-bottom: 2px; }
+.cap-h:empty { display: none; }
+.gsteps { display: flex; flex-wrap: wrap; gap: 6px; }
+.gsteps .pill[aria-current="step"] { background: var(--primary); border-color: var(--primary); color: var(--primary-contrast); font-weight: 600; }

@@ -1,0 +1,9 @@
+{
+  "id": "model-requirement-picker",
+  "title": "From requirement to model choice",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    { "id": "observe-requirement-choice", "hint": "Predict, then tick the scenario's three requirements: low latency, data processed in the EU, and a small team with spiky traffic. Each acts on one axis, and together they leave a smaller managed model on an EU endpoint." }
+  ]
+}

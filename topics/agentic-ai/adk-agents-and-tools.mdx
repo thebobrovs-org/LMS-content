@@ -126,11 +126,9 @@ belongs:
   in the loop, for checks and edits that must happen every time, because
   callbacks are your code, not the model's judgement.
 
-<Figure
-  src="/media/adk-agent-anatomy.svg"
-  alt="Anatomy of an ADK LlmAgent. The agent box lists name and description (who it is; the description is how other agents route to it), model (the LLM that reasons) and instruction (goal, persona, limits, when to use each tool). Each model call reads the instruction, the tool and sub-agent declarations, the conversation so far and its state, and the user's new message. To the right, tools (function tools, built-in tools such as Search, and AgentTool) are called and return results; sub-agents receive control by transfer. Below, callbacks run your deterministic code before and after the agent, each model call and each tool call: return a value to skip the step, or replace its output."
-  caption="An LlmAgent is configured by its identity, model and instruction; it acts through tools, hands off to sub-agents, and runs your callbacks at fixed points in the loop."
-/>
+Before you open a part, guess which one would guarantee that a reply never shows a full account number. Then click each part of the agent to see its field, an example and when it runs.
+
+<Simulation id="adk-anatomy-explorer" />
 
 ## Build a support agent in five steps
 

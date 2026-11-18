@@ -1,0 +1,12 @@
+{
+  "id": "sandbox-ladder-explorer",
+  "title": "The isolation ladder, rung by rung",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-credentials-off-laptop",
+      "hint": "Click the lowest rung that keeps company credentials off laptops: Cloud Workstations, since the terminal sandbox still runs on the laptop."
+    }
+  ]
+}

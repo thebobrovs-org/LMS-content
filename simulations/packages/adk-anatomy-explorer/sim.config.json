@@ -1,0 +1,12 @@
+{
+  "id": "adk-anatomy-explorer",
+  "title": "Inside an ADK agent, part by part",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-callback-guarantees",
+      "hint": "Click the part that is your code at a fixed point in the loop and can replace each model response: the before / after model callbacks, not the instruction."
+    }
+  ]
+}

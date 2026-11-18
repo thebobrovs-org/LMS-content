@@ -180,11 +180,9 @@ grants identities roles that decide who may call what.
 | Look up one customer's order in the orders database | **MCP Toolbox for Databases**, with named queries | You run the open-source server; you write the queries | You: database account, query design, caller authentication |
 | Book a pickup through the internal carrier API | A **custom MCP server** | You build, host and patch it | You, end to end |
 
-<Figure
-  src="/media/mcp-integration-routes.svg"
-  alt="An ADK agent, the MCP client, connects over HTTP to three kinds of MCP server. A Google Cloud MCP server is for a Google Cloud service such as BigQuery, Spanner or GKE: Google hosts and updates it, and it is secured by IAM roles you grant, with an optional read-only deny policy. MCP Toolbox for Databases is for named queries against your own database tables: you run the open-source server and write the queries, and you secure the database account, the fixed queries and the authenticated parameters. A custom MCP server is for an internal API nothing else covers: you build it with an MCP SDK and host it on Cloud Run or GKE, and you secure it end to end. A band underneath shows Agent Registry, where all three are listed for discovery and access policies bind agent identities to them."
-  caption="The further right, the more of the integration your team owns."
-/>
+The map below draws the three routes, with Agent Registry underneath. Predict which route leaves your team the least to run for the BigQuery analytics, then click each server to see who hosts it, who updates it and who secures it.
+
+<Simulation id="mcp-routes-explorer" />
 
 **<Term id="google cloud mcp servers">Google Cloud MCP servers</Term>** are remote MCP servers that run on Google's
 infrastructure and offer an HTTP endpoint for a Google Cloud service, for

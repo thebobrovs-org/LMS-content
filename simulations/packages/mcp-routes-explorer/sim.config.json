@@ -1,0 +1,12 @@
+{
+  "id": "mcp-routes-explorer",
+  "title": "Three MCP routes, server by server",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-managed-mcp-server",
+      "hint": "Click the route for BigQuery analytics: the Google Cloud MCP server, which Google hosts and updates, so you only grant IAM roles."
+    }
+  ]
+}

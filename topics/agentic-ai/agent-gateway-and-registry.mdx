@@ -119,11 +119,10 @@ to exist**, and **what is actually happening**.
 The last lesson answered **who is calling**: each agent has its own identity
 and narrow roles. This lesson adds the other two pieces of runtime governance.
 
-<Figure
-  src="/media/agent-gateway-registry.svg"
-  alt="One agent tool call with three governance pieces. On the left, the invoice agent, with Agent Identity answering who: its own principal, a SPIFFE-based identity. At the top, Agent Registry answering what exists: invoice-agent and finance-mcp, an MCP server, are registered; pdf-tools-online is not listed. A dotted arrow shows that gateway policies name registry entries. In the middle, Agent Gateway answering may it happen: 1, which agent is calling; 2, is the target registered, and does the policy allow this agent to call it; 3, screen the content with Model Armor; 4, record the call for monitoring. On the right, the call to finance-mcp, registered and allowed, goes through; the call to pdf-tools-online, not registered, is refused. Footer: identity answers who is calling, the registry answers what exists, and the gateway answers whether this call may happen now, and records it."
-  caption="Identity names the caller, the registry names the target, and the gateway applies policy between them."
-/>
+Follow one invoice agent's two calls through the gateway. Before the second call, to
+pdf-tools-online, predict what happens to it, then step on to check.
+
+<Simulation id="gateway-registry-flow" />
 
 ## Agent Registry: what exists
 

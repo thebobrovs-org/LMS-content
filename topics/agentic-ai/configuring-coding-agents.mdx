@@ -322,11 +322,10 @@ The agent loads a skill in steps, which is called **<Term id="progressive disclo
    `pricing-rules.md`. Scripts are meant to be run rather than read, so
    normally only their output enters the context.
 
-<Figure
-  src="/media/coding-agent-context-loading.svg"
-  alt="Two panels. In context on every turn: the project instructions file (AGENTS.md, GEMINI.md or CLAUDE.md); the skill listing, which holds each skill's name and description, for example bigquery-cost-review and release-notes; and the MCP tools the agent may call, for example list_dataset_ids, get_table_info and execute_sql_readonly from a BigQuery server. Loaded only when relevant: a skill's SKILL.md body, read when the task matches its description or you type its slash command; reference files in the skill folder, read only if the body points to them; and scripts in the skill folder, which the agent runs so that only their output enters the context. A note says a skill costs a line of context until used, every exposed MCP tool is something the model can call so a server should be limited to the tools the task needs, and some agents load only tool names up front and fetch full schemas when needed."
-  caption="What is always in context, and what loads only when a task needs it."
-/>
+Follow one cost review through the skill below. Before you step it, predict
+what of the skill's script enters the agent's context.
+
+<Simulation id="context-loading-flow" />
 
 So a team can keep dozens of skills at little cost (the listing has a budget,
 so keep descriptions short), as long as each description says plainly what the

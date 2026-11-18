@@ -136,11 +136,9 @@ The case also sets its **session input**: the app name, the user id and the
 initial **state** (data the agent keeps across turns, such as a customer tier), so
 it starts from the same place every run.
 
-<Figure
-  src="/media/agent-eval-case-anatomy.svg"
-  alt="Anatomy of one ADK eval case for a refund. The case has an id and a session input. Turn 1 holds the user input, 'Order 1182 arrived broken. Can I get my 60 dollars back?', the expected trajectory, get_order with order id 1182 then issue_refund with order id 1182 and amount 60, an empty list of expected intermediate responses, and the expected final response, 'I've refunded 60 dollars for order 1182.' Beside it, the eval config says how each part is scored: a trajectory criterion compares the actual tool calls with the expected ones, a response criterion compares the final reply with the reference, and optional rubrics are yes or no checks an LLM judge applies when no single reference answer exists."
-  caption="A case records the path as well as the answer. The eval config, kept separately, decides how strictly each part is scored."
-/>
+Before you click, predict which field would catch an agent that skips `get_order` and guesses the amount. Then open each field to see what it holds and which criterion in the eval config scores it.
+
+<Simulation id="eval-case-explorer" />
 
 How strictly each part is scored lives in a separate eval config (a
 `test_config.json` file, or the settings you pick when you run the eval); a later

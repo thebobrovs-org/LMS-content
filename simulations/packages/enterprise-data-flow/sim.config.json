@@ -1,0 +1,12 @@
+{
+  "id": "enterprise-data-flow",
+  "title": "One query across three data stores",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-permission-filter",
+      "hint": "Predict, then step one blended query to the permission filter: a matching document the user can't open in the source is dropped before results reach them."
+    }
+  ]
+}
