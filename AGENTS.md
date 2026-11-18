@@ -17,6 +17,7 @@ The learning content for Hyperstack:
 | `paths/*.mdx` | Learning paths |
 | `glossary/`, `resources/` | Per-path JSON |
 | `media/` | Images |
+| `audio/` | Read-along narration: `audio/<topic id>.json` (cues + the MP3's bucket URL) for a lesson's `<ReadAlong />`, written only by the read-along workflow (`scripts/generate-readalong.mjs`) |
 | `simulations/packages/*` | Interactive simulations: classic JS with `sim.config.json` |
 | `notebooks/` | Companion Colab notebooks |
 | `schema/` | The content schema (zod) and its generated declarations |

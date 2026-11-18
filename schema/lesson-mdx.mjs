@@ -106,7 +106,8 @@ export function literalValue(node) {
 
 const READALONG_CUE_KEYS = new Set(["start", "end", "text", "paragraph"]);
 /**
- * What is wrong with a `<ReadAlong>`'s props, or null: `src` is a string (its URL is checked like any
+ * What is wrong with a `<ReadAlong>`'s props, or null. With neither `src` nor `cues` it renders the
+ * lesson's `audio/<topic id>.json` (ReadAlongAudioSchema; content CI checks the file). Otherwise `src` is a string (its URL is checked like any
  * other), and `cues` a non-empty literal array of `{ start, end, text, paragraph? }` in seconds, each with
  * 0 <= start <= end, sorted by start, non-empty text and a whole, non-negative paragraph. The app renders
  * the cues as the transcript and seeks by them, so a malformed list would fail the app's build.
@@ -114,8 +115,9 @@ const READALONG_CUE_KEYS = new Set(["start", "end", "text", "paragraph"]);
 export function readAlongProblem(attributes) {
   const attr = (name) => attributes?.find((x) => x.type === "mdxJsxAttribute" && x.name === name);
   const src = attr("src");
-  if (!src || typeof stringValue(src) !== "string") return "<ReadAlong> needs a src string (the MP3's https URL or /media/ path)";
   const cuesAttr = attr("cues");
+  if (!src && !cuesAttr) return null; // the narration lives in the lesson's audio/<topic id>.json (content CI checks it)
+  if (!src || typeof stringValue(src) !== "string") return "<ReadAlong> needs a src string (the MP3's https URL or /media/ path) with its cues, or neither, to use the lesson's audio/<topic id>.json";
   const cues = cuesAttr && cuesAttr.value && typeof cuesAttr.value === "object" ? literalValue(literalOf(cuesAttr.value.data?.estree)) : undefined;
   if (!Array.isArray(cues) || cues.length === 0) return "<ReadAlong cues={…}> must be a non-empty array of { start, end, text } cues";
   let previous = -Infinity;
@@ -145,9 +147,9 @@ export function readAlongProblem(attributes) {
  *   `src` and `href` are strings.
  * - a `<ReadAlong>` carries a src string and well-formed cues (readAlongProblem).
  * `urls` receives the URLs of every image, link, definition and `src`/`href`; `sims` the
- * `id` of every `<Simulation>`, however it is written.
+ * `id` of every `<Simulation>`, however it is written; `readAlongs` one `{ fromFile }` per `<ReadAlong>`.
  */
-export function lessonRules(urls = [], sims = [], objectives = [], identities = []) {
+export function lessonRules(urls = [], sims = [], objectives = [], identities = [], readAlongs = []) {
   return (tree, vfile) => {
     const url = (value, node, what) => {
       if (UNSAFE_URL_CHARS.test(value)) vfile.fail(`${what} holds whitespace or a control character, which a browser drops before reading the scheme; encode it`, node);
@@ -201,6 +203,8 @@ export function lessonRules(urls = [], sims = [], objectives = [], identities = 
         if (node.name === "ReadAlong") {
           const problem = readAlongProblem(node.attributes);
           if (problem) vfile.fail(problem, node);
+          const inline = node.attributes?.some((x) => x.type === "mdxJsxAttribute" && (x.name === "src" || x.name === "cues"));
+          readAlongs.push({ fromFile: !inline });
         }
         // A rendered check or step and its identity (ADR 0004): the prompt the app hashes, and the
         // `id` / `former-ids` it may carry. Checked against the topic's other items afterwards.

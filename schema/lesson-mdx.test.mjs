@@ -147,6 +147,7 @@ test("a <ReadAlong> with a missing or unsafe src, or missing, code or malformed 
   const ok = '[{ start: 0, end: 1, text: "Hi." }]';
   for (const [mdx, reason] of [
     [`<ReadAlong cues={${ok}} />`, /needs a src string/],
+    ['<ReadAlong src="/media/a.mp3" />', /must be a non-empty array/],
     [`<ReadAlong src="javascript:alert(1)" cues={${ok}} />`, /not "javascript:"/],
     [`<ReadAlong src={audio} cues={${ok}} />`, /may carry only literal data/],
     ['<ReadAlong src="/media/a.mp3" />', /must be a non-empty array/],
@@ -165,4 +166,13 @@ test("a <ReadAlong> with a missing or unsafe src, or missing, code or malformed 
     assert.equal(r.ok, false, `accepted: ${mdx}`);
     assert.match(r.reason, reason, mdx);
   }
+});
+
+test("a prop-less <ReadAlong /> compiles and is reported as reading the lesson's audio file", async () => {
+  const readAlongs = [];
+  await compile('Intro.\n\n<ReadAlong title="Listen" />\n\n<ReadAlong src="/media/a.mp3" cues={[{ start: 0, end: 1, text: "Hi." }]} />', {
+    development: false,
+    remarkPlugins: [() => lessonRules([], [], [], [], readAlongs)],
+  });
+  assert.deepEqual(readAlongs, [{ fromFile: true }, { fromFile: false }]);
 });

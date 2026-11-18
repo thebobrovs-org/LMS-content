@@ -9,6 +9,8 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
+  # The read-along workflow starts CI on the commit it pushes (a push by its token starts nothing by itself).
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -20,7 +22,7 @@ concurrency:
 jobs:
   gate:
     name: gate
-    if: github.event_name == 'push' || github.event.pull_request.draft == false
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

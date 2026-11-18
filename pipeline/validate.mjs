@@ -27,8 +27,9 @@ import { parseFrontmatter } from "./frontmatter.mjs";
 import { effectiveGlossary, pathsByTopic as indexPathsByTopic, termKeys } from "./glossary.mjs";
 import { loadRecords, recordProblems } from "./knowledge.mjs";
 import { lessonRules } from "../schema/lesson-mdx.mjs";
+import { extractSpokenText, narrationHash } from "./readalong-text.mjs";
 import {
-  GlossarySchema, CALLOUT_TYPES, MDX_COMPONENTS, PathFrontmatterSchema, ResourcesSchema, SimConfigSchema, TopicFrontmatterSchema, check,
+  GlossarySchema, CALLOUT_TYPES, MDX_COMPONENTS, PathFrontmatterSchema, ReadAlongAudioSchema, ResourcesSchema, SimConfigSchema, TopicFrontmatterSchema, check,
 } from "../schema/content-schema.mjs";
 
 const ROOT = process.cwd();
@@ -196,9 +197,10 @@ async function compiles(file, content, bodyLine) {
   const sims = [];
   const objectives = [];
   const identities = [];
+  const readAlongs = [];
   try {
-    await compile(content, { development: false, remarkPlugins: [() => lessonRules(urls, sims, objectives, identities)] });
-    return { urls, sims, objectives, identities };
+    await compile(content, { development: false, remarkPlugins: [() => lessonRules(urls, sims, objectives, identities, readAlongs)] });
+    return { urls, sims, objectives, identities, readAlongs };
   } catch (e) {
     // The position is in the message's body coordinates, as fields or as a "(line:col-line:col)" suffix.
     const reason = String(e.reason ?? e.message);
@@ -224,7 +226,36 @@ async function checkBody(id, file, content, bodyLine) {
   for (const sim of new Set(found?.sims ?? [])) {
     if (!simIds.has(sim)) errors.push(`${id}: simulation "${sim}" has no simulations/packages/${sim}`);
   }
-  return { objectives: found?.objectives ?? [], identities: found?.identities ?? [], sims: [...new Set(found?.sims ?? [])] };
+  return { objectives: found?.objectives ?? [], identities: found?.identities ?? [], sims: [...new Set(found?.sims ?? [])], readAlongs: found?.readAlongs ?? [] };
+}
+
+// ── read-along audio: a prop-less <ReadAlong /> renders audio/<topic id>.json (ReadAlongAudioSchema) ──
+const AUDIO_DIR = path.join(ROOT, "audio");
+const audioUsers = new Set(); // topic ids whose body holds a prop-less <ReadAlong />
+
+/**
+ * A topic's read-along audio file: at most one prop-less <ReadAlong /> per lesson, and when there is
+ * one, audio/<id>.json exists and matches the schema. When the lesson's narration text no longer
+ * hashes to the file's `textHash`, the audio is stale: a warning, since the read-along workflow
+ * regenerates it (scripts/generate-readalong.mjs).
+ */
+function checkReadAlongAudio(id, file, readAlongs) {
+  const fromFile = readAlongs.filter((r) => r.fromFile).length;
+  if (fromFile === 0) return;
+  audioUsers.add(id);
+  if (fromFile > 1) errors.push(`${id}: only one prop-less <ReadAlong /> per lesson (it renders audio/${id}.json); give any other src and cues`);
+  const audioFile = path.join(AUDIO_DIR, `${id}.json`);
+  if (!fs.existsSync(audioFile)) {
+    errors.push(`${id}: <ReadAlong /> needs audio/${id}.json; run the read-along workflow (label the PR "audio") or scripts/generate-readalong.mjs`);
+    return;
+  }
+  const raw = json(audioFile);
+  if (!raw.ok) return;
+  const r = check(ReadAlongAudioSchema, raw.value, rel(audioFile));
+  errors.push(...r.problems);
+  if (r.ok && r.value.textHash !== narrationHash(extractSpokenText(fs.readFileSync(file, "utf8")))) {
+    warnings.push(`${id}: audio/${id}.json was narrated from text this lesson no longer holds; regenerate it (the read-along workflow, or scripts/generate-readalong.mjs)`);
+  }
 }
 
 const ID_RE = /^[a-z0-9][a-z0-9-]*$/;
@@ -348,6 +379,7 @@ for (const t of topics) {
     }
   }
   const body = await checkBody(id, file, content, bodyLine);
+  checkReadAlongAudio(id, file, body.readAlongs);
   touchable.set(id, { ...touchableIn(data, body.identities, tree), sims: new Set(body.sims) });
   const objectives = objectiveProblems(data, body.objectives);
   for (const e of objectives.errors) errors.push(`${id}: ${e}`);
@@ -381,6 +413,16 @@ for (const { pid, file, data, content, bodyLine } of parsedPaths) {
   // A path has no objectives to refer to (LMS-content#83): an objective attribute in its body is refused, not ignored.
   const pathBody = await checkBody(`path ${pid}`, file, content, bodyLine);
   for (const id of new Set(pathBody.objectives)) errors.push(`path ${pid}: the body names objective "${id}", but a path declares no objectives`);
+  if (pathBody.readAlongs.some((r) => r.fromFile)) errors.push(`path ${pid}: a prop-less <ReadAlong /> reads a lesson's audio file; a path's body must give src and cues`);
+}
+
+// Every audio file belongs to a lesson that renders it: one left behind by a removed <ReadAlong /> or topic is an error.
+for (const audioFile of walk(AUDIO_DIR, ".json")) {
+  const id = path.relative(AUDIO_DIR, audioFile).replace(/\.json$/, "").split(path.sep).join("/");
+  if (!audioUsers.has(id)) {
+    if (!includeStaging && fs.existsSync(path.join(ROOT, "staging", "topics", `${id}.mdx`))) continue; // a staged lesson's, checked with --staging
+    errors.push(`${rel(audioFile)}: no ${allIds.has(id) ? `prop-less <ReadAlong /> in topic "${id}"` : `topic "${id}"`}; remove the file`);
+  }
 }
 
 // Knowledge records (knowledge/, LMS-content#105): the schema, and every `touches` reference resolved

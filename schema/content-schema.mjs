@@ -237,6 +237,33 @@ export const SimConfigSchema = z
   })
   .strict();
 
+/** One sentence of a `<ReadAlong>`: its span in the MP3 in seconds, its text, and the paragraph it belongs to. */
+export const ReadAlongCueSchema = z
+  .object({
+    start: z.number().finite().nonnegative(),
+    end: z.number().finite().nonnegative(),
+    text: nonEmpty,
+    paragraph: z.number().int().nonnegative().optional(),
+  })
+  .strict()
+  .refine((c) => c.end >= c.start, { message: "end must not be before start", path: ["end"] });
+/**
+ * `audio/<topic id>.json`: a lesson's narration, which a prop-less `<ReadAlong />` in that lesson
+ * renders. Written by scripts/generate-readalong.mjs (and its workflow), never by hand: `textHash`
+ * is the SHA-256 of the narration text the MP3 was made from, so content CI can tell when the
+ * lesson's prose has moved on, and the generator can skip a lesson whose text hasn't.
+ */
+export const ReadAlongAudioSchema = z
+  .object({
+    src: z.string().regex(/^(?:https:\/\/[^\s]+|\/media\/[^\s]+)$/, "must be an https URL or a /media/ path"),
+    voice: nonEmpty,
+    model: nonEmpty,
+    textHash: z.string().regex(/^[0-9a-f]{64}$/, "must be a SHA-256 hex digest"),
+    cues: z.array(ReadAlongCueSchema).min(1),
+  })
+  .strict()
+  .refine((a) => a.cues.every((c, i) => i === 0 || c.start >= a.cues[i - 1].start), { message: "cues must be sorted by start", path: ["cues"] });
+
 /**
  * Validate `value` against `schema`, naming `file`: the parsed value (the schema's
  * output type, with defaults filled in), or a list of problems as
