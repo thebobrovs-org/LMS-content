@@ -41,6 +41,8 @@ export const FIT = [
   "platform-map-explorer",
   "a2a-vs-mcp-flow",
   "threat-defence-flow",
+  "sandbox-ladder-explorer",
+  "mcp-routes-explorer",
   "rag-retrieval-tuner",
   "state-scope-explorer",
   "trace-waterfall-explorer",

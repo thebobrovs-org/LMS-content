@@ -44,6 +44,8 @@ const WIDTH_GUARDS = {
   "customization-guarantees-flow": [".scroll"],
   "context-loading-flow": [".scroll"],
   "agents-cli-loop": [".scroll"],
+  "sandbox-ladder-explorer": [".scroll"],
+  "mcp-routes-explorer": [".scroll"],
   "access-boundary-explorer": [".scroll"],
   "context-budget-explorer": [".scroll"],
   "media-reference-explorer": [".scroll"],
