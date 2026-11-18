@@ -31,6 +31,7 @@ export const FIT = [
   "hybrid-agent-flow",
   "oauth-consent-pause",
   "orchestration-patterns",
+  "platform-map-explorer",
   "rag-retrieval-tuner",
   "state-scope-explorer",
   "trajectory-match-explorer",
