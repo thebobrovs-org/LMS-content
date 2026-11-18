@@ -236,8 +236,8 @@ function build() {
         <button id="reset" class="secondary">Reset</button>
       </div>
     </div>
-    <div id="phases"></div>
     <p class="readout" id="readout" role="status"></p>
+    <div class="phases" id="phases" tabindex="0" role="region" aria-label="Handlers on this page, in evaluation order"></div>
     <p class="legend">Handlers are evaluated top to bottom. A handler with a transition ends the evaluation; an intent or event is consumed by the first handler that takes it; dashed rows are out of scope on this page. One turn only: in a live flow, condition routes also run when a page is entered.</p>`;
   els = {
     page: app.querySelector("#page"),
@@ -279,6 +279,15 @@ function renderRun() {
     html += "</ol></section>";
   }
   els.phases.innerHTML = html;
+  // Fit the screen: the handler list scrolls in its own region, so keep the current row in view
+  // without scrolling the page (scrollIntoView would also move the host page).
+  const curRow = els.phases.querySelector(".cur");
+  if (curRow) {
+    const box = els.phases;
+    const top = curRow.offsetTop; // .phases is position: relative, so this is relative to it
+    if (top < box.scrollTop) box.scrollTop = top - 8;
+    else if (top + curRow.offsetHeight > box.scrollTop + box.clientHeight) box.scrollTop = top + curRow.offsetHeight - box.clientHeight + 8;
+  }
   const hadFocus = document.activeElement === els.step || document.activeElement === els.auto;
   els.step.disabled = done;
   els.auto.disabled = done;

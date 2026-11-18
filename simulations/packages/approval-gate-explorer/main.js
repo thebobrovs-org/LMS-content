@@ -203,13 +203,13 @@ function laneSvg(name, title, code) {
 
 function build() {
   app.innerHTML = `
-    <div class="panel predict" id="predict">
-      <p class="q">Predict first: you will <strong>deny</strong> this refund. Which track keeps the money in the vault?</p>
+    <details class="panel predict" open id="predict">
+      <summary class="q">Predict first: you will <strong>deny</strong> this refund. Which track keeps the money in the vault?</summary>
       <div class="chips" role="group" aria-label="Your prediction">
         ${Object.entries(PREDICT).map(([k, v]) => `<button type="button" class="chip" data-predict="${k}" aria-pressed="false">${v}</button>`).join("")}
       </div>
       <p class="verdict" id="verdict"></p>
-    </div>
+    </details>
     <div class="panel stage">
       <div class="scroll" tabindex="0" role="region" aria-label="The two tracks"><svg viewBox="0 0 760 400" role="img" aria-label="The same refund rides two tracks. On the top track the approval signal stands before the line where issue_refund pays out; on the bottom track the review signal stands after it.">
         <g class="noreturn">
@@ -239,11 +239,11 @@ function build() {
           <button type="button" id="reset" class="secondary">Reset</button>
         </div>
       </div>
-    </div>
-    <div class="tiles">
-      <div class="tile"><span class="tl">Top vault</span><span class="tv mono" id="t-top"></span></div>
-      <div class="tile"><span class="tl">Bottom vault</span><span class="tv mono" id="t-bottom"></span></div>
-      <div class="tile"><span class="tl">Your call</span><span class="tv" id="t-call"></span></div>
+      <div class="tiles">
+        <div class="tile"><span class="tl">Top vault</span><span class="tv mono" id="t-top"></span></div>
+        <div class="tile"><span class="tl">Bottom vault</span><span class="tv mono" id="t-bottom"></span></div>
+        <div class="tile"><span class="tl">Your call</span><span class="tv" id="t-call"></span></div>
+      </div>
     </div>
     <p class="legend">A fictional store and refund. Both tracks start from the same €5,000 and get the same decision, so the only difference is where the signal stands.</p>`;
   els = {};

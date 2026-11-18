@@ -174,14 +174,16 @@ function build() {
       <ul class="lanes" id="lanes" aria-hidden="true"></ul>
       <div class="axis" aria-hidden="true"><span></span><span class="ticks" id="ticks"></span></div>
     </section>
+    <div class="results">
     <section class="state" aria-labelledby="st-h">
       <h2 id="st-h">Session state</h2>
       <ul id="state"></ul>
     </section>
     <section class="log" aria-labelledby="log-h">
       <h2 id="log-h">Agent runs, in the order they finish</h2>
-      <ol id="rows"></ol>
+      <div class="logbox" id="logbox" tabindex="0" role="region" aria-label="Agent runs, in the order they finish"><ol id="rows"></ol></div>
     </section>
+    </div>
     <p class="legend">Times are illustrative. Each Step finishes one agent run; the state panel shows each key's latest value.</p>`;
   els = {
     pattern: app.querySelector("#pattern"),
@@ -200,6 +202,7 @@ function build() {
     ticks: app.querySelector("#ticks"),
     state: app.querySelector("#state"),
     rows: app.querySelector("#rows"),
+    logbox: app.querySelector("#logbox"),
   };
   els.pattern.value = pattern;
   els.shared.checked = shared;
@@ -279,6 +282,8 @@ function render() {
     rows.push(`<li class="pending">Next: ${esc(next)}. Press Step or Auto.</li>`);
   }
   els.rows.innerHTML = rows.join("");
+  // Fit the screen: the run log scrolls in its own region; keep its newest row in view.
+  els.logbox.scrollTop = els.logbox.scrollHeight;
 
   // Readout.
   const finished = done();

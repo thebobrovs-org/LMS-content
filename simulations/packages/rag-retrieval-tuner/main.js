@@ -230,13 +230,13 @@ function drawScene(r, a) {
 
 function build() {
   app.innerHTML = `
-    <div class="panel predict">
-      <p class="q" id="question"></p>
+    <details class="panel predict" open>
+      <summary class="q" id="question"></summary>
       <div class="chips" role="group" aria-label="Your prediction">
         ${Object.entries(PREDICT).map(([k, v]) => `<button type="button" class="chip" data-predict="${k}" aria-pressed="false">${esc(v)}</button>`).join("")}
       </div>
       <p class="verdict" id="verdict" role="status" aria-live="polite"></p>
-    </div>
+    </details>
     <div class="panel stage">
       <div class="scene">
         <div class="scroll pondwrap" tabindex="0" role="region" aria-label="The pond and the net"><svg id="svg" viewBox="0 0 460 440" role="img"></svg></div>

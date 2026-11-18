@@ -21,6 +21,8 @@ const PACKAGES = path.join(path.dirname(fileURLToPath(import.meta.url)), "../pac
 const TEXT_REGIONS = {
   "capacity-constraint-explorer": [".code"],
   "capacity-orchestrator": [".event-log"],
+  "cx-route-resolver": [".phases"],
+  "orchestration-patterns": [".logbox"],
   "image-tensor-explorer": [".code-overlay"],
   "systolic-array": [".console-log"],
   "training-loop-explorer": [".code-overlay"],

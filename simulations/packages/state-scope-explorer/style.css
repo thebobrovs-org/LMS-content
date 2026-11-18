@@ -1,4 +1,4 @@
-/* sim-kit v1: copied verbatim from simulations/kit/sim-kit.css. Edit it there, never here. */
+/* sim-kit v2: copied verbatim from simulations/kit/sim-kit.css. Edit it there, never here. */
 /* One look for every sim (skills/lms-authoring-simulations/SKILL.md, "One visual style").
    Hues: primary = now / your action; violet = the model; teal = the runtime or a tool;
    green = pass, kept, allowed; red = fail, lost, denied; amber = a limit or a line not to
@@ -72,9 +72,32 @@ input[type="range"] { width: 200px; max-width: 100%; accent-color: var(--primary
 .k-now { stroke: var(--primary); stroke-width: 3; }
 .k-off { fill: var(--surface); stroke: var(--border); stroke-dasharray: 4 4; }
 
+/* Fit the screen (SKILL.md "Fit the screen"): the whole sim fits in 600 px of height on a
+   1280x720 laptop. From 900 px wide the stage is two columns: the drawing on the left, at
+   most 380 px tall, and the caption and controls beside it, so changing a setting never
+   scrolls the drawing out of view. A sim with more than a caption under its drawing wraps
+   the left column in .view and the right in .side. The predict card is a <details open> the learner can fold,
+   and a secondary panel is a <details class="panel more">. */
+details.predict > summary, details.more > summary { cursor: pointer; list-style: none; }
+details.predict > summary::-webkit-details-marker, details.more > summary::-webkit-details-marker { display: none; }
+details.predict > summary::before, details.more > summary::before { content: "\25BE\00A0"; color: var(--muted); }
+details.predict:not([open]) > summary::before, details.more:not([open]) > summary::before { content: "\25B8\00A0"; }
+details.predict:not([open]) > summary { margin: 0; }
+details.more > summary { font-size: 13px; font-weight: 600; color: var(--muted); }
+details.more[open] > summary { margin-bottom: 8px; }
+@media (min-width: 900px) {
+  .stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 32%); grid-template-rows: repeat(11, min-content) 1fr; column-gap: 16px; align-items: start; }
+  .stage > .scroll, .stage > .scene, .stage > .view { grid-column: 1; grid-row: 1 / -1; }
+  .stage > :not(.scroll):not(.scene):not(.view) { grid-column: 2; margin-top: 0; margin-bottom: 10px; }
+  .stage .side { display: flex; flex-direction: column; gap: 10px; }
+  .stage svg { max-height: 380px; }
+  .stage .caption { margin: 0; }
+  .stage .controls { margin-top: 0; flex-direction: column; align-items: stretch; gap: 10px; }
+}
+
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
 .reduced *, .reduced *::before, .reduced *::after { transition: none !important; animation: none !important; }
-/* end sim-kit v1 */
+/* end sim-kit v2 */
 
 /* state-scope-explorer: the agent's building. Scope colours are plain categories (legend):
    temp: amber, no prefix teal, user: green, app: violet; primary marks what the agent reads now. */
@@ -83,7 +106,7 @@ input[type="range"] { width: 200px; max-width: 100%; accent-color: var(--primary
 .put.s-session { border-color: var(--teal); }
 .put.s-user { border-color: var(--green); }
 .put.s-app { border-color: var(--violet); }
-.stage svg { min-width: 600px; }
+
 
 /* The building */
 .shell { fill: var(--inset); stroke: var(--border); stroke-width: 2; }
@@ -138,3 +161,18 @@ input[type="range"] { width: 200px; max-width: 100%; accent-color: var(--primary
 .readout { margin: 8px 0 0; font-size: 12.5px; color: var(--muted); }
 .log { margin: 0; padding-left: 20px; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
 .log:empty { display: none; }
+
+/* Fit the screen: the building, caption and session.state on the left; the controls beside them. */
+.view, .side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.side .controls { margin-top: 0; }
+.side { margin-top: 12px; }
+.merged h2 { margin-bottom: 4px; }
+@media (min-width: 900px) {
+  .side { margin-top: 0; gap: 8px; }
+  .side .controls { flex-direction: column; align-items: stretch; gap: 8px; }
+  .stage { grid-template-columns: minmax(0, 1fr) minmax(260px, 42%); }
+  .stage svg { max-height: 320px; }
+  .merged { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; align-items: center; }
+  .merged h2 { margin: 0; }
+  .merged .readout { grid-column: 1 / -1; margin: 0; }
+}

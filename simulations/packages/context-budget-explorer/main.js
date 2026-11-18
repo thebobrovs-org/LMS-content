@@ -211,40 +211,44 @@ function seg(group, label, options) {
 
 function build() {
   app.innerHTML = `
-    <div class="panel predict">
-      <p class="q"><strong>Predict first.</strong> Compacting the history saves 14,000 tokens, the biggest single cut. If you compact it and change nothing else, which evalset case breaks?</p>
+    <details class="panel predict" open>
+      <summary class="q"><strong>Predict first.</strong> Compacting the history saves 14,000 tokens, the biggest single cut. If you compact it and change nothing else, which evalset case breaks?</summary>
       <div class="chips" role="group" aria-label="Your prediction">
         ${Object.entries(PREDICT).map(([k, v]) => `<button type="button" class="chip${k === "none" ? "" : " mono"}" data-predict="${k}" aria-pressed="false">${esc(v)}</button>`).join("")}
       </div>
       <p class="verdict" id="verdict"></p>
-    </div>
+    </details>
     <div class="panel stage">
-      <div class="scroll" tabindex="0" role="region" aria-label="The backpack and the retrieved chunks"><svg id="svg" viewBox="0 0 760 430" role="img"></svg></div>
-      <p class="caption" id="caption" role="status"></p>
-      <div class="controls">
-        ${seg("tools", "Tools", Object.entries(TOOLS).map(([k, v]) => [k, v.label]))}
-        <div class="seg" role="group" aria-label="History"><span class="seglabel">History</span>
-          <button type="button" class="pill" id="compact" aria-pressed="false">Compact it</button>
-          <button type="button" class="pill" id="pin" aria-pressed="false">Pin order id in state</button>
+      <div class="view">
+        <div class="scroll" tabindex="0" role="region" aria-label="The backpack and the retrieved chunks"><svg id="svg" viewBox="0 0 760 430" role="img"></svg></div>
+        <p class="caption" id="caption" role="status"></p>
+        <section class="receipt" aria-labelledby="rc-h">
+          <h2 id="rc-h">Receipt for one late turn</h2>
+          <div class="rc"><span>Reads</span><span class="mono" id="r-total"></span></div>
+          <div class="rc"><span>billed like</span><span class="mono" id="r-billed"></span></div>
+          <div class="buttons"><button type="button" class="pill" id="cache" aria-pressed="false">Cache the prefix</button><button type="button" class="pill" id="reset">Reset</button></div>
+        </section>
+      </div>
+      <div class="side">
+        <div class="controls">
+          ${seg("tools", "Tools", Object.entries(TOOLS).map(([k, v]) => [k, v.label]))}
+          <div class="seg" role="group" aria-label="History"><span class="seglabel">History</span>
+            <button type="button" class="pill" id="compact" aria-pressed="false">Compact it</button>
+            <button type="button" class="pill" id="pin" aria-pressed="false">Pin order id in state</button>
+          </div>
+          ${seg("memory", "Memory", Object.entries(MEMORY).map(([k, v]) => [k, v.label]))}
+          <div class="seg" role="group" aria-label="Retrieved chunks"><span class="seglabel">Chunks</span>
+            <button type="button" class="pill" data-topk="10" aria-pressed="false">Top 10</button>
+            <button type="button" class="pill" data-topk="5" aria-pressed="false">Top 5</button>
+            <button type="button" class="pill" id="rerank" aria-pressed="false">Rerank first</button>
+          </div>
         </div>
-        ${seg("memory", "Memory", Object.entries(MEMORY).map(([k, v]) => [k, v.label]))}
-        <div class="seg" role="group" aria-label="Retrieved chunks"><span class="seglabel">Chunks</span>
-          <button type="button" class="pill" data-topk="10" aria-pressed="false">Top 10</button>
-          <button type="button" class="pill" data-topk="5" aria-pressed="false">Top 5</button>
-          <button type="button" class="pill" id="rerank" aria-pressed="false">Rerank first</button>
-        </div>
+        <section class="evals" aria-labelledby="evals-h">
+          <h2 id="evals-h">The evalset: is each case's evidence still in the bag?</h2>
+          <ul id="cases"></ul>
+        </section>
       </div>
     </div>
-    <section class="panel evals" aria-labelledby="evals-h">
-      <h2 id="evals-h">The evalset: is each case's evidence still in the bag?</h2>
-      <ul id="cases"></ul>
-    </section>
-    <section class="panel receipt" aria-labelledby="rc-h">
-      <h2 id="rc-h">Receipt for one late turn</h2>
-      <div class="rc"><span>Tokens the model reads</span><span class="mono" id="r-total"></span></div>
-      <div class="rc"><span>Billed like</span><span class="mono" id="r-billed"></span></div>
-      <div class="controls"><button type="button" class="pill" id="cache" aria-pressed="false">Context caching on the stable prefix</button><button type="button" id="reset">Reset</button></div>
-    </section>
     <p class="legend">Token counts are the lesson's illustrative figures; chunk ranks are invented for the exercise. Hatching marks the cached prefix: still in the context window, billed at a tenth of the input rate.</p>`;
   els = {};
   for (const id of ["svg", "verdict", "caption", "cases", "compact", "pin", "rerank", "cache", "reset", "r-total", "r-billed"]) els[id] = app.querySelector(`#${id}`);
@@ -306,8 +310,8 @@ function render() {
   const cases = evalCases();
   const passed = cases.filter((c) => c.pass).length;
   els.cases.innerHTML = cases.map((c) => `<li class="case ${c.pass ? "pass" : "fail"}"><span class="mono id">${c.id}</span><span class="verdict-tag">${c.pass ? "✓ Pass" : "✗ Fail"}</span><span class="why">${esc(c.why)}</span></li>`).join("");
-  els["r-total"].textContent = `${fmt(total)} (was ${fmt(BEFORE)})`;
-  els["r-billed"].textContent = pick.cache ? `${fmt(billed)} uncached tokens` : `${fmt(total)} tokens, nothing cached`;
+  els["r-total"].textContent = `${fmt(total)} of ${fmt(BEFORE)} tokens`;
+  els["r-billed"].textContent = pick.cache ? `${fmt(billed)} uncached tokens` : `${fmt(total)}, nothing cached`;
   els.caption.textContent = captionText(total, cases);
   els.verdict.textContent = verdictText();
 
