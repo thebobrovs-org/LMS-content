@@ -219,6 +219,21 @@ asked about everything stop reading.
 
 <Callout type="note">Check your session service before relying on tool confirmation. ADK's documentation lists DatabaseSessionService and VertexAiSessionService as not supported by this feature.</Callout>
 
+### Try it: can a denial stop a refund that already ran?
+
+Predict first: the support agent proposes a €400 refund and a person denies
+it. The same refund rides two tracks: on the top one the approval sits before
+`issue_refund`, on the bottom one the review runs after it. Which vault keeps
+the money?
+
+Send the refund and deny it. Then raise the threshold above €40 and send the
+€40 refund to see which requests reach a person at all.
+
+<Simulation id="approval-gate-explorer" />
+
+Explain it: why did the denial on the bottom track fail to prevent the refund, and what
+would you need to undo it?
+
 <Callout type="tip">Lab: Google's codelab [Build a Secure Agent with Model Armor and Identity](https://codelabs.developers.google.com/secure-customer-service-agent/instructions) builds an ADK customer-service agent with a Model Armor template (prompt injection, Sensitive Data Protection, responsible AI and malicious URL filters) and a narrow Agent Identity, then red-teams it. It does not cover floor settings or tool confirmation, which this lesson adds.</Callout>
 
 ## Act with the user's permissions

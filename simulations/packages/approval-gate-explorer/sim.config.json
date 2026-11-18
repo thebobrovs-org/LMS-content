@@ -1,0 +1,14 @@
+{
+  "id": "approval-gate-explorer",
+  "title": "Approval gate explorer",
+  "version": "2.0.0",
+  "props": {
+    "request": { "type": "string", "default": "large" }
+  },
+  "checkpoints": [
+    {
+      "id": "observe-approval-before-side-effect",
+      "hint": "Send the €400 refund and deny it: the top track keeps the money, the bottom track has already paid."
+    }
+  ]
+}
