@@ -145,7 +145,9 @@ look doesn't. The look lives in one file, [`simulations/kit/sim-kit.css`](../../
 - **Colour means the same thing everywhere.** `--primary` is "now" or the learner's own
   action; `--violet` is the model; `--teal` is the runtime or a tool; `--green` is pass, kept,
   allowed; `--red` is fail, lost, denied; `--amber` is a limit or a line not to cross.
-  `--orange`, `--rose` and `--gold` are for extra categories, used in that order. Don't invent
+  `--orange`, `--rose` and `--gold` are for extra categories, used in that order. When a sim's
+  categories carry none of these meanings (four storage scopes, say), the hues serve as plain
+  category colours, named in the legend; `--primary` still means "now". Don't invent
   a hue; if a sim truly needs one, add it to the kit with light and dark values that pass the
   `palette-contrast` test.
 - **Type.** System sans at 14 px; `h2` 13 px muted; captions 14 px; legend 12 px muted; in SVG
@@ -161,12 +163,12 @@ look doesn't. The look lives in one file, [`simulations/kit/sim-kit.css`](../../
 - **The frame.** A `.panel.predict` card first (question + chips + `.verdict`), then a
   `.panel.stage` with the drawing (`.scroll` around a wide SVG), the `.caption`
   (`role="status"`) and the `.controls`, then any result panels, then one `.legend` line.
-- **Motion.** Transitions only, about `var(--dur)` (0.6 s), started by the learner. No loops,
-  no idle animation, nothing that only moves to look busy. The kit switches transitions off
+- **Motion.** Short one-shot transitions or animations, about `var(--dur)` (0.6 s), started by
+  the learner. No loops, no idle animation, nothing that only moves to look busy. The kit switches transitions off
   under `prefers-reduced-motion` and under a `.reduced` class you set from `init.reducedMotion`;
   every end state must be readable without the motion.
 
-[`reference/style-side-by-side.png`](reference/style-side-by-side.png) shows four sims on the
+[`reference/style-side-by-side.jpg`](reference/style-side-by-side.jpg) shows four sims on the
 kit, light and dark: four different drawings, one look.
 
 ## The lesson around the sim
