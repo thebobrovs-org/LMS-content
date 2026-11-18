@@ -23,7 +23,7 @@ Update your row in your own PR. Statuses: `open` → `concept` → `building` �
 | B02 | The agent's building (redesign of `state-scope-explorer`) | sessions-state-memory | review | claude | #198 |
 | B03 | Pack the backpack, keep the gems (redesign of `context-budget-explorer`) | context-engineering | building | claude | |
 | B04 | Rails or a driver (redesign of `workflow-vs-agent-stepper`) | what-is-an-agent | building | claude | |
-| B05 | Media by reference | context-engineering | open | | |
+| B05 | Media by reference | context-engineering | preview | codex | #195 |
 | B06 | Grounded but wrong: retrieval precision and recall (upgrade of `rag-retrieval-tuner`) | rag-pipelines | open | | |
 | B07 | Least privilege and the access boundary | agent-identity-and-access | open | | |
 | B08 | Whose authority: the 3-legged OAuth pause | agent-auth-oauth | open | | |
