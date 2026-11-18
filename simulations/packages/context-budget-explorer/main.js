@@ -11,6 +11,12 @@
 // reads. Token counts are the lesson's illustrative numbers; the cached-input rate is a
 // tenth of the standard rate (Gemini 3.5 Flash list price, retrieved 2026-11-17);
 // explicit-cache storage is not counted. Deterministic.
+//
+// Guided mode (props.mode "guided", the embed near the top of the lesson, in place of the figure
+// media/context-budget.svg): the same backpack, stepped through the figure's rows in order (before, filter
+// tools, compact history, recall memory on demand, then caching). No gems, goal line or evalset: the
+// challenge stays in the default mode at the end of the lesson. A small predict card asks what caching does
+// to the token count; guided mode fires only its own checkpoint, observe-cuts-then-cache.
 
 const app = document.getElementById("app");
 
@@ -52,6 +58,25 @@ let sawCompactLoss = false; // the learner compacted without pinning at least on
 let reported = false;
 let reduced = false;
 let els = {};
+let guided = false;
+let gstep = 0;
+let gpick = null;
+let gfired = false;
+
+// Guided mode: the figure's rows, each keeping the cuts before it.
+const GSTEPS = [
+  { label: "Before", row: "Before any cut", pick: {}, text: "One late turn of the support agent: 47,000 tokens before the user's message, and history is the largest part. Press Step to make the first cut." },
+  { label: "Filter tools", row: "Filter tools", delta: "tool declarations 10k → 2k", pick: { tools: "filtered" }, text: "A tool_filter exposes the 8 tools the agent needs instead of 40. Tool declarations drop from 10,000 to about 2,000 tokens." },
+  { label: "Compact history", row: "Compact history", delta: "history 18k → 4k", pick: { compact: true }, text: "History compaction summarises older events and keeps the most recent ones as they were. History drops from 18,000 to 4,000 tokens." },
+  { label: "Memory on demand", row: "Recall memory on demand", delta: "memory 6k → 1.5k*", pick: { memory: "load" }, text: "load_memory recalls memory only on the turns that ask, instead of preload_memory on every call. Memory drops from 6,000 to about 1,500 tokens, assuming compaction soon summarises each recalled result." },
+  { label: "Cache the prefix", row: "Then cache the prefix", delta: "5k prefix cached", pick: { cache: true }, text: "Context caching reuses the stable prefix: instructions and tool declarations, 5,000 tokens. It costs less and is processed faster, but it still counts in the context window." },
+];
+const GPREDICT = {
+  question: "After the three cuts, you cache the 5,000-token prefix. How many tokens does the model read?",
+  options: [["same", "Still 20,500"], ["less", "15,500, without the prefix"]],
+  answer: "same",
+  why: "Caching makes the prefix cheaper and faster, not smaller: the cached tokens still count in the context window.",
+};
 
 function applyTheme(theme) {
   if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
@@ -138,6 +163,7 @@ function gemPos(name, where, lay) {
 }
 
 function buildScene() {
+  if (guided) return buildGuidedScene();
   els.svg.innerHTML = `
     <defs>
       <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" class="hatchline"/></pattern>
@@ -165,6 +191,12 @@ const CH = { x: 380, y: 44, w: 150, row: 26 };
 function drawScene() {
   const t = tokens();
   const lay = blockLayout(t);
+  drawBlocks(t, lay);
+  if (guided) drawGuidedScene(t);
+  else drawRest(t, lay);
+}
+
+function drawBlocks(t, lay) {
   for (const c of COMPONENTS) {
     const g = els.blocks[c.id];
     const { y, h } = lay[c.id];
@@ -175,10 +207,13 @@ function drawScene() {
     const big = h >= 34;
     bl.setAttribute("y", (y + (big ? 17 : h / 2 + 3.5)).toFixed(1));
     bl.setAttribute("class", big ? "bl" : "bl small");
-    bl.textContent = big ? c.label : `${c.label} ${fmt(t[c.id] / 1000)}k`;
+    bl.textContent = big ? c.label : `${c.label} ${t[c.id] / 1000}k`;
     bt.setAttribute("y", (y + 31).toFixed(1));
     bt.textContent = big ? `${fmt(t[c.id])} tokens${cached ? " · cached" : ""}` : "";
   }
+}
+
+function drawRest(t, lay) {
   const order = chunkOrder();
   els.chunks.innerHTML = order.map((ci, i) => {
     const y = CH.y + i * CH.row;
@@ -210,6 +245,7 @@ function seg(group, label, options) {
 }
 
 function build() {
+  if (guided) return buildGuided();
   app.innerHTML = `
     <details class="panel predict" open>
       <summary class="q"><strong>Predict first.</strong> Compacting the history saves 14,000 tokens, the biggest single cut. If you compact it and change nothing else, which evalset case breaks?</summary>
@@ -292,6 +328,7 @@ function verdictText() {
 }
 
 function render() {
+  if (guided) return renderGuided();
   const pressed = (sel, on) => app.querySelectorAll(sel).forEach((b) => b.setAttribute("aria-pressed", String(on(b))));
   pressed("[data-predict]", (b) => b.dataset.predict === prediction);
   pressed("[data-tools]", (b) => b.dataset.tools === pick.tools);
@@ -323,8 +360,127 @@ function render() {
   reportSize();
 }
 
+// ---- Guided mode: the figure's cuts, one step at a time --------------------------------------------
+
+const LEDGER = { x: 372, y: 46, w: 368, row: 64 };
+
+function guidedPick(n) {
+  const p = { ...START };
+  for (let i = 0; i <= n; i++) Object.assign(p, GSTEPS[i].pick);
+  return p;
+}
+
+function guidedTotal(n) {
+  const saved = pick;
+  pick = guidedPick(n);
+  const total = Object.values(tokens()).reduce((a, b) => a + b, 0);
+  pick = saved;
+  return total;
+}
+
+function buildGuidedScene() {
+  els.svg.innerHTML = `
+    <defs>
+      <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" class="hatchline"/></pattern>
+    </defs>
+    <text class="h" x="${BAG.x + BAG.w / 2}" y="26">One late turn's context</text>
+    <path class="strap" d="M${BAG.x + 50} ${BAG.y} Q${BAG.x + BAG.w / 2} ${BAG.y - 46} ${BAG.x + BAG.w - 50} ${BAG.y}"/>
+    <rect class="bag" x="${BAG.x - 8}" y="${BAG.y - 8}" width="${BAG.w + 16}" height="${BAG.h + 16}" rx="22"/>
+    <g id="blocks">${COMPONENTS.map((c) => `<g class="blk ${c.cls}" id="b-${c.id}"><rect x="${BAG.x}" width="${BAG.w}" rx="4"/><rect class="hatch" x="${BAG.x}" width="${BAG.w}" rx="4" fill="url(#hatch)"/><text class="bl" x="${BAG.x + 10}"></text><text class="bt" x="${BAG.x + 10}"></text></g>`).join("")}</g>
+    <text class="h" x="${LEDGER.x + LEDGER.w / 2}" y="26">Tokens per turn, after each cut</text>
+    <g id="ledger">${GSTEPS.map((s, i) => {
+      const y = LEDGER.y + i * LEDGER.row;
+      return `<g class="gl-row" id="gl-${i}">
+        <rect x="${LEDGER.x}" y="${y}" width="${LEDGER.w}" height="${LEDGER.row - 10}" rx="8"/>
+        <text class="gl-l" x="${LEDGER.x + 12}" y="${y + 22}">${i ? `${i}. ` : ""}${esc(s.row)}</text>
+        <text class="gl-d" x="${LEDGER.x + 12}" y="${y + 41}">${esc(s.delta || "instructions, tools, history, memory, chunks")}</text>
+        <text class="gl-t" x="${LEDGER.x + LEDGER.w - 12}" y="${y + 33}">${fmt(guidedTotal(i))}</text>
+      </g>`;
+    }).join("")}</g>
+    <text class="gl-note" x="${LEDGER.x}" y="${LEDGER.y + GSTEPS.length * LEDGER.row + 8}">* Assumes compaction soon summarises each recalled result in history.</text>`;
+  els.blocks = {};
+  for (const c of COMPONENTS) els.blocks[c.id] = els.svg.querySelector(`#b-${c.id}`);
+  els.rows = GSTEPS.map((_, i) => els.svg.querySelector(`#gl-${i}`));
+}
+
+function drawGuidedScene(t) {
+  els.rows.forEach((r, i) => r.setAttribute("class", `gl-row ${i < gstep ? "done" : i === gstep ? "now" : "todo"}`));
+  const total = Object.values(t).reduce((a, b) => a + b, 0);
+  els.svg.setAttribute("aria-label", `Stacked token blocks for one late turn of the support agent, after each cut. Step ${gstep + 1} of ${GSTEPS.length}, ${GSTEPS[gstep].row}: ${fmt(total)} of the original ${fmt(BEFORE)} tokens${pick.cache ? ", with the 5,000-token prefix of instructions and tool declarations cached; it still counts in the context window" : ""}.`);
+}
+
+function buildGuided() {
+  app.innerHTML = `
+    <details class="panel predict" open>
+      <summary class="q">${esc(GPREDICT.question)}</summary>
+      <div class="chips" role="group" aria-label="Your prediction">
+        ${GPREDICT.options.map(([k, l]) => `<button type="button" class="chip" data-gpredict="${k}" aria-pressed="false">${esc(l)}</button>`).join("")}
+      </div>
+      <p class="verdict" id="verdict"></p>
+    </details>
+    <div class="panel stage">
+      <div class="view">
+        <div class="scroll" tabindex="0" role="region" aria-label="The backpack and the cuts"><svg id="svg" viewBox="0 0 760 430" role="img"></svg></div>
+      </div>
+      <div class="side">
+        <p class="caption" id="caption" role="status"><span class="cap-h" id="cap-h"></span><span id="cap-t"></span></p>
+        <nav class="gsteps" aria-label="Cuts">${GSTEPS.map((s, i) => `<button type="button" class="pill" data-gstep="${i}">${esc(s.label)}</button>`).join("")}</nav>
+        <div class="buttons"><button type="button" id="back">Back</button><button type="button" class="primary" id="step">Step</button><button type="button" id="reset">Reset</button></div>
+        <section class="receipt" aria-labelledby="rc-h">
+          <h2 id="rc-h">Receipt for one late turn</h2>
+          <div class="rc"><span>Reads</span><span class="mono" id="r-total"></span></div>
+          <div class="rc"><span>billed like</span><span class="mono" id="r-billed"></span></div>
+        </section>
+      </div>
+    </div>
+    <p class="legend">Illustrative token counts from the lesson. Each step keeps the cuts before it. Retrieved chunks are a separate cut: rerank and pass a smaller top-k. Hatching marks the cached prefix.</p>`;
+  els = {};
+  for (const id of ["svg", "verdict", "caption", "cap-h", "cap-t", "back", "step", "reset", "r-total", "r-billed"]) els[id] = app.querySelector(`#${id}`);
+  buildScene();
+  app.querySelectorAll("[data-gpredict]").forEach((b) => b.addEventListener("click", () => { gpick = b.dataset.gpredict; sim.event("predicted", { prediction: gpick }); render(); }));
+  app.querySelectorAll("[data-gstep]").forEach((b) => b.addEventListener("click", () => goGuided(Number(b.dataset.gstep))));
+  els.back.addEventListener("click", () => goGuided(gstep - 1));
+  els.step.addEventListener("click", () => goGuided(gstep + 1));
+  els.reset.addEventListener("click", () => { gpick = null; goGuided(0); });
+}
+
+function goGuided(n) {
+  gstep = Math.max(0, Math.min(GSTEPS.length - 1, n));
+  sim.event("guided-step", { step: gstep });
+  render();
+}
+
+function renderGuided() {
+  pick = guidedPick(gstep);
+  drawScene();
+  app.querySelectorAll("[data-gpredict]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.gpredict === gpick)));
+  app.querySelectorAll("[data-gstep]").forEach((b) => {
+    if (Number(b.dataset.gstep) === gstep) b.setAttribute("aria-current", "step");
+    else b.removeAttribute("aria-current");
+  });
+  const t = tokens();
+  const total = Object.values(t).reduce((a, b) => a + b, 0);
+  const prefix = t.instructions + t.tools;
+  const billed = pick.cache ? total - prefix + prefix * CACHED_RATE : total;
+  els["r-total"].textContent = `${fmt(total)} of ${fmt(BEFORE)} tokens`;
+  els["r-billed"].textContent = pick.cache ? `${fmt(billed)} uncached tokens` : `${fmt(total)}, nothing cached`;
+  els["cap-h"].textContent = `Step ${gstep + 1} of ${GSTEPS.length} · ${GSTEPS[gstep].label}`;
+  els["cap-t"].textContent = GSTEPS[gstep].text;
+  const last = gstep === GSTEPS.length - 1;
+  const chosen = GPREDICT.options.find(([k]) => k === gpick);
+  els.verdict.textContent = !last ? "" : !chosen
+    ? "Make your prediction above to check it."
+    : `You picked: ${chosen[1]}. ${gpick === GPREDICT.answer ? "Right." : "Not so."} ${GPREDICT.why}`;
+  if (last && chosen && !gfired) {
+    gfired = true;
+    sim.checkpoint("observe-cuts-then-cache");
+  }
+  reportSize();
+}
+
 const sim = createSim({
-  onInit({ theme, reducedMotion }) {
+  onInit({ props, theme, reducedMotion }) {
+    guided = !!props && props.mode === "guided";
     applyTheme(theme);
     reduced = !!reducedMotion;
     if (reduced) document.documentElement.classList.add("reduced");

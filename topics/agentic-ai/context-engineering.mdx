@@ -204,11 +204,12 @@ part.
 
 ## Cut each part with the right technique
 
-<Figure
-  src="/media/context-budget.svg"
-  alt="Panel A: illustrative tokens per turn for a support agent, as stacked bars by component. Before any cut: instructions 3k, tool declarations 10k, history 18k, memory 6k, retrieved chunks 10k, total 47,000. Filtering tools to the ones the step needs cuts tool declarations to 2k, total 39,000. Compacting history cuts it to 4k, total 25,000. Recalling memory on demand cuts memory to about 1.5k, assuming compaction soon summarises each recall, total 20,500. Panel B: with context caching the turn is still 20,500 tokens; the stable 5k prefix of instructions and tool declarations is cached, so it costs less and is processed faster, but it still counts in the context window."
-  caption="Each cut shrinks one component, and each subsection below explains one row. Caching shrinks nothing; it makes the repeated prefix cheaper."
-/>
+Predict first: after the cuts, you cache the prefix. How many tokens does the
+model still read? Then step through the same late turn in **Context budget
+explorer**: each cut shrinks one component, and each subsection below explains
+one step.
+
+<Simulation id="context-budget-explorer" props={{ mode: "guided" }} />
 
 ### Tool declarations: expose only what the step needs
 
