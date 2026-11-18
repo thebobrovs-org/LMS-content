@@ -1,0 +1,184 @@
+/* sim-kit v2: copied verbatim from simulations/kit/sim-kit.css. Edit it there, never here. */
+/* One look for every sim (skills/lms-authoring-simulations/SKILL.md, "One visual style").
+   Hues: primary = now / your action; violet = the model; teal = the runtime or a tool;
+   green = pass, kept, allowed; red = fail, lost, denied; amber = a limit or a line not to
+   cross; orange, rose, gold = extra categories a sim needs (use in that order). */
+:root {
+  --bg: #ffffff; --fg: #0f172a; --muted: #475569; --surface: #f1f5f9;
+  --panel: #ffffff; --border: #cbd5e1; --inset: #f8fafc;
+  --primary: #2563eb; --primary-contrast: #ffffff;
+  --violet: #6d28d9; --teal: #0f766e; --green: #15803d; --red: #b91c1c;
+  --amber: #b45309; --orange: #9a3412; --rose: #be123c; --gold: #854d0e;
+  --r-sm: 4px; --r-md: 8px; --r-lg: 14px; --dur: .6s;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+  --bg: #0f172a; --fg: #f8fafc; --muted: #a5b1c2; --surface: #1e293b;
+  --panel: #1e293b; --border: #475569; --inset: #0f172a;
+  --primary: #60a5fa; --primary-contrast: #0b1220;
+  --violet: #c4b5fd; --teal: #2dd4bf; --green: #4ade80; --red: #fca5a5;
+  --amber: #fbbf24; --orange: #fb923c; --rose: #fda4af; --gold: #fde047;
+  }
+}
+[data-theme="light"] {
+  --bg: #ffffff; --fg: #0f172a; --muted: #475569; --surface: #f1f5f9;
+  --panel: #ffffff; --border: #cbd5e1; --inset: #f8fafc;
+  --primary: #2563eb; --primary-contrast: #ffffff;
+  --violet: #6d28d9; --teal: #0f766e; --green: #15803d; --red: #b91c1c;
+  --amber: #b45309; --orange: #9a3412; --rose: #be123c; --gold: #854d0e;
+}
+[data-theme="dark"] {
+  --bg: #0f172a; --fg: #f8fafc; --muted: #a5b1c2; --surface: #1e293b;
+  --panel: #1e293b; --border: #475569; --inset: #0f172a;
+  --primary: #60a5fa; --primary-contrast: #0b1220;
+  --violet: #c4b5fd; --teal: #2dd4bf; --green: #4ade80; --red: #fca5a5;
+  --amber: #fbbf24; --orange: #fb923c; --rose: #fda4af; --gold: #fde047;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 14px; }
+#app { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+h2 { font-size: 13px; margin: 0 0 8px; color: var(--muted); font-weight: 600; }
+
+/* Controls: pills for choices (aria-pressed), one primary button for the main action */
+button { font: inherit; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--fg); cursor: pointer; }
+button.primary { background: var(--primary); border-color: var(--primary); color: var(--primary-contrast); font-weight: 600; }
+.chip, .pill { padding: 6px 12px; font-size: 13px; }
+.chip[aria-pressed="true"], .pill[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--primary-contrast); font-weight: 600; }
+input[type="range"] { width: 200px; max-width: 100%; accent-color: var(--primary); }
+.controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-top: 12px; }
+.chips, .seg, .buttons { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.seglabel { font-size: 12px; color: var(--muted); margin-right: 4px; }
+
+/* The frame: predict card, stage (drawing + caption + controls), result panels, legend */
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 14px; }
+.predict .q { margin: 0 0 10px; line-height: 1.45; }
+.verdict { margin: 8px 0 0; font-weight: 600; }
+.verdict:empty { display: none; }
+.scroll { overflow-x: auto; }
+.stage svg { width: 100%; height: auto; display: block; }
+.caption { margin: 8px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--surface); line-height: 1.5; min-height: 3em; }
+.legend { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+/* Drawing: flat 2-D shapes, hue stroke over a light tint of the same hue */
+.k-title { fill: var(--fg); font-size: 13px; font-weight: 700; }
+.k-label { fill: var(--fg); font-size: 12px; font-weight: 600; }
+.k-small { fill: var(--muted); font-size: 10.5px; }
+.k-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.k-box { fill: var(--panel); stroke: var(--border); stroke-width: 1.5; }
+.k-now { stroke: var(--primary); stroke-width: 3; }
+.k-off { fill: var(--surface); stroke: var(--border); stroke-dasharray: 4 4; }
+
+/* Fit the screen (SKILL.md "Fit the screen"): the whole sim fits in 600 px of height on a
+   1280x720 laptop. From 900 px wide the stage is two columns: the drawing on the left, at
+   most 380 px tall, and the caption and controls beside it, so changing a setting never
+   scrolls the drawing out of view. A sim with more than a caption under its drawing wraps
+   the left column in .view and the right in .side. The predict card is a <details open> the learner can fold,
+   and a secondary panel is a <details class="panel more">. */
+details.predict > summary, details.more > summary { cursor: pointer; list-style: none; }
+details.predict > summary::-webkit-details-marker, details.more > summary::-webkit-details-marker { display: none; }
+details.predict > summary::before, details.more > summary::before { content: "\25BE\00A0"; color: var(--muted); }
+details.predict:not([open]) > summary::before, details.more:not([open]) > summary::before { content: "\25B8\00A0"; }
+details.predict:not([open]) > summary { margin: 0; }
+details.more > summary { font-size: 13px; font-weight: 600; color: var(--muted); }
+details.more[open] > summary { margin-bottom: 8px; }
+@media (min-width: 900px) {
+  .stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 32%); grid-template-rows: repeat(11, min-content) 1fr; column-gap: 16px; align-items: start; }
+  .stage > .scroll, .stage > .scene, .stage > .view { grid-column: 1; grid-row: 1 / -1; }
+  .stage > :not(.scroll):not(.scene):not(.view) { grid-column: 2; margin-top: 0; margin-bottom: 10px; }
+  .stage .side { display: flex; flex-direction: column; gap: 10px; }
+  .stage svg { max-height: 380px; }
+  .stage .caption { margin: 0; }
+  .stage .controls { margin-top: 0; flex-direction: column; align-items: stretch; gap: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+.reduced *, .reduced *::before, .reduced *::after { transition: none !important; animation: none !important; }
+/* end sim-kit v2 */
+/* flow-kit v2: copied verbatim from simulations/kit/flow-kit.css, right after the sim kit. Edit it there, never here. */
+/* The drawing of a flow sim (simulations/kit/flow-kit.js). Hue means what the sim kit says it means;
+   --primary is the step you are on, so zones and boxes take the other hues. */
+.fk-h-primary { color: var(--primary); } .fk-h-violet { color: var(--violet); } .fk-h-teal { color: var(--teal); }
+.fk-h-green { color: var(--green); } .fk-h-red { color: var(--red); } .fk-h-amber { color: var(--amber); }
+.fk-h-orange { color: var(--orange); } .fk-h-rose { color: var(--rose); } .fk-h-gold { color: var(--gold); }
+.fk-h-neutral { color: var(--muted); }
+.fk-zone rect { fill: currentColor; fill-opacity: .07; stroke: currentColor; stroke-width: 1.5; }
+.fk-zt { fill: var(--fg); paint-order: stroke; stroke: var(--panel); stroke-width: 4px; stroke-linejoin: round; }
+.fk-box { fill: var(--panel); stroke: currentColor; stroke-width: 1.5; }
+.fk-node text { text-anchor: middle; }
+.fk-node.fk-has-icon text { text-anchor: start; }
+.fk-well { fill: currentColor; fill-opacity: .12; }
+.fk-icon { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.fk-node.fk-been .fk-box { stroke-width: 2; }
+.fk-node.fk-here .fk-box { stroke: var(--primary); stroke-width: 3; }
+.fk-edge { color: var(--muted); }
+.fk-line { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+.fk-head { fill: currentColor; }
+.fk-edge.fk-seen { color: var(--primary); }
+.fk-edge.fk-now { color: var(--primary); }
+.fk-edge.fk-now .fk-line { stroke-width: 3; }
+.fk-lbl rect { fill: var(--panel); stroke: currentColor; stroke-width: 1; }
+.fk-lbl text { text-anchor: middle; fill: var(--fg); }
+.fk-num { fill: var(--panel); stroke: currentColor; stroke-width: 1.5; }
+.fk-lbl .fk-num-t { fill: currentColor; font-size: 10px; font-weight: 700; text-anchor: middle; }
+.fk-edge.fk-now .fk-num { fill: var(--primary); }
+.fk-edge.fk-now .fk-lbl .fk-num-t { fill: var(--primary-contrast); }
+.fk-check circle { fill: var(--green); stroke: var(--panel); stroke-width: 2; }
+.fk-check path { fill: none; stroke: var(--panel); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.fk-cap-h:empty { display: none; }
+.fk-cap-h { display: block; font-size: 13px; color: var(--muted); margin-bottom: 2px; }
+.fk-ctl button { padding: 6px 11px; }
+.fk-token { fill: var(--primary); stroke: var(--panel); stroke-width: 2; }
+.fk-steps { display: flex; flex-wrap: wrap; gap: 6px; }
+.fk-readout { margin: 0; font-size: 13px; font-weight: 600; }
+.stage .side { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.stage .side .caption, .stage .side .controls { margin: 0; }
+.view svg { max-width: 100%; margin: 0 auto; }
+@media (min-width: 900px) {
+  .stage { grid-template-columns: minmax(0, 1fr) 300px; } /* a wider drawing column, so boxes with icons fit at full size */
+  .stage .side { margin-top: 0; }
+  /* The kit sets .fk-stack when the drawing fits only at full width: drawing above, controls below. */
+  .stage.fk-stack { display: block; }
+  .stage.fk-stack .side { margin-top: 12px; }
+  .stage.fk-stack svg { max-height: none; }
+}
+/* Explore mode (v2): boxes and zone titles are buttons that open a card. */
+.fk-pick, .fk-zpick { cursor: pointer; }
+.fk-pick:focus, .fk-zpick:focus { outline: none; }
+.fk-pick:hover .fk-box { stroke-width: 2.5; }
+.fk-pick:focus-visible .fk-box { stroke: var(--primary); stroke-width: 3; stroke-dasharray: 5 3; }
+.fk-hit { fill: transparent; }
+.fk-zpick:hover .fk-hit { fill: var(--surface); }
+.fk-zpick:focus-visible .fk-hit { stroke: var(--primary); stroke-width: 2; stroke-dasharray: 4 3; }
+.fk-zpick.fk-here .fk-hit { fill: var(--surface); stroke: var(--primary); stroke-width: 2; }
+.fk-cards { display: grid; }
+.fk-cards > .fk-card { grid-area: 1 / 1; }
+.fk-sizer { visibility: hidden; }
+.fk-card { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--inset); line-height: 1.45; align-self: start; }
+.fk-card-h { margin: 0; font-size: 15px; }
+.fk-card-top { display: flex; align-items: center; gap: 10px; }
+.stage svg.fk-card-icon { flex: none; width: 34px; height: 34px; padding: 6px; border-radius: 8px; box-sizing: border-box; background: var(--panel); border: 1.5px solid currentColor; }
+.stage svg.fk-card-logo { padding: 1px; border: 1px solid var(--border); }
+.fk-card-was { margin: 0; font-size: 12px; color: var(--muted); font-style: italic; }
+.fk-card-t { margin: 4px 0 0; }
+.fk-card-f { margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 2px 16px; font-size: 13px; }
+.fk-card-f div { display: flex; gap: 6px; }
+.fk-card-f dt { color: var(--muted); }
+.fk-card-f dd { margin: 0; font-weight: 600; }
+.fk-card-intro .fk-card-h:empty { display: none; }
+.fk-sizer .fk-card-h:empty { display: none; }
+.fk-ask { display: flex; flex-direction: column; gap: 10px; }
+.fk-ask .caption { margin: 0; }
+@media (min-width: 900px) {
+  /* Stacked explore: the card and the question share the row under the drawing. */
+  .stage.fk-explore.fk-stack .side { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 12px; align-items: start; }
+}
+/* end flow-kit v2 */
+
+/* memory-timeline-flow: dashed means absent (the sim kit's .k-off). order_id is never in session 2, and
+   temp:api_raw is gone once the turn ends (step 3 on). */
+.fk-node[data-node="oid2"] .fk-box { stroke-dasharray: 5 4; }
+.stage:has(.fk-steps .pill[aria-current="step"]:is([data-step="3"], [data-step="4"], [data-step="5"], [data-step="6"])) .fk-node[data-node="temp"] .fk-box { stroke-dasharray: 5 4; }

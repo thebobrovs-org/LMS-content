@@ -1,0 +1,12 @@
+{
+  "id": "memory-timeline-flow",
+  "title": "One user, two sessions, one memory",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-order-id-stays",
+      "hint": "Predict whether order_id is still there in session 2, then step to session 2: user:language is carried over, while order_id stays stored with session 1."
+    }
+  ]
+}
