@@ -355,8 +355,8 @@ function build() {
           ${USERS.map((u) => `<button type="button" class="pill" data-user="${u}" aria-pressed="false">${u}</button>`).join("")}
         </div>
         <div class="seg"><span class="seglabel">Room</span><span class="seg" id="rooms" role="group" aria-label="Go back to a session"></span>
-          <button type="button" id="new-session" class="secondary">New session</button>
-          <button type="button" id="turn" class="secondary">Next turn</button>
+          <button type="button" id="new-session">New session</button>
+          <button type="button" id="turn">Next turn</button>
         </div>
       </div>
       <div class="controls">
@@ -365,7 +365,7 @@ function build() {
         </div>
         <div class="buttons">
           <button type="button" id="restart" class="primary">Restart process</button>
-          <button type="button" id="reset" class="secondary">Reset</button>
+          <button type="button" id="reset">Reset</button>
         </div>
       </div>
     </div>
@@ -375,7 +375,7 @@ function build() {
       <p class="readout" id="readout"></p>
     </section>
     <ol class="log" id="log" aria-label="What happened"></ol>
-    <p class="legend">A prefix decides where a note goes and who reads it; the building decides whether anything survives a restart. Memory Bank is a separate store: nothing here writes to it.</p>`;
+    <p class="legend">Note colours: amber <span class="mono">temp:</span>, teal no prefix, green <span class="mono">user:</span>, violet <span class="mono">app:</span>. A blue outline marks what the agent reads now. A prefix decides where a note goes and who reads it; the building decides whether anything survives a restart. Memory Bank is a separate store: nothing here writes to it.</p>`;
   els = {};
   for (const id of ["svg", "building", "caption", "rooms", "new-session", "turn", "restart", "reset", "merged", "readout", "log", "verdict"]) els[id] = app.querySelector(`#${id}`);
   app.querySelectorAll("[data-predict]").forEach((b) => b.addEventListener("click", () => {
