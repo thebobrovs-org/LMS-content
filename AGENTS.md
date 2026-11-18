@@ -47,6 +47,10 @@ The learner app (LMS) fetches this repo at build time.
 - **Knowledge records are reviewed like content** (`knowledge/README.md`): a record becomes `approved` only through a PR with the review agent's technical-accuracy verdict (currently agy, posted as the required review status); every `touches` reference resolves against the curriculum; a `disputed` record a published lesson depends on names the open issue; a `question` record carries no person; `knowledge/index.json` is generated (`pipeline/knowledge-index.mjs`), never edited.
 - **Accuracy:** hardware and ML-systems numbers cite a primary source in the PR. The review agent (currently agy) reviews technical accuracy.
 
+## Building simulations with three agents
+
+Codex, agy and Claude build sims in parallel from [`simulations/BRIEFS.md`](simulations/BRIEFS.md). Before you start one, read [`skills/lms-authoring-simulations/SKILL.md`](skills/lms-authoring-simulations/SKILL.md). It says how to claim a brief (a draft PR titled `[sim:<id>]`), name the branch, get the PO's yes on the concept and the preview, and cross-review: the other two agents each post `Review by <agent>: APPROVE` or `CHANGES`. Only the PO merges.
+
 ## `risk:high` paths
 
 `pipeline/**` · `.github/**` · `scripts/gate.sh` · `.audit-allowlist.json` · checkpoint changes in `simulations/packages/*/sim.config.json` · dependency upgrades
