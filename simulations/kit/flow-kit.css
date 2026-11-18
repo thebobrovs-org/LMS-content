@@ -1,0 +1,29 @@
+/* flow-kit v1: copied verbatim from simulations/kit/flow-kit.css, right after the sim kit. Edit it there, never here. */
+/* The drawing of a flow sim (simulations/kit/flow-kit.js). Hue means what the sim kit says it means;
+   --primary is the step you are on, so zones and boxes take the other hues. */
+.fk-h-primary { color: var(--primary); } .fk-h-violet { color: var(--violet); } .fk-h-teal { color: var(--teal); }
+.fk-h-green { color: var(--green); } .fk-h-red { color: var(--red); } .fk-h-amber { color: var(--amber); }
+.fk-h-orange { color: var(--orange); } .fk-h-rose { color: var(--rose); } .fk-h-gold { color: var(--gold); }
+.fk-h-neutral { color: var(--muted); }
+.fk-zone rect { fill: currentColor; fill-opacity: .07; stroke: currentColor; stroke-width: 1.5; }
+.fk-zt { fill: var(--fg); paint-order: stroke; stroke: var(--panel); stroke-width: 4px; stroke-linejoin: round; }
+.fk-box { fill: var(--panel); stroke: currentColor; stroke-width: 1.5; }
+.fk-node text { text-anchor: middle; }
+.fk-node.fk-been .fk-box { stroke-width: 2; }
+.fk-node.fk-here .fk-box { stroke: var(--primary); stroke-width: 3; }
+.fk-edge { color: var(--muted); }
+.fk-line { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+.fk-head { fill: currentColor; }
+.fk-edge.fk-seen { color: var(--primary); }
+.fk-edge.fk-now { color: var(--primary); }
+.fk-edge.fk-now .fk-line { stroke-width: 3; }
+.fk-lbl rect { fill: var(--panel); stroke: currentColor; stroke-width: 1; }
+.fk-lbl text { text-anchor: middle; fill: var(--fg); }
+.fk-token { fill: var(--primary); stroke: var(--panel); stroke-width: 2; }
+.fk-steps { display: flex; flex-wrap: wrap; gap: 6px; }
+.fk-readout { margin: 0; font-size: 13px; font-weight: 600; }
+.stage .side { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.stage .side .caption, .stage .side .controls { margin: 0; }
+.view svg { max-width: 100%; }
+@media (min-width: 900px) { .stage .side { margin-top: 0; } }
+/* end flow-kit v1 */

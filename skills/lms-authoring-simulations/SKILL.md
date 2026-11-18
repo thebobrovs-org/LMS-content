@@ -174,6 +174,38 @@ look doesn't. The look lives in one file, [`simulations/kit/sim-kit.css`](../../
 [`reference/style-side-by-side.jpg`](reference/style-side-by-side.jpg) shows four sims on the
 kit, light and dark: four different drawings, one look.
 
+## Flow diagrams: the flow kit
+
+When the idea is a system drawn as zones, boxes and arrows (an architecture, a request's path, who
+calls whom), don't hand-draw it: write it as data and let the flow kit draw it.
+[`simulations/kit/flow-kit.js`](../../simulations/kit/flow-kit.js) lays the boxes on a grid you give,
+draws each zone around its boxes, routes every arrow orthogonally around the boxes, and runs the predict
+card, the steps, the caption, the readout and the one checkpoint. [`hybrid-agent-flow`](../../simulations/packages/hybrid-agent-flow/main.js)
+is the worked example.
+
+- **Copy the kits verbatim.** `main.js` is `flow-kit.js`, then your `SPEC`, then `FlowKit.mount(SPEC)`.
+  `style.css` is `sim-kit.css`, then `flow-kit.css`, then any rules of your own. Add the sim to `ON_FLOW`
+  in `simulations/tests/flow-kit.test.mjs`, `ON_KIT` in `style-kit.test.mjs` and `FIT` in
+  `scripts/sim-fit.mjs`. As with the sim kit, change the kit in `simulations/kit/`, bump its version and
+  recopy it everywhere in the same PR.
+- **The spec.** `zones` (`id`, `title`, an optional `short` title for phones, a kit `hue`, and `in` to nest
+  one zone in another), `nodes` (`id`, `label`, `sub`, `zone`, `at: [column, row]`, an optional `hue`),
+  `edges` (`id`, `from`, `to`, an optional short `label`), `steps` (`label` for its pill, `edges` the token
+  runs in order, `at` the box it stops on, `text` for the caption, an optional `readout` line), an optional
+  `predict` (`question`, `options`, `answer`, `revealAt` step, `why`), the `checkpoint` (`id`, `step`), an
+  `intro` caption and a one-line `legend`. A zone is the rectangle of cells around its boxes: keep other
+  zones' boxes out of it. `cellWidth` sets the box width (150 px by default).
+- **Hue means what the kit says.** Blue is the step you're on, so zones and boxes take the other hues:
+  violet for the model, teal for code, the runtime or a tool, and orange, rose or gold as plain categories,
+  named in the legend.
+- **The gate checks the drawing.** On the laptop frame the drawing must fit its 692 × 380 px column
+  without being scaled down, so labels show at 12 px. Fewer rows, or a narrower `cellWidth`, if it
+  doesn't. Below 480 px the kit reflows the same boxes into one or two columns at full size, and the gate
+  lays it out at 302 and 228 px too. Everywhere, no arrow may cross a box and every label must fit its box.
+  The kit's own `check()` refuses unknown ids, shared cells and a predict answer that isn't an option.
+- **Draw the whole flow.** Every step the caption describes is an arrow the token runs. Don't write in
+  the caption what isn't drawn.
+
 ## Fit the screen
 
 Most learners use a laptop. On a 1280×720 screen the browser leaves about 600 px of height for

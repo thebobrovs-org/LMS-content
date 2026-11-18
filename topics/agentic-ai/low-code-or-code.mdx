@@ -160,7 +160,7 @@ the expected answers and tool calls.
 - **Sales quotes: hybrid.** Sales staff live in Gemini Enterprise, but pricing is a
   complex, tested calculation the finance engineers own. Keep the quote workflow in
   Workflow Builder, put pricing behind an MCP server, and call a registered ADK agent
-  from an existing-agent step for the drafting that needs many tools. The figure below shows this design.
+  from an existing-agent step for the drafting that needs many tools. The simulation in the next section steps through this design.
 
 ## Hybrid designs
 
@@ -184,11 +184,9 @@ the hard logic in code. Google documents several joins; the main ones:
   preview, not yet generally available. Users then find the agent beside the
   low-code ones.
 
-<Figure
-  src="/media/agentic-hybrid-architecture.svg"
-  alt="A hybrid architecture. Employees use Gemini Enterprise, the low-code tier. Inside it, a Workflow Builder workflow has three steps: an MCP step that calls an MCP server on Cloud Run, which exposes pricing as tools and wraps an internal pricing API; an existing-agent step that calls an ADK agent on Agent Runtime, which has its own tools and a large model; and a human approval step where a person signs off. Beside the workflow, the same ADK agent is registered in Gemini Enterprise, which the step needs, and users can open it directly. The MCP server and the ADK agent sit in a code-built tier: your project. A band underneath reads: decide early where identity, evaluation and Model Armor screening live for each part; those are what a later migration breaks."
-  caption="A low-code experience in front, code-built agents and tools behind. Each part needs its own identity, evaluation and screening."
-/>
+Step through the sales-quote design one path at a time. Decide first what happens on the last path.
+
+<Simulation id="hybrid-agent-flow" />
 
 <Flashcard id="hybrid-normal" objective="hybrid-design" front="In a hybrid agent, what usually stays low-code and what moves to code?" back="The experience people use (the workflow, the chat, the approvals) stays low-code; the hard logic (a tested calculation, a multi-agent investigation, a private integration) moves to code-built agents or tools that the low-code side calls." />
 
