@@ -1,29 +1,38 @@
-/* LMS design tokens (skills/lms-authoring-simulations/template), so the sim follows the host theme. */
+/* sim-kit v1: copied verbatim from simulations/kit/sim-kit.css. Edit it there, never here. */
+/* One look for every sim (skills/lms-authoring-simulations/SKILL.md, "One visual style").
+   Hues: primary = now / your action; violet = the model; teal = the runtime or a tool;
+   green = pass, kept, allowed; red = fail, lost, denied; amber = a limit or a line not to
+   cross; orange, rose, gold = extra categories a sim needs (use in that order). */
 :root {
   --bg: #ffffff; --fg: #0f172a; --muted: #475569; --surface: #f1f5f9;
   --panel: #ffffff; --border: #cbd5e1; --inset: #f8fafc;
   --primary: #2563eb; --primary-contrast: #ffffff;
-  --model: #6d28d9; --runtime: #0f766e; --stop: #b91c1c; --ok: #15803d; --rail: #9a3412;
+  --violet: #6d28d9; --teal: #0f766e; --green: #15803d; --red: #b91c1c;
+  --amber: #b45309; --orange: #9a3412; --rose: #be123c; --gold: #854d0e;
+  --r-sm: 4px; --r-md: 8px; --r-lg: 14px; --dur: .6s;
 }
 @media (prefers-color-scheme: dark) {
   :root {
   --bg: #0f172a; --fg: #f8fafc; --muted: #a5b1c2; --surface: #1e293b;
   --panel: #1e293b; --border: #475569; --inset: #0f172a;
   --primary: #60a5fa; --primary-contrast: #0b1220;
-  --model: #c4b5fd; --runtime: #2dd4bf; --stop: #fca5a5; --ok: #4ade80; --rail: #fb923c;
+  --violet: #c4b5fd; --teal: #2dd4bf; --green: #4ade80; --red: #fca5a5;
+  --amber: #fbbf24; --orange: #fb923c; --rose: #fda4af; --gold: #fde047;
   }
 }
 [data-theme="light"] {
   --bg: #ffffff; --fg: #0f172a; --muted: #475569; --surface: #f1f5f9;
   --panel: #ffffff; --border: #cbd5e1; --inset: #f8fafc;
   --primary: #2563eb; --primary-contrast: #ffffff;
-  --model: #6d28d9; --runtime: #0f766e; --stop: #b91c1c; --ok: #15803d; --rail: #9a3412;
+  --violet: #6d28d9; --teal: #0f766e; --green: #15803d; --red: #b91c1c;
+  --amber: #b45309; --orange: #9a3412; --rose: #be123c; --gold: #854d0e;
 }
 [data-theme="dark"] {
   --bg: #0f172a; --fg: #f8fafc; --muted: #a5b1c2; --surface: #1e293b;
   --panel: #1e293b; --border: #475569; --inset: #0f172a;
   --primary: #60a5fa; --primary-contrast: #0b1220;
-  --model: #c4b5fd; --runtime: #2dd4bf; --stop: #fca5a5; --ok: #4ade80; --rail: #fb923c;
+  --violet: #c4b5fd; --teal: #2dd4bf; --green: #4ade80; --red: #fca5a5;
+  --amber: #fbbf24; --orange: #fb923c; --rose: #fda4af; --gold: #fde047;
 }
 
 * { box-sizing: border-box; }
@@ -32,53 +41,76 @@ body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, syst
 #app { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+h2 { font-size: 13px; margin: 0 0 8px; color: var(--muted); font-weight: 600; }
+
+/* Controls: pills for choices (aria-pressed), one primary button for the main action */
 button { font: inherit; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--fg); cursor: pointer; }
 button.primary { background: var(--primary); border-color: var(--primary); color: var(--primary-contrast); font-weight: 600; }
-
-.panel { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
-.predict .q { margin: 0 0 10px; line-height: 1.45; }
-.predict .chips + .chips { margin-top: 8px; }
-.chips, .seg { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .chip, .pill { padding: 6px 12px; font-size: 13px; }
 .chip[aria-pressed="true"], .pill[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--primary-contrast); font-weight: 600; }
-.verdict { margin: 10px 0 0; font-weight: 600; }
-.verdict:empty { display: none; }
-.seglabel { font-size: 12px; color: var(--muted); margin-right: 4px; min-width: 120px; }
+input[type="range"] { width: 200px; max-width: 100%; accent-color: var(--primary); }
 .controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-top: 12px; }
-.buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+.chips, .seg, .buttons { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.seglabel { font-size: 12px; color: var(--muted); margin-right: 4px; }
 
+/* The frame: predict card, stage (drawing + caption + controls), result panels, legend */
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 14px; }
+.predict .q { margin: 0 0 10px; line-height: 1.45; }
+.verdict { margin: 8px 0 0; font-weight: 600; }
+.verdict:empty { display: none; }
 .scroll { overflow-x: auto; }
-.stage svg { width: 100%; min-width: 600px; height: auto; display: block; }
-.caption { margin: 8px 0 0; padding: 8px 12px; border-radius: 10px; background: var(--surface); line-height: 1.5; min-height: 4.5em; }
+.stage svg { width: 100%; height: auto; display: block; }
+.caption { margin: 8px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--surface); line-height: 1.5; min-height: 3em; }
+.legend { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+/* Drawing: flat 2-D shapes, hue stroke over a light tint of the same hue */
+.k-title { fill: var(--fg); font-size: 13px; font-weight: 700; }
+.k-label { fill: var(--fg); font-size: 12px; font-weight: 600; }
+.k-small { fill: var(--muted); font-size: 10.5px; }
+.k-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.k-box { fill: var(--panel); stroke: var(--border); stroke-width: 1.5; }
+.k-now { stroke: var(--primary); stroke-width: 3; }
+.k-off { fill: var(--surface); stroke: var(--border); stroke-dasharray: 4 4; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+.reduced *, .reduced *::before, .reduced *::after { transition: none !important; animation: none !important; }
+/* end sim-kit v1 */
+
+/* workflow-vs-agent-stepper: twin towns. The designer's rails are orange, the model's car
+   and its fuel violet, a desk the runtime visited teal, the vehicle's desk now primary. */
+.predict .chips + .chips { margin-top: 8px; }
+.verdict { margin-top: 10px; }
+.seglabel { min-width: 120px; }
+.stage svg { min-width: 600px; }
+.caption { padding: 8px 12px; min-height: 4.5em; }
 .caption p { margin: 2px 0; }
 .caption .sum { margin-top: 6px; font-weight: 600; }
 
 /* The two towns */
 .map { fill: var(--inset); stroke: var(--border); }
 .mt { fill: var(--fg); font-size: 13px; font-weight: 700; text-anchor: middle; }
-.rail { stroke: var(--rail); stroke-width: 5; stroke-linecap: round; }
+.rail { stroke: var(--orange); stroke-width: 5; stroke-linecap: round; }
 .ties { stroke: var(--panel); stroke-width: 2; stroke-dasharray: 2 8; }
 .street { stroke: var(--border); stroke-width: 9; stroke-linecap: round; }
-.switch rect { fill: var(--panel); stroke: var(--rail); stroke-width: 1.5; }
+.switch rect { fill: var(--panel); stroke: var(--orange); stroke-width: 1.5; }
 .switch text { fill: var(--fg); font-size: 10.5px; font-weight: 600; text-anchor: middle; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-.switch.taken rect { fill: var(--rail); }
+.switch.taken rect { fill: var(--orange); }
 .switch.taken text { fill: var(--primary-contrast); }
 .desk rect { fill: var(--panel); stroke: var(--border); stroke-width: 1.5; }
 .desk .dl { fill: var(--fg); font-size: 12px; font-weight: 700; text-anchor: middle; }
 .desk .ds { fill: var(--muted); font-size: 9.5px; text-anchor: middle; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-.desk.seen rect { stroke: var(--runtime); stroke-width: 2; }
+.desk.seen rect { stroke: var(--teal); stroke-width: 2; }
 .desk.here rect { stroke: var(--primary); stroke-width: 3; }
-.vehicle { transition: transform .8s ease-in-out; }
+.vehicle { transition: transform var(--dur) ease-in-out; }
 .vehicle text { font-size: 11px; font-weight: 700; text-anchor: middle; fill: var(--primary-contrast); }
-.tram rect { fill: var(--rail); }
-.car rect { fill: var(--model); }
-.bubble rect, .bubble path { fill: var(--panel); stroke: var(--model); stroke-width: 1.5; }
+.tram rect { fill: var(--orange); }
+.car rect { fill: var(--violet); }
+.bubble rect, .bubble path { fill: var(--panel); stroke: var(--violet); stroke-width: 1.5; }
 .bubble text { fill: var(--fg); font-size: 11px; font-style: italic; text-anchor: middle; }
 .bubble { transition: opacity .3s; }
 .fuel .fl { fill: var(--muted); font-size: 11px; font-weight: 600; }
 .fuel rect { fill: var(--surface); stroke: var(--border); }
-.fuel rect.on { fill: var(--model); stroke: var(--model); }
+.fuel rect.on { fill: var(--violet); stroke: var(--violet); }
 .fuel .fo { fill: var(--fg); font-size: 11px; font-weight: 700; }
 .reduced .vehicle, .reduced .bubble { transition: none; }
 @media (prefers-reduced-motion: reduce) { .vehicle, .bubble { transition: none; } }
-.legend { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
