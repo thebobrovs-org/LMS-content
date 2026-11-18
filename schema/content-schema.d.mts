@@ -250,4 +250,29 @@ export const SimConfigSchema: z.ZodObject<{
         renamedFrom: z.ZodOptional<z.ZodArray<z.ZodString>>;
     }, z.core.$strict>>>;
 }, z.core.$strict>;
+/** One sentence of a `<ReadAlong>`: its span in the MP3 in seconds, its text, and the paragraph it belongs to. */
+export const ReadAlongCueSchema: z.ZodObject<{
+    start: z.ZodNumber;
+    end: z.ZodNumber;
+    text: z.ZodString;
+    paragraph: z.ZodOptional<z.ZodNumber>;
+}, z.core.$strict>;
+/**
+ * `audio/<topic id>.json`: a lesson's narration, which a prop-less `<ReadAlong />` in that lesson
+ * renders. Written by scripts/generate-readalong.mjs (and its workflow), never by hand: `textHash`
+ * is the SHA-256 of the narration text the MP3 was made from, so content CI can tell when the
+ * lesson's prose has moved on, and the generator can skip a lesson whose text hasn't.
+ */
+export const ReadAlongAudioSchema: z.ZodObject<{
+    src: z.ZodString;
+    voice: z.ZodString;
+    model: z.ZodString;
+    textHash: z.ZodString;
+    cues: z.ZodArray<z.ZodObject<{
+        start: z.ZodNumber;
+        end: z.ZodNumber;
+        text: z.ZodString;
+        paragraph: z.ZodOptional<z.ZodNumber>;
+    }, z.core.$strict>>;
+}, z.core.$strict>;
 import { z } from "zod";
