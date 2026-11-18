@@ -1,0 +1,9 @@
+{
+  "id": "trace-waterfall-explorer",
+  "title": "Trace waterfall: fix the slow turn",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    { "id": "observe-trace-fixes", "hint": "Click the spans you blame, then fix each: a loop guard for the repeated search_flights calls and a cache for get_fare_rules. Watch the turn total drop from 13.6 s to under the 4 s target." }
+  ]
+}

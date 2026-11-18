@@ -45,6 +45,7 @@ const WIDTH_GUARDS = {
   "access-boundary-explorer": [".scroll"],
   "context-budget-explorer": [".scroll"],
   "media-reference-explorer": [".scroll"],
+  "model-requirement-picker": [".scroll"],
   "approval-gate-explorer": [".scroll"],
   "backprop-explorer": [".diagram"],
   "neuron-explorer": [".diagram"],
@@ -54,6 +55,7 @@ const WIDTH_GUARDS = {
   "systolic-array": [".grid-panel"],
   "tpu-ocs-explorer": [".canvas-wrap"],
   "tpu-vm-anatomy": [".stage-scroll"],
+  "trace-waterfall-explorer": [".scroll"],
   "workflow-vs-agent-stepper": [".scroll"],
 };
 

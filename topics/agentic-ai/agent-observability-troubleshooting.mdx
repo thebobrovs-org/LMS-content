@@ -146,11 +146,10 @@ logs for the detail.
 
 Here is the trace of that slow turn.
 
-<Figure
-  src="/media/agent-trace-waterfall.svg"
-  alt="Trace waterfall of one agent turn that takes 13.6 seconds against a 4 second target. The user asked to move a Tuesday flight to Friday. Under the invoke_agent root span: a model call of 0.9 seconds, then search_flights for 0.4 seconds, a model call of 0.8 seconds, and the same pattern three more times (the last model call 0.9 seconds), so search_flights runs four times with the same arguments. This is marked A, a reasoning loop with no progress. A dashed marker on the root span shows the 4 second target. Then get_fare_rules runs for 6.6 seconds, marked B, a slow tool taking 6.6 of the 13.6 seconds. A final model call of 1.2 seconds answers."
-  caption="Two problems in one turn: a loop of identical searches (A) and one slow downstream tool (B)."
-/>
+Predict which single fix gets closest to the 4 second target. Then click the
+spans you blame, pick a fix for each, and watch the turn total recompute.
+
+<Simulation id="trace-waterfall-explorer" />
 
 Read it in two passes.
 
