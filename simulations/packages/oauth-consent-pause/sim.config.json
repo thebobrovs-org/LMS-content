@@ -1,0 +1,14 @@
+{
+  "id": "oauth-consent-pause",
+  "title": "OAuth consent pause",
+  "version": "1.0.0",
+  "props": {
+    "flow": { "type": "string", "default": "3lo" }
+  },
+  "checkpoints": [
+    {
+      "id": "observe-consent-pause",
+      "hint": "Step through the 3-legged OAuth flow from adk_request_credential to consent, callback return, and token exchange."
+    }
+  ]
+}
