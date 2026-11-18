@@ -1,0 +1,114 @@
+/* sim-kit v1: copied verbatim from simulations/kit/sim-kit.css. Edit it there, never here. */
+/* One look for every sim (skills/lms-authoring-simulations/SKILL.md, "One visual style").
+   Hues: primary = now / your action; violet = the model; teal = the runtime or a tool;
+   green = pass, kept, allowed; red = fail, lost, denied; amber = a limit or a line not to
+   cross; orange, rose, gold = extra categories a sim needs (use in that order). */
+:root {
+  --bg: #ffffff; --fg: #0f172a; --muted: #475569; --surface: #f1f5f9;
+  --panel: #ffffff; --border: #cbd5e1; --inset: #f8fafc;
+  --primary: #2563eb; --primary-contrast: #ffffff;
+  --violet: #6d28d9; --teal: #0f766e; --green: #15803d; --red: #b91c1c;
+  --amber: #b45309; --orange: #9a3412; --rose: #be123c; --gold: #854d0e;
+  --r-sm: 4px; --r-md: 8px; --r-lg: 14px; --dur: .6s;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+  --bg: #0f172a; --fg: #f8fafc; --muted: #a5b1c2; --surface: #1e293b;
+  --panel: #1e293b; --border: #475569; --inset: #0f172a;
+  --primary: #60a5fa; --primary-contrast: #0b1220;
+  --violet: #c4b5fd; --teal: #2dd4bf; --green: #4ade80; --red: #fca5a5;
+  --amber: #fbbf24; --orange: #fb923c; --rose: #fda4af; --gold: #fde047;
+  }
+}
+[data-theme="light"] {
+  --bg: #ffffff; --fg: #0f172a; --muted: #475569; --surface: #f1f5f9;
+  --panel: #ffffff; --border: #cbd5e1; --inset: #f8fafc;
+  --primary: #2563eb; --primary-contrast: #ffffff;
+  --violet: #6d28d9; --teal: #0f766e; --green: #15803d; --red: #b91c1c;
+  --amber: #b45309; --orange: #9a3412; --rose: #be123c; --gold: #854d0e;
+}
+[data-theme="dark"] {
+  --bg: #0f172a; --fg: #f8fafc; --muted: #a5b1c2; --surface: #1e293b;
+  --panel: #1e293b; --border: #475569; --inset: #0f172a;
+  --primary: #60a5fa; --primary-contrast: #0b1220;
+  --violet: #c4b5fd; --teal: #2dd4bf; --green: #4ade80; --red: #fca5a5;
+  --amber: #fbbf24; --orange: #fb923c; --rose: #fda4af; --gold: #fde047;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 14px; }
+#app { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+h2 { font-size: 13px; margin: 0 0 8px; color: var(--muted); font-weight: 600; }
+
+/* Controls: pills for choices (aria-pressed), one primary button for the main action */
+button { font: inherit; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--fg); cursor: pointer; }
+button.primary { background: var(--primary); border-color: var(--primary); color: var(--primary-contrast); font-weight: 600; }
+.chip, .pill { padding: 6px 12px; font-size: 13px; }
+.chip[aria-pressed="true"], .pill[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--primary-contrast); font-weight: 600; }
+input[type="range"] { width: 200px; max-width: 100%; accent-color: var(--primary); }
+.controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-top: 12px; }
+.chips, .seg, .buttons { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.seglabel { font-size: 12px; color: var(--muted); margin-right: 4px; }
+
+/* The frame: predict card, stage (drawing + caption + controls), result panels, legend */
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 14px; }
+.predict .q { margin: 0 0 10px; line-height: 1.45; }
+.verdict { margin: 8px 0 0; font-weight: 600; }
+.verdict:empty { display: none; }
+.scroll { overflow-x: auto; }
+.stage svg { width: 100%; height: auto; display: block; }
+.caption { margin: 8px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--surface); line-height: 1.5; min-height: 3em; }
+.legend { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+/* Drawing: flat 2-D shapes, hue stroke over a light tint of the same hue */
+.k-title { fill: var(--fg); font-size: 13px; font-weight: 700; }
+.k-label { fill: var(--fg); font-size: 12px; font-weight: 600; }
+.k-small { fill: var(--muted); font-size: 10.5px; }
+.k-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.k-box { fill: var(--panel); stroke: var(--border); stroke-width: 1.5; }
+.k-now { stroke: var(--primary); stroke-width: 3; }
+.k-off { fill: var(--surface); stroke: var(--border); stroke-dasharray: 4 4; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+.reduced *, .reduced *::before, .reduced *::after { transition: none !important; animation: none !important; }
+/* end sim-kit v1 */
+
+/* B07: flat resource map. Policy outcomes are always written as well as coloured. */
+#app { max-width: 960px; margin: auto; }
+.note { margin: 9px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.verdict { font-size: 13px; line-height: 1.5; }
+.stage svg { min-width: 680px; }
+.setting { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
+.setting > .seglabel { min-width: 115px; }
+#reset { margin-left: auto; }
+.readout { font-size: 23px; font-weight: 700; margin: 0; }
+.next { font-size: 14px; line-height: 1.5; margin: 0; }
+svg text { font-family: inherit; }
+.boundary { fill: none; stroke-width: 2.5; }
+.boundary.on { stroke: var(--amber); stroke-dasharray: 7 4; }
+.boundary.off { stroke: var(--muted); stroke-dasharray: 5 5; }
+.boundary-label-bg { fill: var(--panel); }
+.boundary-label { fill: var(--amber); font-size: 13px; font-weight: 700; }
+.boundary.off + .boundary-label-bg + .boundary-label { fill: var(--muted); }
+.attempts { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+.agent-box { stroke: var(--violet); stroke-width: 1.5; fill: var(--panel); }
+.agent-icon { fill: none; stroke: var(--violet); stroke-width: 2.5; stroke-linecap: round; }
+.key { fill: none; stroke: var(--primary); stroke-width: 2; }
+.grant-label { fill: var(--fg); font-size: 12px; font-weight: 600; }
+.resource-box { fill: var(--panel); stroke: var(--muted); stroke-width: 1.5; }
+.resource-title { fill: var(--fg); font-size: 17px; font-weight: 700; }
+.allowed { color: var(--green); }
+.denied { color: var(--red); }
+.door-frame, .stop { fill: none; stroke: currentColor; stroke-width: 2; }
+.door-leaf { fill: currentColor; fill-opacity: .12; stroke: currentColor; stroke-width: 2; }
+.handle { fill: currentColor; }
+.status-dot { fill: none; stroke: currentColor; stroke-width: 1.5; }
+.status-mark { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.status-text { fill: currentColor; font-size: 12px; font-weight: 600; }
+
+.outside { color: var(--muted); }
+.outside .door-frame, .outside .door-leaf { stroke-dasharray: 4 4; }
+.request { margin: 0 0 10px; padding: 10px 12px; border-left: 3px solid var(--amber); background: var(--surface); line-height: 1.5; }

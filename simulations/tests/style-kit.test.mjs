@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const KIT = fs.readFileSync(path.join(ROOT, "kit/sim-kit.css"), "utf8");
 const START = KIT.slice(0, KIT.indexOf("\n"));
-const ON_KIT = ["approval-gate-explorer", "media-reference-explorer", "rag-retrieval-tuner"];
+const ON_KIT = ["approval-gate-explorer", "media-reference-explorer", "access-boundary-explorer", "rag-retrieval-tuner"];
 
 test("the kit opens with its marker line and closes with its end marker", () => {
   assert.match(START, /^\/\* sim-kit v\d+:/);
