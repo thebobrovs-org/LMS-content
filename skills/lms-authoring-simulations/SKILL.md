@@ -216,7 +216,7 @@ is the worked example.
   Escape closes the card, and the arrow keys move to the box that lines up next. v2 also adds
   `density: "compact"` (36 px boxes, tighter gaps), `span` (a box across several columns), two-line
   labels (`"\n"`, no `sub` then) and zones titled on their left (`titleSide: "left"`, with an optional
-  `sub`, for stacked layers; `zoneTitleWidth` sets the room). When the grid doesn't fit beside the card
+  `sub`, for stacked layers; `zoneTitleWidth` sets the room). A card may carry an `icon` from the kit set, shown beside its title in its zone's hue (never a product logo). When the grid doesn't fit beside the card
   it stacks full width above it, so on the laptop it must fit the 1042 px stage and 400 px of height.
   [`platform-map-explorer`](../../simulations/packages/platform-map-explorer/main.js) is the worked example.
 

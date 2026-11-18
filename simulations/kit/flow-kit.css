@@ -59,6 +59,8 @@
 .fk-sizer { visibility: hidden; }
 .fk-card { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--inset); line-height: 1.45; align-self: start; }
 .fk-card-h { margin: 0; font-size: 15px; }
+.fk-card-top { display: flex; align-items: center; gap: 10px; }
+.stage svg.fk-card-icon { flex: none; width: 34px; height: 34px; padding: 6px; border-radius: 8px; box-sizing: border-box; background: var(--panel); border: 1.5px solid currentColor; }
 .fk-card-was { margin: 0; font-size: 12px; color: var(--muted); font-style: italic; }
 .fk-card-t { margin: 4px 0 0; }
 .fk-card-f { margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 2px 16px; font-size: 13px; }

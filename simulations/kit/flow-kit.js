@@ -11,6 +11,7 @@
 // map. Clicking a box, or Tab then Enter, opens its card; arrow keys move between boxes, Escape closes the card.
 // One `ask` ("which box?") is the learner's prediction: they answer by clicking a box, and the one checkpoint
 // fires when they find the right one (the design standard's one checkpoint, no quest chain).
+// A card may carry an `icon` from the kit's set, drawn beside its title in its zone's hue.
 // v2 also adds `density: "compact"` (40 px boxes), `span` (a box across several columns), two-line labels ("\n")
 // and zones titled on their left (`titleSide: "left"`, for stacked layers).
 var FlowKit = (function () {
@@ -61,6 +62,12 @@ var FlowKit = (function () {
     globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18-3-3-3-15 0-18"/>',
     chat: '<path d="M4 5h16v11H9l-5 4z"/>',
     check: '<path d="M9 13l2 2 4-4"/><rect x="4" y="4" width="16" height="16" rx="4"/>',
+    terminal: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M12 15h5"/>',
+    code: '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/>',
+    search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/>',
+    plug: '<path d="M9 3v5M15 3v5M6 8h12v3a6 6 0 0 1-12 0zM12 17v4"/>',
+    chart: '<path d="M4 4v16h16"/><path d="M8 15l3-4 3 2 5-6"/>',
+    cube: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>',
   };
   /** The width a box leaves for its text: all of it, less the icon well when it has an icon. */
   function textRoom(node, w, icons) {
@@ -139,6 +146,7 @@ var FlowKit = (function () {
         if ((info.facts || []).length > INFO_FACTS) out.push(who + ": at most " + INFO_FACTS + " facts on a card");
         (info.facts || []).forEach(function (f) { if (!Array.isArray(f) || f.length !== 2) out.push(who + ": each fact is [label, value]"); });
         if (info.covered && !(info.covered.topic && info.covered.title)) out.push(who + ": covered needs a topic id and its title");
+        if (info.icon && !ICONS[info.icon]) out.push(who + ": no icon " + info.icon + " (the kit has " + Object.keys(ICONS).join(", ") + ")");
       };
       (spec.nodes || []).forEach(function (n) {
         if (!n.info) out.push("node " + n.id + " needs an info card in explore mode");
@@ -842,10 +850,13 @@ var FlowKit = (function () {
 
   // ---- Explore mode: a map whose boxes open info cards ------------------------------------------------
   /** The card for a box or a zone: its name, its former name, its text, a few facts, and the lesson that covers it. */
-  function cardHtml(name, info) {
+  function cardHtml(name, info, hue) {
     if (!info) return "";
-    return '<h3 class="fk-card-h">' + esc(name) + "</h3>" +
-      (info.formerly ? '<p class="fk-card-was">was ' + esc(info.formerly) + "</p>" : "") +
+    var icon = info.icon && ICONS[info.icon];
+    return '<div class="fk-card-top">' +
+      (icon ? '<svg class="fk-card-icon fk-h-' + esc(hue || "primary") + '" viewBox="0 0 24 24" aria-hidden="true"><g class="fk-icon">' + icon + "</g></svg>" : "") +
+      '<div><h3 class="fk-card-h">' + esc(name) + "</h3>" +
+      (info.formerly ? '<p class="fk-card-was">was ' + esc(info.formerly) + "</p>" : "") + "</div></div>" +
       '<p class="fk-card-t">' + esc(info.text) + "</p>" +
       ((info.facts || []).length || info.covered ? '<dl class="fk-card-f">' +
         (info.facts || []).map(function (f) { return "<div><dt>" + esc(f[0]) + "</dt><dd>" + esc(f[1]) + "</dd></div>"; }).join("") +
@@ -859,8 +870,11 @@ var FlowKit = (function () {
     var L = null;
     var els = {};
     var items = {}; // id -> { name, info }
-    spec.nodes.forEach(function (n) { items[n.id] = { name: lines(n.label).join(" "), info: n.info }; });
-    (spec.zones || []).forEach(function (z) { if (z.info) items[z.id] = { name: z.title, info: z.info }; });
+    var zoneHue = {};
+    (spec.zones || []).forEach(function (z) { zoneHue[z.id] = z.hue; });
+    var cardHue = function (h) { return h && h !== "neutral" ? h : "primary"; };
+    spec.nodes.forEach(function (n) { items[n.id] = { name: lines(n.label).join(" "), info: n.info, hue: cardHue(n.hue || zoneHue[n.zone]) }; });
+    (spec.zones || []).forEach(function (z) { if (z.info) items[z.id] = { name: z.title, info: z.info, hue: cardHue(z.hue) }; });
     var sim = window.createSim({
       onInit: function (init) {
         applyTheme(init && init.theme);
@@ -881,7 +895,7 @@ var FlowKit = (function () {
       // Every card sits, hidden, in one grid cell behind the live one, so the panel is as tall as the tallest
       // card from the start and opening a card never moves the page.
       var sizer = '<div class="fk-card fk-sizer" aria-hidden="true">' + cardHtml("", { text: spec.intro }) + "</div>" +
-        Object.keys(items).map(function (id) { return '<div class="fk-card fk-sizer" aria-hidden="true">' + cardHtml(items[id].name, items[id].info) + "</div>"; }).join("");
+        Object.keys(items).map(function (id) { return '<div class="fk-card fk-sizer" aria-hidden="true">' + cardHtml(items[id].name, items[id].info, items[id].hue) + "</div>"; }).join("");
       app.innerHTML =
         '<section class="panel stage fk-explore"><div class="view scroll" tabindex="0" role="region" aria-label="Map"><svg id="svg" role="group" aria-label="' + esc(spec.title) + '"></svg></div>' +
         '<div class="side"><div class="fk-cards">' + sizer + '<div class="fk-card" id="card" aria-live="polite"></div></div>' +
@@ -941,7 +955,7 @@ var FlowKit = (function () {
 
     function update() {
       var it = state.picked && items[state.picked];
-      els.card.innerHTML = it ? cardHtml(it.name, it.info) : cardHtml("", { text: spec.intro });
+      els.card.innerHTML = it ? cardHtml(it.name, it.info, it.hue) : cardHtml("", { text: spec.intro });
       els.card.classList.toggle("fk-card-intro", !it);
       var say;
       if (state.solved) say = "Right: " + items[ask.answer].name + ". " + ask.why + " Click any box to read about it.";

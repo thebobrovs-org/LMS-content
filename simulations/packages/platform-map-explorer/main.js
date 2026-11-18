@@ -11,6 +11,7 @@
 // map. Clicking a box, or Tab then Enter, opens its card; arrow keys move between boxes, Escape closes the card.
 // One `ask` ("which box?") is the learner's prediction: they answer by clicking a box, and the one checkpoint
 // fires when they find the right one (the design standard's one checkpoint, no quest chain).
+// A card may carry an `icon` from the kit's set, drawn beside its title in its zone's hue.
 // v2 also adds `density: "compact"` (40 px boxes), `span` (a box across several columns), two-line labels ("\n")
 // and zones titled on their left (`titleSide: "left"`, for stacked layers).
 var FlowKit = (function () {
@@ -61,6 +62,12 @@ var FlowKit = (function () {
     globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18-3-3-3-15 0-18"/>',
     chat: '<path d="M4 5h16v11H9l-5 4z"/>',
     check: '<path d="M9 13l2 2 4-4"/><rect x="4" y="4" width="16" height="16" rx="4"/>',
+    terminal: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M12 15h5"/>',
+    code: '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/>',
+    search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/>',
+    plug: '<path d="M9 3v5M15 3v5M6 8h12v3a6 6 0 0 1-12 0zM12 17v4"/>',
+    chart: '<path d="M4 4v16h16"/><path d="M8 15l3-4 3 2 5-6"/>',
+    cube: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>',
   };
   /** The width a box leaves for its text: all of it, less the icon well when it has an icon. */
   function textRoom(node, w, icons) {
@@ -139,6 +146,7 @@ var FlowKit = (function () {
         if ((info.facts || []).length > INFO_FACTS) out.push(who + ": at most " + INFO_FACTS + " facts on a card");
         (info.facts || []).forEach(function (f) { if (!Array.isArray(f) || f.length !== 2) out.push(who + ": each fact is [label, value]"); });
         if (info.covered && !(info.covered.topic && info.covered.title)) out.push(who + ": covered needs a topic id and its title");
+        if (info.icon && !ICONS[info.icon]) out.push(who + ": no icon " + info.icon + " (the kit has " + Object.keys(ICONS).join(", ") + ")");
       };
       (spec.nodes || []).forEach(function (n) {
         if (!n.info) out.push("node " + n.id + " needs an info card in explore mode");
@@ -842,10 +850,13 @@ var FlowKit = (function () {
 
   // ---- Explore mode: a map whose boxes open info cards ------------------------------------------------
   /** The card for a box or a zone: its name, its former name, its text, a few facts, and the lesson that covers it. */
-  function cardHtml(name, info) {
+  function cardHtml(name, info, hue) {
     if (!info) return "";
-    return '<h3 class="fk-card-h">' + esc(name) + "</h3>" +
-      (info.formerly ? '<p class="fk-card-was">was ' + esc(info.formerly) + "</p>" : "") +
+    var icon = info.icon && ICONS[info.icon];
+    return '<div class="fk-card-top">' +
+      (icon ? '<svg class="fk-card-icon fk-h-' + esc(hue || "primary") + '" viewBox="0 0 24 24" aria-hidden="true"><g class="fk-icon">' + icon + "</g></svg>" : "") +
+      '<div><h3 class="fk-card-h">' + esc(name) + "</h3>" +
+      (info.formerly ? '<p class="fk-card-was">was ' + esc(info.formerly) + "</p>" : "") + "</div></div>" +
       '<p class="fk-card-t">' + esc(info.text) + "</p>" +
       ((info.facts || []).length || info.covered ? '<dl class="fk-card-f">' +
         (info.facts || []).map(function (f) { return "<div><dt>" + esc(f[0]) + "</dt><dd>" + esc(f[1]) + "</dd></div>"; }).join("") +
@@ -859,8 +870,11 @@ var FlowKit = (function () {
     var L = null;
     var els = {};
     var items = {}; // id -> { name, info }
-    spec.nodes.forEach(function (n) { items[n.id] = { name: lines(n.label).join(" "), info: n.info }; });
-    (spec.zones || []).forEach(function (z) { if (z.info) items[z.id] = { name: z.title, info: z.info }; });
+    var zoneHue = {};
+    (spec.zones || []).forEach(function (z) { zoneHue[z.id] = z.hue; });
+    var cardHue = function (h) { return h && h !== "neutral" ? h : "primary"; };
+    spec.nodes.forEach(function (n) { items[n.id] = { name: lines(n.label).join(" "), info: n.info, hue: cardHue(n.hue || zoneHue[n.zone]) }; });
+    (spec.zones || []).forEach(function (z) { if (z.info) items[z.id] = { name: z.title, info: z.info, hue: cardHue(z.hue) }; });
     var sim = window.createSim({
       onInit: function (init) {
         applyTheme(init && init.theme);
@@ -881,7 +895,7 @@ var FlowKit = (function () {
       // Every card sits, hidden, in one grid cell behind the live one, so the panel is as tall as the tallest
       // card from the start and opening a card never moves the page.
       var sizer = '<div class="fk-card fk-sizer" aria-hidden="true">' + cardHtml("", { text: spec.intro }) + "</div>" +
-        Object.keys(items).map(function (id) { return '<div class="fk-card fk-sizer" aria-hidden="true">' + cardHtml(items[id].name, items[id].info) + "</div>"; }).join("");
+        Object.keys(items).map(function (id) { return '<div class="fk-card fk-sizer" aria-hidden="true">' + cardHtml(items[id].name, items[id].info, items[id].hue) + "</div>"; }).join("");
       app.innerHTML =
         '<section class="panel stage fk-explore"><div class="view scroll" tabindex="0" role="region" aria-label="Map"><svg id="svg" role="group" aria-label="' + esc(spec.title) + '"></svg></div>' +
         '<div class="side"><div class="fk-cards">' + sizer + '<div class="fk-card" id="card" aria-live="polite"></div></div>' +
@@ -941,7 +955,7 @@ var FlowKit = (function () {
 
     function update() {
       var it = state.picked && items[state.picked];
-      els.card.innerHTML = it ? cardHtml(it.name, it.info) : cardHtml("", { text: spec.intro });
+      els.card.innerHTML = it ? cardHtml(it.name, it.info, it.hue) : cardHtml("", { text: spec.intro });
       els.card.classList.toggle("fk-card-intro", !it);
       var say;
       if (state.solved) say = "Right: " + items[ask.answer].name + ". " + ask.why + " Click any box to read about it.";
@@ -1030,65 +1044,65 @@ var SPEC = {
   zoneTitleWidth: 112,
   zones: [
     { id: "experience", title: "Experience", sub: "low-code, for users", titleSide: "left", hue: "neutral",
-      info: { text: "Low-code tools on top, for people who configure agents rather than code them." } },
+      info: { icon: "person", text: "Low-code tools on top, for people who configure agents rather than code them." } },
     { id: "build", title: "Build", sub: "code, for developers", titleSide: "left", hue: "neutral",
-      info: { text: "Code-first tools for developers who write and ship agents." } },
+      info: { icon: "code", text: "Code-first tools for developers who write and ship agents." } },
     { id: "models", title: "Models", sub: "what reasons", titleSide: "left", hue: "neutral",
-      info: { text: "The models that do the reasoning, from Google, partners and the open-model world." } },
+      info: { icon: "agent", text: "The models that do the reasoning, from Google, partners and the open-model world." } },
     { id: "knowledge", title: "Knowledge", sub: "what it grounds on", titleSide: "left", hue: "neutral",
-      info: { text: "Where an agent finds what it grounds on. Also here: the original Vector Search, a separate product from Agent Retrieval. Underneath sit the data stores an agent reads.", facts: [["Data stores", "BigQuery, Cloud SQL, Firestore, Memorystore for Redis, Cloud Storage"]], covered: { topic: "agentic-ai/rag-pipelines", title: "RAG pipelines: retrieve, rerank and ground" } } },
+      info: { icon: "database", text: "Where an agent finds what it grounds on. Also here: the original Vector Search, a separate product from Agent Retrieval. Underneath sit the data stores an agent reads.", facts: [["Data stores", "BigQuery, Cloud SQL, Firestore, Memorystore for Redis, Cloud Storage"]], covered: { topic: "agentic-ai/rag-pipelines", title: "RAG pipelines: retrieve, rerank and ground" } } },
     { id: "run", title: "Run", sub: "where it executes", titleSide: "left", hue: "neutral",
-      info: { text: "Where a deployed agent runs: from fully managed to a cluster you operate.", covered: { topic: "agentic-ai/deploying-agents", title: "Deploying agents: Agent Runtime, Cloud Run or GKE" } } },
+      info: { icon: "cloud", text: "Where a deployed agent runs: from fully managed to a cluster you operate.", covered: { topic: "agentic-ai/deploying-agents", title: "Deploying agents: Agent Runtime, Cloud Run or GKE" } } },
     { id: "evaluate", title: "Evaluate", sub: "is it any good?", titleSide: "left", hue: "neutral",
-      info: { text: "Measures quality before release and shows what an agent did after it." } },
+      info: { icon: "chart", text: "Measures quality before release and shows what an agent did after it." } },
     { id: "govern", title: "Govern", hue: "green",
-      info: { text: "Not a layer of its own: it wraps every layer, because an agent needs governing however it was built and wherever it runs." } },
+      info: { icon: "shield", text: "Not a layer of its own: it wraps every layer, because an agent needs governing however it was built and wherever it runs." } },
   ],
   nodes: [
     { id: "ge", label: "Gemini Enterprise", zone: "experience", at: [0, 0], span: 4,
-      info: { text: "The app where employees discover, create, run and govern agents. Despite the shared name, it is a separate product from Gemini Enterprise Agent Platform.", covered: { topic: "agentic-ai/enterprise-data-gemini-enterprise", title: "Connecting enterprise data to Gemini Enterprise" } } },
+      info: { icon: "chat", text: "The app where employees discover, create, run and govern agents. Despite the shared name, it is a separate product from Gemini Enterprise Agent Platform.", covered: { topic: "agentic-ai/enterprise-data-gemini-enterprise", title: "Connecting enterprise data to Gemini Enterprise" } } },
     { id: "wb", label: "Workflow Builder", sub: "was Agent Designer", zone: "experience", at: [4, 0], span: 4,
-      info: { formerly: "Agent Designer", text: "Gemini Enterprise's low-code tool for building agent workflows visually, without code.", facts: [["Renamed", "September 2026 (GA)"]], covered: { topic: "agentic-ai/workflow-builder", title: "Workflow Builder: chat agents and workflows" } } },
+      info: { icon: "flow", formerly: "Agent Designer", text: "Gemini Enterprise's low-code tool for building agent workflows visually, without code.", facts: [["Renamed", "September 2026 (GA)"]], covered: { topic: "agentic-ai/workflow-builder", title: "Workflow Builder: chat agents and workflows" } } },
     { id: "cx", label: "CX Agent Studio", sub: "from Dialogflow CX", zone: "experience", at: [8, 0], span: 4,
-      info: { text: "Builds customer-facing conversational agents, for example for a contact centre. Google calls it the evolution of Dialogflow CX.", covered: { topic: "agentic-ai/cx-agent-studio-flows", title: "CX Agent Studio: flows, routes and instructions" } } },
+      info: { icon: "people", text: "Builds customer-facing conversational agents, for example for a contact centre. Google calls it the evolution of Dialogflow CX.", covered: { topic: "agentic-ai/cx-agent-studio-flows", title: "CX Agent Studio: flows, routes and instructions" } } },
     { id: "adk", label: "ADK", zone: "build", at: [0, 1], span: 4,
-      info: { text: "The Agent Development Kit: Google's open-source, code-first framework for agents.", covered: { topic: "agentic-ai/adk-agents-and-tools", title: "Building agents with ADK" } } },
+      info: { icon: "tool", text: "The Agent Development Kit: Google's open-source, code-first framework for agents.", covered: { topic: "agentic-ai/adk-agents-and-tools", title: "Building agents with ADK" } } },
     { id: "cli", label: "Agents CLI", zone: "build", at: [4, 1], span: 4,
-      info: { text: "Gives a coding agent Google's packaged instructions and scripts for building with ADK, evaluating, deploying, observing and publishing.", covered: { topic: "agentic-ai/agents-cli", title: "Agents CLI: the agent lifecycle from a coding agent" } } },
+      info: { icon: "terminal", text: "Gives a coding agent Google's packaged instructions and scripts for building with ADK, evaluating, deploying, observing and publishing.", covered: { topic: "agentic-ai/agents-cli", title: "Agents CLI: the agent lifecycle from a coding agent" } } },
     { id: "ag", label: "Antigravity", zone: "build", at: [8, 1], span: 4,
-      info: { text: "Google's agent-first development environment (app, CLI and SDK) for steering coding agents.", covered: { topic: "agentic-ai/configuring-coding-agents", title: "Configuring coding agents with MCP and skills" } } },
+      info: { icon: "code", text: "Google's agent-first development environment (app, CLI and SDK) for steering coding agents.", covered: { topic: "agentic-ai/configuring-coding-agents", title: "Configuring coding agents with MCP and skills" } } },
     { id: "gem", label: "Gemini models", zone: "models", at: [0, 2], span: 6,
-      info: { text: "Do the reasoning. Smaller models (Flash, Flash-Lite) suit low latency and many simple steps; a larger one (Pro) suits hard, multi-step reasoning.", covered: { topic: "agentic-ai/choosing-a-model", title: "Choosing a model and how to serve it" } } },
+      info: { icon: "agent", text: "Do the reasoning. Smaller models (Flash, Flash-Lite) suit low latency and many simple steps; a larger one (Pro) suits hard, multi-step reasoning.", covered: { topic: "agentic-ai/choosing-a-model", title: "Choosing a model and how to serve it" } } },
     { id: "garden", label: "Model Garden", zone: "models", at: [6, 2], span: 6,
-      info: { text: "Offers Google, partner and open models, such as Gemma, whose open weights you can hold and tune yourself.", covered: { topic: "agentic-ai/choosing-a-model", title: "Choosing a model and how to serve it" } } },
+      info: { icon: "chip", text: "Offers Google, partner and open models, such as Gemma, whose open weights you can hold and tune yourself.", covered: { topic: "agentic-ai/choosing-a-model", title: "Choosing a model and how to serve it" } } },
     { id: "as", label: "Agent Search", sub: "was Vertex AI Search", zone: "knowledge", at: [0, 3], span: 3,
-      info: { formerly: "Vertex AI Search", text: "Managed search and retrieval over your documents. It takes in the documents directly, so you don't build your own indexing.", facts: [["Renamed", "April 2026"]], covered: { topic: "agentic-ai/rag-pipelines", title: "RAG pipelines: retrieve, rerank and ground" } } },
+      info: { icon: "search", formerly: "Vertex AI Search", text: "Managed search and retrieval over your documents. It takes in the documents directly, so you don't build your own indexing.", facts: [["Renamed", "April 2026"]], covered: { topic: "agentic-ai/rag-pipelines", title: "RAG pipelines: retrieve, rerank and ground" } } },
     { id: "rag", label: "RAG Engine", zone: "knowledge", at: [3, 3], span: 3,
-      info: { text: "A framework for your own retrieval-augmented pipeline: ingestion is managed, and you set chunking, the embedding model, the vector database, top-k and the reranker.", covered: { topic: "agentic-ai/rag-pipelines", title: "RAG pipelines: retrieve, rerank and ground" } } },
+      info: { icon: "doc", text: "A framework for your own retrieval-augmented pipeline: ingestion is managed, and you set chunking, the embedding model, the vector database, top-k and the reranker.", covered: { topic: "agentic-ai/rag-pipelines", title: "RAG pipelines: retrieve, rerank and ground" } } },
     { id: "ar", label: "Agent Retrieval", sub: "was Vector Search 2.0", zone: "knowledge", at: [6, 3], span: 3,
-      info: { formerly: "Vector Search 2.0", text: "Stores and searches data objects and their embeddings, and can generate the embeddings. The original Vector Search is still a separate product.", covered: { topic: "agentic-ai/rag-pipelines", title: "RAG pipelines: retrieve, rerank and ground" } } },
+      info: { icon: "database", formerly: "Vector Search 2.0", text: "Stores and searches data objects and their embeddings, and can generate the embeddings. The original Vector Search is still a separate product.", covered: { topic: "agentic-ai/rag-pipelines", title: "RAG pipelines: retrieve, rerank and ground" } } },
     { id: "mcp", label: "MCP servers", zone: "knowledge", at: [9, 3], span: 3,
-      info: { text: "Expose Google Cloud services and your own systems as tools an agent can call over MCP (Model Context Protocol).", covered: { topic: "agentic-ai/mcp-tools-and-integrations", title: "Tools and integrations through MCP" } } },
+      info: { icon: "plug", text: "Expose Google Cloud services and your own systems as tools an agent can call over MCP (Model Context Protocol).", covered: { topic: "agentic-ai/mcp-tools-and-integrations", title: "Tools and integrations through MCP" } } },
     { id: "rt", label: "Agent Runtime", sub: "was Agent Engine", zone: "run", at: [0, 4], span: 4,
-      info: { formerly: "Vertex AI Agent Engine", text: "The managed runtime that deploys, operates and scales agents, with Agent Platform's Sessions and Memory Bank keeping their state.", covered: { topic: "agentic-ai/deploying-agents", title: "Deploying agents: Agent Runtime, Cloud Run or GKE" } } },
+      info: { icon: "server", formerly: "Vertex AI Agent Engine", text: "The managed runtime that deploys, operates and scales agents, with Agent Platform's Sessions and Memory Bank keeping their state.", covered: { topic: "agentic-ai/deploying-agents", title: "Deploying agents: Agent Runtime, Cloud Run or GKE" } } },
     { id: "cloudrun", label: "Cloud Run", zone: "run", at: [4, 4], span: 4,
-      info: { text: "Runs an agent as a serverless container that scales to zero, beside your other Cloud Run services.", covered: { topic: "agentic-ai/deploying-agents", title: "Deploying agents: Agent Runtime, Cloud Run or GKE" } } },
+      info: { icon: "cloud", text: "Runs an agent as a serverless container that scales to zero, beside your other Cloud Run services.", covered: { topic: "agentic-ai/deploying-agents", title: "Deploying agents: Agent Runtime, Cloud Run or GKE" } } },
     { id: "gke", label: "GKE", zone: "run", at: [8, 4], span: 4,
-      info: { text: "Managed Kubernetes: full control of nodes, GPUs and networking, for compliance needs, your own GPUs or an existing cluster.", covered: { topic: "agentic-ai/deploying-agents", title: "Deploying agents: Agent Runtime, Cloud Run or GKE" } } },
+      info: { icon: "cube", text: "Managed Kubernetes: full control of nodes, GPUs and networking, for compliance needs, your own GPUs or an existing cluster.", covered: { topic: "agentic-ai/deploying-agents", title: "Deploying agents: Agent Runtime, Cloud Run or GKE" } } },
     { id: "eval", label: "Gen AI evaluation service", zone: "evaluate", at: [0, 5], span: 6,
-      info: { text: "Scores answers and tool-call paths (trajectories) against a test set before release. It blocks nothing in production.", covered: { topic: "agentic-ai/agent-eval-criteria", title: "Choosing evaluation criteria for agents" } } },
+      info: { icon: "check", text: "Scores answers and tool-call paths (trajectories) against a test set before release. It blocks nothing in production.", covered: { topic: "agentic-ai/agent-eval-criteria", title: "Choosing evaluation criteria for agents" } } },
     { id: "obs", label: "Cloud Logging + Trace", zone: "evaluate", at: [6, 5], span: 6,
-      info: { text: "Cloud Logging and Cloud Trace show what an agent did in production, call by call.", covered: { topic: "agentic-ai/agent-observability-troubleshooting", title: "Observing and troubleshooting agents in production" } } },
+      info: { icon: "chart", text: "Cloud Logging and Cloud Trace show what an agent did in production, call by call.", covered: { topic: "agentic-ai/agent-observability-troubleshooting", title: "Observing and troubleshooting agents in production" } } },
     { id: "identity", label: "Agent Identity", zone: "govern", at: [12, 0], span: 3,
-      info: { text: "Gives each agent its own identity, not a shared account, so access can be granted to it alone and its calls audited.", covered: { topic: "agentic-ai/agent-identity-and-access", title: "Agent Identity and least-privilege access" } } },
+      info: { icon: "key", text: "Gives each agent its own identity, not a shared account, so access can be granted to it alone and its calls audited.", covered: { topic: "agentic-ai/agent-identity-and-access", title: "Agent Identity and least-privilege access" } } },
     { id: "gateway", label: "Agent Gateway", zone: "govern", at: [12, 1], span: 3,
-      info: { text: "The point where policy on agent traffic is enforced and observed, whichever tool built the agent and wherever it runs.", covered: { topic: "agentic-ai/agent-gateway-and-registry", title: "Agent Gateway and Agent Registry" } } },
+      info: { icon: "globe", text: "The point where policy on agent traffic is enforced and observed, whichever tool built the agent and wherever it runs.", covered: { topic: "agentic-ai/agent-gateway-and-registry", title: "Agent Gateway and Agent Registry" } } },
     { id: "registry", label: "Agent Registry", sub: "+ Skill Registry", zone: "govern", at: [12, 2], span: 3,
-      info: { text: "Catalogues agents, MCP servers and tools. Skill Registry is being folded into it.", covered: { topic: "agentic-ai/agent-gateway-and-registry", title: "Agent Gateway and Agent Registry" } } },
+      info: { icon: "bot", text: "Catalogues agents, MCP servers and tools. Skill Registry is being folded into it.", covered: { topic: "agentic-ai/agent-gateway-and-registry", title: "Agent Gateway and Agent Registry" } } },
     { id: "armor", label: "Model Armor", zone: "govern", at: [12, 3], span: 3,
-      info: { text: "Screens prompts and responses for attacks such as prompt injection, and for leaks of sensitive data.", covered: { topic: "agentic-ai/guardrails-model-armor-hitl", title: "Guardrails: Model Armor, data protection and human in the loop" } } },
+      info: { icon: "shield", text: "Screens prompts and responses for attacks such as prompt injection, and for leaks of sensitive data.", covered: { topic: "agentic-ai/guardrails-model-armor-hitl", title: "Guardrails: Model Armor, data protection and human in the loop" } } },
     { id: "sdp", label: "Sensitive Data\nProtection", zone: "govern", at: [12, 4], span: 3,
-      info: { text: "Finds and masks sensitive data, such as card numbers or credentials.", covered: { topic: "agentic-ai/guardrails-model-armor-hitl", title: "Guardrails: Model Armor, data protection and human in the loop" } } },
+      info: { icon: "lock", text: "Finds and masks sensitive data, such as card numbers or credentials.", covered: { topic: "agentic-ai/guardrails-model-armor-hitl", title: "Guardrails: Model Armor, data protection and human in the loop" } } },
   ],
   ask: {
     question: "A team wants answers from 40,000 internal PDFs through a managed service, without building its own indexing. Which product?",
