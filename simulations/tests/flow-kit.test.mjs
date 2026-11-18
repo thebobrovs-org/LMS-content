@@ -24,7 +24,7 @@ const KIT_JS = fs.readFileSync(path.join(ROOT, "kit/flow-kit.js"), "utf8");
 const KIT_CSS = fs.readFileSync(path.join(ROOT, "kit/flow-kit.css"), "utf8");
 const SIM_KIT = fs.readFileSync(path.join(ROOT, "kit/sim-kit.css"), "utf8");
 /** The flow sims. A package whose main.js starts with the kit's marker must be listed here too. */
-export const ON_FLOW = ["hybrid-agent-flow", "platform-map-explorer", "workflow-canvas-flow", "enterprise-data-flow", "a2a-vs-mcp-flow", "threat-defence-flow", "gateway-registry-flow", "continuous-eval-loop", "capstone-architecture-explorer", "customization-guarantees-flow", "context-loading-flow", "agents-cli-loop", "sandbox-ladder-explorer", "mcp-routes-explorer", "adk-anatomy-explorer", "eval-case-explorer"];
+export const ON_FLOW = ["hybrid-agent-flow", "platform-map-explorer", "workflow-canvas-flow", "enterprise-data-flow", "a2a-vs-mcp-flow", "threat-defence-flow", "gateway-registry-flow", "continuous-eval-loop", "capstone-architecture-explorer", "customization-guarantees-flow", "context-loading-flow", "agents-cli-loop", "sandbox-ladder-explorer", "mcp-routes-explorer", "adk-anatomy-explorer", "eval-case-explorer", "memory-timeline-flow", "rag-backend-lanes"];
 
 // The 1100 px frame: #app pads 14 px, the stage panel 14 px plus a 1 px border; from 900 px the stage is two columns,
 // the right one 300 px in a flow sim (flow-kit.css), with a 16 px gap. Phones: 360 px less the same padding, and the

@@ -1,0 +1,12 @@
+{
+  "id": "rag-backend-lanes",
+  "title": "Who runs each RAG stage",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-who-runs-each-stage",
+      "hint": "Predict which lane lets you chunk the documents yourself with a managed index, then step to the index stage: only the Vector Search lane leaves chunking to you while Google runs the index."
+    }
+  ]
+}

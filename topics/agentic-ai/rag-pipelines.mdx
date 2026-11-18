@@ -343,11 +343,11 @@ date, and it does nothing to stop retrieval from feeding the old one.
 
 Google Cloud offers three backends, from most managed to most control.
 
-<Figure
-  src="/media/rag-backend-chooser.svg"
-  alt="Three retrieval backends side by side, from most managed to most control. Agent Search manages every stage end to end: ingest and parse, chunk, embed, index and retrieve, as out-of-the-box RAG with answers that carry citations. RAG Engine manages ingestion; you set chunk size and overlap, pick the embedding model, pick the vector database and set top-k and the reranker. Vector Search provides a managed vector index only; you build ingestion, chunking and embeddings with your own model, and you build the query and ranking."
-  caption="Start from the left, and move right only for control you need."
-/>
+Each lane below is one backend, and each step runs one pipeline stage in all
+three. Before you step, predict which lane lets you chunk the documents yourself
+while Google runs the index.
+
+<Simulation id="rag-backend-lanes" />
 
 - **Agent Search** (formerly Vertex AI Search) is an out-of-the-box RAG
   system. It handles parsing, chunking, embedding and indexing over your

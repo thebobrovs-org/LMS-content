@@ -48,6 +48,8 @@ const WIDTH_GUARDS = {
   "mcp-routes-explorer": [".scroll"],
   "adk-anatomy-explorer": [".scroll"],
   "eval-case-explorer": [".scroll"],
+  "memory-timeline-flow": [".scroll"],
+  "rag-backend-lanes": [".scroll"],
   "access-boundary-explorer": [".scroll"],
   "context-budget-explorer": [".scroll"],
   "media-reference-explorer": [".scroll"],

@@ -45,6 +45,8 @@ export const FIT = [
   "threat-defence-flow",
   "sandbox-ladder-explorer",
   "mcp-routes-explorer",
+  "memory-timeline-flow",
+  "rag-backend-lanes",
   "rag-retrieval-tuner",
   "state-scope-explorer",
   "trace-waterfall-explorer",
