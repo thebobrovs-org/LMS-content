@@ -11,7 +11,8 @@
 // map. Clicking a box, or Tab then Enter, opens its card; arrow keys move between boxes, Escape closes the card.
 // One `ask` ("which box?") is the learner's prediction: they answer by clicking a box, and the one checkpoint
 // fires when they find the right one (the design standard's one checkpoint, no quest chain).
-// A card may carry an `icon` from the kit's set, drawn beside its title in its zone's hue.
+// A card may carry an `icon` from the kit's set, drawn beside its title in its zone's hue, or a `logo`: a key
+// into the spec's `logos` (inner SVG markup on a 512 grid, plain shapes with fill attributes) for official artwork.
 // v2 also adds `density: "compact"` (40 px boxes), `span` (a box across several columns), two-line labels ("\n")
 // and zones titled on their left (`titleSide: "left"`, for stacked layers).
 var FlowKit = (function () {
@@ -147,12 +148,16 @@ var FlowKit = (function () {
         (info.facts || []).forEach(function (f) { if (!Array.isArray(f) || f.length !== 2) out.push(who + ": each fact is [label, value]"); });
         if (info.covered && !(info.covered.topic && info.covered.title)) out.push(who + ": covered needs a topic id and its title");
         if (info.icon && !ICONS[info.icon]) out.push(who + ": no icon " + info.icon + " (the kit has " + Object.keys(ICONS).join(", ") + ")");
+        if (info.logo && !(spec.logos && spec.logos[info.logo])) out.push(who + ": no logo " + info.logo + " in the spec's logos");
       };
       (spec.nodes || []).forEach(function (n) {
         if (!n.info) out.push("node " + n.id + " needs an info card in explore mode");
         infoErr("node " + n.id, n.info);
       });
       (spec.zones || []).forEach(function (z) { infoErr("zone " + z.id, z.info); });
+      Object.keys(spec.logos || {}).forEach(function (k) {
+        if (/<\s*(script|style|foreignObject|image|use)\b|\son\w+\s*=|href|url\(|class=/i.test(spec.logos[k])) out.push("logo " + k + ": plain shapes with fill attributes only");
+      });
       var a = spec.ask;
       if (!a || !a.question || !a.why) out.push("explore mode needs an ask: a question, its answer and why");
       else if (!ids[a.answer]) out.push("the ask answers with an unknown node " + a.answer);
@@ -850,10 +855,12 @@ var FlowKit = (function () {
 
   // ---- Explore mode: a map whose boxes open info cards ------------------------------------------------
   /** The card for a box or a zone: its name, its former name, its text, a few facts, and the lesson that covers it. */
-  function cardHtml(name, info, hue) {
+  function cardHtml(name, info, hue, logos) {
     if (!info) return "";
-    var icon = info.icon && ICONS[info.icon];
+    var logo = info.logo && logos && logos[info.logo];
+    var icon = !logo && info.icon && ICONS[info.icon];
     return '<div class="fk-card-top">' +
+      (logo ? '<svg class="fk-card-icon fk-card-logo" viewBox="0 0 512 512" aria-hidden="true">' + logo + "</svg>" : "") +
       (icon ? '<svg class="fk-card-icon fk-h-' + esc(hue || "primary") + '" viewBox="0 0 24 24" aria-hidden="true"><g class="fk-icon">' + icon + "</g></svg>" : "") +
       '<div><h3 class="fk-card-h">' + esc(name) + "</h3>" +
       (info.formerly ? '<p class="fk-card-was">was ' + esc(info.formerly) + "</p>" : "") + "</div></div>" +
@@ -895,7 +902,7 @@ var FlowKit = (function () {
       // Every card sits, hidden, in one grid cell behind the live one, so the panel is as tall as the tallest
       // card from the start and opening a card never moves the page.
       var sizer = '<div class="fk-card fk-sizer" aria-hidden="true">' + cardHtml("", { text: spec.intro }) + "</div>" +
-        Object.keys(items).map(function (id) { return '<div class="fk-card fk-sizer" aria-hidden="true">' + cardHtml(items[id].name, items[id].info, items[id].hue) + "</div>"; }).join("");
+        Object.keys(items).map(function (id) { return '<div class="fk-card fk-sizer" aria-hidden="true">' + cardHtml(items[id].name, items[id].info, items[id].hue, spec.logos) + "</div>"; }).join("");
       app.innerHTML =
         '<section class="panel stage fk-explore"><div class="view scroll" tabindex="0" role="region" aria-label="Map"><svg id="svg" role="group" aria-label="' + esc(spec.title) + '"></svg></div>' +
         '<div class="side"><div class="fk-cards">' + sizer + '<div class="fk-card" id="card" aria-live="polite"></div></div>' +
@@ -955,7 +962,7 @@ var FlowKit = (function () {
 
     function update() {
       var it = state.picked && items[state.picked];
-      els.card.innerHTML = it ? cardHtml(it.name, it.info, it.hue) : cardHtml("", { text: spec.intro });
+      els.card.innerHTML = it ? cardHtml(it.name, it.info, it.hue, spec.logos) : cardHtml("", { text: spec.intro });
       els.card.classList.toggle("fk-card-intro", !it);
       var say;
       if (state.solved) say = "Right: " + items[ask.answer].name + ". " + ask.why + " Click any box to read about it.";
