@@ -51,6 +51,10 @@ Write a short plan (in the PR description or a `staging/<id>.plan.md`):
 - Where the lesson states a fact a record holds, the PR's **Knowledge delta**
   names that record by id; a lesson's own sources list cites the record's
   source locator, the same one the record carries.
+- End the lesson with its `## Sources` list in the format the
+  `lms-authoring-topics` skill sets (publisher, title as a Markdown link with
+  a full https URL, then one parenthetical on what it supports): the app shows
+  it as a table of links behind a toggle.
 - Validate: `node pipeline/validate.mjs --staging`.
 
 ## 4. Audit (human + sub-agent critics)
