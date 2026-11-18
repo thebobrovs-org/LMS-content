@@ -162,12 +162,14 @@ actions pass through a fixed approval step.
 
 ### Try it: who picks the next step?
 
-The simulation runs one request, "send order A1234 to my new address", as a
-fixed workflow and as an agent. Predict first: when the order turns out to be
-partly shipped, what does each one do?
+The simulation runs one request, "send order A1234 to my new address", on two
+copies of the same town at once. On the left, a fixed workflow is a tram on
+rails the designer laid in advance. On the right, an agent is a car with the
+model at the wheel, choosing the next desk at each junction. Predict first:
+when the order turns out to be partly shipped, what does each one do?
 
-Step through the unexpected result in both modes, then switch to the expected
-result and compare the model calls.
+Step through the surprise, then switch to the expected result and compare the
+model calls, shown as fuel under each map.
 
 <Simulation id="workflow-vs-agent-stepper" />
 
