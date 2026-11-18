@@ -197,11 +197,9 @@ its model or tools without breaking yours, and keeps its internals private.
   explanation="A2A keeps the remote agent opaque. The client sees what the card advertises (skills, endpoint, security) and what the task returns (state, messages and artifacts). Tools, instructions and reasoning stay private to the partner, which is what lets it change them without breaking callers."
 />
 
-<Figure
-  src="/media/a2a-vs-mcp.svg"
-  alt="Two ways an agent reaches out. On the left, MCP: a support agent calls tools on MCP servers, such as get_order on an orders database and book_pickup on a carrier API; each call sends typed arguments and gets a result (experimental MCP tasks can defer it), and the agent can see each tool's name and schema. On the right, A2A: the same support agent reads the fraud-review agent's agent card, then sends it a message; the remote agent, run by the finance team with its own model, tools and state hidden from the caller, works on a task that moves through states such as working, input-required and completed, and returns an artifact."
-  caption="MCP gives one agent more tools. A2A lets independent agents work together without seeing inside each other."
-/>
+Follow one support agent across both boundaries: two MCP tool calls, then a refund check by the finance team's fraud-review agent over A2A. Predict first: can the support agent see the fraud-review agent's tools? Then step through and watch what crosses each boundary.
+
+<Simulation id="a2a-vs-mcp-flow" />
 
 <Flashcard id="vertical-horizontal" objective="a2a-vs-mcp" front="Which protocol is vertical and which is horizontal, and what does that mean?" back="MCP is vertical: it deepens one agent by giving it tools and data. A2A is horizontal: it connects separate agents as peers across team or company boundaries." />
 

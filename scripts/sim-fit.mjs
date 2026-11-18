@@ -32,6 +32,8 @@ export const FIT = [
   "oauth-consent-pause",
   "orchestration-patterns",
   "platform-map-explorer",
+  "a2a-vs-mcp-flow",
+  "threat-defence-flow",
   "rag-retrieval-tuner",
   "state-scope-explorer",
   "trajectory-match-explorer",

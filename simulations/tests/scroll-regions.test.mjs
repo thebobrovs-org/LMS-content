@@ -36,6 +36,8 @@ const WIDTH_GUARDS = {
   "platform-map-explorer": [".scroll"],
   "workflow-canvas-flow": [".scroll"],
   "enterprise-data-flow": [".scroll"],
+  "a2a-vs-mcp-flow": [".scroll"],
+  "threat-defence-flow": [".scroll"],
   "access-boundary-explorer": [".scroll"],
   "context-budget-explorer": [".scroll"],
   "media-reference-explorer": [".scroll"],

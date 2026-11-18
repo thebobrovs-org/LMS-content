@@ -1,0 +1,12 @@
+{
+  "id": "threat-defence-flow",
+  "title": "One injection, four defence layers",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-access-stops-send",
+      "hint": "Predict, then step the invoice attack to access control: the model is fooled, but the agent's identity can't send outside mail, so the call fails."
+    }
+  ]
+}
