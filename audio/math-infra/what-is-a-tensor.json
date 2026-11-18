@@ -1,552 +1,534 @@
 {
-  "src": "https://storage.googleapis.com/hyperstack-lms-audio/topics/math-infra/what-is-a-tensor.9d36f05243b6.mp3",
+  "src": "https://storage.googleapis.com/hyperstack-lms-audio/topics/math-infra/what-is-a-tensor.bae9dda8e301.mp3",
   "voice": "XfNU2rGpBa01ckF309OY",
   "model": "eleven_multilingual_v2",
-  "textHash": "9b32fff7bf39a5afa974721473b9ae25a1284b72711a4852cd368f009082a1bb",
+  "textHash": "60ad79ef28c3641047727ff65bb32a5c5f392f60bf5d0fb7a0884226c6d246d6",
   "cues": [
     {
       "start": 0,
-      "end": 1.312,
+      "end": 1.498,
       "text": "The one-line summary.",
       "paragraph": 0
     },
     {
-      "start": 2.426,
-      "end": 8.406,
+      "start": 1.939,
+      "end": 7.372,
       "text": "Every later lesson — precision, shapes, sharding — leans on one word: tensor.",
       "paragraph": 1
     },
     {
-      "start": 8.847,
-      "end": 10.17,
+      "start": 7.5,
+      "end": 8.661,
       "text": "It sounds exotic.",
       "paragraph": 1
     },
     {
-      "start": 10.228,
-      "end": 10.902,
+      "start": 8.835,
+      "end": 9.427,
       "text": "It isn't.",
       "paragraph": 1
     },
     {
-      "start": 11.714,
-      "end": 20.027,
+      "start": 10.031,
+      "end": 18.773,
       "text": "To the hardware, a tensor is just a multidimensional array of numbers — a flat row of values in memory, plus a shape that says how to read them.",
       "paragraph": 1
     },
     {
-      "start": 20.271,
-      "end": 27.097,
+      "start": 19.052,
+      "end": 26.564,
       "text": "A single number, a list, a grid, a cube of numbers: all tensors, differing only in how many dimensions they have.",
       "paragraph": 1
     },
     {
-      "start": 27.608,
-      "end": 36.781,
+      "start": 27.167,
+      "end": 35.422,
       "text": "Get that, and \"the model is just tensors flowing through chips\" stops being a slogan and becomes something you can reason about.",
       "paragraph": 1
     },
     {
-      "start": 37.222,
-      "end": 38.151,
+      "start": 35.933,
+      "end": 36.92,
       "text": "Infra bridge.",
       "paragraph": 2
     },
     {
-      "start": 38.754,
-      "end": 40.089,
+      "start": 37.523,
+      "end": 38.963,
       "text": "You already think this way.",
       "paragraph": 2
     },
     {
-      "start": 40.333,
-      "end": 42.365,
+      "start": 39.242,
+      "end": 41.355,
       "text": "A config value is one number.",
       "paragraph": 2
     },
     {
-      "start": 42.539,
-      "end": 44.257,
+      "start": 41.598,
+      "end": 43.166,
       "text": "A time series is a list.",
       "paragraph": 2
     },
     {
-      "start": 44.536,
-      "end": 46.185,
+      "start": 43.491,
+      "end": 45.105,
       "text": "A routing table is a grid.",
       "paragraph": 2
     },
     {
-      "start": 46.568,
-      "end": 49.691,
+      "start": 45.488,
+      "end": 48.704,
       "text": "Stack routing tables across VRFs and you've got a cube.",
       "paragraph": 2
     },
     {
-      "start": 49.97,
-      "end": 57.273,
+      "start": 49.4,
+      "end": 56.552,
       "text": "Those are ranks 0, 1, 2, 3 — the only thing that changes is how many indices you need to reach one value.",
       "paragraph": 2
     },
     {
-      "start": 57.447,
-      "end": 58.468,
+      "start": 56.831,
+      "end": 57.655,
       "text": "Run it yourself.",
       "paragraph": 3
     },
     {
-      "start": 59.583,
-      "end": 71.251,
+      "start": 58.468,
+      "end": 69.079,
       "text": "A short Colab notebook reads a tensor's rank and shape straight off numpy, then computes the footprint and charts the rank → memory blow-up (watch rank 3 punch through a chip's HBM).",
       "paragraph": 3
     },
     {
-      "start": 71.947,
-      "end": 75.802,
+      "start": 69.521,
+      "end": 72.62,
       "text": "Pure numpy, runs on CPU, no GPU.",
       "paragraph": 3
     },
     {
-      "start": 76.185,
-      "end": 79.006,
+      "start": 73.062,
+      "end": 75.86,
       "text": "From an arrow to an array — the shadow trick.",
       "paragraph": 4
     },
     {
-      "start": 79.18,
-      "end": 80.678,
+      "start": 76.185,
+      "end": 77.833,
       "text": "So where do the numbers come from?",
       "paragraph": 5
     },
     {
-      "start": 81.282,
-      "end": 86.332,
+      "start": 78.53,
+      "end": 82.907,
       "text": "Start with something physical: an arrow in space (a direction with a length).",
       "paragraph": 5
     },
     {
-      "start": 86.936,
-      "end": 91.754,
+      "start": 83.186,
+      "end": 87.481,
       "text": "You can't store an arrow — but you can measure its shadow on each axis.",
       "paragraph": 5
     },
     {
-      "start": 92.265,
-      "end": 100.287,
+      "start": 88.178,
+      "end": 95.805,
       "text": "Those shadow lengths are the arrow's components, and that list of components — [x, y, z] — is the array the computer keeps.",
       "paragraph": 5
     },
     {
-      "start": 101.379,
-      "end": 105.558,
+      "start": 96.502,
+      "end": 100.786,
       "text": "Drag the arrow below and watch geometry turn into a stored array:",
       "paragraph": 6
     },
     {
-      "start": 105.988,
-      "end": 122.95,
+      "start": 101.39,
+      "end": 117.261,
       "text": "The shadow on an axis is called a projection; the little length-1 rulers (x̂, ŷ, ẑ — the caret ˆ just means \"length exactly 1 along that axis\") are the basis vectors, the agreed unit that makes the numbers mean a real direction.",
       "paragraph": 7
     },
     {
-      "start": 123.554,
-      "end": 124.517,
+      "start": 117.772,
+      "end": 118.724,
       "text": "Infra bridge.",
       "paragraph": 8
     },
     {
-      "start": 125.121,
-      "end": 126.932,
+      "start": 119.536,
+      "end": 121.29,
       "text": "This is serialization.",
       "paragraph": 8
     },
     {
-      "start": 127.083,
-      "end": 134.142,
+      "start": 121.673,
+      "end": 128.569,
       "text": "The arrow is the rich object; the components are the wire format — a flat list both sides agree how to read.",
       "paragraph": 8
     },
     {
-      "start": 134.653,
-      "end": 143.511,
+      "start": 129.08,
+      "end": 137.23,
       "text": "The basis vectors are the protocol: sender and receiver agree the first number means \"along x,\" and the integers suddenly mean something.",
       "paragraph": 8
     },
     {
-      "start": 143.952,
-      "end": 146.333,
+      "start": 137.671,
+      "end": 139.865,
       "text": "The chip only ever ships the flat list.",
       "paragraph": 8
     },
     {
-      "start": 146.716,
-      "end": 160.288,
+      "start": 140.249,
+      "end": 155.097,
       "text": "You'll essentially never touch basis vectors operating ML systems — but they're why a flat list of numbers can stand in for a real object, which is the same reason a wrong shape, not a wrong value, is what usually breaks a run.",
       "paragraph": 9
     },
     {
-      "start": 160.985,
-      "end": 163.005,
+      "start": 156.398,
+      "end": 158.696,
       "text": "Rank — how many dimensions.",
       "paragraph": 10
     },
     {
-      "start": 163.818,
-      "end": 172.351,
+      "start": 159.393,
+      "end": 167.845,
       "text": "The one number that classifies a tensor is its rank: how many dimensions it has, i.e. how many indices you need to reach a single value.",
       "paragraph": 11
     },
     {
-      "start": 172.862,
-      "end": 175.88,
+      "start": 168.286,
+      "end": 171.421,
       "text": "rank 0 — a scalar, one number, shape ().",
       "paragraph": 12
     },
     {
-      "start": 176.264,
-      "end": 181.024,
+      "start": 171.804,
+      "end": 177.295,
       "text": "rank 1 — a vector, a list, shape (n,) — the [x, y, z] above.",
       "paragraph": 12
     },
     {
-      "start": 181.72,
-      "end": 185.726,
+      "start": 177.806,
+      "end": 181.765,
       "text": "rank 2 — a matrix, a grid, shape (rows, cols).",
       "paragraph": 12
     },
     {
-      "start": 186.167,
-      "end": 189.731,
+      "start": 182.323,
+      "end": 186.061,
       "text": "rank 3+ — a cube and beyond, like [batch, seq, hidden].",
       "paragraph": 12
     },
     {
-      "start": 190.01,
-      "end": 191.182,
+      "start": 186.618,
+      "end": 187.698,
       "text": "One naming trap.",
       "paragraph": 13
     },
     {
-      "start": 191.879,
-      "end": 196.836,
+      "start": 188.337,
+      "end": 192.934,
       "text": "\"Rank\" here means number of dimensions (you'll also see ndim or order).",
       "paragraph": 13
     },
     {
-      "start": 197.347,
-      "end": 202.641,
+      "start": 193.34,
+      "end": 198.472,
       "text": "It is not the linear-algebra \"rank of a matrix\" (the count of independent rows).",
       "paragraph": 13
     },
     {
-      "start": 203.152,
-      "end": 210.849,
+      "start": 198.983,
+      "end": 206.506,
       "text": "Same word, unrelated idea — when an ML tool says a tensor is \"rank 3,\" it means three axes.",
       "paragraph": 13
     },
     {
-      "start": 211.29,
-      "end": 214.309,
+      "start": 206.889,
+      "end": 209.942,
       "text": "A tensor you already know — a digital image.",
       "paragraph": 14
     },
     {
-      "start": 214.75,
-      "end": 216.341,
+      "start": 210.384,
+      "end": 211.87,
       "text": "Forget arrows for a second.",
       "paragraph": 15
     },
     {
-      "start": 216.851,
-      "end": 221.101,
+      "start": 212.114,
+      "end": 216.317,
       "text": "A digital image is a tensor, and it shows you every rank at once:",
       "paragraph": 15
     },
     {
-      "start": 221.484,
-      "end": 226.662,
+      "start": 216.758,
+      "end": 222.354,
       "text": "A grayscale photo is literally a grid of brightness numbers — one per pixel.",
       "paragraph": 16
     },
     {
-      "start": 227.358,
-      "end": 234.185,
+      "start": 223.05,
+      "end": 229.041,
       "text": "Now make it color: you don't get a new picture, you get a third dimension — a new axis called channels.",
       "paragraph": 16
     },
     {
-      "start": 234.568,
-      "end": 240.489,
+      "start": 229.284,
+      "end": 234.695,
       "text": "The same grid, but three values deep — how much red, green, and blue sit at each pixel.",
       "paragraph": 16
     },
     {
-      "start": 241.302,
-      "end": 245.865,
+      "start": 235.507,
+      "end": 240.569,
       "text": "That channels axis is exactly the jump from a matrix to a rank-3 tensor.",
       "paragraph": 16
     },
     {
-      "start": 246.306,
-      "end": 250.381,
+      "start": 241.173,
+      "end": 245.62,
       "text": "Stack a batch of photos (or a video's frames) and you've added a fourth.",
       "paragraph": 16
     },
     {
-      "start": 250.764,
-      "end": 263.407,
+      "start": 245.898,
+      "end": 258.414,
       "text": "Walk an image up the ranks yourself — one pixel, a row, a grayscale grid, then color (the +RGB channels dimension), then a stack of frames — and watch the stored array grow right alongside it:",
       "paragraph": 17
     },
     {
-      "start": 263.848,
-      "end": 264.974,
+      "start": 258.797,
+      "end": 259.877,
       "text": "Infra bridge.",
       "paragraph": 18
     },
     {
-      "start": 265.404,
-      "end": 274.506,
+      "start": 260.539,
+      "end": 269.386,
       "text": "That 4K screenshot you just scp'd is a rank-3 tensor — 3840 × 2160 × 3 bytes ≈ 24 MB uncompressed.",
       "paragraph": 18
     },
     {
-      "start": 274.889,
-      "end": 277.885,
+      "start": 269.746,
+      "end": 272.88,
       "text": "The file size is the shape times the bytes-per-value.",
       "paragraph": 18
     },
     {
-      "start": 278.314,
-      "end": 284.34,
+      "start": 273.368,
+      "end": 279.358,
       "text": "Going grayscale → color tripled it (one extra dimension, ×3); a batch multiplies again.",
       "paragraph": 18
     },
     {
-      "start": 284.619,
-      "end": 291.492,
+      "start": 279.683,
+      "end": 286.835,
       "text": "It's the same arithmetic as the memory table below — and the same reason video and image models are so HBM-hungry.",
       "paragraph": 18
     },
     {
-      "start": 292.095,
-      "end": 294.928,
+      "start": 287.532,
+      "end": 290.005,
       "text": "Step through the ranks and watch the structure grow:",
       "paragraph": 19
     },
     {
-      "start": 295.311,
-      "end": 298.446,
+      "start": 290.33,
+      "end": 293.534,
       "text": "Why rank is the scariest word in a memory budget.",
       "paragraph": 20
     },
     {
-      "start": 299.746,
-      "end": 301.674,
+      "start": 294.231,
+      "end": 296.344,
       "text": "Here's the operational punchline.",
       "paragraph": 21
     },
     {
-      "start": 302.184,
-      "end": 306.817,
+      "start": 296.855,
+      "end": 301.429,
       "text": "Each dimension you add doesn't add to the size — it multiplies it.",
       "paragraph": 21
     },
     {
-      "start": 308.117,
-      "end": 314.108,
+      "start": 302.125,
+      "end": 307.594,
       "text": "The number of elements is the product of the dimensions, so growth is multiplicative, not additive.",
       "paragraph": 21
     },
     {
-      "start": 314.921,
-      "end": 321.074,
+      "start": 308.198,
+      "end": 314.107,
       "text": "Make it concrete at model scale — every dimension 4096 wide, in bf16 (2 bytes each):",
       "paragraph": 22
     },
     {
-      "start": 321.469,
-      "end": 332.08,
+      "start": 314.862,
+      "end": 326.228,
       "text": "One extra dimension took the same kind of data from 32 MiB to 128 GiB — past a single accelerator's HBM (today's high-end parts hold ~80–140 GB).",
       "paragraph": 23
     },
     {
-      "start": 332.475,
-      "end": 333.949,
+      "start": 326.797,
+      "end": 328.295,
       "text": "Nothing changed but the rank.",
       "paragraph": 23
     },
     {
-      "start": 334.193,
-      "end": 335.11,
+      "start": 328.898,
+      "end": 329.978,
       "text": "Infra bridge.",
       "paragraph": 24
     },
     {
-      "start": 335.551,
-      "end": 339.719,
+      "start": 330.582,
+      "end": 335.191,
       "text": "This is why \"just add a dimension\" terrifies the people sizing the cluster.",
       "paragraph": 24
     },
     {
-      "start": 340.102,
-      "end": 356.182,
+      "start": 335.795,
+      "end": 352.014,
       "text": "Activations (the chip's intermediate scratch values for each layer) and the KV-cache (a per-token scratchpad attention keeps in HBM to avoid recomputing earlier tokens) both carry batch and sequence and hidden dimensions — every one a multiplier.",
       "paragraph": 24
     },
     {
-      "start": 357.134,
-      "end": 366.491,
+      "start": 352.826,
+      "end": 361.627,
       "text": "When a job OOMs on a longer context or a bigger batch, you're watching this table play out — HBM utilization climbs until the run dies.",
       "paragraph": 24
     },
     {
-      "start": 366.933,
-      "end": 370.88,
+      "start": 362.138,
+      "end": 365.946,
       "text": "The element count, not the dtype, is usually the culprit.",
       "paragraph": 24
     },
     {
-      "start": 371.484,
-      "end": 374.653,
+      "start": 366.549,
+      "end": 369.394,
       "text": "Where the word comes from (optional, and lovely).",
       "paragraph": 25
     },
     {
-      "start": 375.257,
-      "end": 385.613,
+      "start": 370.207,
+      "end": 380.307,
       "text": "If you want the deeper geometric story — why we even say \"tensor,\" and how basis vectors carry it — Dan Fleisch explains it in twelve minutes with blocks and a desk lamp.",
       "paragraph": 26
     },
     {
-      "start": 386.124,
-      "end": 395.11,
+      "start": 380.69,
+      "end": 389.978,
       "text": "It's the physics view (which adds coordinate-system machinery we don't need to operate chips), but it's the clearest intuition for the shadow trick you used above.",
       "paragraph": 26
     },
     {
-      "start": 395.713,
-      "end": 405.617,
+      "start": 390.489,
+      "end": 400.856,
       "text": "For operating ML systems, the array definition is all you need: a tensor is a multidimensional array, and its rank is how many dimensions it has.",
       "paragraph": 27
     },
     {
-      "start": 406.22,
-      "end": 407.404,
+      "start": 401.367,
+      "end": 402.679,
       "text": "Why this matters.",
       "paragraph": 28
     },
     {
-      "start": 407.845,
-      "end": 410.005,
+      "start": 403.19,
+      "end": 405.5,
       "text": "It's the vocabulary for everything else.",
       "paragraph": 29
     },
     {
-      "start": 410.283,
-      "end": 413.79,
-      "text": "Shapes, padding, precision, sharding — all of it is.",
+      "start": 405.709,
+      "end": 413.604,
+      "text": "Shapes, padding, precision, sharding — all of it is \"what's the rank and the shape, and how many bytes does that come to.\"",
       "paragraph": 29
     },
     {
-      "start": 414.3,
-      "end": 417.749,
-      "text": "\"what's the rank and the shape, and how many bytes does that come to.\"",
-      "paragraph": 29
-    },
-    {
-      "start": 418.561,
-      "end": 420.396,
+      "start": 414.301,
+      "end": 416.1,
       "text": "Rank drives the memory bill.",
       "paragraph": 29
     },
     {
-      "start": 420.674,
-      "end": 425.109,
-      "text": "Sizing HBM, predicting an OOM, reading why a longer sequence.",
+      "start": 416.611,
+      "end": 426.921,
+      "text": "Sizing HBM, predicting an OOM, reading why a longer sequence blows up — all start with \"how many dimensions, each how big, times the dtype.\"",
       "paragraph": 29
     },
     {
-      "start": 425.318,
-      "end": 430.926,
-      "text": "blows up — all start with \"how many dimensions, each how big, times the dtype.\"",
-      "paragraph": 29
-    },
-    {
-      "start": 431.622,
-      "end": 433.306,
+      "start": 427.734,
+      "end": 429.591,
       "text": "The chip stores a flat array.",
       "paragraph": 29
     },
     {
-      "start": 433.48,
-      "end": 438.043,
-      "text": "No arrows, no geometry at runtime — just a row of numbers and a.",
+      "start": 429.974,
+      "end": 434.769,
+      "text": "No arrows, no geometry at runtime — just a row of numbers and a shape.",
       "paragraph": 29
     },
     {
-      "start": 438.066,
-      "end": 438.658,
-      "text": "shape.",
-      "paragraph": 29
-    },
-    {
-      "start": 439.099,
-      "end": 450.071,
+      "start": 435.28,
+      "end": 446.692,
       "text": "That's why a wrong shape, not a wrong value, is what usually breaks a run — and the next lesson, on tensor shapes, shows how to compute that footprint before a job ever starts.",
       "paragraph": 29
     },
     {
-      "start": 450.674,
-      "end": 451.65,
+      "start": 447.644,
+      "end": 448.62,
       "text": "Put it together.",
       "paragraph": 30
     },
     {
-      "start": 451.859,
-      "end": 453.194,
+      "start": 449.003,
+      "end": 450.756,
       "text": "Read a shape as a rank.",
       "paragraph": 31
     },
     {
-      "start": 453.635,
-      "end": 460.926,
+      "start": 451.708,
+      "end": 459.487,
       "text": "Given [batch, seq, hidden], say the rank out loud and explain what \"one index per dimension\" means for reaching a single number.",
       "paragraph": 32
     },
     {
-      "start": 461.367,
-      "end": 463.387,
+      "start": 459.998,
+      "end": 462.296,
       "text": "Turn geometry into an array.",
       "paragraph": 33
     },
     {
-      "start": 463.898,
-      "end": 468.635,
+      "start": 462.621,
+      "end": 467.37,
       "text": "In the first sim, set the arrow flat on the floor, then lift it with Z.",
       "paragraph": 34
     },
     {
-      "start": 469.146,
-      "end": 473.801,
+      "start": 467.753,
+      "end": 472.629,
       "text": "Explain what \"adding a dimension\" did to the list of numbers the computer stores.",
       "paragraph": 34
     },
     {
-      "start": 474.405,
-      "end": 476.111,
+      "start": 473.07,
+      "end": 474.58,
       "text": "Scare yourself with rank.",
       "paragraph": 35
     },
     {
-      "start": 476.715,
-      "end": 481.452,
+      "start": 475.532,
+      "end": 480.501,
       "text": "In the second sim, step rank 1 → 2 → 3 at model scale.",
       "paragraph": 36
     },
     {
-      "start": 482.265,
-      "end": 493.236,
+      "start": 481.197,
+      "end": 491.519,
       "text": "State, in one sentence, why the jump from 32 MiB to 128 GiB happens — and what that predicts about activation tensors in a real run.",
       "paragraph": 36
     }
