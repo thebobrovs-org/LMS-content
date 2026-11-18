@@ -197,11 +197,10 @@ everything at once or filter to one store. A few rules apply:
 - Blended search is rate-limited in the Standard and Frontline editions; unlimited
   blended search needs the Plus edition.
 
-<Figure
-  src="/media/agentic-gemini-enterprise-data.svg"
-  alt="A Gemini Enterprise app connected to three data stores: a Google Drive connector (unstructured documents), a BigQuery table (structured rows) and a Jira connector (third-party, ingested, with an incremental sync every 3 hours). A query from a user signed in through the identity provider (IdP) fans out across all three stores in blended search. Before results reach the user, a permission filter keeps only documents that user may read, using the source's access lists (ACLs, or ACL metadata you add on import) and the user's identity. A website data store sits to the side, marked with a red cross, with the note: can't be connected here; site search is Agent Search."
-  caption="One app, three data stores, one blended query, and a permission filter before anything reaches the user."
-/>
+Step one query through the app below. Before the permission filter, predict whether
+a matching document the user can't open in Drive reaches their answer.
+
+<Simulation id="enterprise-data-flow" />
 
 ## Permission-aware retrieval
 

@@ -36,6 +36,8 @@ export const FIT = [
   "state-scope-explorer",
   "trajectory-match-explorer",
   "workflow-vs-agent-stepper",
+  "workflow-canvas-flow",
+  "enterprise-data-flow",
 ];
 /** On-kit sims still taller than the screen, each with its owner, until they're refitted and move to FIT. */
 export const NOT_YET = {

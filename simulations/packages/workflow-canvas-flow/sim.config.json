@@ -1,0 +1,12 @@
+{
+  "id": "workflow-canvas-flow",
+  "title": "A new-starter workflow, step by step",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-no-manager-branch",
+      "hint": "Predict, then step the new-starter workflow to the Condition's no branch: with no manager named, a Gemini Agent step replies asking for one and that run ends before the approval or any write."
+    }
+  ]
+}
