@@ -166,3 +166,50 @@ test("a list item wrapped over several lines is read as one sentence, not cut at
   const text = extractSpokenText("- **Tools** that let it read data or act: functions,\n  APIs, databases, even other agents.\n- A loop.\n  - nested item\n");
   assert.equal(text, "Tools that let it read data or act: functions, APIs, databases, even other agents. A loop. nested item.");
 });
+
+test("Sources, Suggested videos and similar sections are not narrated, up to the next heading of their level", () => {
+  const raw = `---
+title: T
+---
+Intro prose.
+
+## Why it matters
+
+Body prose.
+
+## Sources
+
+- Google, "Agents", example.com/agents.
+
+### A sub-heading under Sources
+
+Still skipped.
+
+## Suggested videos
+
+- A talk worth watching.
+
+## Further Reading:
+
+More links.
+
+## Put it together
+
+Closing prose.
+
+\`\`\`md
+## Sources
+\`\`\`
+
+## Resources at scale
+
+Read: a title that only starts like a skipped one.
+`;
+  const out = extractSpokenText(raw);
+  // Windows line endings narrate the same.
+  assert.equal(extractSpokenText(raw.replaceAll("\n", "\r\n")), out);
+  assert.equal(
+    out,
+    "Intro prose.\n\nWhy it matters.\n\nBody prose.\n\nPut it together.\n\nClosing prose.\n\nResources at scale.\n\nRead: a title that only starts like a skipped one.",
+  );
+});
