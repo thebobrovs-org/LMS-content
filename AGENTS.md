@@ -60,6 +60,10 @@ Merging is the PO's call: never merge without their go-ahead. Once they say go o
 
 Staging redeploys itself: when CI on main passes, its `content-merged` job dispatches the LMS Deploy workflow with the new commit (`scripts/notify-app.mjs`, secret `LMS_DISPATCH_TOKEN`). Concurrent staging deploys collapse to the newest, so a batch costs one wait, not one per PR. Production never deploys from this repo: it serves the content pinned in `LMS/content.lock.json` and moves only by a PR there plus the PO's manual promotion.
 
+## Building simulations with three agents
+
+Codex, agy and Claude build sims in parallel from [`simulations/BRIEFS.md`](simulations/BRIEFS.md). Before you start one, read [`skills/lms-authoring-simulations/SKILL.md`](skills/lms-authoring-simulations/SKILL.md). It says how to claim a brief (a draft PR titled `[sim:<id>]`), name the branch, get the PO's yes on the concept and the preview, and cross-review: the other two agents each post `Review by <agent>: APPROVE` or `CHANGES`. Only the PO merges.
+
 ## `risk:high` paths
 
 `pipeline/**` · `.github/**` · `scripts/gate.sh` · `.audit-allowlist.json` · checkpoint changes in `simulations/packages/*/sim.config.json` · dependency upgrades

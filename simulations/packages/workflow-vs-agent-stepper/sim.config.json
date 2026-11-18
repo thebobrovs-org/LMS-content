@@ -1,15 +1,14 @@
 {
   "id": "workflow-vs-agent-stepper",
   "title": "Workflow or agent stepper",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "props": {
-    "mode": { "type": "string", "default": "workflow" },
     "result": { "type": "string", "default": "unexpected" }
   },
   "checkpoints": [
     {
       "id": "observe-who-decides",
-      "hint": "Run the partly shipped order to the end as a fixed workflow and as an agent, and compare who chose each step."
+      "hint": "Step the partly shipped order to the end: the tram takes the rail its designer left, the model-driven car picks a step nobody wired."
     }
   ]
 }

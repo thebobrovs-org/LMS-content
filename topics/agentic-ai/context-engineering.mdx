@@ -475,13 +475,16 @@ failures from the evalset with the test settings above):
 
 ### Try it: cut the budget without losing the evidence
 
-The simulation below is the same late turn, 47,000 tokens, with the lesson's
-three evalset cases beside it. Predict first: which single cut breaks a case,
-and which case does it break?
+The simulation below packs the same late turn, 47,000 tokens, into a backpack,
+one block per component. Three gems ride inside: the evidence each evalset case
+needs (the `check_warranty` declaration, order id C9012 in the history, and the
+return-policy fact in retrieved chunk 7). A cut that drops a gem sends it to
+the "lost" tray, and its case fails. Predict first: if you compact the history
+and change nothing else, which case breaks?
 
-Then find a set of cuts that brings the turn to about 21,000 tokens or fewer
-with all three cases passing. Turn on caching last and watch what changes, and
-what does not.
+Then find a set of cuts that brings the turn under the goal line, about 21,000
+tokens, with all three gems still in the bag. Turn on caching last and watch
+what changes on the receipt, and what does not.
 
 <Simulation id="context-budget-explorer" />
 
