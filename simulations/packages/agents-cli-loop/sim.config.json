@@ -1,0 +1,12 @@
+{
+  "id": "agents-cli-loop",
+  "title": "The Agents CLI loop, phase by phase",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-loops-to-build",
+      "hint": "Predict where a failed evaluation sends the loop, then step the order-support agent around the whole loop: evaluation failures and production traces both go back to Build."
+    }
+  ]
+}

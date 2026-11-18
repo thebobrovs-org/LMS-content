@@ -161,14 +161,13 @@ walks the coding agent through them in order.
 | Publish to Gemini Enterprise | `google-agents-cli-publish` | `agents-cli publish gemini` |
 | Observe traces and logs | `google-agents-cli-observability` | None (built-in tracing) |
 
-The figure merges Deploy and Publish into one stage, and shows the two loops
+The simulation merges Deploy and Publish into one stage, and shows the two loops
 back to Build.
 
-<Figure
-  src="/media/agents-cli-lifecycle.svg"
-  alt="A loop of six phases, each with its skill and, where there is one, its command. Spec, with the workflow skill. Scaffold, with the scaffold skill and agents-cli create. Build and run, with the adk-code skill and agents-cli run or playground. Evaluate, with the eval skill and agents-cli eval run. Deploy and publish, with the deploy and publish skills and agents-cli deploy and publish gemini. An arrow from Evaluate back to Build is labelled fix and re-run. Observe, with the observability skill and built-in tracing to Cloud Trace, feeds what production traces show back into Build. A note says the workflow skill is always active and walks the coding agent through the loop."
-  caption="Evaluation failures and production traces both loop back to Build."
-/>
+Step the order-support agent round the loop below, with each phase's skill and
+command. First predict where a failed evaluation sends the coding agent.
+
+<Simulation id="agents-cli-loop" />
 
 Here is how that runs for an order-support agent that looks up orders and
 books carrier pickups, with a developer asking their coding agent to build it in

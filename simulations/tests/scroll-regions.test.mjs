@@ -42,6 +42,8 @@ const WIDTH_GUARDS = {
   "threat-defence-flow": [".scroll"],
   "capstone-architecture-explorer": [".scroll"],
   "customization-guarantees-flow": [".scroll"],
+  "context-loading-flow": [".scroll"],
+  "agents-cli-loop": [".scroll"],
   "access-boundary-explorer": [".scroll"],
   "context-budget-explorer": [".scroll"],
   "media-reference-explorer": [".scroll"],
