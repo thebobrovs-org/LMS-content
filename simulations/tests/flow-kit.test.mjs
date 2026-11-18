@@ -24,9 +24,9 @@ const SIM_KIT = fs.readFileSync(path.join(ROOT, "kit/sim-kit.css"), "utf8");
 export const ON_FLOW = ["hybrid-agent-flow"];
 
 // The 1100 px frame: #app pads 14 px, the stage panel 14 px plus a 1 px border; from 900 px the stage is two columns,
-// the right one minmax(260px, 32%), with a 16 px gap (sim-kit.css). Phones: 360 px less the same padding, and the
+// the right one 300 px in a flow sim (flow-kit.css), with a 16 px gap. Phones: 360 px less the same padding, and the
 // lesson's narrowest frame (286 px, LMS-content#130) less it too.
-const LAPTOP_COLUMN = (() => { const inner = 1100 - 2 * 14 - 2 * 15; return Math.floor(inner - 16 - Math.max(260, inner * 0.32)); })();
+const LAPTOP_COLUMN = (() => { const inner = 1100 - 2 * 14 - 2 * 15; return Math.floor(inner - 16 - 300); })();
 const LAPTOP_HEIGHT = 380;
 const NARROW = [360 - 58, 286 - 58];
 
@@ -66,8 +66,9 @@ const fitsBoxes = (FlowKit, spec, L, where) => {
   for (const r of Object.values(L.routes)) assert.equal(r.hits, 0, `${where}: the arrow ${r.id} crosses a box`);
   for (const n of spec.nodes) {
     const b = L.boxes[n.id];
-    assert.ok(FlowKit.textWidth(n.label, 12, true) <= b.w - 10, `${where}: "${n.label}" doesn't fit its ${b.w} px box`);
-    if (n.sub) assert.ok(FlowKit.textWidth(n.sub, 10.5, false) <= b.w - 10, `${where}: "${n.sub}" doesn't fit its ${b.w} px box`);
+    const room = FlowKit.textRoom(n, b.w, L.icons);
+    assert.ok(FlowKit.textWidth(n.label, 12, true) <= room, `${where}: "${n.label}" doesn't fit the ${room} px its box leaves for text`);
+    if (n.sub) assert.ok(FlowKit.textWidth(n.sub, 10.5, false) <= room, `${where}: "${n.sub}" doesn't fit the ${room} px its box leaves for text`);
   }
   for (const z of spec.zones || []) {
     const b = L.zones[z.id];
@@ -93,6 +94,7 @@ for (const id of ON_FLOW) {
     const spec = specOf(id);
     const L = FlowKit.layout(spec, LAPTOP_COLUMN);
     assert.equal(L.narrow, false);
+    if (spec.nodes.some((n) => n.icon)) assert.equal(L.icons, true, `${id}: the boxes are too narrow for their icons on a laptop; shorten the labels or widen cellWidth`);
     assert.ok(L.width <= LAPTOP_COLUMN, `${id}: the drawing is ${L.width} px wide, over the ${LAPTOP_COLUMN} px column, so it would shrink; narrow cellWidth`);
     assert.ok(L.height <= LAPTOP_HEIGHT, `${id}: the drawing is ${L.height} px tall, over ${LAPTOP_HEIGHT}, so it would shrink; use fewer rows`);
     fitsBoxes(FlowKit, spec, L, `${id} (laptop)`);
@@ -119,7 +121,7 @@ for (const id of ON_FLOW) {
     for (let i = 1; i <= spec.steps.length; i++) {
       await sim.press("#step");
       await sim.advance(2000);
-      assert.equal(text("#caption"), spec.steps[i - 1].text);
+      assert.equal(text("#caption"), `Step ${i} of ${spec.steps.length} · ${spec.steps[i - 1].label}${spec.steps[i - 1].text}`);
       assert.equal(sim.find(`[data-step="${i}"]`).getAttribute("aria-current"), "step");
       assert.equal(sim.doc.activeElement, sim.find("#step"), "Step keeps focus");
       if (i < spec.predict.revealAt) assert.equal(text("#verdict"), "");
@@ -132,6 +134,26 @@ for (const id of ON_FLOW) {
     await sim.press("#reset");
     assert.equal(text("#caption"), spec.intro);
     assert.equal(text("#verdict"), "");
+  });
+
+  test(`${id}: Play steps to the end on its own, then stops; any other control stops it first`, async () => {
+    const spec = specOf(id);
+    const sim = await loadSim(id);
+    const at = () => sim.doc.querySelectorAll("[aria-current]").map((b) => b.getAttribute("data-step"));
+    await sim.press("#play");
+    assert.equal(sim.find("#play").textContent, "Pause");
+    await sim.advance(60000);
+    assert.deepEqual(at(), [String(spec.steps.length)]);
+    assert.equal(sim.find("#play").textContent, "Play");
+    assert.equal(sim.doc.activeElement, sim.find("#play"), "Play keeps focus");
+    await sim.press('[data-step="0"]');
+    await sim.press("#play");
+    await sim.advance(100);
+    await sim.press("#back");
+    await sim.advance(60000);
+    assert.deepEqual(at(), ["0"], "Back stopped the run at the overview");
+    await sim.press("#speed");
+    assert.equal(sim.find("#speed").textContent, "1.5×");
   });
 
   test(`${id}: the token runs a step's arrows once and stops at the end`, async () => {

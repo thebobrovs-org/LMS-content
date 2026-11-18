@@ -16,7 +16,32 @@ var FlowKit = (function () {
 
   // ---- Text measure: average glyph widths of the kit's system sans (Inter, Segoe UI, SF) --------------
   function textWidth(s, size, bold) {
-    return String(s).length * size * (bold ? 0.6 : 0.54);
+    return String(s).length * size * (bold ? 0.58 : 0.56);
+  }
+
+  // ---- Icons: a small inline set, drawn as 1.5 px strokes in the box's hue (24-unit grid) -------------
+  var ICONS = {
+    person: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>',
+    people: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M15.5 4.6a3.5 3.5 0 0 1 0 6.8M18 14.4c2.1.8 3.5 2.8 3.5 5.6"/>',
+    server: '<rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01"/>',
+    database: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+    agent: '<path d="M12 3l2 5.5 5.5 2-5.5 2-2 5.5-2-5.5-5.5-2 5.5-2z"/><path d="M19 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>',
+    bot: '<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/><path d="M9 13v2M15 13v2"/>',
+    shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+    chip: '<rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5"/><path d="M9 2.5v3.5M15 2.5v3.5M9 18v3.5M15 18v3.5M2.5 9h3.5M2.5 15h3.5M18 9h3.5M18 15h3.5"/>',
+    cloud: '<path d="M7 18h10a4 4 0 0 0 .6-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z"/>',
+    flow: '<rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="15" width="6" height="6" rx="1"/><path d="M9 6h4a2 2 0 0 1 2 2v7"/>',
+    tool: '<path d="M14.5 5.5a4 4 0 0 0-5 5L4 16v4h4l5.5-5.5a4 4 0 0 0 5-5l-2.5 2.5-2.5-.5-.5-2.5z"/>',
+    key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M14 9l2 2"/>',
+    lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    doc: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>',
+    globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18-3-3-3-15 0-18"/>',
+    chat: '<path d="M4 5h16v11H9l-5 4z"/>',
+    check: '<path d="M9 13l2 2 4-4"/><rect x="4" y="4" width="16" height="16" rx="4"/>',
+  };
+  /** The width a box leaves for its text: all of it, less the icon well when it has an icon. */
+  function textRoom(node, w, icons) {
+    return node.icon && icons !== false ? w - 50 : w - 12;
   }
 
   // ---- Spec checks (the gate runs these too) ---------------------------------------------------------
@@ -44,6 +69,7 @@ var FlowKit = (function () {
         cells[key] = n.id;
       }
       if (n.hue && HUES.indexOf(n.hue) < 0) out.push("node " + n.id + ": no kit hue " + n.hue);
+      if (n.icon && !ICONS[n.icon]) out.push("node " + n.id + ": no icon " + n.icon + " (the kit has " + Object.keys(ICONS).join(", ") + ")");
     });
     // A zone is the rectangle of cells around its boxes; a box of another zone can't sit inside it.
     (spec.zones || []).forEach(function (z) {
@@ -130,7 +156,7 @@ var FlowKit = (function () {
       var cells = reflow(spec, cols);
       var extra = geometry(spec, cells, 0, SIDE, true, false).width;
       var cellW = Math.min(cols === 1 ? 2 * MAX_CELL : MAX_CELL, Math.floor((width - extra) / cols));
-      if (cols === 2 && (cellW < MIN_CELL || cellW < widest(spec) + 16)) continue;
+      if (cols === 2 && (cellW < MIN_CELL || cellW < widest(spec))) continue;
       return geometry(spec, cells, cellW, SIDE, true, true);
     }
   }
@@ -234,12 +260,21 @@ var FlowKit = (function () {
       b.titleX = b.titleClear ? tx : b.x + 9; // no clear gap: left, over the arrows, on its halo
       b.titleW = tw;
     });
-    return { narrow: narrow, width: Math.ceil(W), height: Math.ceil(H), boxes: boxes, zones: zoneBoxes, routes: routes };
+    // A narrow frame too tight for the icon wells drops them, so the labels keep their full size.
+    var icons = spec.nodes.every(function (n) {
+      var t = Math.max(textWidth(n.label, 12, true), n.sub ? textWidth(n.sub, 10.5, false) : 0);
+      return t <= textRoom(n, cellW, true);
+    });
+    return { narrow: narrow, icons: icons, width: Math.ceil(W), height: Math.ceil(H), boxes: boxes, zones: zoneBoxes, routes: routes };
   }
 
+  /** The narrowest box every label fits in. */
   function widest(spec) {
     var w = 0;
-    spec.nodes.forEach(function (n) { w = Math.max(w, textWidth(n.label, 12, true), n.sub ? textWidth(n.sub, 10.5, false) : 0); });
+    spec.nodes.forEach(function (n) {
+      var t = Math.max(textWidth(n.label, 12, true), n.sub ? textWidth(n.sub, 10.5, false) : 0);
+      w = Math.max(w, t + (n.icon ? 50 : 12));
+    });
     return w;
   }
 
@@ -408,6 +443,8 @@ var FlowKit = (function () {
 
   function drawSvg(spec, L) {
     var parts = [];
+    var firstStep = {};
+    (spec.steps || []).forEach(function (st, i) { (st.edges || []).forEach(function (id) { if (!firstStep[id]) firstStep[id] = i + 1; }); });
     var zoneList = (spec.zones || []).slice().sort(function (a, b) { return chainOf(spec, a.id).length - chainOf(spec, b.id).length; });
     zoneList.forEach(function (z) {
       var b = L.zones[z.id];
@@ -426,23 +463,33 @@ var FlowKit = (function () {
       var dx = Math.sign(tip[0] - from[0]), dy = Math.sign(tip[1] - from[1]);
       var head = "M" + tip[0] + " " + tip[1] + " L" + (tip[0] - dx * 8 - dy * 4) + " " + (tip[1] - dy * 8 - dx * 4) + " L" + (tip[0] - dx * 8 + dy * 4) + " " + (tip[1] - dy * 8 + dx * 4) + " Z";
       var label = "";
-      if (e.label) {
-        var w = textWidth(e.label, 10.5, false) + 10;
-        var spot = labelSpot(r.pts, w, L.width);
-        label = '<g class="fk-lbl" transform="translate(' + spot.x + "," + spot.y + ')"><rect x="' + (-w / 2) + '" y="-8" width="' + w + '" height="16" rx="8"/><text class="k-small" y="3.5">' + esc(e.label) + "</text></g>";
+      var num = firstStep[e.id];
+      if (e.label || num) {
+        // A numbered badge (the step that first runs this arrow), then the label, in one pill.
+        var tw = e.label ? textWidth(e.label, 10.5, false) : 0;
+        var w = (num ? 18 : 0) + (e.label ? tw + 10 : 0) + (num && !e.label ? 0 : 0);
+        var spot = labelSpot(r.pts, Math.max(w, 18), L.width);
+        var x0 = -w / 2;
+        label = '<g class="fk-lbl" transform="translate(' + spot.x + "," + spot.y + ')">' +
+          (e.label ? '<rect x="' + x0 + '" y="-8" width="' + w + '" height="16" rx="8"/>' : "") +
+          (num ? '<circle class="fk-num" cx="' + (x0 + 8) + '" cy="0" r="7"/><text class="fk-num-t" x="' + (x0 + 8) + '" y="3.5">' + num + "</text>" : "") +
+          (e.label ? '<text class="k-small" x="' + (x0 + (num ? 18 : 5) + tw / 2) + '" y="3.5">' + esc(e.label) + "</text>" : "") + "</g>";
       }
       parts.push('<g class="fk-edge" data-edge="' + esc(e.id) + '"><path class="fk-line" d="' + d + '"/><path class="fk-head" d="' + head + '"/>' + label + "</g>");
     });
     spec.nodes.forEach(function (nd) {
       var b = L.boxes[nd.id];
       var hue = nd.hue || (spec.zones || []).filter(function (z) { return z.id === nd.zone; }).map(function (z) { return z.hue; })[0] || "neutral";
-      var cx = b.x + b.w / 2;
-      parts.push('<g class="fk-node fk-h-' + hue + '" data-node="' + esc(nd.id) + '"><rect class="fk-box" x="' + b.x + '" y="' + b.y + '" width="' + b.w + '" height="' + b.h + '" rx="8"/>' +
-        '<text class="k-label" x="' + cx + '" y="' + (b.y + (nd.sub ? 19 : 27)) + '">' + esc(nd.label) + "</text>" +
-        (nd.sub ? '<text class="k-small" x="' + cx + '" y="' + (b.y + 35) + '">' + esc(nd.sub) + "</text>" : "") + "</g>");
+      var icon = L.icons && nd.icon && ICONS[nd.icon];
+      var tx = icon ? b.x + 42 : b.x + b.w / 2;
+      parts.push('<g class="fk-node fk-h-' + hue + (icon ? " fk-has-icon" : "") + '" data-node="' + esc(nd.id) + '"><rect class="fk-box" x="' + b.x + '" y="' + b.y + '" width="' + b.w + '" height="' + b.h + '" rx="8"/>' +
+        (icon ? '<rect class="fk-well" x="' + (b.x + 8) + '" y="' + (b.y + 10) + '" width="26" height="26" rx="6"/><g class="fk-icon" transform="translate(' + (b.x + 12) + "," + (b.y + 14) + ') scale(.75)">' + icon + "</g>" : "") +
+        '<text class="k-label" x="' + tx + '" y="' + (b.y + (nd.sub ? 20 : 27)) + '">' + esc(nd.label) + "</text>" +
+        (nd.sub ? '<text class="k-small" x="' + tx + '" y="' + (b.y + 35) + '">' + esc(nd.sub) + "</text>" : "") + "</g>");
     });
     parts.push('<g class="fk-titles">' + titles + "</g>");
     parts.push('<circle class="fk-token" id="fk-token" r="6" cx="-20" cy="-20"/>');
+    parts.push('<g class="fk-check" id="fk-check" transform="translate(-40,-40)"><circle r="8"/><path d="M-3.5 0l2.5 2.5 4.5-5"/></g>');
     return parts.join("");
   }
 
@@ -450,7 +497,7 @@ var FlowKit = (function () {
   function mount(spec) {
     var app = document.getElementById("app");
     var steps = spec.steps;
-    var state = { step: 0, picked: null, fired: false, reduced: false, mode: null, anim: 0 };
+    var state = { step: 0, picked: null, fired: false, reduced: false, mode: null, anim: 0, playing: false, timer: 0, speed: 1 };
     var L = null;
     var els = {};
     var sim = window.createSim({
@@ -479,24 +526,34 @@ var FlowKit = (function () {
           p.options.map(function (o) { return '<button class="chip" type="button" data-predict="' + esc(o.id) + '" aria-pressed="false">' + esc(o.label) + "</button>"; }).join("") +
           '</div><p class="verdict" id="verdict"></p></details>' : "") +
         '<section class="panel stage"><div class="view scroll" tabindex="0" role="region" aria-label="Diagram"><svg id="svg" role="img" aria-label="' + esc(spec.title) + '"></svg></div>' +
-        '<div class="side"><p class="caption" id="caption" role="status"></p>' +
-        '<nav class="fk-steps" aria-label="Steps">' + steps.map(function (s, i) { return '<button class="pill" type="button" data-step="' + (i + 1) + '">' + (i + 1) + " · " + esc(s.label) + "</button>"; }).join("") + "</nav>" +
-        '<div class="controls"><div class="buttons"><button type="button" id="back">Back</button><button type="button" id="step" class="primary">Step</button><button type="button" id="reset">Reset</button></div></div>' +
+        '<div class="side"><p class="caption" id="caption" role="status"><strong class="fk-cap-h" id="cap-h"></strong><span id="cap-t"></span></p>' +
+        '<nav class="fk-steps" aria-label="Steps"><button class="pill" type="button" data-step="0">Overview</button>' + steps.map(function (s, i) { return '<button class="pill" type="button" data-step="' + (i + 1) + '">' + (i + 1) + " · " + esc(s.label) + "</button>"; }).join("") + "</nav>" +
+        '<div class="controls fk-ctl"><div class="buttons"><button type="button" id="back">Back</button><button type="button" id="step" class="primary">Step</button><button type="button" id="play">Play</button><button type="button" id="speed" aria-label="Speed 1x">1×</button><button type="button" id="reset">Reset</button></div></div>' +
         '<p class="fk-readout" id="readout"></p></div></section>' +
         (spec.legend ? '<p class="legend">' + esc(spec.legend) + "</p>" : "");
       els.svg = app.querySelector("#svg");
-      els.caption = app.querySelector("#caption");
+      els.capH = app.querySelector("#cap-h");
+      els.capT = app.querySelector("#cap-t");
       els.readout = app.querySelector("#readout");
       els.verdict = app.querySelector("#verdict");
       els.view = app.querySelector(".view");
       els.pills = Array.prototype.slice.call(app.querySelectorAll("[data-step]"));
       els.chips = Array.prototype.slice.call(app.querySelectorAll("[data-predict]"));
-      app.querySelector("#step").addEventListener("click", function () { go(Math.min(steps.length, state.step + 1)); });
-      app.querySelector("#back").addEventListener("click", function () { go(Math.max(0, state.step - 1)); });
-      app.querySelector("#reset").addEventListener("click", function () { state.picked = null; go(0); });
-      els.pills.forEach(function (b) { b.addEventListener("click", function () { go(+b.getAttribute("data-step")); }); });
+      els.play = app.querySelector("#play");
+      els.speed = app.querySelector("#speed");
+      app.querySelector("#step").addEventListener("click", function () { stop(); go(Math.min(steps.length, state.step + 1)); });
+      app.querySelector("#back").addEventListener("click", function () { stop(); go(Math.max(0, state.step - 1)); });
+      app.querySelector("#reset").addEventListener("click", function () { stop(); state.picked = null; go(0); });
+      els.play.addEventListener("click", function () { if (state.playing) stop(); else play(); });
+      els.speed.addEventListener("click", function () {
+        var speeds = [1, 1.5, 2, 0.5];
+        state.speed = speeds[(speeds.indexOf(state.speed) + 1) % speeds.length];
+        els.speed.textContent = state.speed + "×";
+        els.speed.setAttribute("aria-label", "Speed " + state.speed + "x");
+      });
+      els.pills.forEach(function (b) { b.addEventListener("click", function () { stop(); go(+b.getAttribute("data-step")); }); });
       els.chips.forEach(function (b) { b.addEventListener("click", function () { state.picked = b.getAttribute("data-predict"); update(); }); });
-      document.addEventListener("visibilitychange", function () { if (document.hidden) finishMotion(); });
+      document.addEventListener("visibilitychange", function () { if (document.hidden) { stop(); finishMotion(); } });
       if (typeof ResizeObserver === "function") new ResizeObserver(function () { draw(false); }).observe(els.view);
       draw(true);
       update();
@@ -550,11 +607,12 @@ var FlowKit = (function () {
 
     function update() {
       var s = steps[state.step - 1];
-      els.caption.textContent = s ? s.text : spec.intro;
+      els.capH.textContent = s ? "Step " + state.step + " of " + steps.length + " · " + s.label : "";
+      els.capT.textContent = s ? s.text : spec.intro;
       els.readout.textContent = s && s.readout ? s.readout : spec.readout || "";
       els.readout.hidden = !els.readout.textContent;
       els.pills.forEach(function (b, i) {
-        if (i === state.step - 1) b.setAttribute("aria-current", "step");
+        if (i === state.step) b.setAttribute("aria-current", "step");
         else b.removeAttribute("aria-current");
       });
       els.chips.forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-predict") === state.picked)); });
@@ -584,6 +642,11 @@ var FlowKit = (function () {
       var tok = els.svg.querySelector("#fk-token");
       var pts = stepPath(steps[state.step - 1]);
       if (!tok) return;
+      // The check badge sits on the box the step reaches, once the token is there.
+      var chk = els.svg.querySelector("#fk-check");
+      var s = steps[state.step - 1];
+      var b = s && s.at && t >= 1 ? L.boxes[s.at] : null;
+      if (chk) chk.setAttribute("transform", b ? "translate(" + (b.x + b.w - 4) + "," + (b.y + 4) + ")" : "translate(-40,-40)");
       if (!pts.length) { tok.setAttribute("cx", "-20"); tok.setAttribute("cy", "-20"); return; }
       var q = pointAt(pts, pathLength(pts) * t);
       tok.setAttribute("cx", String(Math.round(q[0] * 10) / 10));
@@ -594,11 +657,31 @@ var FlowKit = (function () {
       state.anim = 0;
       placeToken(1);
     }
+    /** Play: step on from here to the end, one step each beat; any other control stops it. */
+    function play() {
+      state.playing = true;
+      els.play.textContent = "Pause";
+      if (state.step >= steps.length) go(0);
+      beat();
+    }
+    function beat() {
+      if (!state.playing) return;
+      if (state.step >= steps.length) { stop(); return; }
+      go(state.step + 1);
+      var s = steps[state.step - 1];
+      var wait = (Math.min(1400, 450 * ((s && s.edges) || []).length) + 1400) / state.speed;
+      state.timer = setTimeout(beat, wait);
+    }
+    function stop() {
+      if (state.timer) clearTimeout(state.timer);
+      state.timer = 0;
+      if (state.playing) { state.playing = false; els.play.textContent = "Play"; }
+    }
     function animate(s) {
       finishMotion();
       var reducedNow = state.reduced || (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
       if (reducedNow || document.hidden || !s || !(s.edges || []).length) return;
-      var dur = Math.min(1400, 450 * s.edges.length);
+      var dur = Math.min(1400, 450 * s.edges.length) / state.speed;
       var t0 = null;
       var tick = function (now) {
         if (t0 === null) t0 = now;
@@ -610,6 +693,6 @@ var FlowKit = (function () {
     }
   }
 
-  return { mount: mount, layout: layout, check: check, textWidth: textWidth, segHitsRect: segHitsRect, NARROW_BELOW: NARROW_BELOW, NODE_H: NODE_H };
+  return { mount: mount, layout: layout, check: check, textWidth: textWidth, textRoom: textRoom, icons: Object.keys(ICONS), NARROW_BELOW: NARROW_BELOW, NODE_H: NODE_H };
 })();
 /* end flow-kit v1 */
