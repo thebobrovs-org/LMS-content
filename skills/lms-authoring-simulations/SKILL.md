@@ -109,9 +109,10 @@ The exemplars show the bar for richness, not a look to copy: **`approval-gate-ex
    The thing we *don't* want isn't ambition, it's cruft: off-brand themes, CDN
    frameworks, quest games, and runaway height. Pure explanation/comparison
    belongs in the **lesson prose**, not padded into the sim.
-3. **Focused & self-sizing.** One interactive idea; the sim **grows to its
+3. **Focused & self-sizing, inside one laptop screen.** One interactive idea; the sim **grows to its
    content** via `requestAnimationFrame(() => sim.resize(document.body.scrollHeight + 8))`
-   after every render — no clipping, no runaway scroll. It's an **embed**, not a
+   after every render — no clipping, no runaway scroll — and that content **fits in 600 px of
+   height** on a 1280×720 laptop (see "Fit the screen" below). It's an **embed**, not a
    page: no site chrome (header/sticky nav), no unrelated panels.
 4. **On-theme, plain CSS only.** Start `style.css` with the sim kit (see "One visual style"
    below) and apply the host `theme` via `document.documentElement.dataset.theme`. **No CSS frameworks or CDNs**
@@ -125,7 +126,9 @@ The exemplars show the bar for richness, not a look to copy: **`approval-gate-ex
    `precision-and-memory` does). A sentence of "predict first" prose doesn't count. In the
    sim, show their pick beside the outcome and say why it was right or wrong.
 7. **Anatomy.** Usually predict → drawing → caption (`role="status"`) → controls →
-   readout → one-line `legend`. Change the order when the idea needs it.
+   readout → one-line `legend`. From 900 px wide the drawing sits on the left and the caption
+   and controls beside it, so a change never scrolls the drawing away. Change the order when
+   the idea needs it.
 8. **Deterministic core.** Derive behavior from inputs/props (e.g. a small hash),
    not runtime randomness, so results are reproducible and explainable.
 9. **Interaction & a11y.** One primary action + a few controls + **Reset**;
@@ -160,7 +163,7 @@ look doesn't. The look lives in one file, [`simulations/kit/sim-kit.css`](../../
 - **Controls.** Pills (`.chip` with `aria-pressed`) for choices; exactly one `button.primary`
   for the main action; plain buttons for the rest (Step, Reset). Sliders use the kit's
   `input[type=range]`. Never disable a control that can hold focus.
-- **The frame.** A `.panel.predict` card first (question + chips + `.verdict`), then a
+- **The frame.** A `details.panel.predict` card first (question + chips + `.verdict`), then a
   `.panel.stage` with the drawing (`.scroll` around a wide SVG), the `.caption`
   (`role="status"`) and the `.controls`, then any result panels, then one `.legend` line.
 - **Motion.** Short one-shot transitions or animations, about `var(--dur)` (0.6 s), started by
@@ -170,6 +173,33 @@ look doesn't. The look lives in one file, [`simulations/kit/sim-kit.css`](../../
 
 [`reference/style-side-by-side.jpg`](reference/style-side-by-side.jpg) shows four sims on the
 kit, light and dark: four different drawings, one look.
+
+## Fit the screen
+
+Most learners use a laptop. On a 1280×720 screen the browser leaves about 600 px of height for
+the sim, and the LMS frame stops at 85% of the window. A sim the learner has to scroll to see
+both the control they just moved and what it changed doesn't teach anything. So:
+
+- **The whole sim fits in 600 px** at the laptop frame width (1100 px), at the start and after
+  the longest run, with the caption and controls on that screen. `npm run gate` checks it in
+  Chromium (`scripts/sim-fit.mjs`, which runs Step to the end or presses the primary button):
+  add a new sim to its `FIT` list. The preview (`scripts/sim-preview.mjs`) is 1100 px wide too.
+- **Controls beside the drawing from 900 px.** The kit (v2) makes `.panel.stage` two columns
+  at 900 px and wider: the drawing (`.scroll`, `.scene` or a `.view` wrapper) on the left,
+  capped at **380 px** tall, and the caption and controls in the right column. When a stage
+  holds more than a caption under its drawing, wrap the left column in `.view` and the right in
+  `.side`. Below 900 px it stacks: drawing, caption, controls.
+- **Fold what isn't the experiment.** The predict card is a `<details class="panel predict" open>`
+  with the question as its `<summary class="q">`, so the learner can fold it after answering.
+  A secondary panel (a breakdown, an eval list) is a `<details class="panel more">`. Keep
+  the predict question to one line at 1100 px.
+- **A log scrolls in its own region.** A step log or handler list that grows with a run gets a
+  `max-height` and `overflow-y: auto`, `tabindex="0"`, a role and a name, is registered as a
+  `TEXT_REGION` in `simulations/tests/scroll-regions.test.mjs`, and keeps its newest or current
+  row in view by setting `scrollTop` (never `scrollIntoView`, which also moves the host page).
+- **No phone `min-width` on the drawing.** A fixed `min-width` forces a sideways scroll on a phone
+  and a taller frame everywhere; let the SVG scale with its `viewBox` instead. Keep labels at
+  a size that still reads at 360 px, or drop secondary labels there with a media query.
 
 ## The lesson around the sim
 
@@ -187,6 +217,9 @@ kit, light and dark: four different drawings, one look.
 - [ ] A drawing that shows the idea, not a list of rows; a predict step the learner commits to.
 - [ ] The misconception is reachable in three actions or fewer.
 - [ ] Self-sizing (grows to content via `sim.resize`); no clipping or runaway scroll; no page chrome.
+- [ ] Fits the screen: at 1100 px wide the whole sim is at most 600 px tall, before and after a
+      full run; controls and the caption sit beside the drawing; the predict card folds; any log
+      scrolls in its own region.
 - [ ] Matches the style guide: `style.css` starts with the sim kit, the sim's own rules use only kit
       tokens with their meanings, and the drawing is flat with kit strokes and radii; correct in light + dark.
 - [ ] Every text colour reads at **4.5:1** on what it sits on, in both modes (3:1 for

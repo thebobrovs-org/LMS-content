@@ -24,9 +24,9 @@ Update your row in your own PR. Statuses: `open` → `concept` → `building` �
 | B03 | Pack the backpack, keep the gems (redesign of `context-budget-explorer`) | context-engineering | merged | claude | #199 |
 | B04 | Rails or a driver (redesign of `workflow-vs-agent-stepper`) | what-is-an-agent | merged | claude | #200 |
 | B05 | Media by reference | context-engineering | merged | codex | #195 |
-| B06 | Grounded but wrong: retrieval precision and recall (upgrade of `rag-retrieval-tuner`) | rag-pipelines | review | claude | #204 |
+| B06 | Grounded but wrong: retrieval precision and recall (upgrade of `rag-retrieval-tuner`) | rag-pipelines | merged | claude | #204 |
 | B07 | Least privilege and the access boundary | agent-identity-and-access | merged | codex | #197 |
-| B08 | Whose authority: the 3-legged OAuth pause | agent-auth-oauth | open | | |
+| B08 | Whose authority: the 3-legged OAuth pause | agent-auth-oauth | merged | claude | #213 |
 | B09 | Hook pipeline | customizing-coding-agents | open | | |
 | B10 | What each guardrail can see | guardrails-model-armor-hitl | review | codex | #206 |
 | B11 | Scaling and cost | deploying-agents | open | | |

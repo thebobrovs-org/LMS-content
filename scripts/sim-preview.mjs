@@ -43,7 +43,7 @@ process.stdout.write(`<!doctype html>
 <title>${title} (preview)</title>
 <style>
 ${inline(read("style.css"))}
-#app { max-width: 760px; margin: 0 auto; }
+#app { max-width: 1100px; margin: 0 auto; } /* the LMS frame on a 1280x720 laptop */
 </style>
 </head>
 <body>

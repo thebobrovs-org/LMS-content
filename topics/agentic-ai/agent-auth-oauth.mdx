@@ -150,11 +150,16 @@ tools can be configured to send one.
 
 ## Two legs or three
 
-<Figure
-  src="/media/agent-oauth-2lo-3lo.svg"
-  alt="Two sequence diagrams. Top, two-legged OAuth, where the agent acts as itself: 1, the agent built with ADK sends its own client credentials to the authorisation server; 2, the server returns an access token; 3, the agent calls the API with the token; 4, the API returns the agent's own resources. Bottom, three-legged OAuth, where the agent acts for a user with consent: 1, the agent pauses and sends adk_request_credential to the agent client app; 2, the app opens the consent page for the user; 3, the user signs in and consents at the authorisation server, the only place the password goes; 4, the server redirects to the client app with an authorisation code; 5, the app sends the auth response back to the agent; 6, the agent exchanges the code for a token at the authorisation server; 7, the server returns an access token with the user's scopes; 8, the agent retries the tool call to the API with the token."
-  caption="Two-legged OAuth uses the agent's own authority; three-legged uses a user's, with their consent."
-/>
+Before the definitions, follow one tool call that needs a credential. Predict
+who sees Ana's password, then step through **Ana's mailbox (3LO)**, **Agent's
+own bucket** and **Ask for the password**, and watch what crosses the amber
+credential boundary around the agent and its client app.
+
+<Simulation id="oauth-consent-pause" />
+
+**Explain it:** in Ana's mailbox flow, a code and a token cross the boundary
+but the password never does. Where does Ana type it, and why does the agent
+have to pause and wait instead of asking her for it?
 
 **Two-legged OAuth (2LO)** and **three-legged OAuth (3LO)** are common
 shorthand, used in Google's documentation, for two OAuth grants.
@@ -162,8 +167,11 @@ shorthand, used in Google's documentation, for two OAuth grants.
 **Two-legged OAuth (2LO)** uses the **client credentials** grant. The agent
 authenticates as itself, with no user involved, and gets a token for resources
 under its own control. Use it when the agent acts as itself: writing to its own
-bucket, calling an internal API on its own behalf. On Google Cloud, the agent's
-own identity with a narrow role usually plays this part.
+bucket, calling an internal API on its own behalf. On Google Cloud the agent
+usually does this as its **service account** rather than with a client secret:
+it gets a token by signing a JWT (the JWT bearer grant) or from the metadata
+server, and Application Default Credentials picks the method for you. Either
+way no user is involved, so the shape is the same: the agent's own authority.
 
 **Three-legged OAuth (3LO)** uses the **authorisation code** grant with user
 consent. The third leg is the user. The user signs in at the authorisation
@@ -265,13 +273,35 @@ development.
 
 <Callout type="warning">A common trap: "the user can just give the agent their password". Then the agent holds a credential that does everything the user can do, until the password changes, and the model has seen it. Three-legged OAuth gives it a token for only the scopes the user approved, which the user can usually revoke at the provider.</Callout>
 
+### Put it together
+
+<Steps>
+<Step id="oauth-sim-predict-consent" title="Predict, then follow the pause">
+In Whose authority: the consent pause, pick who sees Ana's password, then press
+Next step through Ana's mailbox (3LO). Stop at step 3 and check your pick
+against where the password goes. Then step on to 10 and name the three things
+that cross the credential boundary.
+</Step>
+<Step id="oauth-sim-follow-the-code" title="Follow the code, then the token">
+Step back to 4 and forward again, watching Who holds what. Say who holds the
+code at steps 4, 5 and 6, why it is spent after step 7, and which scope the
+token at step 8 carries.
+</Step>
+<Step id="oauth-sim-own-and-shortcut" title="Compare the agent's own authority and the shortcut">
+Switch to Agent's own bucket and step to the end: which columns go unused, and
+why is there no pause? Then try Ask for the password and step to 3. Explain
+why the boundary turns red, and what the agent can now do that the 3LO token
+could not.
+</Step>
+</Steps>
+
 ## Recap
 
 - OAuth 2.0 authorises access with tokens; OpenID Connect adds an ID token that
   says who the user is.
-- Two-legged (client credentials): the agent acts as itself. Three-legged
-  (authorisation code with consent): the agent acts for a user, on that user's
-  data.
+- Two-legged (client credentials, or a service account on Google Cloud): the
+  agent acts as itself. Three-legged (authorisation code with consent): the
+  agent acts for a user, on that user's data.
 - In ADK, an AuthConfig pairs an AuthScheme and an AuthCredential. A
   three-legged tool pauses with `adk_request_credential`, the client app gets
   consent, and ADK exchanges the code and retries the call. The agent never
@@ -283,6 +313,8 @@ development.
 - IETF, RFC 6749, "The OAuth 2.0 Authorization Framework", rfc-editor.org/rfc/rfc6749 (retrieved 2026-11-17: the abstract, "obtain limited access to an HTTP service, either on behalf of a resource owner … or … on its own behalf"; section 1.3.1, "the resource owner's credentials are never shared with the client"; section 1.3.4, client credentials for resources under the client's control; section 1.4, access tokens; section 3.3, access token scope).
 - OpenID Foundation, "OpenID Connect Core 1.0 incorporating errata set 2", openid.net/specs/openid-connect-core-1_0.html (retrieved 2026-11-17: "a simple identity layer on top of the OAuth 2.0 protocol"; the ID Token "contains Claims about the Authentication of an End-User").
 - Google, Agent Development Kit documentation, "Authenticating with tools", github.com/google/adk-docs/blob/main/docs/tools-custom/authentication.md (retrieved 2026-11-17: authentication manager services recommended for production; AuthScheme, AuthCredential and credential types; OAuth 2.0 authorisation code and client credentials examples; AuthConfig at toolset level; the adk_request_credential pause, redirect, auth response and automatic retry).
+- Google, "Using OAuth 2.0 for Server to Server Applications", developers.google.com/identity/protocols/oauth2/service-account (retrieved 2026-11-18: a service account creates a JWT signed with RS256 and posts it to https://oauth2.googleapis.com/token with grant_type urn:ietf:params:oauth:grant-type:jwt-bearer; client libraries abstract this, and on Google Cloud Application Default Credentials can be used instead).
+- Google Cloud, "How Application Default Credentials works", docs.cloud.google.com/docs/authentication/application-default-credentials (retrieved 2026-11-18: the attached service account is found through the metadata server, "the preferred method for finding credentials in a production environment on Google Cloud").
 - Google, Agent Development Kit documentation, "Agent Identity Auth Manager for ADK", github.com/google/adk-docs/blob/main/docs/integrations/agent-identity.md (retrieved 2026-11-17: Google-managed lifecycle of auth credentials; Preview release).
 - Google Cloud, Conversational Analytics API, "Integration patterns for data agents", docs.cloud.google.com/gemini/data-agents/conversational-analytics-api/integration-patterns (retrieved 2026-11-17: the agentic platform authenticates the user through a 3-legged OAuth 2.0 flow; queries run with the authenticated user's identity rather than a shared service account, so IAM, row-level and column-level policies apply; Looker queries use the credentials supplied for a Looker API user).
 - Google Cloud, Conversational Analytics API, "Authenticate user identity and connect to a data source", docs.cloud.google.com/gemini/data-agents/conversational-analytics-api/authentication (retrieved 2026-11-17: Looker API keys or an access token; an access token applies the target user's LookML row and column level permissions; with API keys all users share the same level of access).

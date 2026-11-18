@@ -1,0 +1,154 @@
+/* sim-kit v2: copied verbatim from simulations/kit/sim-kit.css. Edit it there, never here. */
+/* One look for every sim (skills/lms-authoring-simulations/SKILL.md, "One visual style").
+   Hues: primary = now / your action; violet = the model; teal = the runtime or a tool;
+   green = pass, kept, allowed; red = fail, lost, denied; amber = a limit or a line not to
+   cross; orange, rose, gold = extra categories a sim needs (use in that order). */
+:root {
+  --bg: #ffffff; --fg: #0f172a; --muted: #475569; --surface: #f1f5f9;
+  --panel: #ffffff; --border: #cbd5e1; --inset: #f8fafc;
+  --primary: #2563eb; --primary-contrast: #ffffff;
+  --violet: #6d28d9; --teal: #0f766e; --green: #15803d; --red: #b91c1c;
+  --amber: #b45309; --orange: #9a3412; --rose: #be123c; --gold: #854d0e;
+  --r-sm: 4px; --r-md: 8px; --r-lg: 14px; --dur: .6s;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+  --bg: #0f172a; --fg: #f8fafc; --muted: #a5b1c2; --surface: #1e293b;
+  --panel: #1e293b; --border: #475569; --inset: #0f172a;
+  --primary: #60a5fa; --primary-contrast: #0b1220;
+  --violet: #c4b5fd; --teal: #2dd4bf; --green: #4ade80; --red: #fca5a5;
+  --amber: #fbbf24; --orange: #fb923c; --rose: #fda4af; --gold: #fde047;
+  }
+}
+[data-theme="light"] {
+  --bg: #ffffff; --fg: #0f172a; --muted: #475569; --surface: #f1f5f9;
+  --panel: #ffffff; --border: #cbd5e1; --inset: #f8fafc;
+  --primary: #2563eb; --primary-contrast: #ffffff;
+  --violet: #6d28d9; --teal: #0f766e; --green: #15803d; --red: #b91c1c;
+  --amber: #b45309; --orange: #9a3412; --rose: #be123c; --gold: #854d0e;
+}
+[data-theme="dark"] {
+  --bg: #0f172a; --fg: #f8fafc; --muted: #a5b1c2; --surface: #1e293b;
+  --panel: #1e293b; --border: #475569; --inset: #0f172a;
+  --primary: #60a5fa; --primary-contrast: #0b1220;
+  --violet: #c4b5fd; --teal: #2dd4bf; --green: #4ade80; --red: #fca5a5;
+  --amber: #fbbf24; --orange: #fb923c; --rose: #fda4af; --gold: #fde047;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 14px; }
+#app { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+h2 { font-size: 13px; margin: 0 0 8px; color: var(--muted); font-weight: 600; }
+
+/* Controls: pills for choices (aria-pressed), one primary button for the main action */
+button { font: inherit; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--fg); cursor: pointer; }
+button.primary { background: var(--primary); border-color: var(--primary); color: var(--primary-contrast); font-weight: 600; }
+.chip, .pill { padding: 6px 12px; font-size: 13px; }
+.chip[aria-pressed="true"], .pill[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--primary-contrast); font-weight: 600; }
+input[type="range"] { width: 200px; max-width: 100%; accent-color: var(--primary); }
+.controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-top: 12px; }
+.chips, .seg, .buttons { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.seglabel { font-size: 12px; color: var(--muted); margin-right: 4px; }
+
+/* The frame: predict card, stage (drawing + caption + controls), result panels, legend */
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 14px; }
+.predict .q { margin: 0 0 10px; line-height: 1.45; }
+.verdict { margin: 8px 0 0; font-weight: 600; }
+.verdict:empty { display: none; }
+.scroll { overflow-x: auto; }
+.stage svg { width: 100%; height: auto; display: block; }
+.caption { margin: 8px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--surface); line-height: 1.5; min-height: 3em; }
+.legend { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+/* Drawing: flat 2-D shapes, hue stroke over a light tint of the same hue */
+.k-title { fill: var(--fg); font-size: 13px; font-weight: 700; }
+.k-label { fill: var(--fg); font-size: 12px; font-weight: 600; }
+.k-small { fill: var(--muted); font-size: 10.5px; }
+.k-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.k-box { fill: var(--panel); stroke: var(--border); stroke-width: 1.5; }
+.k-now { stroke: var(--primary); stroke-width: 3; }
+.k-off { fill: var(--surface); stroke: var(--border); stroke-dasharray: 4 4; }
+
+/* Fit the screen (SKILL.md "Fit the screen"): the whole sim fits in 600 px of height on a
+   1280x720 laptop. From 900 px wide the stage is two columns: the drawing on the left, at
+   most 380 px tall, and the caption and controls beside it, so changing a setting never
+   scrolls the drawing out of view. A sim with more than a caption under its drawing wraps
+   the left column in .view and the right in .side. The predict card is a <details open> the learner can fold,
+   and a secondary panel is a <details class="panel more">. */
+details.predict > summary, details.more > summary { cursor: pointer; list-style: none; }
+details.predict > summary::-webkit-details-marker, details.more > summary::-webkit-details-marker { display: none; }
+details.predict > summary::before, details.more > summary::before { content: "\25BE\00A0"; color: var(--muted); }
+details.predict:not([open]) > summary::before, details.more:not([open]) > summary::before { content: "\25B8\00A0"; }
+details.predict:not([open]) > summary { margin: 0; }
+details.more > summary { font-size: 13px; font-weight: 600; color: var(--muted); }
+details.more[open] > summary { margin-bottom: 8px; }
+@media (min-width: 900px) {
+  .stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 32%); grid-template-rows: repeat(11, min-content) 1fr; column-gap: 16px; align-items: start; }
+  .stage > .scroll, .stage > .scene, .stage > .view { grid-column: 1; grid-row: 1 / -1; }
+  .stage > :not(.scroll):not(.scene):not(.view) { grid-column: 2; margin-top: 0; margin-bottom: 10px; }
+  .stage .side { display: flex; flex-direction: column; gap: 10px; }
+  .stage svg { max-height: 380px; }
+  .stage .caption { margin: 0; }
+  .stage .controls { margin-top: 0; flex-direction: column; align-items: stretch; gap: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+.reduced *, .reduced *::before, .reduced *::after { transition: none !important; animation: none !important; }
+/* end sim-kit v2 */
+
+/* oauth-consent-pause: a sequence diagram inside an amber credential boundary. */
+.side { display: flex; flex-direction: column; }
+.side { margin-top: 12px; gap: 10px; }
+.side .caption { margin: 0; }
+.side .controls { margin-top: 0; }
+@media (min-width: 900px) { .side { margin-top: 0; } }
+
+.boundary { fill: var(--amber); fill-opacity: .07; stroke: var(--amber); stroke-width: 2; stroke-dasharray: 6 4; }
+.boundary.breached { fill: var(--red); fill-opacity: .08; stroke: var(--red); stroke-dasharray: none; }
+.boundary-t { fill: var(--amber); font-size: 11px; font-weight: 700; }
+.boundary-t.breached { fill: var(--red); }
+
+.life { stroke: var(--border); stroke-width: 1.5; stroke-dasharray: 3 4; }
+.life.off { opacity: .5; }
+.head { fill: var(--panel); stroke: var(--border); stroke-width: 1.5; }
+.head.agent { fill: var(--violet); fill-opacity: .14; stroke: var(--violet); }
+.head.app { fill: var(--teal); fill-opacity: .14; stroke: var(--teal); }
+.head.off { fill: var(--surface); fill-opacity: 1; stroke: var(--border); stroke-dasharray: 4 4; }
+.head-t { fill: var(--fg); font-size: 12px; font-weight: 700; }
+.head-t.off { fill: var(--muted); font-weight: 600; }
+
+.msg line { stroke-width: 2; }
+.msg.past line { stroke: var(--muted); stroke-width: 1.5; }
+.msg.now line { stroke: var(--primary); stroke-width: 3; }
+.msg.token line { stroke: var(--green); }
+.msg.token.is-now line { stroke-width: 3; }
+.msg.bad line { stroke: var(--red); stroke-width: 3; }
+.mk-now { fill: var(--primary); }
+.mk-past { fill: var(--muted); }
+.mk-token { fill: var(--green); }
+.mk-bad { fill: var(--red); }
+.lbl-bg { fill: var(--panel); }
+.lbl { fill: var(--fg); font-size: 11px; }
+.msg.past .lbl { fill: var(--muted); }
+.msg.is-now .lbl { font-weight: 700; }
+.msg.token .lbl { fill: var(--green); }
+.msg.bad .lbl { fill: var(--red); font-weight: 700; }
+.msg.pw .lbl-bg { stroke: var(--fg); stroke-width: 1; }
+.note { fill: var(--panel); stroke: var(--red); stroke-width: 2.5; }
+
+.paused-line { stroke: var(--violet); stroke-width: 4; stroke-dasharray: 2 4; }
+.paused { fill: var(--panel); stroke: var(--violet); stroke-width: 2; }
+.paused-t { fill: var(--violet); font-size: 11px; font-weight: 700; }
+
+.holds { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+.holds li { display: grid; grid-template-columns: 74px 1fr; gap: 8px; padding: 5px 10px; border: 1px solid var(--border); border-radius: var(--r-md); }
+.holds .hk { font-weight: 700; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.holds li.ok { border-color: var(--green); }
+.holds li.ok .hv { color: var(--green); font-weight: 600; }
+.holds li.bad { border-color: var(--red); }
+.holds li.bad .hv { color: var(--red); font-weight: 600; }
+.paused.was { stroke: var(--border); stroke-width: 1.5; }
+.paused-t.was { fill: var(--muted); font-weight: 600; }

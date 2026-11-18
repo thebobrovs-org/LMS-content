@@ -1,4 +1,4 @@
-/* sim-kit v1: copied verbatim from simulations/kit/sim-kit.css. Edit it there, never here. */
+/* sim-kit v2: copied verbatim from simulations/kit/sim-kit.css. Edit it there, never here. */
 /* One look for every sim (skills/lms-authoring-simulations/SKILL.md, "One visual style").
    Hues: primary = now / your action; violet = the model; teal = the runtime or a tool;
    green = pass, kept, allowed; red = fail, lost, denied; amber = a limit or a line not to
@@ -72,9 +72,32 @@ input[type="range"] { width: 200px; max-width: 100%; accent-color: var(--primary
 .k-now { stroke: var(--primary); stroke-width: 3; }
 .k-off { fill: var(--surface); stroke: var(--border); stroke-dasharray: 4 4; }
 
+/* Fit the screen (SKILL.md "Fit the screen"): the whole sim fits in 600 px of height on a
+   1280x720 laptop. From 900 px wide the stage is two columns: the drawing on the left, at
+   most 380 px tall, and the caption and controls beside it, so changing a setting never
+   scrolls the drawing out of view. A sim with more than a caption under its drawing wraps
+   the left column in .view and the right in .side. The predict card is a <details open> the learner can fold,
+   and a secondary panel is a <details class="panel more">. */
+details.predict > summary, details.more > summary { cursor: pointer; list-style: none; }
+details.predict > summary::-webkit-details-marker, details.more > summary::-webkit-details-marker { display: none; }
+details.predict > summary::before, details.more > summary::before { content: "\25BE\00A0"; color: var(--muted); }
+details.predict:not([open]) > summary::before, details.more:not([open]) > summary::before { content: "\25B8\00A0"; }
+details.predict:not([open]) > summary { margin: 0; }
+details.more > summary { font-size: 13px; font-weight: 600; color: var(--muted); }
+details.more[open] > summary { margin-bottom: 8px; }
+@media (min-width: 900px) {
+  .stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 32%); grid-template-rows: repeat(11, min-content) 1fr; column-gap: 16px; align-items: start; }
+  .stage > .scroll, .stage > .scene, .stage > .view { grid-column: 1; grid-row: 1 / -1; }
+  .stage > :not(.scroll):not(.scene):not(.view) { grid-column: 2; margin-top: 0; margin-bottom: 10px; }
+  .stage .side { display: flex; flex-direction: column; gap: 10px; }
+  .stage svg { max-height: 380px; }
+  .stage .caption { margin: 0; }
+  .stage .controls { margin-top: 0; flex-direction: column; align-items: stretch; gap: 10px; }
+}
+
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
 .reduced *, .reduced *::before, .reduced *::after { transition: none !important; animation: none !important; }
-/* end sim-kit v1 */
+/* end sim-kit v2 */
 
 /* context-budget-explorer: the backpack. Blocks are categories: instructions grey, tool
    declarations teal (tools), history violet (the model's conversation), memory gold,
@@ -82,7 +105,7 @@ input[type="range"] { width: 200px; max-width: 100%; accent-color: var(--primary
 .seglabel { min-width: 52px; }
 .controls { flex-direction: column; align-items: stretch; gap: 10px; }
 .receipt .controls { flex-direction: row; flex-wrap: wrap; }
-.stage svg { min-width: 560px; }
+
 
 /* The backpack */
 .h { fill: var(--fg); font-size: 13px; font-weight: 700; text-anchor: middle; }
@@ -133,3 +156,21 @@ input[type="range"] { width: 200px; max-width: 100%; accent-color: var(--primary
 @media (max-width: 520px) { .case { grid-template-columns: 1fr auto; } .case .why { grid-column: 1 / -1; } }
 .rc { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border-bottom: 1px dashed var(--border); }
 .rc .mono { font-weight: 700; }
+
+/* Fit the screen: drawing, caption and receipt on the left; controls and the evalset beside them. */
+.view, .side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.side { margin-top: 12px; }
+.receipt h2, .evals h2 { margin-bottom: 4px; }
+.receipt .buttons { margin-top: 8px; }
+@media (min-width: 900px) {
+  .side { margin-top: 0; }
+  .stage svg { max-height: 310px; }
+  .case { grid-template-columns: minmax(0, 1fr) auto; padding: 5px 8px; }
+  .case .why { grid-column: 1 / -1; font-size: 12px; }
+  .case.pass .why { display: none; }
+  .receipt { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+  .receipt h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .receipt .rc { border: 0; padding: 0; gap: 6px; font-size: 13px; }
+  .receipt .buttons { margin-top: 0; margin-left: auto; }
+}
+@media (min-width: 900px) { .evals ul { gap: 4px; } .side .controls { gap: 8px; } }

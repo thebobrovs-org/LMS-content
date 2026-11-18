@@ -1,0 +1,14 @@
+{
+  "id": "oauth-consent-pause",
+  "title": "Whose authority: the consent pause",
+  "version": "1.0.0",
+  "props": {
+    "flow": { "type": "string", "default": "user" }
+  },
+  "checkpoints": [
+    {
+      "id": "observe-consent-pause",
+      "hint": "Follow three-legged OAuth to the end: ADK pauses with adk_request_credential, the client app sends the user to consent, the code comes back, and ADK exchanges it and retries the tool."
+    }
+  ]
+}

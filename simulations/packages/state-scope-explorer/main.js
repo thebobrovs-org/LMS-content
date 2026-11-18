@@ -332,52 +332,56 @@ function drawScene() {
 
 function build() {
   app.innerHTML = `
-    <div class="panel predict" id="predict">
-      <p class="q"><strong>Predict first.</strong> A tool writes <span class="mono">language = "fr"</span> twice: once on the room wall (no prefix) and once on the fridge (<span class="mono">user:</span>). Then Ana opens a new session. Which note can the agent still read?</p>
+    <details class="panel predict" open id="predict">
+      <summary class="q"><strong>Predict first.</strong> A tool writes <span class="mono">language = "fr"</span> on the wall and on the fridge (<span class="mono">user:</span>). In Ana's new session, which can the agent read?</summary>
       <div class="chips" role="group" aria-label="Your prediction">
         ${Object.entries(PREDICT).map(([k, v]) => `<button type="button" class="chip" data-predict="${k}" aria-pressed="false">${v}</button>`).join("")}
       </div>
       <p class="verdict" id="verdict"></p>
-    </div>
+    </details>
     <div class="panel stage">
-      <div class="scroll" tabindex="0" role="region" aria-label="The agent's building"><svg id="svg" viewBox="0 0 760 480" role="img"><g id="building"></g></svg></div>
-      <p class="caption" id="caption" role="status"></p>
-      <div class="controls">
-        <div class="seg" role="group" aria-label="Note a tool writes"><span class="seglabel">Note</span>
-          ${Object.entries(FIELDS).map(([k, f]) => `<button type="button" class="pill mono" data-field="${k}" aria-pressed="false">${esc(f.label)}</button>`).join("")}
-        </div>
-        <div class="seg" role="group" aria-label="Stick it on"><span class="seglabel">Stick it on</span>
-          ${Object.entries(SCOPES).map(([k, s]) => `<button type="button" class="put s-${k}" id="put-${k}">${s.place} <span class="mono">${s.prefix || "no prefix"}</span></button>`).join("")}
-        </div>
+      <div class="view">
+        <div class="scroll" tabindex="0" role="region" aria-label="The agent's building"><svg id="svg" viewBox="0 0 760 480" role="img"><g id="building"></g></svg></div>
+        <section class="merged" aria-labelledby="merged-h">
+          <h2 id="merged-h">session.state, as the code reads it</h2>
+          <p class="mono" id="merged"></p>
+          <p class="readout" id="readout"></p>
+        </section>
+        <details class="more" id="log-more" hidden><summary id="log-sum">Earlier steps</summary><ol class="log" id="log" aria-labelledby="log-sum"></ol></details>
       </div>
-      <div class="controls">
-        <div class="seg" role="group" aria-label="User"><span class="seglabel">User</span>
-          ${USERS.map((u) => `<button type="button" class="pill" data-user="${u}" aria-pressed="false">${u}</button>`).join("")}
+      <div class="side">
+        <p class="caption" id="caption" role="status"></p>
+        <div class="controls">
+          <div class="seg" role="group" aria-label="Note a tool writes"><span class="seglabel">Note</span>
+            ${Object.entries(FIELDS).map(([k, f]) => `<button type="button" class="pill mono" data-field="${k}" aria-pressed="false">${esc(f.label)}</button>`).join("")}
+          </div>
+          <div class="seg" role="group" aria-label="Stick it on"><span class="seglabel">Stick it on</span>
+            ${Object.entries(SCOPES).map(([k, s]) => `<button type="button" class="put s-${k}" id="put-${k}">${s.place} <span class="mono">${s.prefix || "no prefix"}</span></button>`).join("")}
+          </div>
         </div>
-        <div class="seg"><span class="seglabel">Room</span><span class="seg" id="rooms" role="group" aria-label="Go back to a session"></span>
-          <button type="button" id="new-session">New session</button>
-          <button type="button" id="turn">Next turn</button>
+        <div class="controls">
+          <div class="seg" role="group" aria-label="User"><span class="seglabel">User</span>
+            ${USERS.map((u) => `<button type="button" class="pill" data-user="${u}" aria-pressed="false">${u}</button>`).join("")}
+          </div>
+          <div class="seg"><span class="seglabel">Room</span><span class="seg" id="rooms" role="group" aria-label="Go back to a session"></span>
+            <button type="button" id="new-session">New session</button>
+            <button type="button" id="turn">Next turn</button>
+          </div>
         </div>
-      </div>
-      <div class="controls">
-        <div class="seg" role="group" aria-label="Session service"><span class="seglabel">Building</span>
-          ${Object.entries(SERVICES).map(([k, s]) => `<button type="button" class="pill" data-service="${k}" aria-pressed="false">${s.look} · <span class="mono">${s.name}</span></button>`).join("")}
-        </div>
-        <div class="buttons">
-          <button type="button" id="restart" class="primary">Restart process</button>
-          <button type="button" id="reset">Reset</button>
+        <div class="controls">
+          <div class="seg" role="group" aria-label="Session service"><span class="seglabel">Building</span>
+            ${Object.entries(SERVICES).map(([k, s]) => `<button type="button" class="pill" data-service="${k}" aria-pressed="false">${s.look} · <span class="mono">${s.name}</span></button>`).join("")}
+          </div>
+          <div class="buttons">
+            <button type="button" id="restart" class="primary">Restart process</button>
+            <button type="button" id="reset">Reset</button>
+          </div>
         </div>
       </div>
     </div>
-    <section class="panel merged" aria-labelledby="merged-h">
-      <h2 id="merged-h">session.state, as the agent's code reads it</h2>
-      <p class="mono" id="merged"></p>
-      <p class="readout" id="readout"></p>
-    </section>
-    <ol class="log" id="log" aria-label="What happened"></ol>
-    <p class="legend">Note colours: amber <span class="mono">temp:</span>, teal no prefix, green <span class="mono">user:</span>, violet <span class="mono">app:</span>. A blue outline marks what the agent reads now. A prefix decides where a note goes and who reads it; the building decides whether anything survives a restart. Memory Bank is a separate store: nothing here writes to it.</p>`;
+    <p class="legend">Notes: amber <span class="mono">temp:</span>, teal no prefix, green <span class="mono">user:</span>, violet <span class="mono">app:</span>; a blue outline marks what the agent reads now. Memory Bank is a separate store: nothing here writes to it.</p>`;
   els = {};
-  for (const id of ["svg", "building", "caption", "rooms", "new-session", "turn", "restart", "reset", "merged", "readout", "log", "verdict"]) els[id] = app.querySelector(`#${id}`);
+  for (const id of ["svg", "building", "caption", "rooms", "new-session", "turn", "restart", "reset", "merged", "readout", "log", "log-more", "log-sum", "verdict"]) els[id] = app.querySelector(`#${id}`);
   app.querySelectorAll("[data-predict]").forEach((b) => b.addEventListener("click", () => {
     prediction = b.dataset.predict;
     sim.event("predicted", { prediction });
@@ -440,6 +444,8 @@ function render() {
   const stored = storedCount();
   els.readout.textContent = `${session().id}, turn ${session().turn} · the agent reads ${merged.length} ${merged.length === 1 ? "key" : "keys"} · ${stored} stored ${stored === 1 ? "key" : "keys"} in ${sessions.length} ${sessions.length === 1 ? "room" : "rooms"} · ${SERVICES[service].name}.`;
   els.log.innerHTML = log.slice(1).map((l) => `<li>${esc(l)}</li>`).join("");
+  els["log-more"].hidden = log.length < 2; // folded by default, so the sim keeps to one laptop screen
+  els["log-sum"].textContent = `Earlier steps (${log.length - 1})`;
   checkInsight();
   els.verdict.textContent = verdictText();
   reportSize();

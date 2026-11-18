@@ -19,8 +19,11 @@ const PACKAGES = path.join(path.dirname(fileURLToPath(import.meta.url)), "../pac
 
 /** Scrolling panels of text: each must be a focusable, named region. */
 const TEXT_REGIONS = {
+  "agent-loop-stepper": [".logbox"],
   "capacity-constraint-explorer": [".code"],
   "capacity-orchestrator": [".event-log"],
+  "cx-route-resolver": [".phases"],
+  "orchestration-patterns": [".logbox"],
   "image-tensor-explorer": [".code-overlay"],
   "systolic-array": [".console-log"],
   "training-loop-explorer": [".code-overlay"],
@@ -35,6 +38,7 @@ const WIDTH_GUARDS = {
   "approval-gate-explorer": [".scroll"],
   "backprop-explorer": [".diagram"],
   "neuron-explorer": [".diagram"],
+  "oauth-consent-pause": [".scroll"],
   "rag-retrieval-tuner": [".scroll"],
   "state-scope-explorer": [".scroll"],
   "systolic-array": [".grid-panel"],
