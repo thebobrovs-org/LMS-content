@@ -1,41 +1,36 @@
 // `createSim` is a global from sim-sdk.js (a classic script loaded first). No imports:
 // this bundle runs in an opaque-origin sandbox.
 //
-// One question, a small corpus with a superseded and a current version of the same
-// policy, and the retrieval knobs that decide which chunks reach the model: chunk
-// size, top-k, reranking and a metadata filter. Scores are scripted and deterministic,
-// chosen to show the documented behaviour, not measured from a real embedding model.
+// B06: Grounded but wrong — Context Precision vs. Context Recall.
+// Corpus chunks in a pond flow through an optional metadata filter barrier and a top-k
+// retrieval net into the model's catch basket. Scores are scripted and deterministic
+// (illustrative, not measured from a live embedding model).
 
 const app = document.getElementById("app");
 
-const QUESTION = "How many days do I have to return an item?";
-
-// role: stale (superseded policy), current (current policy), exception (current, final-sale rule), other.
-const CHUNKS = {
+const PONDS = {
   small: [
-    { doc: "Refund FAQ · 2024 · superseded", role: "stale", text: "How many days do I have to return an item? You have 60 days.", tokens: 90, sim: 0.93, rr: 0.95 },
-    { doc: "Shipping FAQ · 2026", role: "other", text: "How many days does delivery take? Standard delivery takes 3 to 5 days.", tokens: 60, sim: 0.88, rr: 0.3 },
-    { doc: "Returns policy · 2026 · current", role: "current", text: "Items can be returned within 30 days of delivery for a full refund.", tokens: 70, sim: 0.86, rr: 0.93 },
-    { doc: "Exchanges · 2026", role: "other", text: "You can exchange an item for another size within 30 days.", tokens: 60, sim: 0.81, rr: 0.55 },
-    { doc: "Warranty · 2026", role: "other", text: "Items carry a one-year warranty from delivery.", tokens: 50, sim: 0.76, rr: 0.38 },
-    { doc: "Shipping FAQ · 2026", role: "other", text: "Express delivery takes 1 to 2 days.", tokens: 40, sim: 0.7, rr: 0.2 },
-    { doc: "Gift cards · 2025", role: "other", text: "Gift cards never expire and cannot be refunded.", tokens: 50, sim: 0.6, rr: 0.08 },
-    { doc: "Returns policy · 2026 · current", role: "exception", text: "Final-sale items cannot be returned.", tokens: 40, sim: 0.58, rr: 0.62 },
+    { id: "faq24", label: "2024 FAQ (60d)", role: "stale", sym: "▲ ⚠", sim: 0.93, rr: 0.95 },
+    { id: "ship", label: "Shipping FAQ", role: "noise", sym: "□ ·", sim: 0.88, rr: 0.30 },
+    { id: "pol26", label: "2026 Policy (30d)", role: "rel", sym: "● ✓", sim: 0.86, rr: 0.93 },
+    { id: "exch", label: "Exchanges", role: "noise", sym: "□ ·", sim: 0.81, rr: 0.55 },
+    { id: "warr", label: "Warranty", role: "noise", sym: "□ ·", sim: 0.76, rr: 0.38 },
+    { id: "exc26", label: "2026 Final-sale", role: "rel", sym: "● ✓", sim: 0.58, rr: 0.82 },
   ],
   medium: [
-    { doc: "Refund FAQ · 2024 · superseded", role: "stale", text: "How many days do I have to return an item? You have 60 days from delivery to return any item, no questions asked.", tokens: 280, sim: 0.9, rr: 0.94 },
-    { doc: "Shipping FAQ · 2026", role: "other", text: "How many days does delivery take? Standard delivery takes 3 to 5 days; express takes 1 to 2.", tokens: 260, sim: 0.85, rr: 0.31 },
-    { doc: "Returns policy · 2026 · current", role: "current", text: "Items can be returned within 30 days of delivery for a full refund. Final-sale items cannot be returned.", tokens: 300, sim: 0.83, rr: 0.92, exception: true },
-    { doc: "Exchanges · 2026", role: "other", text: "You can exchange an item for another size or colour within 30 days, once per order.", tokens: 240, sim: 0.8, rr: 0.55 },
-    { doc: "Warranty · 2026", role: "other", text: "Items carry a one-year warranty from the day of delivery against manufacturing faults.", tokens: 250, sim: 0.78, rr: 0.4 },
-    { doc: "Gift cards · 2025", role: "other", text: "Gift cards never expire and cannot be exchanged for cash or refunded.", tokens: 220, sim: 0.62, rr: 0.1 },
+    { id: "faq24", label: "2024 FAQ (60d)", role: "stale", sym: "▲ ⚠", sim: 0.90, rr: 0.94 },
+    { id: "ship", label: "Shipping FAQ", role: "noise", sym: "□ ·", sim: 0.85, rr: 0.31 },
+    { id: "pol26", label: "2026 Policy (30d)", role: "rel", sym: "● ✓", sim: 0.83, rr: 0.92, full: true },
+    { id: "exch", label: "Exchanges", role: "noise", sym: "□ ·", sim: 0.80, rr: 0.55 },
+    { id: "warr", label: "Warranty", role: "noise", sym: "□ ·", sim: 0.78, rr: 0.40 },
+    { id: "gift", label: "Gift cards", role: "noise", sym: "□ ·", sim: 0.62, rr: 0.10 },
   ],
   large: [
-    { doc: "Refund FAQ · 2024 · superseded", role: "stale", text: "The whole 2024 refund FAQ: return window (60 days), refund methods, store credit, damaged items…", tokens: 800, sim: 0.79, rr: 0.9 },
-    { doc: "Returns policy · 2026 · current", role: "current", text: "The whole 2026 returns policy: 30-day window, final-sale exclusions, refund timing, return labels…", tokens: 760, sim: 0.77, rr: 0.89, exception: true },
-    { doc: "Shipping FAQ · 2026", role: "other", text: "The whole shipping FAQ: delivery times, carriers, tracking, international orders…", tokens: 820, sim: 0.74, rr: 0.3 },
-    { doc: "Warranty · 2026", role: "other", text: "The whole warranty page: one-year coverage, claims, exclusions…", tokens: 600, sim: 0.7, rr: 0.35 },
-    { doc: "Gift cards · 2025", role: "other", text: "The whole gift card page: balances, expiry, refunds…", tokens: 500, sim: 0.58, rr: 0.08 },
+    { id: "faq24", label: "2024 FAQ (whole)", role: "stale", sym: "▲ ⚠", sim: 0.79, rr: 0.90 },
+    { id: "pol26", label: "2026 Policy (whole)", role: "rel", sym: "● ✓", sim: 0.77, rr: 0.89, full: true },
+    { id: "ship", label: "Shipping FAQ", role: "noise", sym: "□ ·", sim: 0.74, rr: 0.30 },
+    { id: "warr", label: "Warranty", role: "noise", sym: "□ ·", sim: 0.70, rr: 0.35 },
+    { id: "gift", label: "Gift cards", role: "noise", sym: "□ ·", sim: 0.58, rr: 0.08 },
   ],
 };
 
@@ -43,9 +38,10 @@ let chunk = "medium";
 let topK = 3;
 let rerank = false;
 let filter = false;
+let prediction = null;
+let hasRun = true;
 let sawWrong = false;
-let reported = false;
-let els = {};
+let checkpointSent = false;
 
 function applyTheme(theme) {
   if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
@@ -56,149 +52,280 @@ function esc(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 }
 
-function reportSize() {
-  requestAnimationFrame(() => sim.resize(document.body.scrollHeight + 8));
-}
-
-// The pipeline: rank by vector similarity, optionally rerank the candidates, drop
-// filtered chunks, keep the top k. Returns every chunk with its fate, in display order.
-function retrieve() {
-  const all = CHUNKS[chunk].map((c, i) => ({ ...c, i }));
+function compute() {
   const key = rerank ? "rr" : "sim";
-  const ranked = all.slice().sort((a, b) => b[key] - a[key]);
-  let kept = 0;
+  const ranked = PONDS[chunk].map((c) => ({ ...c, score: c[key] })).sort((a, b) => b.score - a.score);
+  const totalRel = ranked.filter((c) => c.role === "rel").length;
+  const caught = [];
   for (const c of ranked) {
-    c.filtered = filter && c.role === "stale";
-    c.inContext = !c.filtered && kept < topK;
-    if (c.inContext) kept += 1;
+    c.blocked = filter && c.role === "stale";
+    c.inCatch = !c.blocked && caught.length < topK;
+    if (c.inCatch) caught.push(c);
   }
-  return ranked;
+  const relCaught = caught.filter((c) => c.role === "rel").length;
+  const recall = totalRel ? Math.round((relCaught / totalRel) * 100) : 0;
+  const precision = caught.length ? Math.round((relCaught / caught.length) * 100) : 0;
+
+  const firstPolicy = caught.find((c) => c.role === "stale" || c.role === "rel");
+  const hasFull = caught.some((c) => c.full) || relCaught === totalRel;
+
+  let ansKind = "none";
+  let ansText = "“Not found in sources.”";
+  let ansCite = "Recall 0%: no policy chunk caught.";
+  if (firstPolicy && firstPolicy.role === "stale") {
+    ansKind = "wrong";
+    ansText = "“60 days.” (Grounded, WRONG)";
+    ansCite = "Cites #1: 2024 FAQ (superseded).";
+  } else if (firstPolicy && !hasFull) {
+    ansKind = "partial";
+    ansText = "“30 days.” (Incomplete)";
+    ansCite = "Final-sale chunk missed (Recall 50%).";
+  } else if (firstPolicy) {
+    ansKind = "right";
+    ansText = "“30 days, excl. final-sale.” (RIGHT)";
+    ansCite = "Cites #1: 2026 Policy (current).";
+  }
+  return { ranked, caught, totalRel, relCaught, recall, precision, ansKind, ansText, ansCite };
 }
 
-function answer(ranked) {
-  const ctx = ranked.filter((c) => c.inContext);
-  const tokens = ctx.reduce((n, c) => n + c.tokens, 0);
-  const firstPolicy = ctx.find((c) => c.role === "stale" || c.role === "current");
-  const hasException = ctx.some((c) => c.role === "exception" || (c.role === "current" && c.exception));
-  if (!firstPolicy) {
-    return { kind: "none", tokens, text: "“I can't find the return window in the sources I was given.”", note: "No policy chunk reached the model: retrieval failed, so the answer is honest but useless." };
+function buildSvg(state) {
+  const { ranked, caught, ansKind, ansText, ansCite } = state;
+  const pondNodes = ranked
+    .map((c, i) => {
+      const y = 44 + i * 36;
+      const cls = c.blocked ? "node-blocked" : c.role === "rel" ? "node-rel" : c.role === "stale" ? "node-stale" : "node-noise";
+      const nowCls = c.inCatch ? " k-now" : "";
+      const badge = c.blocked ? "BLOCKED" : c.score.toFixed(2);
+      return `
+        <g>
+          <rect x="14" y="${y}" width="234" height="28" rx="6" class="${cls}${nowCls}" />
+          <text x="24" y="${y + 18}" class="k-label">${esc(c.sym)} ${esc(c.label)}</text>
+          <text x="240" y="${y + 18}" text-anchor="end" class="k-small">${esc(badge)}</text>
+        </g>`;
+    })
+    .join("");
+
+  const catchNodes = Array.from({ length: topK }, (_, i) => {
+    const y = 44 + i * 36;
+    const c = caught[i];
+    if (!c) {
+      return `<rect x="448" y="${y}" width="250" height="28" rx="6" class="k-off" />
+        <text x="458" y="${y + 18}" class="k-small">#${i + 1} empty</text>`;
+    }
+    const cls = c.role === "rel" ? "node-rel" : c.role === "stale" ? "node-stale" : "node-noise";
+    const strokeNow = i === 0 ? " k-now" : "";
+    return `
+      <g>
+        <rect x="448" y="${y}" width="250" height="28" rx="6" class="${cls}${strokeNow}" />
+        <text x="458" y="${y + 18}" class="k-label">#${i + 1} ${esc(c.sym)} ${esc(c.label)}</text>
+      </g>`;
+  }).join("");
+
+  const ansClass = ansKind === "wrong" ? "ans-wrong" : ansKind === "partial" ? "ans-partial" : ansKind === "right" ? "ans-right" : "k-box";
+  const ansY = 44 + Math.max(topK, 3) * 36 + 10;
+  const totalH = Math.max(276, ansY + 58);
+
+  const barrierClass = filter ? "barrier-on" : "barrier-off";
+  const barrierLabel = filter ? "Filter ON: blocks ▲" : "No filter";
+  const aria = `Corpus pond with ${ranked.length} chunks; metadata filter is ${filter ? "on" : "off"}; top-${topK} net caught ${caught.length} chunks with ${state.recall}% recall and ${state.precision}% precision; model answers ${ansText}`;
+
+  return `<svg viewBox="0 0 716 ${totalH}" role="img" aria-label="${esc(aria)}">
+    <rect x="6" y="8" width="250" height="${totalH - 16}" rx="10" class="pond-box" />
+    <text x="16" y="28" class="k-title">1. Corpus Pond (${esc(chunk)})</text>
+    ${pondNodes}
+
+    <line x1="292" y1="26" x2="292" y2="${totalH - 22}" class="${barrierClass}" />
+    <text x="292" y="17" text-anchor="middle" class="k-small">${esc(barrierLabel)}</text>
+
+    <rect x="322" y="92" width="98" height="64" rx="10" class="net-box" />
+    <text x="371" y="118" text-anchor="middle" class="k-title">Top-${topK} Net</text>
+    <text x="371" y="136" text-anchor="middle" class="k-small">${rerank ? "Reranked" : "Similarity"} →</text>
+
+    <rect x="438" y="8" width="270" height="${totalH - 16}" rx="10" class="basket-box" />
+    <text x="448" y="28" class="k-title">2. Model Catch (reads #1 first)</text>
+    ${catchNodes}
+
+    <rect x="448" y="${ansY}" width="250" height="44" rx="8" class="${ansClass}" />
+    <text x="458" y="${ansY + 18}" class="k-label">${esc(ansText)}</text>
+    <text x="458" y="${ansY + 34}" class="k-small">${esc(ansCite)}</text>
+  </svg>`;
+}
+
+function verdictText(state) {
+  if (!prediction || !hasRun) return "";
+  if (prediction === "wrong") {
+    return "Your prediction matched at default settings: even with 100% recall, the superseded 2024 FAQ ranked #1 (33% precision) and grounded a 60-day answer.";
   }
-  const conflict = ctx.some((c) => c.role === "stale") && ctx.some((c) => c.role === "current");
-  if (firstPolicy.role === "stale") {
-    return {
-      kind: "wrong",
-      tokens,
-      text: "“You have 60 days to return an item.” Cites: Refund FAQ (2024).",
-      note: conflict
-        ? "Both versions reached the model and it followed the higher-ranked, superseded one."
-        : "The answer faithfully cites a superseded document.",
-    };
+  if (prediction === "right") {
+    return "Not at default settings: the 2026 policy IS in the catch (100% recall), but the 2024 FAQ ranks #1 and wins.";
   }
-  return {
-    kind: hasException ? "right" : "partial",
-    tokens,
-    text: hasException ? "“You have 30 days from delivery, except for final-sale items.” Cites: Returns policy (2026)." : "“You have 30 days from delivery.” Cites: Returns policy (2026).",
-    note: hasException ? "Only the current policy reached the model." : "The final-sale exception sits in a chunk that did not make the top k.",
-  };
+  return "It found a policy — just the wrong one: the 2024 FAQ ranked #1 and grounded “60 days”.";
+}
+
+function captionText(state) {
+  if (!hasRun) return "Press Retrieve to scoop Top-k chunks from the pond.";
+  if (state.ansKind === "wrong") {
+    return `Recall ${state.recall}% (${state.relCaught}/${state.totalRel} relevant), Precision ${state.precision}% (${state.relCaught}/${state.caught.length}) — ▲ 2024 FAQ is #1 and grounds “60 days”. Raising Top-k only adds noise; turn on the metadata filter.`;
+  }
+  if (state.ansKind === "partial") {
+    return `Metadata filter blocked ▲ 2024 FAQ, but at Small chunks Recall is ${state.recall}% (${state.relCaught}/${state.totalRel}) — turn on Rerank or raise Top-k to catch the final-sale exception.`;
+  }
+  if (state.ansKind === "right") {
+    return `Metadata filter blocked ▲ 2024 FAQ: Recall ${state.recall}%, Precision ${state.precision}%, and the 2026 policy leads the catch.`;
+  }
+  return `Recall is 0% — raise Top-k or turn on Rerank so the 2026 policy enters the catch.`;
+}
+
+function maybeCheckpoint(state) {
+  if (state.ansKind === "wrong") sawWrong = true;
+  if (!checkpointSent && sawWrong && filter && state.ansKind === "right") {
+    checkpointSent = true;
+    sim.checkpoint("observe-stale-grounding");
+    sim.event("fixed-stale-grounding", { chunk, topK, rerank });
+  }
 }
 
 function build() {
   app.innerHTML = `
-    <p class="question">Question: “${esc(QUESTION)}”</p>
-    <div class="controls">
-      <label class="field">Chunk size
-        <select id="chunk">
-          <option value="small">Small (about 60 tokens)</option>
-          <option value="medium">Medium (about 260 tokens)</option>
-          <option value="large">Large (whole documents)</option>
-        </select>
-      </label>
-      <label class="field" for="topk"><span class="nowrap">Top-k: <span id="kval"></span></span>
-        <input id="topk" type="range" min="1" max="6" step="1" />
-      </label>
-      <label class="check"><input id="rerank" type="checkbox" /> Rerank candidates</label>
-      <label class="check"><input id="filter" type="checkbox" /> Metadata filter: current documents only</label>
-      <button id="reset">Reset</button>
-    </div>
-    <p class="readout" id="readout" role="status"></p>
-    <section class="ranked" aria-labelledby="ranked-h">
-      <h2 id="ranked-h">Ranked chunks</h2>
-      <ol id="list"></ol>
+    <section class="panel predict" aria-label="Predict step">
+      <p class="q"><strong>Predict first:</strong> Query is “How many days do I have to return an item?” With Medium chunks, Top-k = 3, and no filter, what will the model answer?</p>
+      <div class="chips" role="group" aria-label="Prediction choices">
+        <button type="button" class="chip" data-pred="right" aria-pressed="false">30 days (right)</button>
+        <button type="button" class="chip" data-pred="wrong" aria-pressed="false">60 days (grounded, wrong)</button>
+        <button type="button" class="chip" data-pred="none" aria-pressed="false">Not found</button>
+      </div>
+      <p class="verdict" id="verdict"></p>
     </section>
-    <p class="legend">A blue border marks a chunk in the model's context. Scores are illustrative: vector similarity without reranking, reranker relevance with it.</p>`;
-  els = {
-    chunk: app.querySelector("#chunk"),
-    topk: app.querySelector("#topk"),
-    kval: app.querySelector("#kval"),
-    rerank: app.querySelector("#rerank"),
-    filter: app.querySelector("#filter"),
-    reset: app.querySelector("#reset"),
-    readout: app.querySelector("#readout"),
-    list: app.querySelector("#list"),
-  };
-  els.chunk.addEventListener("change", () => { chunk = els.chunk.value; render(); });
-  els.topk.addEventListener("input", () => { topK = Number(els.topk.value); render(); });
-  els.rerank.addEventListener("change", () => { rerank = els.rerank.checked; render(); });
-  els.filter.addEventListener("change", () => { filter = els.filter.checked; render(); });
-  els.reset.addEventListener("click", () => { chunk = "medium"; topK = 3; rerank = false; filter = false; syncControls(); render(); });
-  syncControls();
-}
 
-function syncControls() {
-  els.chunk.value = chunk;
-  els.topk.value = String(topK);
-  els.rerank.checked = rerank;
-  els.filter.checked = filter;
+    <section class="panel stage" aria-label="Retrieval pond simulation">
+      <div class="scroll" id="scrollWrap" tabindex="0" role="region" aria-label="Corpus pond, filter barrier, and model catch basket"></div>
+      <div class="why">
+        <p class="why-title">Why it happens: similarity scores wording overlap, not freshness</p>
+        <div class="why-grid">
+          <div class="why-card stale"><strong>▲ 2024 FAQ (0.90 · #1):</strong> “<span class="hl">How many days do I have to return an item?</span> You have 60 days…”</div>
+          <div class="why-card rel"><strong>● 2026 Policy (0.83 · #3):</strong> “Items can be <span class="hl">returned</span> within 30 <span class="hl">days</span> of delivery…”</div>
+        </div>
+      </div>
+      <p class="caption" id="caption" role="status"></p>
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Chunk size">
+          <span class="seglabel">Chunks</span>
+          <button type="button" class="chip" data-chunk="small" aria-pressed="false">Small</button>
+          <button type="button" class="chip" data-chunk="medium" aria-pressed="true">Medium</button>
+          <button type="button" class="chip" data-chunk="large" aria-pressed="false">Large</button>
+        </div>
+        <div class="seg" role="group" aria-label="Top-k">
+          <span class="seglabel">Top-k</span>
+          <button type="button" class="chip" data-k="1" aria-pressed="false">1</button>
+          <button type="button" class="chip" data-k="3" aria-pressed="true">3</button>
+          <button type="button" class="chip" data-k="5" aria-pressed="false">5</button>
+        </div>
+        <div class="chips" role="group" aria-label="Retrieval filters">
+          <button type="button" class="chip" id="rerankBtn" aria-pressed="false">Rerank</button>
+          <button type="button" class="chip" id="filterBtn" aria-pressed="false">Filter: current only</button>
+        </div>
+        <div class="buttons">
+          <button type="button" class="primary" id="retrieveBtn">Retrieve</button>
+          <button type="button" id="resetBtn">Reset</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="ratios" aria-label="Context recall and precision">
+      <div class="panel">
+        <h2>Context Recall (caught ✓ / pond ✓)</h2>
+        <div class="ratio-val" id="recVal"></div>
+        <div class="tokens" id="recTokens"></div>
+      </div>
+      <div class="panel">
+        <h2>Context Precision (caught ✓ / all caught)</h2>
+        <div class="ratio-val" id="precVal"></div>
+        <div class="tokens" id="precTokens"></div>
+      </div>
+    </section>
+
+    <p class="legend">● ✓ Current 2026 policy (green) · ▲ ⚠ Superseded 2024 FAQ (red) · □ · Noise (dashed) · Amber line = metadata filter · Scores are scripted and illustrative.</p>
+  `;
+
+  app.querySelectorAll("[data-pred]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      prediction = btn.dataset.pred;
+      hasRun = true;
+      render();
+    });
+  });
+  app.querySelectorAll("[data-chunk]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      chunk = btn.dataset.chunk;
+      render();
+    });
+  });
+  app.querySelectorAll("[data-k]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      topK = Number(btn.dataset.k);
+      render();
+    });
+  });
+  app.querySelector("#rerankBtn").addEventListener("click", () => {
+    rerank = !rerank;
+    render();
+  });
+  app.querySelector("#filterBtn").addEventListener("click", () => {
+    filter = !filter;
+    render();
+  });
+  app.querySelector("#retrieveBtn").addEventListener("click", () => {
+    hasRun = true;
+    render();
+  });
+  app.querySelector("#resetBtn").addEventListener("click", () => {
+    chunk = "medium";
+    topK = 3;
+    rerank = false;
+    filter = false;
+    hasRun = true;
+    render();
+  });
 }
 
 function render() {
-  const ranked = retrieve();
-  const a = answer(ranked);
-  const key = rerank ? "rr" : "sim";
-  els.kval.textContent = String(topK);
-  els.list.innerHTML = ranked
-    .map((c, n) => {
-      const cls = c.role === "stale" ? "stale" : c.role === "current" || c.role === "exception" ? "current" : "other";
-      const tag = c.filtered ? `<span class="tag filtered">filtered out</span>` : c.inContext ? `<span class="tag inctx">in context</span>` : "";
-      const pct = Math.round(c[key] * 100);
-      return `<li class="chunk ${c.inContext ? "in" : "out"}">
-        <span class="rank">${n + 1}</span>
-        <span><span class="doc ${cls}">${esc(c.doc)}</span>${tag}<span class="text">${esc(c.text)}</span></span>
-        <span class="score">${(c[key]).toFixed(2)} · ${c.tokens} tok<span class="bar" aria-hidden="true"><span style="width:${pct}%"></span></span></span>
-      </li>`;
-    })
-    .join("");
-  const label = { wrong: "Grounded but wrong", right: "Correct", partial: "Correct but incomplete", none: "No answer" }[a.kind];
-  els.readout.className = `readout ${a.kind === "wrong" ? "wrong" : a.kind === "right" ? "right" : ""}`;
-  els.readout.innerHTML = `${label}: ${esc(a.text)}<span class="sub">${esc(a.note)} Context: ${ranked.filter((c) => c.inContext).length} chunks, ${a.tokens.toLocaleString("en-US")} tokens.</span>`;
-  if (a.kind === "wrong") sawWrong = true;
-  if (filter && sawWrong && (a.kind === "right" || a.kind === "partial") && !reported) {
-    reported = true;
-    sim.checkpoint("observe-stale-grounding");
-  }
-  sim.event("retrieve", { chunk, topK, rerank, filter, result: a.kind });
-  reportSize();
-}
+  if (!app.firstElementChild) build();
+  const state = compute();
+  maybeCheckpoint(state);
 
-function readProps(props) {
-  if (props && CHUNKS[props.chunk]) chunk = props.chunk;
-  const k = Number(props && props.topK);
-  if (Number.isFinite(k) && k >= 1 && k <= 6) topK = Math.floor(k);
+  app.querySelectorAll("[data-pred]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.pred === prediction)));
+  app.querySelectorAll("[data-chunk]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.chunk === chunk)));
+  app.querySelectorAll("[data-k]").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.k) === topK)));
+  app.querySelector("#rerankBtn").setAttribute("aria-pressed", String(rerank));
+  app.querySelector("#filterBtn").setAttribute("aria-pressed", String(filter));
+
+  app.querySelector("#verdict").textContent = verdictText(state);
+  app.querySelector("#scrollWrap").innerHTML = buildSvg(state);
+  app.querySelector("#caption").textContent = captionText(state);
+
+  app.querySelector("#recVal").textContent = `${state.relCaught}/${state.totalRel} (${state.recall}%)`;
+  app.querySelector("#recTokens").innerHTML = Array.from({ length: state.totalRel }, (_, i) =>
+    i < state.relCaught ? `<span class="tok rel">● ✓ caught</span>` : `<span class="tok missed">○ missed</span>`
+  ).join("");
+
+  app.querySelector("#precVal").textContent = `${state.relCaught}/${state.caught.length} (${state.precision}%)`;
+  app.querySelector("#precTokens").innerHTML = state.caught
+    .map((c) => `<span class="tok ${c.role}">${esc(c.sym)} ${esc(c.role === "rel" ? "2026" : c.role === "stale" ? "2024" : "noise")}</span>`)
+    .join("");
+
+  requestAnimationFrame(() => sim.resize(document.body.scrollHeight + 8));
 }
 
 const sim = createSim({
-  onInit({ props, theme }) {
+  onInit({ props, theme, reducedMotion }) {
     applyTheme(theme);
-    readProps(props);
-    build();
+    document.documentElement.classList.toggle("reduced", Boolean(reducedMotion));
+    if (props && typeof props.chunk === "string" && PONDS[props.chunk]) chunk = props.chunk;
+    if (props && typeof props.topK === "number" && [1, 3, 5].includes(props.topK)) topK = props.topK;
     render();
   },
 });
 
-// Fallback for opening the bundle directly (no host init).
 setTimeout(() => {
-  if (!sim.isInitialized() && app.childElementCount === 0) {
-    build();
-    render();
-  }
+  if (!sim.isInitialized()) render();
 }, 300);

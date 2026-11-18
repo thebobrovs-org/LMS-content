@@ -31,6 +31,7 @@ const WIDTH_GUARDS = {
   "approval-gate-explorer": [".scroll"],
   "backprop-explorer": [".diagram"],
   "neuron-explorer": [".diagram"],
+  "rag-retrieval-tuner": [".scroll"],
   "systolic-array": [".grid-panel"],
   "tpu-ocs-explorer": [".canvas-wrap"],
   "tpu-vm-anatomy": [".stage-scroll"],

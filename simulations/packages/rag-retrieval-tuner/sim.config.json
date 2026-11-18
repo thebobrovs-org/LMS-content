@@ -1,7 +1,7 @@
 {
   "id": "rag-retrieval-tuner",
   "title": "RAG retrieval tuner",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "props": {
     "chunk": { "type": "string", "default": "medium" },
     "topK": { "type": "number", "default": 3 }
@@ -9,7 +9,7 @@
   "checkpoints": [
     {
       "id": "observe-stale-grounding",
-      "hint": "See a superseded policy ground a wrong answer, then fix it with the metadata filter rather than more chunks or reranking."
+      "hint": "See high recall with low precision ground a wrong 60-day answer, then turn on the metadata filter so only the current 2026 policy reaches the model."
     }
   ]
 }
