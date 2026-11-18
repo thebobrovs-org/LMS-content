@@ -46,6 +46,8 @@ const WIDTH_GUARDS = {
   "agents-cli-loop": [".scroll"],
   "sandbox-ladder-explorer": [".scroll"],
   "mcp-routes-explorer": [".scroll"],
+  "adk-anatomy-explorer": [".scroll"],
+  "eval-case-explorer": [".scroll"],
   "access-boundary-explorer": [".scroll"],
   "context-budget-explorer": [".scroll"],
   "media-reference-explorer": [".scroll"],

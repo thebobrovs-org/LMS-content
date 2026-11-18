@@ -24,6 +24,7 @@ const MAX_STEPS = 40;
 
 /** Sims held to the rule. A new sim joins when it fits; the skill's design checklist asks for it. */
 export const FIT = [
+  "adk-anatomy-explorer",
   "agent-loop-stepper",
   "agents-cli-loop",
   "approval-gate-explorer",
@@ -34,6 +35,7 @@ export const FIT = [
   "context-loading-flow",
   "cx-route-resolver",
   "gateway-registry-flow",
+  "eval-case-explorer",
   "hybrid-agent-flow",
   "model-requirement-picker",
   "oauth-consent-pause",
