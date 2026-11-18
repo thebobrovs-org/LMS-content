@@ -206,12 +206,15 @@ the narration text, and the sentence cues. Never write that file by hand:
    (`.github/workflows/readalong.yml`) narrates the lesson with ElevenLabs
    (`scripts/generate-readalong.mjs`), uploads the MP3 and commits `audio/<id>.json` to the PR.
    While the label is on, each push re-narrates only lessons whose text changed.
+   The workflow's commit starts a CI run by dispatch, which shows the result but doesn't count as
+   the PR's required `gate` check: before merging, push any commit to the branch (or use
+   **Update branch**) so CI runs on the PR itself.
 3. Review the cues like any other change. Content CI fails when the file is missing, and
    warns when the lesson's prose has changed since the audio was made.
 
 To choose a voice, add the label **`audio-samples`** (or run the workflow by hand in
 *samples* mode): it reads one paragraph in Bella, Alice and River and attaches the MP3s
-to the run. The default voice is Bella (`hpp4J3VqNfWAUOO0d1Us`); the repo variable
+to the run. The default voice is Nichalia (`XfNU2rGpBa01ckF309OY`); the repo variable
 `READALONG_VOICE` changes it, and the next run re-narrates every lesson in the new voice.
 
 By hand: `node scripts/generate-readalong.mjs topics/<dir>/<name>.mdx --dry-run` prints the

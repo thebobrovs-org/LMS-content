@@ -1,0 +1,350 @@
+{
+  "src": "https://storage.googleapis.com/hyperstack-lms-audio/topics/agentic-ai/choosing-a-model.e3648394d2f9.mp3",
+  "voice": "XfNU2rGpBa01ckF309OY",
+  "model": "eleven_multilingual_v2",
+  "textHash": "0e0ef0e2b44de4501e660b9bc4b75756b242f92b5485a7f53a8f462637b9e5fd",
+  "cues": [
+    {
+      "start": 0,
+      "end": 2.392,
+      "text": "Why model choice matters early.",
+      "paragraph": 0
+    },
+    {
+      "start": 2.995,
+      "end": 10.019,
+      "text": "The model fixes much of an agent's cost, its latency, where its data is processed and how far you can customise it.",
+      "paragraph": 1
+    },
+    {
+      "start": 10.623,
+      "end": 18.959,
+      "text": "It is also hard to change later: prompts, tool descriptions and evaluation thresholds all get tuned to one model's behaviour.",
+      "paragraph": 1
+    },
+    {
+      "start": 19.203,
+      "end": 23.359,
+      "text": "So make the choice deliberately, from requirements, not from habit.",
+      "paragraph": 1
+    },
+    {
+      "start": 23.87,
+      "end": 34.702,
+      "text": "The exam frames it as three comparisons: a large or a small model, an open or a proprietary model, and a model you host or one you consume as a service.",
+      "paragraph": 2
+    },
+    {
+      "start": 35.143,
+      "end": 40.809,
+      "text": "They are three separate decisions, and the most common mistake is to treat two of them as one.",
+      "paragraph": 2
+    },
+    {
+      "start": 41.053,
+      "end": 42.678,
+      "text": "Three separate decisions.",
+      "paragraph": 3
+    },
+    {
+      "start": 43.003,
+      "end": 43.642,
+      "text": "Size.",
+      "paragraph": 4
+    },
+    {
+      "start": 44.083,
+      "end": 47.648,
+      "text": "A large model reasons better over long, multi-step problems.",
+      "paragraph": 4
+    },
+    {
+      "start": 48.089,
+      "end": 56.355,
+      "text": "A small language model (SLM) answers faster and costs less per request, but handles a narrower range of tasks well.",
+      "paragraph": 4
+    },
+    {
+      "start": 57.052,
+      "end": 68.244,
+      "text": "Within Gemini, the Pro, Flash and Flash-Lite tiers are steps along this axis: the same family and the same API, trading capability for speed and cost.",
+      "paragraph": 4
+    },
+    {
+      "start": 68.848,
+      "end": 69.684,
+      "text": "Openness.",
+      "paragraph": 5
+    },
+    {
+      "start": 70.288,
+      "end": 78.728,
+      "text": "A proprietary model, such as Gemini or a partner model like Claude, is used through its provider's service; you never hold the weights.",
+      "paragraph": 5
+    },
+    {
+      "start": 79.239,
+      "end": 87.47,
+      "text": "An open-weights model, such as Google's Gemma, publishes its weights, so you may fine-tune it, inspect it and run it on hardware you choose.",
+      "paragraph": 5
+    },
+    {
+      "start": 88.074,
+      "end": 96.468,
+      "text": "Tuning alone doesn't force open weights: Gemini models can be tuned through Agent Platform's managed tuning, but you never hold the result.",
+      "paragraph": 5
+    },
+    {
+      "start": 96.979,
+      "end": 103.562,
+      "text": "Choose open weights when you need to hold the model yourself, for example to tune it and run it on your own machines.",
+      "paragraph": 5
+    },
+    {
+      "start": 104.374,
+      "end": 105.048,
+      "text": "Serving.",
+      "paragraph": 6
+    },
+    {
+      "start": 105.431,
+      "end": 114.487,
+      "text": "With model as a service (MaaS) you call a managed endpoint and pay as you go (reserved capacity is an option), with nothing to operate.",
+      "paragraph": 6
+    },
+    {
+      "start": 114.998,
+      "end": 129.835,
+      "text": "With a self-deployed model you deploy the weights to an endpoint or cluster you control, such as an Agent Platform endpoint or GKE, and you pay for that compute while it is provisioned, usually whether or not requests arrive.",
+      "paragraph": 6
+    },
+    {
+      "start": 130.276,
+      "end": 136.824,
+      "text": "Model Garden is the catalogue where you find Google, partner and open models and the serving options each one offers.",
+      "paragraph": 6
+    },
+    {
+      "start": 137.521,
+      "end": 139.622,
+      "text": "Open does not mean self-hosted.",
+      "paragraph": 7
+    },
+    {
+      "start": 140.064,
+      "end": 145.973,
+      "text": "Model Garden offers some open models, Gemma among them, as managed MaaS endpoints too.",
+      "paragraph": 7
+    },
+    {
+      "start": 146.484,
+      "end": 150.64,
+      "text": "Open weights give you the option to self-deploy, not the obligation.",
+      "paragraph": 7
+    },
+    {
+      "start": 151.081,
+      "end": 152.951,
+      "text": "From requirement to choice.",
+      "paragraph": 8
+    },
+    {
+      "start": 153.392,
+      "end": 156.109,
+      "text": "Each axis is pushed by different requirements.",
+      "paragraph": 9
+    },
+    {
+      "start": 156.492,
+      "end": 160.811,
+      "text": "Read the requirement, find the axis it acts on, then choose.",
+      "paragraph": 9
+    },
+    {
+      "start": 161.415,
+      "end": 163.493,
+      "text": "Two rows deserve a closer look:",
+      "paragraph": 10
+    },
+    {
+      "start": 163.818,
+      "end": 166.244,
+      "text": "Residency is not the same as control.",
+      "paragraph": 11
+    },
+    {
+      "start": 166.685,
+      "end": 171.446,
+      "text": "If data must be processed in the EU, choose a model served from an EU region.",
+      "paragraph": 11
+    },
+    {
+      "start": 171.887,
+      "end": 181.964,
+      "text": "Many managed models, Gemini among them, can be called on an EU regional or multi-region endpoint (never the global endpoint, which gives no residency guarantee).",
+      "paragraph": 11
+    },
+    {
+      "start": 182.289,
+      "end": 196.708,
+      "text": "An endpoint's location is not always the whole processing boundary: Google documents that a locational endpoint may process data within a wider country or multi-region boundary, and in-country processing in Europe varies by model.",
+      "paragraph": 11
+    },
+    {
+      "start": 197.15,
+      "end": 205.103,
+      "text": "So check the model's documented processing commitment for your requirement; where it matches, a managed endpoint meets the need.",
+      "paragraph": 11
+    },
+    {
+      "start": 205.613,
+      "end": 211.906,
+      "text": "Self-deploy only when the requirement is stronger: the model must run on infrastructure you operate yourself.",
+      "paragraph": 11
+    },
+    {
+      "start": 212.603,
+      "end": 215.702,
+      "text": "Cost at scale is a measurement, not a rule.",
+      "paragraph": 11
+    },
+    {
+      "start": 216.306,
+      "end": 219.766,
+      "text": "A self-deployed endpoint costs money every hour it runs.",
+      "paragraph": 11
+    },
+    {
+      "start": 220.462,
+      "end": 228.926,
+      "text": "It can beat per-use pricing only when traffic is steady and high enough to keep it busy, so compare the real numbers before moving off a managed model.",
+      "paragraph": 11
+    },
+    {
+      "start": 229.437,
+      "end": 243.798,
+      "text": "So the default is simple: start with a managed model, and move to a self-deployed one only for a stated need, such as a need to run it on infrastructure you operate, holding its weights or a measured cost saving.",
+      "paragraph": 12
+    },
+    {
+      "start": 245.098,
+      "end": 247.467,
+      "text": "Routing between models in one agent.",
+      "paragraph": 13
+    },
+    {
+      "start": 248.419,
+      "end": 251.078,
+      "text": "An agent doesn't need one model for everything.",
+      "paragraph": 14
+    },
+    {
+      "start": 251.287,
+      "end": 257.893,
+      "text": "Most of its steps are simple: deciding what kind of request it has, extracting fields, writing a short confirmation.",
+      "paragraph": 14
+    },
+    {
+      "start": 258.334,
+      "end": 262.525,
+      "text": "A few are hard: a multi-step diagnosis, a plan with trade-offs.",
+      "paragraph": 14
+    },
+    {
+      "start": 263.129,
+      "end": 268.063,
+      "text": "Send the simple steps to a small, fast model and keep the large model for the hard ones.",
+      "paragraph": 14
+    },
+    {
+      "start": 268.875,
+      "end": 272.869,
+      "text": "The router is the step that decides which model handles a request.",
+      "paragraph": 14
+    },
+    {
+      "start": 273.821,
+      "end": 283.597,
+      "text": "Agent frameworks such as ADK let each agent set its own model, so a design can give the router and the simple steps a small model and the reasoning step a large one.",
+      "paragraph": 14
+    },
+    {
+      "start": 284.201,
+      "end": 291.399,
+      "text": "Routing has a cost of its own: two models to evaluate, and a wrong route sends a hard request to a model that can't handle it.",
+      "paragraph": 15
+    },
+    {
+      "start": 292.096,
+      "end": 299.7,
+      "text": "Use it when the volume of simple steps is large enough that the savings matter, and evaluate the router as carefully as the rest of the agent.",
+      "paragraph": 15
+    },
+    {
+      "start": 300.211,
+      "end": 304.728,
+      "text": "There is no official Google rule for when to pick a small model over a large one.",
+      "paragraph": 16
+    },
+    {
+      "start": 305.169,
+      "end": 312.901,
+      "text": "Treat it as engineering judgement: state the requirement, choose, and confirm with an evaluation on your own tasks.",
+      "paragraph": 16
+    },
+    {
+      "start": 313.4,
+      "end": 314.097,
+      "text": "Sources.",
+      "paragraph": 17
+    },
+    {
+      "start": 314.526,
+      "end": 342.182,
+      "text": "Google Cloud, Professional Agentic Architect exam guide, services.google.com/fh/files/misc/professional_agentic_architect_exam_guide_english.pdf (section 3.1, the bullet on selecting and configuring the language model; LLM vs SLM, self-hosted vs SaaS, open-source vs proprietary, weighed on cost, security and architecture).",
+      "paragraph": 18
+    },
+    {
+      "start": 343.052,
+      "end": 360.282,
+      "text": "Google Cloud, Agent Platform documentation, \"Choose a serving option for open models\", docs.cloud.google.com/gemini-enterprise-agent-platform/models/open-models/choose-serving-option (open models served as MaaS or self-deployed).",
+      "paragraph": 18
+    },
+    {
+      "start": 360.979,
+      "end": 375.468,
+      "text": "Google Cloud, Agent Platform documentation, Model Garden and self-deployed models, docs.cloud.google.com/gemini-enterprise-agent-platform/models/model-garden/self-deployed-models.",
+      "paragraph": 18
+    },
+    {
+      "start": 376.281,
+      "end": 397.225,
+      "text": "Google Cloud, Agent Platform documentation, \"Data residency\", docs.cloud.google.com/gemini-enterprise-agent-platform/resources/data-residency (a locational endpoint can process data within a broader country or multi-region boundary; in-country processing varies by model).",
+      "paragraph": 18
+    },
+    {
+      "start": 397.922,
+      "end": 413.248,
+      "text": "Google Cloud, Generative AI on Agent Platform pricing, cloud.google.com/vertex-ai/generative-ai/pricing (Gemma 4 offered as a managed model priced per token; Gemini tuning priced per training token).",
+      "paragraph": 18
+    },
+    {
+      "start": 413.851,
+      "end": 425.868,
+      "text": "Google Cloud, \"Serve Gemma open models using GPUs on GKE with vLLM\", docs.cloud.google.com/kubernetes-engine/docs/tutorials/serve-gemma-gpu-vllm.",
+      "paragraph": 18
+    },
+    {
+      "start": 426.332,
+      "end": 433.995,
+      "text": "Google AI for Developers, Gemma documentation, ai.google.dev/gemma/docs (Gemma, a family of open models).",
+      "paragraph": 18
+    },
+    {
+      "start": 434.436,
+      "end": 449.123,
+      "text": "Google, Agent Development Kit documentation, \"LLM agents\", github.com/google/adk-docs/blob/main/docs/agents/llm-agents.md (each LlmAgent sets its own model).",
+      "paragraph": 18
+    }
+  ]
+}

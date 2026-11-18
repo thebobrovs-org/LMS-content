@@ -40,6 +40,8 @@ export function extractSpokenText(raw) {
   text = text.replace(/^[ \t]*([-*_])(?:[ \t]*\1){2,}[ \t]*$/gm, ""); // thematic breaks
   text = text.replace(/^#{1,6}\s+(.+?)\s*#*\s*$/gm, (_, h) => `\n${sentence(h.trim())}\n`);
   text = text.replace(/^[ \t]*>[ \t]?/gm, "");
+  // A list item wrapped over several lines is one item: join its continuation lines (not a nested item) first.
+  text = text.replace(/^([ \t]*(?:[-*+]|\d+[.)])[ \t]+[^\n]*)((?:\n[ \t]+(?!(?:[-*+]|\d+[.)])[ \t])\S[^\n]*)+)/gm, (_, first, rest) => first + rest.replace(/\n[ \t]+/g, " "));
   text = text.replace(/^[ \t]*(?:[-*+]|\d+[.)])[ \t]+(.+)$/gm, (_, item) => `${sentence(item.trim())}`);
   text = text.replace(/!\[[^\]]*\]\([^)]*\)/g, "");
   text = text.replace(/\[([^\]]+)\]\([^)]*\)/g, "$1");
