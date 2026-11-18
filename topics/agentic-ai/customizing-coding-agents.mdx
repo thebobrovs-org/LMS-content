@@ -317,13 +317,11 @@ to. The last line of the body is guidance; the tool list is enforcement.
 ## One requirement, five ways
 
 Put the mechanisms side by side on the requirement from the hooks section: every
-edited TypeScript file passes the linter.
+edited TypeScript file passes the linter. Predict first whether the linter still
+runs when the model ignores the rule, then step one edit request through the
+agent and watch where each mechanism sits.
 
-<Figure
-  src="/media/coding-agent-customization-guarantees.svg"
-  alt="A table with one requirement, every edited TypeScript file passes the linter, tried with five mechanisms. Rule saying always run the linter: the model may skip it, so not guaranteed. Skill with a lint procedure: loads only if the task matches its description, so not guaranteed. Reviewer subagent: runs only when the agent delegates to it, so not guaranteed. Plugin: ships whichever mechanism it contains, so it guarantees only what that mechanism does. PostToolUse hook on edits: the harness runs it after every edit, so guaranteed. A footer says a hook covers one developer's machine and the agent's edit tools, so CI is still the final check before merge."
-  caption="Only the hook makes the check happen on every edit."
-/>
+<Simulation id="customization-guarantees-flow" />
 
 A hook enforces on one developer's machine, in one agent, for the edits its
 matcher covers. A developer can edit files by hand or turn the hook off, so keep

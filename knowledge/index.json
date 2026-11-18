@@ -16,6 +16,9 @@
     "capacity-orchestrator": [
       "ml-systems/tpu-provisioning-vm"
     ],
+    "capstone-architecture-explorer": [
+      "agentic-ai/capstone-agent-design-review"
+    ],
     "gpu-or-tpu-decider": [
       "ml-systems/gpu-or-tpu"
     ],

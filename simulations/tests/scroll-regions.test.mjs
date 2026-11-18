@@ -40,6 +40,8 @@ const WIDTH_GUARDS = {
   "enterprise-data-flow": [".scroll"],
   "a2a-vs-mcp-flow": [".scroll"],
   "threat-defence-flow": [".scroll"],
+  "capstone-architecture-explorer": [".scroll"],
+  "customization-guarantees-flow": [".scroll"],
   "access-boundary-explorer": [".scroll"],
   "context-budget-explorer": [".scroll"],
   "media-reference-explorer": [".scroll"],

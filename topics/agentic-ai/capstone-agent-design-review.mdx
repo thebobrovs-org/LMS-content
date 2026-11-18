@@ -254,11 +254,11 @@ For R3, the refund limit lives in code, as the next section explains.
 </Step>
 </Steps>
 
-<Figure
-  src="/media/capstone-reference-architecture.svg"
-  alt="Reference architecture for the Northwind Outdoor support agent. A customer signs in on the website, which sets the customer id in session state and sends the chat to the agent. The agent, an ADK LlmAgent on Agent Runtime with persistent sessions and its own agent identity, is bound to Agent Gateway, so all its outbound calls pass through the gateway, which allows only listed targets and records each call: a managed Gemini model, Agent Search over the policy pages, MCP Toolbox with the parameterised query get_orders_for_customer on Cloud SQL, and issue_refund on the payments API, which sends refunds over 200 dollars to the support leads' approval queue. Model Armor screens prompts and responses for prompt injection and detects and de-identifies card numbers. Agent Registry lists the agent and its MCP server. Below, an evalset runs in CI on every change, and sampled live traffic is scored online; failures become new eval cases. Each element is labelled with the requirement it serves, R1 to R7."
-  caption="Every box answers a numbered requirement. A box with no requirement next to it would be the first thing to question."
-/>
+Here is the whole design on one map, and every box answers a numbered
+requirement. Predict first which box holds a refund over $200 for a support
+lead, then open the other boxes to see what each does and the lesson behind it.
+
+<Simulation id="capstone-architecture-explorer" />
 
 ## The refund limit: where a rule is enforced
 

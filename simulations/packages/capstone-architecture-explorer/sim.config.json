@@ -1,0 +1,12 @@
+{
+  "id": "capstone-architecture-explorer",
+  "title": "The Northwind agent, box by box",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-refund-limit-in-code",
+      "hint": "Find the box that holds a refund over $200 for a support lead: issue_refund, whose code files it in the approval queue, not an instruction to the agent."
+    }
+  ]
+}

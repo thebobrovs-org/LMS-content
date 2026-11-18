@@ -26,8 +26,10 @@ const MAX_STEPS = 40;
 export const FIT = [
   "agent-loop-stepper",
   "approval-gate-explorer",
+  "capstone-architecture-explorer",
   "context-budget-explorer",
   "continuous-eval-loop",
+  "customization-guarantees-flow",
   "cx-route-resolver",
   "gateway-registry-flow",
   "hybrid-agent-flow",
