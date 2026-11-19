@@ -61,7 +61,7 @@ quiz:
       - "A line in the project instructions file listing the table names"
       - "A larger context window, so the agent can hold every schema"
     answer: 0
-    explanation: "Looking up a schema is an action against a live system, so it needs a tool, and MCP is how a coding agent gets tools. A skill or an instructions file holds text the agent reads; it goes stale as tables change and cannot query anything. A larger window still has nothing to call."
+    explanation: "Looking up a schema is an action against a live system, so it needs a tool. An MCP server can expose the BigQuery schema-lookup tools needed here. A skill or an instructions file holds text the agent reads; it goes stale as tables change and cannot query anything. A larger window still has nothing to call."
   - id: mcp-or-skill-review
     objective: configure-mcp
     question: "Your team has a six-step checklist for reviewing a BigQuery query's cost before it ships, with a page of examples. The agent should follow it whenever someone asks for a cost review. What do you add?"
