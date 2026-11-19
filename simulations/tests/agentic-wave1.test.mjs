@@ -7,6 +7,8 @@
 //   key is gone next turn; an app: key reaches another user.
 // - rag-retrieval-tuner: recall 1/1 still grounds "60 days" on the superseded FAQ; a bigger net or the reranker
 //   does not fix it, the metadata filter does and fires the checkpoint; small chunks split out the final-sale rule.
+// - autonomy-cost-radar: an agent on the invoice pipeline grows all four costs and fires the checkpoint; on the IT
+//   troubleshooter the workflow falls short and the agent is the least autonomy that solves it.
 // Run by `npm run gate`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -260,4 +262,27 @@ test("rag-retrieval-tuner: Reset restarts the prediction cycle but the checkpoin
   await sim.press("#cast");
   assert.match(text(sim, "#verdict"), /^Right: on your first cast the agent said 30 days/);
   assert.equal(sim.events.filter((e) => e === "checkpoint:observe-stale-grounding").length, 1);
+});
+
+test("autonomy-cost-radar: swapping the invoice workflow for an agent grows all four costs and fires the checkpoint", async () => {
+  const sim = await loadSim("autonomy-cost-radar");
+  assert.match(text(sim, "#caption"), /^Workflow is the least autonomy that solves it/);
+  await sim.press('[data-predict="four"]');
+  assert.equal(text(sim, "#verdict"), "", "no verdict before the agent is swapped in");
+  await sim.press("#agent");
+  assert.match(text(sim, "#caption"), /workflow already does/);
+  assert.match(text(sim, "#caption"), /all four costs grow/);
+  assert.match(text(sim, "#readout"), /costs up on 4 of 4 axes/);
+  assert.match(text(sim, "#verdict"), /^You predicted all four: right/);
+  assert.ok(sim.events.includes("checkpoint:observe-autonomy-cost"));
+});
+
+test("autonomy-cost-radar: on the IT troubleshooter the workflow falls short and the agent is the fit, with no checkpoint", async () => {
+  const sim = await loadSim("autonomy-cost-radar");
+  await sim.press('[data-task="it"]');
+  assert.match(text(sim, "#caption"), /^Workflow can't solve the IT troubleshooter/);
+  assert.match(text(sim, "#readout"), /Short of what the task needs by 2 levels/);
+  await sim.press('[data-system="agent"]');
+  assert.match(text(sim, "#caption"), /^Agent is the least autonomy that solves it/);
+  assert.ok(!sim.events.includes("checkpoint:observe-autonomy-cost"));
 });
