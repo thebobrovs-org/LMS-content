@@ -1,0 +1,12 @@
+{
+  "id": "auth-manager-flow",
+  "title": "Ana's GitHub token through the auth manager",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-token-in-vault",
+      "hint": "Predict where Ana's tokens end up, then step to the callback: the auth manager exchanges GitHub's code and keeps her tokens in its Google-managed vault, not in the app or the agent."
+    }
+  ]
+}
