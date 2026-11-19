@@ -18,28 +18,14 @@
     "topic": "agentic-ai/capstone-agent-design-review",
     "title": "Hands-on lab: Production-Ready AI Roadshow 1: Building a Multi-Agent System",
     "url": "https://codelabs.developers.google.com/codelabs/production-ready-ai-roadshow/1-building-a-multi-agent-system/building-a-multi-agent-system",
-    "note": "Build a distributed multi-agent system with ADK and A2A. Part 1 of 3: build, evaluate, secure. Codelab, runs in your own Google Cloud project with billing on."
-  },
-  {
-    "type": "link",
-    "topic": "agentic-ai/capstone-agent-design-review",
-    "title": "Hands-on lab: Production-Ready AI Roadshow 2: Evaluating Multi-Agent Systems",
-    "url": "https://codelabs.developers.google.com/codelabs/production-ready-ai-roadshow/2-evaluating-multi-agent-systems/evaluating-multi-agent-systems",
-    "note": "Replace vibe checks with data-driven evaluation of the same system. Part 2 of 3. Codelab, runs in your own Google Cloud project with billing on."
+    "note": "Build a distributed multi-agent system with ADK and A2A. Part 1 of the roadshow series: build, then secure. Codelab, runs in your own Google Cloud project with billing on."
   },
   {
     "type": "link",
     "topic": "agentic-ai/capstone-agent-design-review",
     "title": "Hands-on lab: Production-Ready AI Roadshow 3: Securing a Multi-Agent System",
     "url": "https://codelabs.developers.google.com/codelabs/production-ready-ai-roadshow/3-securing-a-multi-agent-system/securing-a-multi-agent-system",
-    "note": "Secure the system with Google Cloud security features. Part 3 of 3. Codelab, runs in your own Google Cloud project with billing on."
-  },
-  {
-    "type": "link",
-    "topic": "agentic-ai/enterprise-data-gemini-enterprise",
-    "title": "Hands-on lab: Integrate Gemini Enterprise Agents with Google Workspace",
-    "url": "https://codelabs.developers.google.com/ge-gws-agents",
-    "note": "Build Gemini Enterprise agents over data stores, Google-managed MCP servers and Workspace APIs. Codelab, runs in your own Google Cloud project with billing on."
+    "note": "Secure the system from part 1 with Google Cloud security features. Codelab, runs in your own Google Cloud project with billing on."
   },
   {
     "type": "link",
@@ -71,31 +57,10 @@
   },
   {
     "type": "link",
-    "topic": "agentic-ai/agents-cli",
-    "title": "Hands-on lab: Agents CLI in Agent Platform: From Development to Production",
-    "url": "https://codelabs.developers.google.com/agents-cli-agent-platform/agents-cli-agent-platform",
-    "note": "Install the tools, then build, test and deploy an ADK agent with Agents CLI. About 55 min. Codelab, runs in your own Google Cloud project with billing on."
-  },
-  {
-    "type": "link",
-    "topic": "agentic-ai/agents-cli",
-    "title": "Hands-on lab: Managing the Agent Lifecycle with Agents CLI and ADK 2.0",
-    "url": "https://codelabs.developers.google.com/agents-cli-adk-lifecycle",
-    "note": "Scaffold, lint and test an agent in the local playground with Agents CLI. Codelab, runs in your own Google Cloud project with billing on."
-  },
-  {
-    "type": "link",
     "topic": "agentic-ai/coding-agent-sandboxes",
     "title": "Hands-on lab: Automatic Code Evaluation with Agent Sandbox on GKE",
     "url": "https://codelabs.developers.google.com/codelabs/gke/ai-toolkit-lab-2",
     "note": "Run untrusted, agent-generated code in GKE Agent Sandbox. About 45 min. Codelab, runs in your own Google Cloud project with billing on."
-  },
-  {
-    "type": "link",
-    "topic": "agentic-ai/coding-agent-sandboxes",
-    "title": "Hands-on lab: Deploying Secure AI Agents on GKE",
-    "url": "https://codelabs.developers.google.com/codelabs/gke/ai-agents-on-gke",
-    "note": "Run an ADK agent's generated code in Agent Sandbox with gVisor isolation. Codelab, runs in your own Google Cloud project with billing on."
   },
   {
     "type": "link",
@@ -127,34 +92,6 @@
   },
   {
     "type": "link",
-    "topic": "agentic-ai/sessions-state-memory",
-    "title": "Hands-on lab: Building Stateful and Personalized Agents with ADK",
-    "url": "https://codelabs.developers.google.com/codelabs/agent-memory/instructions",
-    "note": "Six levels of memory, from session state to a persistent database and Memory Bank. Codelab, runs in your own Google Cloud project with billing on."
-  },
-  {
-    "type": "link",
-    "topic": "agentic-ai/sessions-state-memory",
-    "title": "Hands-on lab: Enhancing Agents with Memory",
-    "url": "https://codelabs.developers.google.com/next26/dev-keynote/enhancing-agents-with-memory",
-    "note": "Add Agent Platform session management and Memory Bank to an ADK agent. About 16 min. Codelab, runs in your own Google Cloud project with billing on."
-  },
-  {
-    "type": "link",
-    "topic": "agentic-ai/rag-pipelines",
-    "title": "Hands-on lab: Building Agents with Retrieval-Augmented Generation",
-    "url": "https://codelabs.developers.google.com/codelabs/production-ready-ai-with-gc/7-advanced-agent-capabilities/building-agents-with-retrieval-augmented-generation",
-    "note": "Build agentic RAG with ADK over a search backend (labelled Vertex AI Search in the lab). Codelab, runs in your own Google Cloud project with billing on."
-  },
-  {
-    "type": "link",
-    "topic": "agentic-ai/rag-pipelines",
-    "title": "Hands-on lab: Advanced RAG Techniques",
-    "url": "https://codelabs.developers.google.com/codelabs/production-ready-ai-with-gc/8-advanced-rag-methods/advanced-rag-methods",
-    "note": "Compare chunking strategies, add reranking and query transformation. Codelab, runs in your own Google Cloud project with billing on."
-  },
-  {
-    "type": "link",
     "topic": "agentic-ai/mcp-tools-and-integrations",
     "title": "Hands-on lab: Getting Started with Google MCP Servers",
     "url": "https://codelabs.developers.google.com/getting-started-google-mcp-servers",
@@ -166,13 +103,6 @@
     "title": "Hands-on lab: Build a Travel Agent using MCP Toolbox for Databases and ADK",
     "url": "https://codelabs.developers.google.com/travel-agent-mcp-toolbox-adk",
     "note": "Expose a database through MCP Toolbox for Databases to an ADK agent. About 35 min. Codelab, runs in your own Google Cloud project with billing on."
-  },
-  {
-    "type": "link",
-    "topic": "agentic-ai/mcp-tools-and-integrations",
-    "title": "Hands-on lab: Build, Secure, and Deploy an MCP Server on Google Cloud",
-    "url": "https://codelabs.developers.google.com/secure-mcp-server-gcp",
-    "note": "Build a custom MCP server and deploy it to Cloud Run, GKE and Gemini Enterprise. About 50 min. Codelab, runs in your own Google Cloud project with billing on."
   },
   {
     "type": "link",
@@ -211,20 +141,6 @@
   },
   {
     "type": "link",
-    "topic": "agentic-ai/agent-quality-basics",
-    "title": "Hands-on lab: From vibe checks to data-driven Agent Evaluation",
-    "url": "https://codelabs.developers.google.com/codelabs/production-ready-ai-roadshow/2-evaluating-multi-agent-systems/evaluating-multi-agent-systems",
-    "note": "Replace a few happy demos with measured evaluation of an agent system. Codelab, runs in your own Google Cloud project with billing on."
-  },
-  {
-    "type": "link",
-    "topic": "agentic-ai/agent-eval-datasets",
-    "title": "Hands-on lab: Evaluating Agents with ADK",
-    "url": "https://codelabs.developers.google.com/adk-eval/instructions",
-    "note": "Generate golden datasets and run ADK evaluations against them. Codelab, runs in your own Google Cloud project with billing on."
-  },
-  {
-    "type": "link",
     "topic": "agentic-ai/agent-eval-datasets",
     "title": "Hands-on lab: Evaluate ADK agent performance using the Gen AI Evaluation Service",
     "url": "https://www.cloudskillsboost.google/focuses/134095",
@@ -260,20 +176,6 @@
   },
   {
     "type": "link",
-    "topic": "agentic-ai/agent-observability-troubleshooting",
-    "title": "Hands-on lab: Deploy, Manage, and Observe ADK Agent on Cloud Run",
-    "url": "https://codelabs.developers.google.com/deploy-manage-observe-adk-cloud-run",
-    "note": "Load-test revisions and trace every invocation of a deployed agent. Codelab, runs in your own Google Cloud project with billing on."
-  },
-  {
-    "type": "link",
-    "topic": "agentic-ai/agent-observability-troubleshooting",
-    "title": "Hands-on lab: Debugging Agents At Scale",
-    "url": "https://codelabs.developers.google.com/next26/dev-keynote/debugging-agents",
-    "note": "Debug agents with Agent Platform, Cloud Assist and Antigravity. About 47 min. Codelab, runs in your own Google Cloud project with billing on."
-  },
-  {
-    "type": "link",
     "topic": "agentic-ai/agent-threat-model",
     "title": "Hands-on lab: Defeat Prompt Injection with ADK 2 Graph Workflows",
     "url": "https://codelabs.developers.google.com/ai-kopitiam-adk-graph-workflow",
@@ -285,13 +187,6 @@
     "title": "Hands-on lab: Deploy, Contain, Observe: Least-Privilege ADK Agents on Agent Runtime",
     "url": "https://codelabs.developers.google.com/adk-agent-runtime-least-privilege",
     "note": "Narrow Agent Identity IAM, sandboxed code execution and trace inspection. About 59 min. Codelab, runs in your own Google Cloud project with billing on."
-  },
-  {
-    "type": "link",
-    "topic": "agentic-ai/agent-identity-and-access",
-    "title": "Hands-on lab: Build a Secure Agent with Model Armor and Identity",
-    "url": "https://codelabs.developers.google.com/secure-customer-service-agent/instructions",
-    "note": "Least-privilege access with Agent Identity, plus Model Armor filtering. Codelab, runs in your own Google Cloud project with billing on."
   },
   {
     "type": "link",
