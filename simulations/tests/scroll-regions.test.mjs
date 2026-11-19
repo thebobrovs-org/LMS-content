@@ -55,6 +55,7 @@ const WIDTH_GUARDS = {
   "context-budget-explorer": [".scroll"],
   "media-reference-explorer": [".scroll"],
   "model-requirement-picker": [".scroll"],
+  "autonomy-cost-radar": [".scroll"],
   "approval-gate-explorer": [".scroll"],
   "backprop-explorer": [".diagram"],
   "neuron-explorer": [".diagram"],

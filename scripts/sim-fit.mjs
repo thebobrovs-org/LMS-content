@@ -27,6 +27,7 @@ export const FIT = [
   "adk-anatomy-explorer",
   "agent-loop-stepper",
   "agents-cli-loop",
+  "autonomy-cost-radar",
   "approval-gate-explorer",
   "capstone-architecture-explorer",
   "context-budget-explorer",
