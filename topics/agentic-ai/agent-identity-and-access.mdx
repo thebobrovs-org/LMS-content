@@ -3,7 +3,7 @@ title: Agent Identity and least-privilege access
 summary: An agent that runs as a broad service account turns one prompt injection into a breach. Give each agent its own identity, grant it only the roles its tools need, and cap its reach with a Principal Access Boundary.
 tags: [agentic-ai, agents, security, iam]
 difficulty: intermediate
-estimatedMinutes: 30
+estimatedMinutes: 40
 level: 200
 prerequisites: [agentic-ai/agent-threat-model, agentic-ai/google-agent-platform-map]
 objectives:
@@ -48,6 +48,14 @@ flashcards:
     objective: agent-identity
     front: What is SPIFFE, and how does Agent Identity use it?
     back: "An open standard for identifying workloads. Each agent identity is based on it: a cryptographic identity with an X.509 certificate that Google Cloud provisions and manages on the agent."
+  - id: redeploy-new-principal
+    objective: agent-identity
+    front: What happens to an agent's grants when you delete it and deploy a replacement?
+    back: "The replacement gets a new resource ID, so a new principal identifier, and the old grants don't apply to it: grant the roles again. The old agent's bindings stay in your policies as inactive grants until you remove them."
+  - id: id-token-outside-google
+    objective: agent-identity
+    front: How does an agent prove its identity to a service outside Google Cloud?
+    back: "With an OIDC ID token (in Preview): a signed JWT whose sub is the agent's SPIFFE ID. The service verifies it with the issuer's public JWKS keys, checks iss, aud and exp, and allows only SPIFFE IDs on its allowlist. It needs no Google credentials."
 quiz:
   - id: owner-so-it-never-fails
     objective: least-privilege
@@ -94,8 +102,26 @@ quiz:
       - "Its tokens expire hourly, and its roles rotate along with them"
     answer: 0
     explanation: "A downloaded service account key works from anywhere until someone revokes it. Agent identities cannot have long-lived keys, and their tokens are cryptographically bound to the agent's X.509 certificate to prevent token theft. Roles do not rotate, and encryption in transit is not what stops a stolen token."
+  - id: redeployed-agent-denied
+    objective: agent-identity
+    question: "A team deletes its invoice agent on Agent Runtime and deploys the same code again. The new agent gets permission errors on the bucket the old one could read. Why?"
+    choices:
+      - "The new agent has a new resource ID, so a new principal that holds none of the old grants"
+      - "Agent identities need a day for their certificate before IAM accepts their tokens"
+      - "Deleting an agent removes every IAM binding that mentioned its principal"
+    answer: 0
+    explanation: "An agent's identity is derived from the ID of the resource that hosts it, so a replacement is a new principal, even with the same name and code: grant it the roles again. Deleting the old agent does not remove its bindings; they stay as inactive grants to clean up. Certificates are provisioned automatically and need no waiting period."
+  - id: partner-verifies-agent
+    objective: agent-identity
+    question: "An agent on Cloud Run calls a partner's API hosted outside Google Cloud. How should the partner know which agent is calling?"
+    choices:
+      - "Accept the agent's Google access token and ask Google who it belongs to"
+      - "Verify the agent's OIDC ID token with the issuer's public keys and check sub against an allowlist"
+      - "Give the agent a long-lived API key and match it against a list of keys"
+    answer: 1
+    explanation: "Outside Google, the agent's identity travels as an OIDC ID token whose sub is its SPIFFE ID. The partner verifies the signature with the public JWKS keys, checks iss, aud and exp, and allows only SPIFFE IDs it trusts, with no Google credentials of its own. An access token is for Google Cloud APIs, and a long-lived key is the kind of secret Agent Identity avoids."
 status: draft
-updated: "2026-11-17"
+updated: "2026-11-19"
 ---
 
 ## One injection, one breach
@@ -146,6 +172,68 @@ beyond it the binding is carried by DPoP (Demonstrating Proof-of-Possession, RFC
 9449): proofs signed with the agent's private key, which Context-Aware Access
 checks. Google's words for the result: "compromised tokens are useless outside
 of their intended, trusted runtimes."
+
+### What an agent principal looks like
+
+Each agent identity has a SPIFFE ID and a matching IAM principal identifier.
+For an agent on Agent Runtime in an organization, the principal is:
+
+```text
+principal://agents.global.org-ORGANIZATION_ID.system.id.goog/resources/aiplatform/projects/PROJECT_NUMBER/locations/LOCATION/reasoningEngines/ENGINE_ID
+```
+
+The part before `/resources` is the **trust domain**:
+`agents.global.org-ORGANIZATION_ID.system.id.goog` for an organization, or
+`agents.global.proj-PROJECT_NUMBER.system.id.goog` for a project with no
+organization. The rest names the resource that hosts the agent (Gemini
+Enterprise agents use `discoveryengine` in place of `aiplatform`). You grant
+roles to that identifier the way you grant them to any principal. To grant one
+role to every agent in a project, use the principal set
+`principalSet://agents.global.org-ORGANIZATION_ID.system.id.goog/attribute.platformContainer/aiplatform/projects/PROJECT_NUMBER`;
+`principalSet://agents.global.org-ORGANIZATION_ID.system.id.goog/*` covers
+every agent in the organization. Prefer the single agent, for the same reason
+as Step 2 below.
+
+Two lifecycle rules follow from the identity being derived from the hosting
+resource's ID:
+
+- **A redeployed agent is a new principal.** Delete an agent and deploy a
+  replacement, even with the same name, code and configuration, and it gets a
+  new resource ID and so a new identifier. The old grants don't apply to it;
+  grant the roles again.
+- **Deleting an agent leaves its grants behind.** Its IAM bindings stay in
+  your policies as inactive grants. Remove them when you decommission the
+  agent.
+
+### Where the agent's credentials come from
+
+Agent Identity supports three kinds of credential. The agent's **X.509
+certificate** is provisioned on it automatically, valid for 24 hours and kept
+current by Google Cloud. For Google Cloud APIs (`*.googleapis.com`) it gets
+short-lived OAuth 2.0 **access tokens**, which Application Default Credentials
+fetches from the metadata server, so Google Cloud client libraries use the
+agent's identity with no code change. For services outside Google, and for
+Cloud Run or GKE endpoints, it can get **OIDC ID tokens**: signed JWTs whose
+`sub` claim is the agent's SPIFFE ID (in Preview at the time of writing).
+
+An ID token lets a service outside Google trust the agent without holding any
+Google secret. The receiver fetches the issuer's public keys from an
+unauthenticated JWKS endpoint, checks the token's issuer, audience and expiry,
+and then compares `sub` against its own allowlist of agent SPIFFE IDs. By
+default the token's `cnf` claim also carries the fingerprint of the agent's
+certificate, so a receiver that requires mTLS can reject a token presented with
+any other certificate.
+
+Follow the invoice agent in **Where an agent's credentials come from**. Predict
+what a copied access token can do, then step through its two calls on its own
+authority, one inside Google Cloud and one outside it, and the replay at the
+end.
+
+<Simulation id="agent-credential-flow" />
+
+**Explain it:** BigQuery and the partner API each trust the agent, but through
+different tokens. What does each one check, and why does the partner never
+need a Google credential?
 
 ## Step 2: grant only what the tools need
 
@@ -251,6 +339,15 @@ eligibility, not a network firewall.
     Finance boundary Off. Compare four readable buckets with two when it is
     On. Press Reset to return to the grant needed by the invoice tool alone.
   </Step>
+  <Step id="credential-flow-two-tokens" title="Name the two tokens">
+    In Where an agent's credentials come from, step to 3 and then to 6. Name
+    the token each call carries, who issued it, and what BigQuery and the
+    partner API each check before they let the call through.
+  </Step>
+  <Step id="credential-flow-replay" title="Explain the failed replay">
+    Pick an answer, then step to 7. Say why the copied access token can't be
+    replayed from the laptop, and which default policy enforces that.
+  </Step>
 </Steps>
 
 <Quiz
@@ -266,6 +363,12 @@ eligibility, not a network firewall.
 
 - Give each agent its own identity: per-agent grants, per-agent audit, an
   identity not shared by default, and no long-lived keys.
+- An agent principal is a SPIFFE-based identifier derived from the resource that
+  hosts it: a redeployed agent is a new principal, and a deleted one leaves
+  inactive grants to remove.
+- The agent's own credentials: a 24-hour X.509 certificate, certificate-bound
+  access tokens for Google Cloud APIs, and OIDC ID tokens that services outside
+  Google verify with public keys.
 - Grant the narrowest roles on the narrowest resources its tools need, and
   design as if prompt injection will succeed.
 - Roles grant; a Principal Access Boundary caps. Use both, so a mistaken grant
@@ -273,7 +376,9 @@ eligibility, not a network firewall.
 
 ## Sources
 
-- Google Cloud, [Agent Identity overview](https://docs.cloud.google.com/iam/docs/agent-identity-overview) (retrieved 2026-11-17: a cryptographic identity per agent based on the SPIFFE standard; X.509 certificates auto-provisioned and managed on the agent; access tokens bound to the agent's certificates to prevent token theft; "not shared by multiple workloads by default, can't be impersonated, and don't allow developers to generate long-lived service account keys"; audit logs record the agent and the delegating user; permissions granted directly to the agent's identifier; supported by Agent Runtime, Gemini Enterprise, Cloud Run and GKE).
+- Google Cloud, [Agent Identity overview](https://docs.cloud.google.com/iam/docs/agent-identity-overview) (retrieved 2026-11-17, rechecked 2026-11-19 for the principal format, trust domains, "Each X.509 certificate is valid for 24 hours", the three credential types, and the identity and permission lifecycle: a replacement agent "receives a new resource ID and therefore a new principal identifier", and deleting an agent leaves its bindings as inactive grants; a cryptographic identity per agent based on the SPIFFE standard; X.509 certificates auto-provisioned and managed on the agent; access tokens bound to the agent's certificates to prevent token theft; "not shared by multiple workloads by default, can't be impersonated, and don't allow developers to generate long-lived service account keys"; audit logs record the agent and the delegating user; permissions granted directly to the agent's identifier; supported by Agent Runtime, Gemini Enterprise, Cloud Run and GKE).
+- Google Cloud, [Authenticate to Google Cloud using an agent's own identity](https://docs.cloud.google.com/iam/docs/auth-agent-own-identity) (retrieved 2026-11-19: client libraries use Agent Identity automatically, with Application Default Credentials fetching the token from the metadata server; principal sets for all agents in a project or organization; a default Context-Aware Access policy enforces DPoP and requires mTLS for Agent Gateway, so "only the intended, trusted runtime environment ... can use the certificate-bound tokens").
+- Google Cloud, [Authenticate to external services using an agent's own identity](https://docs.cloud.google.com/iam/docs/auth-agent-own-identity-external) (retrieved 2026-11-19, Preview: OIDC ID tokens whose `sub` is the agent's SPIFFE ID; receivers verify `iss`, `aud`, `iat` and `exp` against the public discovery and JWKS endpoints, cacheable for 24 hours, and authorize on an allowlist of SPIFFE IDs; the `cnf` `x5t#S256` claim carries the certificate fingerprint by default; external verifiers need no IAM roles or Google credentials).
 - Google Cloud, [Context-Aware Access for agents](https://docs.cloud.google.com/access-context-manager/docs/caa-agent-security) (retrieved 2026-11-17: certificate-bound workload access tokens; mTLS to Google Cloud APIs and Agent Gateway; DPoP per RFC 9449 beyond the gateway; "compromised tokens are useless outside of their intended, trusted runtimes").
 - Google Cloud, [Principal Access Boundary policies](https://docs.cloud.google.com/iam/docs/principal-access-boundary-policies) (retrieved 2026-11-17: PAB policies "let you define the resources that principals can access"; they "can only block or not block access—they can't grant access"; by default principals are eligible to access any resource; an ineligible principal's access is limited "regardless of the roles they've been granted"; only supported permissions are blocked; when several policies apply to a principal, the principal is eligible for the resources any of them allows, per the "Principal access boundary policy evaluation" section).
 - OWASP GenAI Security Project, [LLM06:2025 Excessive Agency](https://github.com/OWASP/www-project-top-10-for-large-language-model-applications/blob/main/2_0_vulns/LLM06_ExcessiveAgency.md) (retrieved 2026-11-17: minimise extension permissions).

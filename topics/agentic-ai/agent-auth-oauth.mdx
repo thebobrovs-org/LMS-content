@@ -3,7 +3,7 @@ title: Authenticating agent tool calls with OAuth 2.0
 summary: Every tool call that reaches a protected API runs on someone's authority, either the agent's own or a user's. Tell OAuth from OpenID Connect, choose two-legged or three-legged OAuth for a tool, and handle ADK's pause for user consent.
 tags: [agentic-ai, agents, security, oauth, adk]
 difficulty: advanced
-estimatedMinutes: 35
+estimatedMinutes: 45
 level: 300
 prerequisites: [agentic-ai/agent-identity-and-access, agentic-ai/adk-agents-and-tools]
 objectives:
@@ -13,6 +13,10 @@ objectives:
     statement: "Choose 2-legged or 3-legged OAuth for a tool call."
   - id: adk-auth
     statement: "Configure ADK tool authentication and handle the consent pause and resume."
+  - id: auth-models
+    statement: "Choose among Agent Identity's auth models for a call, from the target and whose authority it uses."
+  - id: auth-manager
+    statement: "Trace a third-party credential through Agent Identity's auth manager."
 videos:
   - youtubeId: QpMweHAiE4o
     title: "Agent Sessions and Tool Authentication"
@@ -54,6 +58,14 @@ flashcards:
     objective: adk-auth
     front: In ADK, what do AuthScheme and AuthCredential each describe?
     back: "AuthScheme describes how the API expects credentials, such as an OAuth 2.0 bearer token or an API key. AuthCredential holds the initial information to start the flow, such as the app's OAuth client ID and secret. An AuthConfig pairs the two."
+  - id: two-questions-card
+    objective: auth-models
+    front: Which two questions pick an Agent Identity auth model?
+    back: "Whose authority the call uses (the agent's own, or a user's who delegated it), and what the target accepts (a Google Cloud API, an OIDC ID token, OAuth, an API key, or basic auth). User-delegated means 3-legged OAuth; the agent's own to Google Cloud means its Agent Identity token."
+  - id: auth-provider-card
+    objective: auth-manager
+    front: What is an auth provider in Agent Identity's auth manager?
+    back: "The configuration for one third-party app: its auth type (3-legged OAuth, 2-legged OAuth or API key) and credentials. The auth manager keeps the client secrets, API keys and users' tokens in a Google-managed vault, runs consent and code exchange, and refreshes tokens."
 quiz:
   - id: calendar-3lo
     objective: 2lo-vs-3lo
@@ -109,8 +121,35 @@ quiz:
       - "A local .env file deployed with the agent's container image to production"
     answer: 1
     explanation: "ADK recommends an authentication manager service that stores keys and secrets and acquires, manages and stores tokens for you; Agent Identity's auth manager integrates with ADK (in Preview at the time of writing). In-memory session state is lost when an instance restarts and is not encrypted storage, and a .env file is for local development only."
+  - id: servicenow-2lo
+    objective: auth-models
+    question: "A nightly agent on Agent Runtime files incident summaries in ServiceNow under its own service user. ServiceNow supports OAuth client credentials. Which auth model fits?"
+    choices:
+      - "3-legged OAuth, so an administrator consents once for the agent"
+      - "2-legged OAuth through an auth provider that holds the client credentials"
+      - "HTTP basic auth with the service user's password in an environment variable"
+    answer: 1
+    explanation: "The agent acts on its own authority against an external service that supports OAuth, which is what Google recommends 2-legged OAuth for; the auth provider stores the client ID and secret, and ADK injects the token. 3-legged needs a user to act for, and Google marks basic auth not recommended because it uses plaintext passwords."
+  - id: bigquery-own-identity
+    objective: auth-models
+    question: "The same agent also reads a BigQuery table in its own project. What does it need for that call?"
+    choices:
+      - "A role on the table granted to its agent principal; client libraries use its Agent Identity token"
+      - "An API key auth provider for BigQuery in the auth manager"
+      - "An OIDC ID token with BigQuery's URL as the audience"
+    answer: 0
+    explanation: "For Google Cloud APIs the agent uses its own Agent Identity: grant its principal a role, and Application Default Credentials fetches a certificate-bound access token from the metadata server. The auth manager is for third-party credentials, and OIDC ID tokens are for services outside Google or Cloud Run and GKE endpoints."
+  - id: who-exchanges-code
+    objective: auth-manager
+    question: "A tool uses a 3-legged auth provider. After the user consents at the third party, where does the authorization code go?"
+    choices:
+      - "To the chat app, which exchanges it and stores the tokens in its database"
+      - "Into the agent's prompt, so the model can attach it to the tool call"
+      - "To the auth provider's callback, and the auth manager exchanges it and stores the tokens"
+    answer: 2
+    explanation: "You register the auth provider's oauthcallback URL with the third-party OAuth client, so the code reaches the auth manager, which exchanges it and keeps the tokens in a Google-managed vault. The app then calls FinalizeCredentials with the consent nonce and resumes the agent. Neither the app nor the model ever handles the code or stores the tokens."
 status: draft
-updated: "2026-11-17"
+updated: "2026-11-19"
 ---
 
 ## Whose authority does this call use?
@@ -209,6 +248,42 @@ user's access token instead.
   explanation="Each mailbox belongs to its employee, so the agent should act on that employee's authority, with their consent: three-legged. A company-wide credential reaches every mailbox, and an ID token proves who someone is but authorises no mailbox access."
 />
 
+## Six auth models on Google Cloud
+
+Google's Agent Identity documentation sorts every call an agent makes by two
+questions: **whose authority** it uses, and **what the target accepts**.
+
+| Authority | Method | Target | Use it when |
+|---|---|---|---|
+| User-delegated | OAuth 2.0, 3-legged | External tools | The agent acts for one user, such as on their Jira or GitHub. An auth provider handles consent and tokens. |
+| Agent's own | Agent Identity | Google Cloud APIs | The agent calls Google Cloud with its own principal and grants. |
+| Agent's own | OIDC ID tokens | External tools | The agent calls an external backend or another cloud that trusts Google's OIDC identity federation. |
+| Agent's own | OAuth 2.0, 2-legged | External tools | Machine to machine, where the service supports OAuth. Google recommends this one for external services. |
+| Agent's own | API key | External tools | The service only takes a key. The auth provider stores and manages it. |
+| Agent's own | HTTP basic auth | External tools | Only if nothing else is offered: it sends plaintext passwords, and Google marks it not recommended. |
+
+The first two rows are what the previous lesson and this one have covered so
+far: 3-legged OAuth for a user's data, and the agent's own Agent Identity for
+Google Cloud. The OIDC row is the same identity carried outside Google as a
+signed ID token, which the receiver checks against public keys. The last three
+rows hold a third party's secret: the **auth manager**, below, keeps it out of
+your code.
+
+Behind the table sit three identities. The **user identity** signs in to your
+app with OAuth 2.0 or OIDC. The **agent identity** is the agent's SPIFFE-based
+principal, acting on its own authority. The **delegated identity** is the agent
+acting for the user with scoped 3-legged credentials that the auth manager
+brokers. Audit logs record both the agent and the delegating user.
+
+<Quiz
+  id="pick-auth-model"
+  objective="auth-models"
+  question="An agent posts weather alerts using a third-party weather service that only accepts an API key. No user is involved. What should hold the key?"
+  choices={["The agent's system prompt, so the model can pass it to the tool", "An API key auth provider in Agent Identity's auth manager", "A 3-legged auth provider, so a user approves each alert"]}
+  answer={1}
+  explanation="The agent acts on its own authority and the service takes only a key, so an API key auth provider fits: the auth manager stores the key and ADK puts it in the tool's request headers. A key in a prompt is visible to the model and its logs, and 3-legged OAuth needs a user to act for."
+/>
+
 ## Tool authentication in ADK
 
 ADK describes a tool's authentication with two objects:
@@ -265,17 +340,72 @@ so the app must handle the event and a redirect URI.
 Tokens and client secrets are credentials, so treat them like the agent's
 other secrets. ADK's documentation recommends an **authentication manager**
 service in production: one that stores keys and secrets and acquires, manages
-and stores OAuth tokens for you. Agent Identity's auth manager integrates with
-ADK this way (in Preview at the time of writing). If you manage tokens
-yourself, store them encrypted against an authenticated user, and keep secrets
-in a secrets manager, not in code, prompts or a `.env` file outside local
-development.
+and stores OAuth tokens for you. If you manage tokens yourself, store them
+encrypted against an authenticated user, and keep secrets in a secrets manager,
+not in code, prompts or a `.env` file outside local development.
+
+## The auth manager: one broker for third-party credentials
+
+Agent Identity's **auth manager** is Google's authentication manager for
+agents, and it integrates with ADK (the ADK integration was in Preview at the
+time of writing). You configure an **auth provider** for each third-party app:
+its type (3-legged OAuth, 2-legged OAuth or API key) and its credentials, such
+as an OAuth client ID and secret, a token URL or a key. The auth manager then:
+
+- keeps API keys, OAuth client secrets and users' tokens in a **Google-managed
+  vault**;
+- runs the multi-step OAuth work itself: consent, the authorization code
+  exchange and token refreshes, with no backend code of yours;
+- lets you see which users granted access, and revoke it.
+
+Who may use a provider is ordinary IAM: grant the Agent Identity User role
+(`roles/agentidentity.user`) on the auth provider to the agent's principal (and,
+for 3-legged OAuth, to the users). Auth providers live in a region, not in
+`global`, so keep the provider, the MCP server and the Agent Registry client in
+one region. When a tool comes from an MCP server in Agent Registry, the
+server's outbound binding already records which auth provider to use, so you
+don't build an auth scheme for it.
+
+**2-legged OAuth and API key providers** use the agent's identity and need no
+consent: ADK retrieves the token or key from the provider and injects it into
+the tool's request headers. **3-legged providers** need the user once. Follow
+Ana's first request in **Ana's GitHub token through the auth manager**:
+predict where her tokens end up, then step through the pause, her consent on
+GitHub's own page, and the callback. Step 9 shows her next request.
+
+<Simulation id="auth-manager-flow" />
+
+**Explain it:** in Ana's flow, the app and the agent each take part, yet
+neither ever holds her GitHub tokens or the OAuth client secret. What does each
+of them do, and what does the auth manager do in their place?
+
+The pieces you build for a 3-legged provider:
+
+1. **Register the callback.** Creating the auth provider returns its
+   `oauthcallback` URL on `agentidentitycredentials.googleapis.com`; register
+   it as the redirect URI of your OAuth client at the third party.
+2. **Handle the pause.** When the agent returns `adk_request_credential`, the
+   app sends the user to the `authorization_uri` and keeps the `consent_nonce`.
+3. **Serve a continue URI.** After consent the user lands on your app's
+   `continue_uri`, which calls `FinalizeCredentials` with the nonce to complete
+   the flow.
+4. **Resume the agent** with a `function_response` to `adk_request_credential`.
+   ADK fetches the token from the provider and the tool call runs.
 
 <Callout type="warning">A common trap: "the user can just give the agent their password". Then the agent holds a credential that does everything the user can do, until the password changes, and the model has seen it. Three-legged OAuth gives it a token for only the scopes the user approved, which the user can usually revoke at the provider.</Callout>
 
 ### Put it together
 
 <Steps>
+<Step id="auth-manager-sim-callback" title="Follow the code to the vault">
+In Ana's GitHub token through the auth manager, pick where her tokens are kept,
+then step to 5. Name who receives GitHub's code, who exchanges it, and where the
+tokens go.
+</Step>
+<Step id="auth-manager-sim-next-time" title="Compare the first and the next request">
+Step on to 9. List the steps of the first request that the next one skips, and
+say which part of the auth manager makes that possible.
+</Step>
 <Step id="oauth-sim-predict-consent" title="Predict, then follow the pause">
 In Whose authority: the consent pause, pick who sees Ana's password, then press
 Next step through Ana's mailbox (3LO). Stop at step 3 and check your pick
@@ -307,6 +437,14 @@ could not.
   consent, and ADK exchanges the code and retries the call. The agent never
   sees a password.
 - Keep tokens and secrets in an authentication manager or a secrets manager.
+- Google's six auth models follow from two questions: whose authority, and
+  what the target accepts. 3-legged for a user's data; Agent Identity for
+  Google Cloud; OIDC ID tokens, 2-legged OAuth or an API key for external
+  services on the agent's own authority; basic auth only as a last resort.
+- Agent Identity's auth manager holds third-party secrets and users' tokens in
+  a Google-managed vault, runs consent and code exchange through an auth
+  provider's callback, refreshes tokens, and lets ADK inject them into tool
+  calls.
 
 ## Sources
 
@@ -315,6 +453,10 @@ could not.
 - Google, Agent Development Kit documentation, "Authenticating with tools", github.com/google/adk-docs/blob/main/docs/tools-custom/authentication.md (retrieved 2026-11-17: authentication manager services recommended for production; AuthScheme, AuthCredential and credential types; OAuth 2.0 authorisation code and client credentials examples; AuthConfig at toolset level; the adk_request_credential pause, redirect, auth response and automatic retry).
 - Google, "Using OAuth 2.0 for Server to Server Applications", developers.google.com/identity/protocols/oauth2/service-account (retrieved 2026-11-18: a service account creates a JWT signed with RS256 and posts it to https://oauth2.googleapis.com/token with grant_type urn:ietf:params:oauth:grant-type:jwt-bearer; client libraries abstract this, and on Google Cloud Application Default Credentials can be used instead).
 - Google Cloud, "How Application Default Credentials works", docs.cloud.google.com/docs/authentication/application-default-credentials (retrieved 2026-11-18: the attached service account is found through the metadata server, "the preferred method for finding credentials in a production environment on Google Cloud").
+- Google Cloud, "Agent Identity overview", docs.cloud.google.com/iam/docs/agent-identity-overview (retrieved 2026-11-19: the auth models table, by authority, method and target, with 2-legged OAuth "recommended for machine-to-machine authentication with external services that support OAuth" and HTTP basic auth not recommended; user, agent and delegated identities).
+- Google Cloud, "Agent Identity auth manager overview", docs.cloud.google.com/iam/docs/auth-manager-overview (retrieved 2026-11-19: auth providers "are the specific configurations used to acquire, manage, and secure API keys, OAuth client IDs, OAuth client secrets, and delegated end-user OAuth tokens"; a Google-managed vault; consent, authorization code exchange and token refreshes "without custom backend code"; visibility and revocation of end-user access).
+- Google Cloud, "Authenticate using 3-legged OAuth with auth manager", docs.cloud.google.com/iam/docs/auth-with-3lo-v2 (retrieved 2026-11-19: retrieveCredentials returns `uri_consent_required` with `authorization_uri` and `consent_nonce`; register the provider's oauthcallback redirect URI; the continue URI calls FinalizeCredentials with the nonce; resume with a `function_response` to `adk_request_credential`; tokens stored in a Google-managed credential vault; roles/agentidentity.user; an MCP server's outbound binding records the auth provider; auth providers aren't available in the global location).
+- Google Cloud, "Authenticate using 2-legged OAuth with auth manager" and "Authenticate using API key with auth manager", docs.cloud.google.com/iam/docs/auth-with-2lo-v2 and docs.cloud.google.com/iam/docs/auth-with-api-key-v2 (retrieved 2026-11-19: these providers "use the agent's identity and don't require user consent"; ADK retrieves and injects the token or key into the tool invocation headers).
 - Google, Agent Development Kit documentation, "Agent Identity Auth Manager for ADK", github.com/google/adk-docs/blob/main/docs/integrations/agent-identity.md (retrieved 2026-11-17: Google-managed lifecycle of auth credentials; Preview release).
 - Google Cloud, Conversational Analytics API, "Integration patterns for data agents", docs.cloud.google.com/gemini/data-agents/conversational-analytics-api/integration-patterns (retrieved 2026-11-17: the agentic platform authenticates the user through a 3-legged OAuth 2.0 flow; queries run with the authenticated user's identity rather than a shared service account, so IAM, row-level and column-level policies apply; Looker queries use the credentials supplied for a Looker API user).
 - Google Cloud, Conversational Analytics API, "Authenticate user identity and connect to a data source", docs.cloud.google.com/gemini/data-agents/conversational-analytics-api/authentication (retrieved 2026-11-17: Looker API keys or an access token; an access token applies the target user's LookML row and column level permissions; with API keys all users share the same level of access).

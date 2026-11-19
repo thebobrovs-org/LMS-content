@@ -34,6 +34,8 @@ const WIDTH_GUARDS = {
   "guardrail-visibility": [".scroll"],
   "hybrid-agent-flow": [".scroll"],
   "gateway-registry-flow": [".scroll"],
+  "agent-credential-flow": [".scroll"],
+  "auth-manager-flow": [".scroll"],
   "continuous-eval-loop": [".scroll"],
   "guardrail-layers-flow": [".scroll"],
   "platform-map-explorer": [".scroll"],

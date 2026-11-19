@@ -1,0 +1,12 @@
+{
+  "id": "agent-credential-flow",
+  "title": "Where an agent's credentials come from",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-bound-token-refused",
+      "hint": "Predict what a copied access token can do, then step to the end: the token is bound to the agent's certificate, so a replay from a laptop fails."
+    }
+  ]
+}
