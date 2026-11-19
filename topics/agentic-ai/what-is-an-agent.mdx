@@ -3,7 +3,7 @@ title: What makes something an agent
 summary: An agent is a model that chooses its own next action, in a loop, with tools. Tell it apart from a chatbot and a fixed workflow, and use the least autonomy that solves the task.
 tags: [agentic-ai, agents, architecture]
 difficulty: beginner
-estimatedMinutes: 15
+estimatedMinutes: 17
 level: 100
 objectives:
   - id: define-agent
@@ -113,7 +113,7 @@ quiz:
     answer: 2
     explanation: "Only a check outside the model enforces the limit. A rule in the prompt is guidance the model can get wrong or be manipulated into ignoring, so it is not a guardrail. An eval, even one that checks the agent's trajectory, measures behaviour on the cases it sees; it does not block an action when the agent runs."
 status: published
-updated: "2026-11-17"
+updated: "2026-11-19"
 ---
 
 <ReadAlong title="Listen to this lesson" />
@@ -225,6 +225,22 @@ something:
   many turns, so it needs narrow permissions and guardrails. A limit written in
   the prompt is only guidance the model can ignore or be manipulated past, so
   enforce it in the tool or with an approval step.
+
+### Try it: what does each step right buy, and what does it cost?
+
+The radar puts the three designs on one picture: one axis for what autonomy
+gives, flexibility, and four for what it costs. Every axis grows outward, so a
+bigger shape is more flexible and more expensive at once. Pick one of this
+lesson's tasks and an amber mark shows the flexibility its path needs. Predict
+first: if you turn the invoice workflow into an agent, how many of the four
+costs grow?
+
+<Simulation id="autonomy-cost-radar" />
+
+The shapes nest: you can't buy flexibility without buying the costs that come
+with it. On the invoice pipeline the agent's extra reach buys nothing, while on
+the IT troubleshooter the workflow falls short of the mark and only the agent
+clears it. That is when its costs are worth paying.
 
 So the rule is simple: **use the least autonomy that solves the task.** Start
 with a single model call or a workflow, and give the model control of the next

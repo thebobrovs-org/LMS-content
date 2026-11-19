@@ -1,0 +1,9 @@
+{
+  "id": "autonomy-cost-radar",
+  "title": "What autonomy costs",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    { "id": "observe-autonomy-cost", "hint": "On the invoice pipeline, a task a workflow already solves, swap in an agent: flexibility grows past what the task needs, and every one of the four costs grows with it." }
+  ]
+}
