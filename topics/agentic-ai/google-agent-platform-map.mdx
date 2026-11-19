@@ -199,7 +199,8 @@ product; answer them to complete the map.
   retrieval-augmented pipeline. **Agent Retrieval** and the original **Vector
   Search** store and search embeddings, the lists of numbers that capture what a
   passage means, so that similar passages can be found. **MCP (Model Context
-  Protocol) servers** expose Google Cloud services and your own systems as tools.
+  Protocol) servers** are one way to expose Google Cloud services and your own
+  systems as tools.
   Underneath sit the data stores an agent reads: **BigQuery**, **Cloud SQL**,
   **Firestore**, **Memorystore for Redis** and **Cloud Storage**.
 - **Run.** <Term id="Agent Runtime">Agent Runtime</Term> is the managed runtime
@@ -216,7 +217,7 @@ product; answer them to complete the map.
   prompt injection and for leaks of sensitive data. **Sensitive Data
   Protection** finds and masks sensitive data.
 
-<Callout type="note">Agents talk to tools over MCP (Model Context Protocol) and to other agents over A2A (Agent2Agent). These are protocols, not products, so they connect the boxes rather than sitting in one. A later lesson compares them.</Callout>
+<Callout type="note">Agents can call tools defined in their own code, such as ADK function tools, or tools exposed by a separate server over MCP (Model Context Protocol), a standard way to share tools across agents and frameworks. Agents talk to other agents over A2A (Agent2Agent). MCP and A2A are protocols, not products, so they connect the boxes rather than sitting in one. A later lesson compares them.</Callout>
 
 The shape is the thing to remember. Low-code tools sit on top, for people who
 configure agents rather than code them. ADK, the models and the runtime sit
