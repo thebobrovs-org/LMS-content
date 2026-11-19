@@ -1,374 +1,392 @@
 {
-  "src": "https://storage.googleapis.com/hyperstack-lms-audio/topics/agentic-ai/what-is-an-agent.e4000323ba19.mp3",
+  "src": "https://storage.googleapis.com/hyperstack-lms-audio/topics/agentic-ai/what-is-an-agent.c27f57d3291f.mp3",
   "voice": "XfNU2rGpBa01ckF309OY",
   "model": "eleven_multilingual_v2",
-  "textHash": "54905bca4290d9fcbaab8ee40ea30e70a584901f0ddef9ee46b44d9b11b7864e",
+  "textHash": "0e63bb353cd3ab453c1bce498de660e73a42b7b6e48441394d8bfb4abb511eba",
   "cues": [
     {
       "start": 0,
-      "end": 2.392,
+      "end": 2.926,
       "text": "Not everything with an LLM is an agent.",
       "paragraph": 0
     },
     {
-      "start": 2.717,
-      "end": 7.396,
+      "start": 3.309,
+      "end": 8.15,
       "text": "Teams call almost any feature that uses a large language model an \"agent\".",
       "paragraph": 1
     },
     {
-      "start": 7.837,
-      "end": 9.16,
+      "start": 8.591,
+      "end": 10.077,
       "text": "That label matters.",
       "paragraph": 1
     },
     {
-      "start": 9.671,
-      "end": 24.659,
+      "start": 10.588,
+      "end": 26.726,
       "text": "Every LLM feature needs evaluation and protections suited to its data and outputs, but an agent adds more: checks on the path it took, permissions for the actions it can take, and guards against errors that compound over many turns.",
       "paragraph": 1
     },
     {
-      "start": 25.101,
-      "end": 32.589,
+      "start": 27.33,
+      "end": 34.458,
       "text": "And a task that a simple workflow handles well becomes slower, costlier and harder to test when you make it an agent.",
       "paragraph": 1
     },
     {
-      "start": 33.704,
-      "end": 40.623,
+      "start": 35.062,
+      "end": 41.749,
       "text": "Many of the architecture choices in this path start with one question: does this task need an agent at all?",
       "paragraph": 1
     },
     {
-      "start": 41.064,
-      "end": 42.341,
+      "start": 42.19,
+      "end": 43.421,
       "text": "The parts of an agent.",
       "paragraph": 2
     },
     {
-      "start": 42.55,
-      "end": 47.473,
+      "start": 43.665,
+      "end": 47.972,
       "text": "The tool-using agents this path studies have four core parts, plus state.",
       "paragraph": 3
     },
     {
-      "start": 48.17,
-      "end": 64.702,
+      "start": 48.414,
+      "end": 65.016,
       "text": "Google's Agent Development Kit (ADK) names the first three as an agent's basic components, with tools optional: an ADK agent needs only a model and instructions, but without tools it can only produce text, never read live data or act.",
       "paragraph": 3
     },
     {
-      "start": 65.398,
-      "end": 75.29,
+      "start": 65.712,
+      "end": 76.242,
       "text": "ADK's agent class is a building block, not a verdict: a tool-less ADK agent that answers whatever the user asks behaves as a chatbot in this lesson's terms.",
       "paragraph": 3
     },
     {
-      "start": 75.731,
-      "end": 78.97,
+      "start": 76.753,
+      "end": 80.202,
       "text": "A model that reads the situation and reasons about what to do.",
       "paragraph": 4
     },
     {
-      "start": 79.481,
-      "end": 82.941,
+      "start": 80.643,
+      "end": 84.544,
       "text": "Instructions that set the goal, the persona and the limits.",
       "paragraph": 4
     },
     {
-      "start": 83.545,
-      "end": 89.454,
+      "start": 84.927,
+      "end": 91.696,
       "text": "Tools that let it read data or act: functions, APIs, databases, even other agents.",
       "paragraph": 4
     },
     {
-      "start": 90.151,
-      "end": 90.917,
+      "start": 92.207,
+      "end": 92.961,
       "text": "A loop.",
       "paragraph": 4
     },
     {
-      "start": 91.068,
-      "end": 103.386,
+      "start": 93.565,
+      "end": 106.394,
       "text": "The model picks the next tool call, the runtime (your code or the agent framework) runs it, the result comes back, and the model decides again, until it can answer or a stop condition ends the loop.",
       "paragraph": 4
     },
     {
-      "start": 104.083,
-      "end": 111.885,
+      "start": 107.346,
+      "end": 115.147,
       "text": "Around these four, state (the conversation so far, and longer-term memory) lets each turn build on the last.",
       "paragraph": 5
     },
     {
-      "start": 113,
-      "end": 114.985,
+      "start": 115.844,
+      "end": 118.003,
       "text": "The model never runs a tool itself.",
       "paragraph": 6
     },
     {
-      "start": 115.078,
-      "end": 120.999,
+      "start": 118.444,
+      "end": 124.725,
       "text": "It asks for a call, and your code, the agent runtime or the provider's tool service executes it.",
       "paragraph": 6
     },
     {
-      "start": 121.51,
-      "end": 125.202,
+      "start": 125.236,
+      "end": 130.054,
       "text": "A later topic, the agent loop, follows one request through this cycle.",
       "paragraph": 6
     },
     {
-      "start": 125.527,
-      "end": 127.385,
+      "start": 130.565,
+      "end": 132.899,
       "text": "Chatbot, workflow or agent.",
       "paragraph": 7
     },
     {
-      "start": 128.081,
-      "end": 133.004,
+      "start": 133.712,
+      "end": 138.774,
       "text": "The defining question is who controls the path: who decides what happens next.",
       "paragraph": 8
     },
     {
-      "start": 133.701,
-      "end": 135.686,
+      "start": 139.378,
+      "end": 141.479,
       "text": "A chatbot answers each message.",
       "paragraph": 9
     },
     {
-      "start": 136.069,
-      "end": 140.887,
+      "start": 141.862,
+      "end": 146.541,
       "text": "It acts only when the user asks, and the user decides every next step.",
       "paragraph": 9
     },
     {
-      "start": 141.7,
-      "end": 144.95,
+      "start": 147.354,
+      "end": 150.628,
       "text": "A workflow runs steps the designer laid out in advance.",
       "paragraph": 9
     },
     {
-      "start": 145.554,
-      "end": 155.643,
+      "start": 151.069,
+      "end": 162.087,
       "text": "A step can call a model, for example to extract fields or draft a reply, and a model may even pick between branches the designer defined, but it never invents the path.",
       "paragraph": 9
     },
     {
-      "start": 156.154,
-      "end": 158.535,
+      "start": 162.47,
+      "end": 165.013,
       "text": "That makes it predictable and easy to test.",
       "paragraph": 9
     },
     {
-      "start": 159.487,
-      "end": 162.447,
+      "start": 166.127,
+      "end": 169.819,
       "text": "A single model call is simpler still, and often enough.",
       "paragraph": 9
     },
     {
-      "start": 162.958,
-      "end": 166.162,
+      "start": 170.33,
+      "end": 173.871,
       "text": "An agent lets the model direct its own steps at run time.",
       "paragraph": 9
     },
     {
-      "start": 166.603,
-      "end": 175.938,
+      "start": 174.312,
+      "end": 184.621,
       "text": "Where a workflow's router makes one choice among branches the designer wired, an agent chooses again and again in a loop, each choice informed by the last result.",
       "paragraph": 9
     },
     {
-      "start": 176.635,
-      "end": 184.03,
+      "start": 185.318,
+      "end": 193.375,
       "text": "It can handle a task whose path you cannot know ahead of time, such as investigating a problem where each finding decides the next check.",
       "paragraph": 9
     },
     {
-      "start": 184.727,
-      "end": 195.187,
+      "start": 194.072,
+      "end": 203.766,
       "text": "ADK uses \"workflow\" more broadly: any application with more than one agent or executable node, including agents that route between themselves.",
       "paragraph": 10
     },
     {
-      "start": 195.791,
-      "end": 200.656,
+      "start": 204.37,
+      "end": 209.072,
       "text": "This lesson uses the narrower sense above, where the designer controls the path.",
       "paragraph": 10
     },
     {
-      "start": 201.259,
-      "end": 212.301,
+      "start": 209.513,
+      "end": 219.846,
       "text": "These sit on a determinism spectrum, and real systems mix them: a workflow with one agentic step, or an agent whose risky actions pass through a fixed approval step.",
       "paragraph": 11
     },
     {
-      "start": 212.742,
-      "end": 215.412,
+      "start": 220.287,
+      "end": 222.772,
       "text": "Try it: who picks the next step?",
       "paragraph": 12
     },
     {
-      "start": 216.097,
-      "end": 223.888,
+      "start": 223.213,
+      "end": 231.583,
       "text": "The simulation runs one request, \"send order A1234 to my new address\", on two copies of the same town at once.",
       "paragraph": 13
     },
     {
-      "start": 224.271,
-      "end": 229.275,
+      "start": 232.094,
+      "end": 236.587,
       "text": "On the left, a fixed workflow is a tram on rails the designer laid in advance.",
       "paragraph": 13
     },
     {
-      "start": 229.658,
-      "end": 235.324,
+      "start": 236.97,
+      "end": 242.381,
       "text": "On the right, an agent is a car with the model at the wheel, choosing the next desk at each junction.",
       "paragraph": 13
     },
     {
-      "start": 235.928,
-      "end": 241.431,
+      "start": 242.892,
+      "end": 247.803,
       "text": "Predict first: when the order turns out to be partly shipped, what does each one do?",
       "paragraph": 13
     },
     {
-      "start": 242.128,
-      "end": 249.152,
+      "start": 248.406,
+      "end": 256.185,
       "text": "Step through the surprise, then switch to the expected result and compare the model calls, shown as fuel under each map.",
       "paragraph": 14
     },
     {
-      "start": 249.848,
-      "end": 255.259,
+      "start": 256.882,
+      "end": 262.291,
       "text": "When the path was known, the workflow reached the same outcome with one model call instead of three.",
       "paragraph": 15
     },
     {
-      "start": 255.769,
-      "end": 262.991,
+      "start": 262.802,
+      "end": 269.548,
       "text": "When it was not, only the agent adapted, and it did so by choosing a step nobody tested in advance.",
       "paragraph": 15
     },
     {
-      "start": 263.687,
-      "end": 265.742,
+      "start": 270.244,
+      "end": 272.102,
       "text": "What autonomy costs.",
       "paragraph": 16
     },
     {
-      "start": 266.439,
-      "end": 275.042,
+      "start": 273.402,
+      "end": 281.529,
       "text": "Each step to the right on the spectrum, above all from workflow to agent, hands the system more control of what it does.",
       "paragraph": 17
     },
     {
-      "start": 275.739,
-      "end": 278.363,
+      "start": 281.912,
+      "end": 284.525,
       "text": "That buys flexibility and costs something:",
       "paragraph": 17
     },
     {
-      "start": 278.513,
-      "end": 279.651,
+      "start": 284.803,
+      "end": 285.883,
       "text": "Predictability.",
       "paragraph": 18
     },
     {
-      "start": 280.162,
-      "end": 283.482,
+      "start": 286.266,
+      "end": 289.436,
       "text": "The same input can take a different path on a different day.",
       "paragraph": 18
     },
     {
-      "start": 284.179,
-      "end": 285.456,
+      "start": 289.947,
+      "end": 291.247,
       "text": "Testing effort.",
       "paragraph": 18
     },
     {
-      "start": 285.967,
-      "end": 289.728,
+      "start": 291.851,
+      "end": 295.613,
       "text": "You must check the path the agent took, not just its final answer.",
       "paragraph": 18
     },
     {
-      "start": 290.111,
-      "end": 291.748,
+      "start": 296.309,
+      "end": 298.109,
       "text": "Latency and cost.",
       "paragraph": 18
     },
     {
-      "start": 292.248,
-      "end": 295.58,
+      "start": 298.805,
+      "end": 301.963,
       "text": "More model turns mean more time and more tokens.",
       "paragraph": 18
     },
     {
-      "start": 296.381,
-      "end": 296.961,
+      "start": 302.776,
+      "end": 303.38,
       "text": "Risk.",
       "paragraph": 18
     },
     {
-      "start": 297.553,
-      "end": 305.587,
+      "start": 303.821,
+      "end": 311.298,
       "text": "An agent that can act can act wrongly, and errors can compound over many turns, so it needs narrow permissions and guardrails.",
       "paragraph": 18
     },
     {
-      "start": 306.284,
-      "end": 314.899,
+      "start": 311.623,
+      "end": 320.388,
       "text": "A limit written in the prompt is only guidance the model can ignore or be manipulated past, so enforce it in the tool or with an approval step.",
       "paragraph": 18
     },
     {
-      "start": 315.502,
-      "end": 320.251,
-      "text": "So the rule is simple: use the least autonomy that solves the task.",
+      "start": 320.899,
+      "end": 325.137,
+      "text": "Try it: what does each step right buy, and what does it cost?",
       "paragraph": 19
     },
     {
-      "start": 320.948,
-      "end": 329.365,
-      "text": "Start with a single model call or a workflow, and give the model control of the next step only where the path really cannot be known in advance.",
-      "paragraph": 19
-    },
-    {
-      "start": 330.061,
-      "end": 341.973,
-      "text": "The rest of this path teaches the tools for each choice: low-code workflows and agents, agents built in code, and the evaluation and security layers that make autonomy safe to ship.",
-      "paragraph": 19
-    },
-    {
-      "start": 342.867,
-      "end": 343.575,
-      "text": "Sources.",
+      "start": 326.089,
+      "end": 334.588,
+      "text": "The radar puts the three designs on one picture: one axis for what autonomy gives, flexibility, and four for what it costs.",
       "paragraph": 20
     },
     {
-      "start": 343.842,
-      "end": 362.035,
-      "text": "Google, Agent Development Kit documentation, \"Agents\", github.com/google/adk-docs/blob/main/docs/agents/index.md (an agent's basic components: a model, task instructions and optionally tools; ADK's broader meaning of workflow).",
+      "start": 335.192,
+      "end": 339.928,
+      "text": "Every axis grows outward, so a bigger shape is more flexible and more expensive at once.",
+      "paragraph": 20
+    },
+    {
+      "start": 340.625,
+      "end": 346.639,
+      "text": "Pick one of this lesson's tasks and an amber mark shows the flexibility its path needs.",
+      "paragraph": 20
+    },
+    {
+      "start": 347.335,
+      "end": 353.767,
+      "text": "Predict first: if you turn the invoice workflow into an agent, how many of the four costs grow?",
+      "paragraph": 20
+    },
+    {
+      "start": 354.464,
+      "end": 359.677,
+      "text": "The shapes nest: you can't buy flexibility without buying the costs that come with it.",
       "paragraph": 21
     },
     {
-      "start": 362.65,
-      "end": 382.271,
-      "text": "Google, Agent Development Kit documentation, \"Workflows\", github.com/google/adk-docs/blob/main/docs/workflows/index.md (any application with more than one agent or executable node is a workflow; collaborative workflows where one agent coordinates sub-agents).",
+      "start": 360.281,
+      "end": 369.58,
+      "text": "On the invoice pipeline the agent's extra reach buys nothing, while on the IT troubleshooter the workflow falls short of the mark and only the agent clears it.",
       "paragraph": 21
     },
     {
-      "start": 382.84,
-      "end": 392.081,
-      "text": "Google Cloud, \"What is an AI agent?\", cloud.google.com/discover/what-are-ai-agents (agents vs assistants vs bots).",
+      "start": 370.021,
+      "end": 372.076,
+      "text": "That is when its costs are worth paying.",
       "paragraph": 21
     },
     {
-      "start": 392.685,
-      "end": 413.827,
-      "text": "Anthropic, \"Building effective agents\", anthropic.com/engineering/building-effective-agents (workflows use predefined code paths, agents direct their own process; start with the simplest solution; agentic systems trade latency and cost for task performance, with the potential for compounding errors).",
-      "paragraph": 21
+      "start": 372.459,
+      "end": 377.44,
+      "text": "So the rule is simple: use the least autonomy that solves the task.",
+      "paragraph": 22
+    },
+    {
+      "start": 377.881,
+      "end": 386.681,
+      "text": "Start with a single model call or a workflow, and give the model control of the next step only where the path really cannot be known in advance.",
+      "paragraph": 22
+    },
+    {
+      "start": 387.378,
+      "end": 398.222,
+      "text": "The rest of this path teaches the tools for each choice: low-code workflows and agents, agents built in code, and the evaluation and security layers that make autonomy safe to ship.",
+      "paragraph": 22
     }
   ]
 }
