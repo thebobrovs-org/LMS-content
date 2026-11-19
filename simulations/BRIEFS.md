@@ -33,6 +33,7 @@ Update your row in your own PR. Statuses: `open` → `concept` → `building` �
 | B12 | Trace detective | agent-observability-troubleshooting | open | | |
 | B13 | Requirements to a model | choosing-a-model | open | | |
 | B14 | Low-code or code pressure test | low-code-or-code | open | | |
+| B15 | What autonomy costs (radar) | what-is-an-agent | preview | claude | |
 
 B02 to B04 have approved concepts (Claude's concept note, 17 Nov 2026). B05 to B14 come from
 the interactive-opportunities audit of 17 Nov 2026 (its top 10) and still need a concept note.
@@ -179,3 +180,13 @@ Done: see `approval-gate-explorer` and #193. Kept here as the worked example of 
 - **Misconception:** "Code is always more capable, so always use it."
 - **Checkpoint:** new, e.g. `observe-pressure-row`.
 - **Sources:** the lesson.
+
+## B15. What autonomy costs (radar)
+
+- **Lesson:** `topics/agentic-ai/what-is-an-agent.mdx`, "Try it: what does each step right buy, and what does it cost?"
+- **Objective:** Given a task, the learner can pick the least autonomy that solves it and name the four costs a step to the right adds.
+- **Picture:** a radar with one axis for what autonomy gives (flexibility) and four for what it costs (unpredictability, testing effort, latency and cost, risk); a chat or single call, a workflow and an agent as nested shapes; an amber mark for the flexibility the chosen task needs.
+- **Aha:** On the invoice pipeline an agent grows all four costs and buys flexibility nobody needs; on the IT troubleshooter only the agent clears the mark.
+- **Misconception:** "An agent is a free upgrade: it is just smarter."
+- **Checkpoint:** `observe-autonomy-cost` (new): an agent on a task a lighter design already solves.
+- **Sources:** the lesson's "What autonomy costs" list and Anthropic, "Building effective agents" (agentic systems trade latency and cost for task performance). Levels are ordinal and illustrative.
