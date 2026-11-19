@@ -1050,7 +1050,7 @@ var FlowKit = (function () {
 var SPEC = {
   title: "Two ways an agent reaches out. MCP: the support agent calls get_order on the orders DB's MCP server and book_pickup on the carrier API's, sending typed arguments and getting a result, and it sees each tool's name and schema. A2A: the same support agent reads the fraud-review agent's agent card, then sends it a message; the remote agent, run by the finance team with its own model, tools and state hidden from the caller, works on a task that moves through states and returns an artifact",
   cellWidth: 142,
-  intro: "One support agent, two kinds of help: tools over MCP, and the finance team's fraud-review agent over A2A. Press Step to follow both.",
+  intro: "One support agent, two kinds of help: tools on two MCP servers, and the finance team's fraud-review agent over A2A. Press Step to follow both.",
   predict: {
     question: "Can the support agent see the fraud-review agent's tools?",
     options: [
