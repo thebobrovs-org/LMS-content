@@ -1,368 +1,332 @@
 {
-  "src": "https://storage.googleapis.com/hyperstack-lms-audio/topics/agentic-ai/google-agent-platform-map.3203c65673cb.mp3",
+  "src": "https://storage.googleapis.com/hyperstack-lms-audio/topics/agentic-ai/google-agent-platform-map.a31bd2a6df53.mp3",
   "voice": "XfNU2rGpBa01ckF309OY",
   "model": "eleven_multilingual_v2",
-  "textHash": "aa4a6a9e7ea503494c8cc042e85ff8ed4016b26c555599cf9c85fe35d6098419",
+  "textHash": "c19bd9456154b55224677d270a1cbcb8b9bfa5ee9b5d697e81fc885c7a67f9f6",
   "cues": [
     {
       "start": 0,
-      "end": 1.474,
+      "end": 1.428,
       "text": "Why a map first.",
       "paragraph": 0
     },
     {
-      "start": 2.426,
-      "end": 7.697,
+      "start": 1.939,
+      "end": 7.152,
       "text": "Google renamed most of its agent products in 2025 and 2026.",
       "paragraph": 1
     },
     {
-      "start": 8.022,
-      "end": 18.959,
+      "start": 7.663,
+      "end": 19.191,
       "text": "Docs, blog posts, console screens and old practice questions now use different names for the same thing, and a scenario question is only answerable if you know what each product is for.",
       "paragraph": 1
     },
     {
-      "start": 19.4,
-      "end": 21.374,
+      "start": 19.632,
+      "end": 21.873,
       "text": "This lesson gives you one map.",
       "paragraph": 1
     },
     {
-      "start": 22.186,
-      "end": 25.542,
+      "start": 22.384,
+      "end": 26.262,
       "text": "Every later lesson in the path zooms into one of its boxes.",
       "paragraph": 1
     },
     {
-      "start": 26.145,
-      "end": 38.464,
+      "start": 26.772,
+      "end": 39.926,
       "text": "Most of the map lives in Gemini Enterprise Agent Platform (Agent Platform for short), which Google describes as the evolution of Vertex AI for building, scaling, governing and optimising agents.",
       "paragraph": 2
     },
     {
-      "start": 39.276,
-      "end": 46.358,
+      "start": 40.739,
+      "end": 48.471,
       "text": "Despite the shared name, Gemini Enterprise is a separate product: the app where employees find and use agents.",
       "paragraph": 2
     },
     {
-      "start": 46.962,
-      "end": 47.624,
+      "start": 48.982,
+      "end": 49.632,
       "text": "The map.",
       "paragraph": 3
     },
     {
-      "start": 48.321,
-      "end": 53.626,
+      "start": 50.445,
+      "end": 55.994,
       "text": "Read the map top to bottom, from the people who use agents down to where agents run.",
       "paragraph": 4
     },
     {
-      "start": 54.439,
-      "end": 58.223,
+      "start": 56.69,
+      "end": 60.336,
       "text": "Governance is not a layer of its own: it wraps all of them.",
       "paragraph": 4
     },
     {
-      "start": 59.175,
-      "end": 61.416,
+      "start": 61.033,
+      "end": 68.51,
+      "text": "Click any box or layer name on the map for a short card: what it does, its former name and the lesson that covers it.",
+      "paragraph": 5
+    },
+    {
+      "start": 69.206,
+      "end": 73.595,
+      "text": "Three questions ask you to place a product; answer them to complete the map.",
+      "paragraph": 5
+    },
+    {
+      "start": 74.291,
+      "end": 76.288,
       "text": "Experience (low-code).",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 62.368,
-      "end": 67.372,
+      "start": 76.729,
+      "end": 81.571,
       "text": "Gemini Enterprise is where employees discover, create, run and govern agents.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 67.814,
-      "end": 72.179,
+      "start": 82.012,
+      "end": 86.168,
       "text": "Its Workflow Builder builds agent workflows visually, without code.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 72.69,
-      "end": 79.308,
+      "start": 86.609,
+      "end": 92.542,
       "text": "CX Agent Studio builds customer-facing conversational agents, for example for a contact centre.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 79.911,
-      "end": 83.104,
+      "start": 93.146,
+      "end": 96.269,
       "text": "Google calls it the evolution of Dialogflow CX.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 83.545,
-      "end": 84.753,
+      "start": 96.71,
+      "end": 97.952,
       "text": "Build (code).",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 85.357,
-      "end": 90.918,
+      "start": 98.765,
+      "end": 105.359,
       "text": "The Agent Development Kit (ADK) is Google's open-source, code-first framework for agents.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 91.359,
-      "end": 99.962,
+      "start": 106.056,
+      "end": 115.216,
       "text": "Agents CLI gives a coding agent Google's packaged instructions and scripts for building with ADK, evaluating, deploying, observing and publishing.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 100.566,
-      "end": 108.368,
+      "start": 115.913,
+      "end": 123.668,
       "text": "Antigravity is Google's agent-first development environment (app, CLI and SDK) for steering coding agents.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 109.065,
-      "end": 109.691,
+      "start": 124.481,
+      "end": 125.049,
       "text": "Models.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 109.866,
-      "end": 116.1,
+      "start": 125.746,
+      "end": 131.354,
       "text": "Gemini models do the reasoning, and Model Garden offers Google, partner and open models.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 116.797,
-      "end": 117.482,
+      "start": 131.957,
+      "end": 132.631,
       "text": "Knowledge.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 117.725,
-      "end": 121.417,
+      "start": 133.234,
+      "end": 136.833,
       "text": "Agent Search is managed search and retrieval over your documents.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 122.532,
-      "end": 127.431,
+      "start": 137.344,
+      "end": 141.547,
       "text": "RAG Engine is a framework for building your own retrieval-augmented pipeline.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 128.383,
-      "end": 137.439,
+      "start": 141.93,
+      "end": 151.206,
       "text": "Agent Retrieval and the original Vector Search store and search embeddings, the lists of numbers that capture what a passage means, so that similar passages can be found.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 138.252,
-      "end": 145.229,
-      "text": "MCP (Model Context Protocol) servers expose Google Cloud services and your own systems as tools.",
-      "paragraph": 5
+      "start": 152.321,
+      "end": 160.274,
+      "text": "MCP (Model Context Protocol) servers are one way to expose Google Cloud services and your own systems as tools.",
+      "paragraph": 6
     },
     {
-      "start": 145.926,
-      "end": 154.691,
+      "start": 160.784,
+      "end": 169.701,
       "text": "Underneath sit the data stores an agent reads: BigQuery, Cloud SQL, Firestore, Memorystore for Redis and Cloud Storage.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 155.295,
-      "end": 155.829,
+      "start": 170.084,
+      "end": 170.513,
       "text": "Run.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 156.34,
-      "end": 166.023,
+      "start": 171.21,
+      "end": 180.405,
       "text": "Agent Runtime is the managed runtime that deploys, operates and scales agents, with Agent Platform's Sessions and Memory Bank services keeping their state.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 166.534,
-      "end": 173.686,
+      "start": 181.101,
+      "end": 187.754,
       "text": "Cloud Run runs an agent as a serverless container, and GKE gives full control of a Kubernetes cluster.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 174.127,
-      "end": 175.067,
+      "start": 188.195,
+      "end": 189.089,
       "text": "Evaluate.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 175.764,
-      "end": 183.101,
+      "start": 189.786,
+      "end": 196.844,
       "text": "The Gen AI evaluation service scores answers and tool-call paths (trajectories) against a test set.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 183.798,
-      "end": 187.281,
+      "start": 197.448,
+      "end": 202.034,
       "text": "Cloud Logging and Cloud Trace show what an agent did in production.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 187.977,
-      "end": 188.523,
+      "start": 202.638,
+      "end": 203.242,
       "text": "Govern.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 189.127,
-      "end": 192.122,
+      "start": 203.683,
+      "end": 207.201,
       "text": "Agent Identity gives each agent its own identity.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 192.726,
-      "end": 197.254,
+      "start": 208.013,
+      "end": 212.588,
       "text": "Agent Gateway is the point where policy on agent traffic is enforced and observed.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 197.951,
-      "end": 204.673,
+      "start": 213.191,
+      "end": 219.983,
       "text": "Agent Registry catalogues agents, MCP servers and tools, and Skill Registry is being folded into it.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 205.277,
-      "end": 211.952,
+      "start": 220.494,
+      "end": 226.74,
       "text": "Model Armor screens prompts and responses for attacks such as prompt injection and for leaks of sensitive data.",
-      "paragraph": 5
+      "paragraph": 6
     },
     {
-      "start": 212.765,
-      "end": 216.817,
+      "start": 227.344,
+      "end": 231.21,
       "text": "Sensitive Data Protection finds and masks sensitive data.",
-      "paragraph": 5
-    },
-    {
-      "start": 217.2,
-      "end": 225.351,
-      "text": "Agents talk to tools over MCP (Model Context Protocol) and to other agents over A2A (Agent2Agent).",
       "paragraph": 6
     },
     {
-      "start": 226.047,
-      "end": 231.098,
-      "text": "These are protocols, not products, so they connect the boxes rather than sitting in one.",
-      "paragraph": 6
+      "start": 231.814,
+      "end": 245.641,
+      "text": "Agents can call tools defined in their own code, such as ADK function tools, or tools exposed by a separate server over MCP (Model Context Protocol), a standard way to share tools across agents and frameworks.",
+      "paragraph": 7
     },
     {
-      "start": 231.794,
-      "end": 233.501,
+      "start": 246.454,
+      "end": 250.506,
+      "text": "Agents talk to other agents over A2A (Agent2Agent).",
+      "paragraph": 7
+    },
+    {
+      "start": 250.947,
+      "end": 257.193,
+      "text": "MCP and A2A are protocols, not products, so they connect the boxes rather than sitting in one.",
+      "paragraph": 7
+    },
+    {
+      "start": 257.89,
+      "end": 259.596,
       "text": "A later lesson compares them.",
-      "paragraph": 6
+      "paragraph": 7
     },
     {
-      "start": 233.826,
-      "end": 235.591,
+      "start": 260.037,
+      "end": 261.86,
       "text": "The shape is the thing to remember.",
-      "paragraph": 7
-    },
-    {
-      "start": 236.102,
-      "end": 241.059,
-      "text": "Low-code tools sit on top, for people who configure agents rather than code them.",
-      "paragraph": 7
-    },
-    {
-      "start": 241.756,
-      "end": 246.4,
-      "text": "ADK, the models and the runtime sit underneath, for developers.",
-      "paragraph": 7
-    },
-    {
-      "start": 247.212,
-      "end": 253.807,
-      "text": "Identity, the gateway and the registry wrap everything, because an agent needs governing however it was built.",
-      "paragraph": 7
-    },
-    {
-      "start": 254.248,
-      "end": 255.897,
-      "text": "Translating the old names.",
       "paragraph": 8
     },
     {
-      "start": 256.849,
-      "end": 260.726,
-      "text": "When a source uses an old name, translate it before you reason about it:",
+      "start": 262.557,
+      "end": 267.781,
+      "text": "Low-code tools sit on top, for people who configure agents rather than code them.",
+      "paragraph": 8
+    },
+    {
+      "start": 268.594,
+      "end": 273.389,
+      "text": "ADK, the models and the runtime sit underneath, for developers.",
+      "paragraph": 8
+    },
+    {
+      "start": 274.201,
+      "end": 280.134,
+      "text": "Identity, the gateway and the registry wrap everything, because an agent needs governing however it was built.",
+      "paragraph": 8
+    },
+    {
+      "start": 280.946,
+      "end": 282.734,
+      "text": "Translating the old names.",
       "paragraph": 9
     },
     {
-      "start": 261.168,
-      "end": 263.722,
+      "start": 283.338,
+      "end": 287.239,
+      "text": "When a source uses an old name, translate it before you reason about it:",
+      "paragraph": 10
+    },
+    {
+      "start": 287.622,
+      "end": 289.909,
       "text": "Renames don't reach every surface at once.",
-      "paragraph": 10
-    },
-    {
-      "start": 264.836,
-      "end": 272.766,
-      "text": "When Google renamed Vertex AI Search, the console still showed the old name, and the APIs kept their Discovery Engine endpoints.",
-      "paragraph": 10
-    },
-    {
-      "start": 273.369,
-      "end": 282.739,
-      "text": "So expect old names in code, URLs and screenshots, and trust the product's current documentation and the exam guide over an older blog post.",
-      "paragraph": 10
-    },
-    {
-      "start": 283.18,
-      "end": 283.889,
-      "text": "Sources.",
       "paragraph": 11
     },
     {
-      "start": 284.272,
-      "end": 306.272,
-      "text": "Google Cloud, Professional Agentic Architect exam guide, services.google.com/fh/files/misc/professional_agentic_architect_exam_guide_english.pdf (in-scope tools; Agent Runtime formerly Agent Engine; Agent Search formerly Vertex AI Search; Workflow Builder formerly Agent Designer).",
-      "paragraph": 12
+      "start": 290.42,
+      "end": 298.083,
+      "text": "When Google renamed Vertex AI Search, the console still showed the old name, and the APIs kept their Discovery Engine endpoints.",
+      "paragraph": 11
     },
     {
-      "start": 307.085,
-      "end": 328.551,
-      "text": "Google Cloud Blog, \"Introducing Gemini Enterprise Agent Platform\", 22 April 2026, cloud.google.com/blog/products/ai-machine-learning/introducing-gemini-enterprise-agent-platform (the evolution of Vertex AI; Agent Runtime, Agent Identity, Agent Gateway, Agent Registry).",
-      "paragraph": 12
-    },
-    {
-      "start": 329.155,
-      "end": 349.229,
-      "text": "Google Cloud Blog, \"I/O 26 news for agent developers on Google Cloud\", 19 May 2026, cloud.google.com/blog/topics/developers-practitioners/io26-news-for-agent-developers-on-google-cloud (ADK, Agents CLI, Antigravity; Skill Registry joining Agent Registry).",
-      "paragraph": 12
-    },
-    {
-      "start": 350.03,
-      "end": 369.419,
-      "text": "Google Cloud, Gemini Enterprise, cloud.google.com/gemini-enterprise, and Gemini Enterprise release notes, docs.cloud.google.com/gemini/enterprise/docs/release-notes (3 September 2026: Workflow Builder, formerly Agent Designer, generally available).",
-      "paragraph": 12
-    },
-    {
-      "start": 370.22,
-      "end": 384.779,
-      "text": "Google Cloud, Agent Retrieval overview, docs.cloud.google.com/vertex-ai/docs/vector-search-2/overview (Agent Retrieval, formerly Vector Search 2.0; Vector Search documented separately).",
-      "paragraph": 12
-    },
-    {
-      "start": 385.359,
-      "end": 399.443,
-      "text": "Google Cloud, Agent Search release notes, docs.cloud.google.com/generative-ai-app-builder/docs/release-notes (22 April 2026 rename from Vertex AI Search; console and API names unchanged).",
-      "paragraph": 12
-    },
-    {
-      "start": 400.046,
-      "end": 411.436,
-      "text": "Google Cloud, CX Agent Studio documentation, docs.cloud.google.com/gemini-enterprise-cx/cx-agent-studio (the evolution of Dialogflow CX).",
-      "paragraph": 12
-    },
-    {
-      "start": 411.946,
-      "end": 417.821,
-      "text": "Google Cloud, Model Armor overview, docs.cloud.google.com/model-armor/overview.",
-      "paragraph": 12
+      "start": 298.524,
+      "end": 307.057,
+      "text": "So expect old names in code, URLs and screenshots, and trust the product's current documentation and the exam guide over an older blog post.",
+      "paragraph": 11
     }
   ]
 }
