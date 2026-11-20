@@ -145,12 +145,12 @@ function render() {
 
   app.innerHTML = `
     <div class="topbar">
-      <div class="gentabs" role="tablist">
-        <button class="gtab ${gen === "v3" ? "on" : ""}" data-gen="v3" role="tab">v3 (legacy)</button>
-        <button class="gtab ${gen === "v5p" ? "on" : ""}" data-gen="v5p" role="tab">v5p (train)</button>
-        <button class="gtab ${gen === "v6e" ? "on" : ""}" data-gen="v6e" role="tab">Trillium (infer)</button>
-        <button class="gtab ${gen === "8t" ? "on" : ""}" data-gen="8t" role="tab">8t (train)</button>
-        <button class="gtab ${gen === "8i" ? "on" : ""}" data-gen="8i" role="tab">8i (infer)</button>
+      <div class="gentabs" role="group" aria-label="TPU generation">
+        <button class="gtab ${gen === "v3" ? "on" : ""}" data-gen="v3" aria-pressed="${gen === "v3"}">v3 (legacy)</button>
+        <button class="gtab ${gen === "v5p" ? "on" : ""}" data-gen="v5p" aria-pressed="${gen === "v5p"}">v5p (train)</button>
+        <button class="gtab ${gen === "v6e" ? "on" : ""}" data-gen="v6e" aria-pressed="${gen === "v6e"}">Trillium (infer)</button>
+        <button class="gtab ${gen === "8t" ? "on" : ""}" data-gen="8t" aria-pressed="${gen === "8t"}">8t (train)</button>
+        <button class="gtab ${gen === "8i" ? "on" : ""}" data-gen="8i" aria-pressed="${gen === "8i"}">8i (infer)</button>
       </div>
       <span class="hint">Toggle the architectures to watch the silicon change.</span>
     </div>

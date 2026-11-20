@@ -90,3 +90,6 @@ body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, syst
 .trace .tr.out .val { color: var(--good); } .trace .tr.err .val { color: var(--bad); }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+
+/* Read by screen readers, not shown (LMS-content#136). */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

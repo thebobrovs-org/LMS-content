@@ -140,6 +140,7 @@ function initDOM() {
           <div class="m-card"><div class="m-k">Epochs run</div><div class="m-v" id="m-ep">0</div></div>
           <div class="m-card"><div class="m-k">Mean loss</div><div class="m-v loss" id="m-loss">—</div></div>
         </div>
+        <p class="sr-only" id="live" role="status" aria-live="polite" aria-atomic="true"></p>
         <div class="converged" id="converged">🎉 <b>Converged</b> — loss below 0.01. The trained weights are the model.</div>
       </div>
 
@@ -185,23 +186,25 @@ function setStep(s) {
 function buildControls() {
   const c = document.getElementById("controls");
   if (step === 1 || step === 2) {
-    c.innerHTML = `<div class="panel" style="padding:12px"><div class="m-k" style="margin-bottom:8px">Trace which car</div><div class="btn-row" id="samp"></div></div>`;
+    c.innerHTML = `<div class="panel" style="padding:12px"><div class="m-k" style="margin-bottom:8px" id="samp-h">Trace which car</div><div class="btn-row" id="samp" role="group" aria-labelledby="samp-h"></div></div>`;
     const sr = document.getElementById("samp");
     DATA.forEach((car, i) => {
       const bt = document.createElement("button");
       bt.className = "btn " + (i === sampleIdx ? "step" : "reset");
       bt.textContent = car.id;
+      bt.dataset.car = String(i);
+      bt.setAttribute("aria-pressed", String(i === sampleIdx));
       bt.style.padding = "8px 0";
       bt.addEventListener("click", () => { sampleIdx = i; update(); });
       sr.appendChild(bt);
     });
   } else if (step === 3 || step === 4) {
     c.innerHTML = `<div class="btn-row"><button class="btn step" id="b-step">Step (+1 epoch)</button><button class="btn reset" id="b-reset">Reset</button></div>`;
-    document.getElementById("b-step").addEventListener("click", () => { if (!converged) { trainStep(); update(); } });
+    document.getElementById("b-step").addEventListener("click", () => { if (!converged) { trainStep(); update(); announce(converged ? `${epochText()} Converged.` : epochText()); } });
     document.getElementById("b-reset").addEventListener("click", reset);
   } else if (step === 5) {
     c.innerHTML = `<div class="btn-row"><button class="btn step" id="b-step">Step</button><button class="btn train" id="b-train">Auto Train</button></div><button class="btn reset" id="b-reset">Reset</button>`;
-    document.getElementById("b-step").addEventListener("click", () => { if (!converged) { trainStep(); update(); } });
+    document.getElementById("b-step").addEventListener("click", () => { if (!converged) { trainStep(); update(); announce(converged ? `${epochText()} Converged.` : epochText()); } });
     document.getElementById("b-train").addEventListener("click", toggleTrain);
     document.getElementById("b-reset").addEventListener("click", reset);
   } else if (step === 6) {
@@ -214,6 +217,14 @@ function buildControls() {
     document.getElementById("b-reset").addEventListener("click", reset);
   }
 }
+// What a control just did, said once through the polite live region that initDOM mounts (LMS-content#136): the epoch
+// and loss after a step, the score after inference, convergence. Training's own ticks don't speak, so it never floods.
+function announce(text) {
+  const el = document.getElementById("live");
+  if (el) el.textContent = text;
+}
+const epochText = () => `Epoch ${epoch}. Mean loss ${evaluate().meanLoss.toFixed(3)}.`;
+
 function clamp(v) { return Math.max(1, Math.min(10, isFinite(v) ? v : 1)); }
 
 function graphSVG(predictions) {
@@ -297,7 +308,11 @@ function update() {
   document.getElementById("e-desc").innerHTML = STEPS[step].d;
   document.getElementById("diag-h").textContent = ["The network", "Forward pass", "The error", "Backprop", "Weight update", "Training", "Inference"][step];
 
+  // buildControls rewrites the controls; a control that had focus gets it back by its id or car (LMS-content#136).
+  const had = document.activeElement && document.getElementById("controls")?.contains(document.activeElement) ? document.activeElement : null;
+  const key = had ? (had.id ? "#" + had.id : had.dataset.car !== undefined ? `[data-car="${had.dataset.car}"]` : null) : null;
   buildControls();
+  if (key) document.getElementById("controls").querySelector(key)?.focus({ preventScroll: true });
   buildContext(predictions);
   updateDiagram();
 
@@ -311,6 +326,7 @@ function update() {
     document.getElementById("converged").classList.add("show");
     updateDiagram();
     const tb = document.getElementById("b-train"); if (tb) { tb.textContent = "Re-train"; tb.classList.remove("on"); }
+    announce(`Converged at epoch ${epoch}: loss below 0.01.`);
   }
   reportSize();
 }
@@ -319,12 +335,13 @@ function stopTrain() { clearInterval(timer); timer = null; isTraining = false; c
 
 function toggleTrain() {
   const tb = document.getElementById("b-train");
-  if (isTraining) { stopTrain(); update(); return; }
+  if (isTraining) { stopTrain(); update(); announce(`Training paused. ${epochText()}`); return; }
   if (converged) { converged = false; epoch = 0; wh1 = { w1: 0.6, w2: -0.5, b: 0.1 }; wh2 = { w1: -0.4, w2: 0.7, b: -0.2 }; wh3 = { w1: 0.3, w2: 0.4, b: -0.1 }; wo = { w1: 0.5, w2: -0.6, w3: 0.4, b: 0.0 }; }
-  if (REDUCE) { let i = 0; while (evaluate().meanLoss >= 0.01 && i < 5000) { trainStep(); i++; } update(); return; }
+  if (REDUCE) { let i = 0; while (evaluate().meanLoss >= 0.01 && i < 5000) { trainStep(); i++; } update(); announce(epochText()); return; }
   isTraining = true;
   if (tb) { tb.textContent = "Pause training"; tb.classList.add("on"); }
   update();
+  announce("Training…");
   timer = setInterval(() => {
     for (let i = 0; i < 3 && evaluate().meanLoss >= 0.01; i++) trainStep();
     update();
@@ -338,6 +355,7 @@ function reset() {
   wh1 = { w1: r(), w2: r(), b: r() }; wh2 = { w1: r(), w2: r(), b: r() }; wh3 = { w1: r(), w2: r(), b: r() };
   wo = { w1: r(), w2: r(), w3: r(), b: r() };
   update();
+  announce(`Network reset to random weights. ${epochText()}`);
 }
 
 function runInference() {
@@ -349,6 +367,7 @@ function runInference() {
   const buy = a_o > 0.5;
   const c = document.getElementById("controls");
   if (!document.getElementById("inf-out")) { const d = document.createElement("div"); d.id = "inf-out"; d.style.marginTop = "10px"; c.appendChild(d); }
+  announce(`Network score ${(a_o * 100).toFixed(1)}%. Recommendation: ${buy ? "buy" : "walk away"}.`);
   document.getElementById("inf-out").innerHTML = `<div class="inf-result ${buy ? "buy" : "walk"}"><div class="k">Network score</div><div class="score">${(a_o * 100).toFixed(1)}%</div><div class="verdict">${buy ? "Recommendation: BUY" : "Recommendation: WALK AWAY"}</div></div>`;
   reportSize();
 }

@@ -39,9 +39,9 @@ function mount() {
     <div class="controls">
       <label>Batch <b id="b-val"></b><input id="b" type="range" min="8" max="1024" step="1" value="${B}"></label>
       <label>Feature <b id="f-val"></b><input id="f" type="range" min="128" max="8192" step="1" value="${F}"></label>
-      <span class="tiles">matrix-unit tile
-        <button class="t" data-t="128">128</button>
-        <button class="t" data-t="256">256</button>
+      <span class="tiles" role="group" aria-labelledby="tile-h"><span id="tile-h">matrix-unit tile</span>
+        <button class="t" data-t="128" aria-pressed="false">128</button>
+        <button class="t" data-t="256" aria-pressed="false">256</button>
       </span>
     </div>
 
@@ -68,7 +68,12 @@ function render() {
 
   app.querySelector("#b-val").textContent = String(B);
   app.querySelector("#f-val").textContent = String(F);
-  app.querySelectorAll(".t").forEach((el) => el.classList.toggle("on", +el.getAttribute("data-t") === tile));
+  // The tile choice is exposed as aria-pressed, not only styled (LMS-content#136).
+  app.querySelectorAll(".t").forEach((el) => {
+    const on = +el.getAttribute("data-t") === tile;
+    el.classList.toggle("on", on);
+    el.setAttribute("aria-pressed", String(on));
+  });
 
   app.querySelector("#roofline").innerHTML = `
       <div class="rl-axis">
@@ -93,7 +98,7 @@ function render() {
       Arithmetic intensity <b>${m.intensity.toFixed(0)} FLOP/byte</b> →
       <b class="${m.bound === "compute" ? "ok" : "warn"}">${m.bound}-bound</b>${
         m.bound === "memory" ? ` (below the ~${RIDGE} ridge — the matrix unit starves)` : ` (above the ridge — the matrix unit runs near peak)`
-      }.${
+      }. On the ${tile} tile, utilization is <b>${(m.util * 100).toFixed(0)}%</b>.${
         m.waste > 0.3 ? ` <span class="warn">${(m.waste * 100).toFixed(0)}% of every tile is padded zeros — wasted compute + memory, and a path to a "mysterious" OOM.</span>` : ""
       }`;
 

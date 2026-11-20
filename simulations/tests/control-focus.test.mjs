@@ -62,6 +62,11 @@ const CASES = {
     { setup: ['[data-i="6"]'], press: '[data-act="next"]', focus: '[data-act="prev"]', why: "Next gen switches off at the last generation; Prev takes focus" },
     { setup: ['[data-i="1"]'], press: '[data-act="prev"]', focus: '[data-act="next"]', why: "Prev switches off at the first generation; Next gen takes focus" },
   ],
+  // LMS-content#136: backprop-explorer writes its controls again on every update; the one that had focus gets it back.
+  "backprop-explorer": [
+    { setup: ['[data-s="3"]'], press: "#b-step", focus: "#b-step", why: "Step (+1 epoch) keeps focus though the controls are written again" },
+    { setup: ['[data-s="1"]'], press: '[data-car="2"]', focus: '[data-car="2"]', why: "a car picked to trace keeps focus" },
+  ],
   "xla-fusion-explorer": [
     { press: "#btn-step", focus: "#btn-step", same: true },
     { setup: ["#btn-step", "#btn-step", "#btn-step"], press: "#btn-step", focus: "#btn-run", why: "the last Step compiles and switches off; Execute takes focus" },

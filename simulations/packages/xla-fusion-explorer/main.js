@@ -109,6 +109,8 @@ function applyStage(n) {
     $("cn-py").classList.add("active"); updateInspector("python");
     btnStep.textContent = "Step: JAX trace";
   } else if (n === 2) {
+    // Every stage says what it did through the polite note, so Step and Auto-compile are never silent (LMS-content#136).
+    note.innerHTML = "<i>Tracing with <b>JAX</b> — recording the ops into a <b>jaxpr</b>, JAX's typed intermediate form…</i>";
     $("ca-1").classList.add("active"); $("cn-trace").classList.add("active"); updateInspector("trace");
     btnStep.textContent = "Step: StableHLO";
   } else if (n === 3) {

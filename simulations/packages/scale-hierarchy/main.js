@@ -111,10 +111,10 @@ function renderUI() {
   const lvl = LEVELS[i];
   const isDCN = lvl.id === "multislice";
   const netClass = isDCN ? "net-dcn" : lvl.net === "OPTICAL ICI" ? "net-optical" : "net-copper";
-  const steps = LEVELS.map((l, n) => `<button class="step-btn ${n === i ? "active" : ""} ${n < i ? "done" : ""}" data-i="${n}">${l.name}</button>${n < LEVELS.length - 1 ? '<span class="step-arrow">→</span>' : ""}`).join("");
+  const steps = LEVELS.map((l, n) => `<button class="step-btn ${n === i ? "active" : ""} ${n < i ? "done" : ""}" data-i="${n}"${n === i ? ' aria-current="step"' : ""}>${l.name}</button>${n < LEVELS.length - 1 ? '<span class="step-arrow" aria-hidden="true">→</span>' : ""}`).join("");
 
   app.innerHTML = `
-    <div class="steps-container">${steps}</div>
+    <nav class="steps-container" aria-label="Scale levels">${steps}</nav>
     <div class="stage">
       <canvas id="c"></canvas>
       <div class="stage-overlay">
