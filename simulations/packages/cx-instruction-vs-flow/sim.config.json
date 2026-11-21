@@ -1,0 +1,12 @@
+{
+  "id": "cx-instruction-vs-flow",
+  "title": "One call, two ways to steer it",
+  "version": "1.1.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-flow-guarantees",
+      "hint": "Step to attempt 3: the flow's stop route fires because its condition is true, while the instructions only state the limit."
+    }
+  ]
+}

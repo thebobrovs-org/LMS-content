@@ -35,6 +35,7 @@ export const FIT = [
   "customization-guarantees-flow",
   "context-loading-flow",
   "cx-route-resolver",
+  "cx-instruction-vs-flow",
   "gateway-registry-flow",
   "eval-case-explorer",
   "guardrail-layers-flow",

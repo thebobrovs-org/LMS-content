@@ -24,7 +24,7 @@ const KIT_JS = fs.readFileSync(path.join(ROOT, "kit/flow-kit.js"), "utf8");
 const KIT_CSS = fs.readFileSync(path.join(ROOT, "kit/flow-kit.css"), "utf8");
 const SIM_KIT = fs.readFileSync(path.join(ROOT, "kit/sim-kit.css"), "utf8");
 /** The flow sims. A package whose main.js starts with the kit's marker must be listed here too. */
-export const ON_FLOW = ["hybrid-agent-flow", "platform-map-explorer", "workflow-canvas-flow", "enterprise-data-flow", "a2a-vs-mcp-flow", "threat-defence-flow", "gateway-registry-flow", "continuous-eval-loop", "capstone-architecture-explorer", "customization-guarantees-flow", "context-loading-flow", "agents-cli-loop", "sandbox-ladder-explorer", "mcp-routes-explorer", "adk-anatomy-explorer", "eval-case-explorer", "memory-timeline-flow", "rag-backend-lanes", "guardrail-layers-flow", "agent-credential-flow", "auth-manager-flow"];
+export const ON_FLOW = ["hybrid-agent-flow", "platform-map-explorer", "workflow-canvas-flow", "enterprise-data-flow", "a2a-vs-mcp-flow", "threat-defence-flow", "gateway-registry-flow", "continuous-eval-loop", "capstone-architecture-explorer", "customization-guarantees-flow", "context-loading-flow", "agents-cli-loop", "sandbox-ladder-explorer", "mcp-routes-explorer", "adk-anatomy-explorer", "eval-case-explorer", "memory-timeline-flow", "rag-backend-lanes", "guardrail-layers-flow", "agent-credential-flow", "auth-manager-flow", "cx-route-resolver", "cx-instruction-vs-flow"];
 
 // The 1100 px frame: #app pads 14 px, the stage panel 14 px plus a 1 px border; from 900 px the stage is two columns,
 // the right one 300 px in a flow sim (flow-kit.css), with a 16 px gap. Phones: 360 px less the same padding, and the
@@ -330,5 +330,39 @@ function exploreTests(id) {
       const title = (fs.readFileSync(file, "utf8").match(/^title:\s*["']?(.+?)["']?\s*$/m) || [])[1];
       assert.equal(title, c.title, `${id}: ${it.id} names ${c.topic} "${c.title}", but the lesson's title is "${title}"`);
     }
+  });
+}
+
+// Path continuity (PR #223 review): the token slides from the end of one arrow to the start of the next, so when a
+// step's arrows don't join up it animates a connection the drawing doesn't have. Each arrow in a step must start where
+// the one before it ended. These sims predate the rule and keep exactly this many gaps until they're redrawn; the
+// count may only go down.
+const KNOWN_GAPS = { "enterprise-data-flow": 4, "gateway-registry-flow": 1, "memory-timeline-flow": 3, "rag-backend-lanes": 10, "auth-manager-flow": 1 };
+
+/** Every place a step's next arrow doesn't start where the previous one ended. */
+function stepGaps(spec) {
+  const byId = Object.fromEntries(spec.edges.map((e) => [e.id, e]));
+  const gaps = [];
+  spec.steps.forEach((s, i) => {
+    for (let k = 1; k < s.edges.length; k++) {
+      const prev = byId[s.edges[k - 1]], next = byId[s.edges[k]];
+      if (next.from !== prev.to) gaps.push(`step ${i + 1} ("${s.label}"): ${prev.id} ends at ${prev.to}, ${next.id} starts at ${next.from}`);
+    }
+  });
+  return gaps;
+}
+
+test("path continuity: the review's case, get_balance then the DOB page in one step, is a gap", () => {
+  const edges = [{ id: "detour", from: "model", to: "tool" }, { id: "off", from: "dob", to: "reprompt" }, { id: "p1", from: "dob", to: "last4" }];
+  assert.equal(stepGaps({ edges, steps: [{ label: "Off script", edges: ["detour", "off"] }] }).length, 1);
+  assert.equal(stepGaps({ edges, steps: [{ label: "Split", edges: ["detour"] }, { label: "Flow", edges: ["off"] }] }).length, 0);
+});
+
+for (const id of ON_FLOW) {
+  const spec = specOf(id);
+  if (!spec.steps) continue;
+  test(`${id}: each step's arrows form one connected path`, () => {
+    const gaps = stepGaps(spec);
+    assert.ok(gaps.length <= (KNOWN_GAPS[id] ?? 0), `${id}: the token would jump between unconnected arrows:\n  ${gaps.join("\n  ")}`);
   });
 }

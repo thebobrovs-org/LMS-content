@@ -1,16 +1,12 @@
 {
   "id": "cx-route-resolver",
-  "title": "CX flow route resolver",
-  "version": "1.0.0",
-  "props": {
-    "page": { "type": "string", "default": "confirm" },
-    "balance": { "type": "number", "default": 120 },
-    "input": { "type": "string", "default": "unclear" }
-  },
+  "title": "Which handler fires, turn by turn",
+  "version": "2.0.0",
+  "props": {},
   "checkpoints": [
     {
       "id": "observe-route-scope",
-      "hint": "With a balance due, send an unmatched input on a page other than the start page, and see the flow's balance_due condition route skipped as out of scope."
+      "hint": "Step to the second customer turn: on Confirm payment the flow's balance_due condition route is true but out of scope, so the page's own no-match handler answers."
     }
   ]
 }
