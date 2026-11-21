@@ -151,9 +151,34 @@ parameters. Use the model for understanding what the customer wants, and callbac
 
 See the difference on one call below. Before you step through it, predict which
 design is sure to stop after the third wrong answer, then watch what each does when
-the customer goes off script.
+the customer goes off script, and how the flow counts each attempt.
 
 <Simulation id="cx-instruction-vs-flow" />
+
+**Explain it:** both designs carry the same rule, "allow two retries". In the
+flow, what makes the third wrong answer end the verification on every run, and
+what would you have to change for it to allow a fourth? In the instruction-based
+agent, what applies the limit?
+
+### Put it together
+
+<Steps>
+<Step id="ivf-find-enforcer" title="Find what enforces the limit" objective="instruction-vs-flow">
+In One call, two ways to steer it, step to Try 3. Name the route that fires and
+the condition that makes it fire, then say which box on the instruction side
+would have to apply the same limit.
+</Step>
+<Step id="ivf-apply-sim-swap" title="Apply it to a SIM swap" objective="instruction-vs-flow">
+A mobile operator's SIM swap collects the account number, then a one-time code
+sent by text, and stops after three failed codes. Sketch it as flow pages: the
+pages in order, the retry route and its condition, and the stop route.
+</Step>
+<Step id="ivf-split-the-call" title="Split the call" objective="instruction-vs-flow">
+The same customer also asks why the bill went up. Say which part stays with the
+instruction-based agent, which part goes to the flow, and which session parameters
+the agent passes in and gets back.
+</Step>
+</Steps>
 
 ## Inside a flow: pages, routes and handlers
 

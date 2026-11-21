@@ -332,3 +332,37 @@ function exploreTests(id) {
     }
   });
 }
+
+// Path continuity (PR #223 review): the token slides from the end of one arrow to the start of the next, so when a
+// step's arrows don't join up it animates a connection the drawing doesn't have. Each arrow in a step must start where
+// the one before it ended. These sims predate the rule and keep exactly this many gaps until they're redrawn; the
+// count may only go down.
+const KNOWN_GAPS = { "enterprise-data-flow": 4, "gateway-registry-flow": 1, "memory-timeline-flow": 3, "rag-backend-lanes": 10, "auth-manager-flow": 1 };
+
+/** Every place a step's next arrow doesn't start where the previous one ended. */
+function stepGaps(spec) {
+  const byId = Object.fromEntries(spec.edges.map((e) => [e.id, e]));
+  const gaps = [];
+  spec.steps.forEach((s, i) => {
+    for (let k = 1; k < s.edges.length; k++) {
+      const prev = byId[s.edges[k - 1]], next = byId[s.edges[k]];
+      if (next.from !== prev.to) gaps.push(`step ${i + 1} ("${s.label}"): ${prev.id} ends at ${prev.to}, ${next.id} starts at ${next.from}`);
+    }
+  });
+  return gaps;
+}
+
+test("path continuity: the review's case, get_balance then the DOB page in one step, is a gap", () => {
+  const edges = [{ id: "detour", from: "model", to: "tool" }, { id: "off", from: "dob", to: "reprompt" }, { id: "p1", from: "dob", to: "last4" }];
+  assert.equal(stepGaps({ edges, steps: [{ label: "Off script", edges: ["detour", "off"] }] }).length, 1);
+  assert.equal(stepGaps({ edges, steps: [{ label: "Split", edges: ["detour"] }, { label: "Flow", edges: ["off"] }] }).length, 0);
+});
+
+for (const id of ON_FLOW) {
+  const spec = specOf(id);
+  if (!spec.steps) continue;
+  test(`${id}: each step's arrows form one connected path`, () => {
+    const gaps = stepGaps(spec);
+    assert.ok(gaps.length <= (KNOWN_GAPS[id] ?? 0), `${id}: the token would jump between unconnected arrows:\n  ${gaps.join("\n  ")}`);
+  });
+}

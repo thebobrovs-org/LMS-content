@@ -1045,9 +1045,9 @@ var FlowKit = (function () {
 /* end flow-kit v2 */
 
 var SPEC = {
-  title: "The same card verification handled two ways: an instruction-based agent, where the model reads the instructions every turn and decides, answers an off-script balance question but nothing guarantees the retry limit; a flow moves page by page in a fixed order, reprompts when the customer goes off script and always stops after the third failure; together, the agent hands the verification to the flow and takes over again with its output",
+  title: "The same card verification handled two ways. The instruction-based agent's model reads written instructions each turn and takes an off-script detour to get_balance; nothing but the text says when to stop retrying. The flow moves page by page: an off-script reply gets its no-match handler, each wrong answer takes the retry route while attempts are under 3, and the stop route you configured ends it at attempt 3. Together, the agent hands over to the flow, the flow runs its pages to Verified, and the agent takes over again with the output",
   cellWidth: 150,
-  intro: "Card verification: ask for the date of birth, then the last four digits, allow two retries. Press Step to run the same call through instructions, then through a flow.",
+  intro: "Card verification: date of birth, then the last 4 digits, two retries. Press Step to run it as instructions, then as a flow. The model's replies are illustrative.",
   predict: {
     question: "The customer gets the digits wrong a third time. Which design is sure to stop?",
     options: [
@@ -1056,12 +1056,12 @@ var SPEC = {
       { id: "instr", label: "Only the instructions" },
     ],
     answer: "flow",
-    revealAt: 4,
-    why: "The flow's routes count the attempts, so the third failure always ends it. Instructions only guide the model: it usually follows them, but nothing guarantees it.",
+    revealAt: 6,
+    why: "At attempts = 3 the flow's stop route fires on every run, because you configured it. The instructions state the limit, but no rule enforces it; only the model's reading applies it.",
   },
   zones: [
     { id: "instr", title: "Instruction-based agent: the model decides", short: "Instructions", hue: "violet" },
-    { id: "flow", title: "Flow: pages and routes decide", short: "Flow", hue: "orange" },
+    { id: "flow", title: "Flow: the routes you configured decide", short: "Flow", hue: "orange" },
   ],
   nodes: [
     { id: "rules", label: "Instructions", sub: "DOB, last 4, 2 retries", zone: "instr", at: [0, 0] },
@@ -1072,28 +1072,33 @@ var SPEC = {
     { id: "check", label: "Check record", sub: "counts attempts", zone: "flow", at: [2, 2] },
     { id: "ok", label: "Verified", sub: "END_SESSION", zone: "flow", at: [3, 2] },
     { id: "reprompt", label: "No-match", sub: "asks for DOB again", zone: "flow", hue: "gold", at: [0, 3] },
-    { id: "stop", label: "Third failure", sub: "always stops", zone: "flow", hue: "rose", at: [2, 3] },
+    { id: "retry", label: "Retry route", sub: "wrong, attempts < 3", zone: "flow", hue: "teal", at: [1, 3] },
+    { id: "stop", label: "Stop route", sub: "wrong, attempts = 3", zone: "flow", hue: "rose", at: [2, 3] },
   ],
   edges: [
     { id: "read", from: "rules", to: "model" },
     { id: "detour", from: "model", to: "tool" },
+    { id: "off", from: "dob", to: "reprompt" },
     { id: "p1", from: "dob", to: "last4" },
     { id: "p2", from: "last4", to: "check" },
-    { id: "p3", from: "check", to: "ok" },
-    { id: "off", from: "dob", to: "reprompt" },
+    { id: "r1", from: "check", to: "retry" },
+    { id: "r2", from: "retry", to: "last4" },
     { id: "fail", from: "check", to: "stop" },
+    { id: "p3", from: "check", to: "ok" },
     { id: "handover", from: "model", to: "dob", label: "hand over" },
     { id: "back", from: "ok", to: "model", label: "output" },
   ],
   steps: [
-    { label: "Instructions", edges: ["read"], at: "model", text: "\"I want to pay my bill.\" The model reads the instructions on every turn and decides what to say next. Written well, it asks for the date of birth first.", readout: "Instructions guide the model; it chooses each move." },
-    { label: "Flow", edges: ["p1", "p2", "p3"], at: "ok", text: "The same call in a flow: Date of birth, then Last 4 digits, then the check. Routes you wrote move the customer page by page, so the same inputs always take the same path.", readout: "The flow follows its routes, in the same order every time." },
-    { label: "Off script", edges: ["detour", "off"], at: "reprompt", text: "\"Wait, what do I owe first?\" The model calls get_balance, answers and comes back to verification. The flow matches no route on its page, so its no-match handler asks for the date of birth again.", readout: "Open questions suit the model. The flow sticks to its procedure." },
-    { label: "3rd failure", edges: ["fail"], at: "stop", text: "Wrong digits, a third time. The flow's check counts the attempts and ends the verification, every time. The instruction-based agent usually stops too, but it can lose count or be talked into a fourth try.", readout: "Flow: guaranteed. Instructions: usually." },
-    { label: "Together", edges: ["handover", "back"], at: "model", text: "Google's advice: the instruction-based agent steers and hands fixed procedures like this to a flow, passing session parameters in. At END_SESSION it takes over again with the flow's output.", readout: "The agent steers; the flow runs the fixed part." },
+    { label: "Instructions", edges: ["read"], at: "model", text: "\"I want to pay my bill.\" The model reads the written instructions on every turn and decides what to say. Here it asks for the date of birth first.", readout: "Instructions guide the model. Nothing else sets the order." },
+    { label: "Detour", edges: ["detour"], at: "tool", text: "\"Wait, what do I owe first?\" The model can call get_balance, answer, and come back to verification. Open questions like this suit the model.", readout: "Illustrative: the model chooses the detour." },
+    { label: "No-match", edges: ["off"], at: "reprompt", text: "The same question on the flow's Date of birth page. No route on the page matches it, so the page's no-match handler asks for the date of birth again.", readout: "The flow sticks to its procedure." },
+    { label: "Try 1", edges: ["p1", "p2"], at: "check", text: "The customer gives the date of birth, then the last 4 digits. Check record compares them with the record: wrong. That is attempt 1.", readout: "attempts = 1" },
+    { label: "Try 2", edges: ["r1", "r2", "p2"], at: "check", text: "Wrong, and attempts is under 3, so the retry route sends the customer back to Last 4 digits. The second try is checked: wrong again.", readout: "attempts = 2" },
+    { label: "Try 3", edges: ["r1", "r2", "p2", "fail"], at: "stop", text: "Retry once more, still wrong: attempts = 3. The stop route's condition is now true, so it fires and ends the verification, on every run, because you configured that rule.", readout: "attempts = 3: stop route fires" },
+    { label: "Together", edges: ["handover", "p1", "p2", "p3", "back"], at: "model", text: "Google's advice: the agent steers and hands fixed procedures to a flow, passing session parameters in. The flow runs its pages to Verified, and at END_SESSION the agent takes over with its output.", readout: "The agent steers; the flow runs the fixed part." },
   ],
-  checkpoint: { id: "observe-flow-guarantees", step: 4 },
-  legend: "Violet: the instruction-based agent. Orange: the flow's pages. Teal: a tool. Gold: a no-match handler. Rose: the retry limit. Blue: the step you are on.",
+  checkpoint: { id: "observe-flow-guarantees", step: 6 },
+  legend: "Violet: the instruction-based agent. Orange: the flow's pages. Teal: a tool or a route. Gold: a no-match handler. Rose: the stop route. Blue: the step you are on.",
 };
 
 FlowKit.mount(SPEC);
