@@ -155,6 +155,8 @@ export const TopicFrontmatterSchema: z.ZodObject<{
     updated: z.ZodOptional<z.ZodString>;
     authors: z.ZodDefault<z.ZodArray<z.ZodString>>;
 }, z.core.$strict>;
+/** How a path's sections are presented (PathFrontmatterSchema.layout). */
+export const PATH_LAYOUTS: readonly ["levels", "chapters"];
 export const PathLevelSchema: z.ZodObject<{
     level: z.ZodNumber;
     title: z.ZodString;
@@ -169,6 +171,10 @@ export const PathFrontmatterSchema: z.ZodObject<{
         title: z.ZodString;
         topics: z.ZodArray<z.ZodString>;
     }, z.core.$strict>>;
+    layout: z.ZodDefault<z.ZodEnum<{
+        chapters: "chapters";
+        levels: "levels";
+    }>>;
     status: z.ZodDefault<z.ZodEnum<{
         published: "published";
         draft: "draft";

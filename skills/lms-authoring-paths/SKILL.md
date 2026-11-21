@@ -55,10 +55,19 @@ A full example is [examples/example-path.mdx](examples/example-path.mdx).
 | `title` | string | yes | Sentence case. |
 | `summary` | string | yes | 1–2 sentences. |
 | `levels` | Level[] | yes (≥1) | Ordered; render top to bottom. |
+| `layout` | `levels`\|`chapters` | no (default `levels`) | `chapters`: each entry is a chapter, shown as "Chapter N" with no level tiers. |
 | `status` | `draft`\|`published` | no (default `published`) | `draft` hidden in prod. |
 
 **Level**: `level` (positive integer — the tier, e.g. 100/200/300), `title`
 (string), `topics` (≥1 topic ids, in order).
+
+**Chapters** (`layout: chapters`): for a path read straight through, one chapter
+after another, with no depth tiers. Each entry is a chapter and its `level` is
+just its number, 1, 2, 3 in order (the schema checks it). The app shows
+"Chapter N" and the chapter's title, and the lesson page's progress timeline
+follows one chapter. `paths/gcp-agentic-architect.mdx` is one. Reordering or
+regrouping lessons never touches learners' progress, which is keyed by topic and
+item, not by level or chapter.
 
 ## Rules
 

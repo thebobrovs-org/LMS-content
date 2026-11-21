@@ -80,6 +80,17 @@ test("a path names published-shaped levels; a malformed one fails", () => {
   }
 });
 
+test("a chapters path numbers its sections 1, 2, 3 in order; a levels path is the default", () => {
+  const path = { title: "P", summary: "S", levels: [{ level: 100, title: "Basics", topics: ["a/b"] }] };
+  assert.equal(check(PathFrontmatterSchema, path).value.layout, "levels");
+  const chapters = { ...path, layout: "chapters", levels: [{ level: 1, title: "One", topics: ["a/b"] }, { level: 2, title: "Two", topics: ["a/c"] }] };
+  assert.equal(check(PathFrontmatterSchema, chapters).ok, true);
+  assert.equal(check(PathFrontmatterSchema, { ...chapters, layout: "tiers" }).ok, false);
+  const r = check(PathFrontmatterSchema, { ...chapters, levels: [chapters.levels[1], chapters.levels[0]] }, "p.mdx");
+  assert.equal(r.ok, false);
+  assert.match(r.problems[0], /levels\.0\.level: is chapter 1/);
+});
+
 test("glossary entries, resources and sim configs are checked too", () => {
   assert.equal(check(GlossarySchema, { array: { definition: "A block", href: "https://example.com", linkLabel: "more" } }).ok, true);
   assert.equal(check(GlossarySchema, { array: { definition: "" } }).ok, false);
