@@ -176,6 +176,9 @@ export const TopicFrontmatterSchema = z
     }
   });
 
+/** How a path's sections are presented (PathFrontmatterSchema.layout). */
+export const PATH_LAYOUTS = /** @type {const} */ (["levels", "chapters"]);
+
 export const PathLevelSchema = z
   .object({
     level: z.number().int().positive(),
@@ -190,9 +193,23 @@ export const PathFrontmatterSchema = z
     title: nonEmpty,
     summary: nonEmpty,
     levels: z.array(PathLevelSchema).min(1, "needs at least one level"),
+    /**
+     * How the app presents the path's sections. "levels" (the default): each section is a depth tier and
+     * shows its `level` (100, 200, …). "chapters": each section is a chapter, numbered by its place in the
+     * list, and `level` is only that number; the app shows no levels. Optional and ignorable: an app that
+     * doesn't know it still renders every section in order.
+     */
+    layout: z.enum(PATH_LAYOUTS).default("levels"),
     status: z.enum(STATUSES).default("published"),
   })
-  .strict();
+  .strict()
+  // In a chapters path a section's `level` is its chapter number, so it must match its place: 1, 2, 3, …
+  .superRefine((p, ctx) => {
+    if (p.layout !== "chapters") return;
+    for (const [i, l] of p.levels.entries()) {
+      if (l.level !== i + 1) ctx.addIssue({ code: "custom", path: ["levels", i, "level"], message: `is chapter ${i + 1} in a chapters path, so its level must be ${i + 1}` });
+    }
+  });
 
 /** `glossary/<pathId>.json`: term → entry. */
 export const GlossaryEntrySchema = z
