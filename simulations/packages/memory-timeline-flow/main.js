@@ -1059,7 +1059,7 @@ var SPEC = {
       { id: "deleted", label: "No, it was deleted when session 1 ended" },
     ],
     answer: "stays",
-    revealAt: 5,
+    revealAt: 6,
     why: "A key with no prefix belongs to its own session, so the new session starts without it. It is not deleted: Monday's session is still stored, and your app can load and resume it until you delete it or its time to live expires.",
   },
   zones: [
@@ -1090,18 +1090,19 @@ var SPEC = {
     { id: "send", from: "lang", to: "extract", label: "generate memories" },
     { id: "keep", from: "extract", to: "mem" },
     { id: "carry", from: "ul1", to: "ul2" },
-    { id: "ask", from: "msg2", to: "reply" },
+    { id: "ask", from: "msg2", to: "mem", label: "search" },
     { id: "recall", from: "mem", to: "reply", label: "recall" },
   ],
   steps: [
-    { label: "Events", edges: ["call", "then"], at: "lang", text: "The user orders a desk lamp shipped to the Lyon office. The agent calls create_order and gets order B-77. Then the user asks for replies in French, and the agent calls its set_language tool.", readout: "Events: the history of session 1, kept with that session." },
-    { label: "State", edges: ["w-oid", "w-temp", "w-lang"], at: "ul1", text: "Values go into state, and each key's prefix sets its scope: order_id = \"B-77\" has no prefix, set_language writes user:language = \"fr\", and temp:api_raw holds a scratch value between two tools.", readout: "order_id: this session. user:language: every session of this user. temp:api_raw: this turn." },
+    { label: "Order", edges: ["call", "w-oid"], at: "oid1", text: "The user orders a desk lamp shipped to the Lyon office. The agent calls create_order, gets order B-77 and writes order_id = \"B-77\" to state. With no prefix, the key belongs to this session.", readout: "order_id: this session only." },
+    { label: "Scratch", edges: ["w-temp"], at: "temp", text: "create_order also leaves temp:api_raw, a scratch value between two tools. The temp: prefix means it lasts this turn only.", readout: "temp:api_raw: this turn only." },
+    { label: "Language", edges: ["then", "w-lang"], at: "ul1", text: "The user asks for replies in French, and the agent calls set_language, which writes user:language = \"fr\". The user: prefix makes it shared by every session of this user.", readout: "user:language: every session of this user." },
     { label: "Turn ends", edges: [], text: "The turn ends. temp:api_raw is gone: temp: state lasts one invocation, from the user's message to the agent's reply, and is never persisted. order_id and user:language stay.", readout: "temp:api_raw: gone, never persisted." },
     { label: "Memory Bank", edges: ["send", "keep"], at: "mem", text: "After a turn or the session, the session goes to Memory Bank. An LLM extracts the facts worth keeping and consolidates them, such as \"Ships work orders to the Lyon office.\" It does not store the transcript.", readout: "Memories: isolated per agent and user, kept until deleted or their time to live expires." },
     { label: "Session 2", edges: ["carry"], at: "ul2", text: "Thursday: a new session with a new, empty history. user:language = \"fr\" is carried over. order_id is not carried in: it stays stored with session 1.", readout: "user:language: carried over. order_id: stays with session 1." },
-    { label: "Recall", edges: ["ask", "recall"], at: "reply", text: "\"I need another lamp, same as before.\" At the start of the turn the agent recalls the relevant memories, replies in French and offers to ship to the Lyon office.", readout: "Recall: this user's memories, from earlier sessions." },
+    { label: "Recall", edges: ["ask", "recall"], at: "reply", text: "\"I need another lamp, same as before.\" The agent searches this user's memories for ones relevant to it, then replies in French and offers to ship to Lyon.", readout: "Recall: this user's memories, from earlier sessions." },
   ],
-  checkpoint: { id: "observe-order-id-stays", step: 5 },
+  checkpoint: { id: "observe-order-id-stays", step: 6 },
   legend: "Orange: a session and its plain state. Rose: user: state. Gold: temp: state. Teal: tools and Memory Bank. Dashed: gone or not carried in. Blue: the step you are on.",
 };
 

@@ -179,6 +179,6 @@ details.more[open] > summary { margin-bottom: 8px; }
 /* end flow-kit v2 */
 
 /* memory-timeline-flow: dashed means absent (the sim kit's .k-off). order_id is never in session 2, and
-   temp:api_raw is gone once the turn ends (step 3 on). */
+   temp:api_raw is gone once the turn ends (step 5 on). */
 .fk-node[data-node="oid2"] .fk-box { stroke-dasharray: 5 4; }
-.stage:has(.fk-steps .pill[aria-current="step"]:is([data-step="3"], [data-step="4"], [data-step="5"], [data-step="6"])) .fk-node[data-node="temp"] .fk-box { stroke-dasharray: 5 4; }
+.stage:has(.fk-steps .pill[aria-current="step"]:is([data-step="5"], [data-step="6"], [data-step="7"], [data-step="8"])) .fk-node[data-node="temp"] .fk-box { stroke-dasharray: 5 4; }

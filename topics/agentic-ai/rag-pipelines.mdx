@@ -343,8 +343,8 @@ date, and it does nothing to stop retrieval from feeding the old one.
 
 Google Cloud offers three backends, from most managed to most control.
 
-Each lane below is one backend, and each step runs one pipeline stage in all
-three. Before you step, predict which lane lets you chunk the documents yourself
+Each lane below is one backend, and each step runs one lane through every
+pipeline stage. Before you step, predict which lane lets you chunk the documents yourself
 while Google runs the index.
 
 <Simulation id="rag-backend-lanes" />
@@ -367,8 +367,8 @@ while Google runs the index.
   vectors are stored and queried; custom embeddings alone are not a reason,
   since Agent Search accepts them too.
 
-Each step to the right buys control and costs engineering time. Move right only
-for a need the option to its left cannot meet.
+Each lane down buys control and costs engineering time. Move down only for a
+need the lane above it cannot meet.
 
 A retrieval call to RAG Engine with a reranker looks like this (Python, Vertex
 AI SDK):

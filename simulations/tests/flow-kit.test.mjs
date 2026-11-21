@@ -335,9 +335,7 @@ function exploreTests(id) {
 
 // Path continuity (PR #223 review): the token slides from the end of one arrow to the start of the next, so when a
 // step's arrows don't join up it animates a connection the drawing doesn't have. Each arrow in a step must start where
-// the one before it ended. These sims predate the rule and keep exactly this many gaps until they're redrawn; the
-// count may only go down.
-const KNOWN_GAPS = { "enterprise-data-flow": 4, "gateway-registry-flow": 1, "memory-timeline-flow": 3, "rag-backend-lanes": 10, "auth-manager-flow": 1 };
+// the one before it ended.
 
 /** Every place a step's next arrow doesn't start where the previous one ended. */
 function stepGaps(spec) {
@@ -363,6 +361,6 @@ for (const id of ON_FLOW) {
   if (!spec.steps) continue;
   test(`${id}: each step's arrows form one connected path`, () => {
     const gaps = stepGaps(spec);
-    assert.ok(gaps.length <= (KNOWN_GAPS[id] ?? 0), `${id}: the token would jump between unconnected arrows:\n  ${gaps.join("\n  ")}`);
+    assert.equal(gaps.length, 0, `${id}: the token would jump between unconnected arrows:\n  ${gaps.join("\n  ")}`);
   });
 }
