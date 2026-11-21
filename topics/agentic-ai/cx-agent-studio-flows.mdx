@@ -149,6 +149,12 @@ validating data in a fixed order, or authenticating a customer on session
 parameters. Use the model for understanding what the customer wants, and callbacks
 (small pieces of code) for fixed, canned replies.
 
+See the difference on one call below. Before you step through it, predict which
+design is sure to stop after the third wrong answer, then watch what each does when
+the customer goes off script.
+
+<Simulation id="cx-instruction-vs-flow" />
+
 ## Inside a flow: pages, routes and handlers
 
 A flow models one topic, such as taking a payment. Its states are
@@ -199,21 +205,19 @@ its reply and evaluation continues. An intent is consumed by the first route tha
 matches it, and so is an event; a condition is not consumed, so several condition
 routes can each run if none of them transitions.
 
-Try it below. The flow takes a payment: the flow-level routes are a handoff to a
-person, a balance question, and the condition route `balance_due > 0` that sends
-the customer to Collect amount. It starts on Confirm payment with a balance due and
-an unmatched reply; press Step to walk the handlers in order.
+Try it below on a flow that takes a payment, with `balance_due` set to 120. Its
+flow-level routes are the condition route `balance_due > 0`, which sends the customer
+to Collect amount, and an `agent.handoff` intent route to a person. Step from the start page
+through three customer turns, and before the second, predict what happens on Confirm payment when
+the reply matches nothing.
 
-<Simulation id="cx-route-resolver" props={{ page: "confirm", balance: 120, input: "unclear" }} />
+<Simulation id="cx-route-resolver" />
 
-The flow's `balance_due` route is true, but it is skipped as out of scope, so the
-no-match event falls to the page's own handler, which asks for yes or no. Ask for
-a person instead and the flow's intent route fires from this page, because intent
-routes stay in scope everywhere. Then switch to the start page with the unmatched
-reply: the condition route wins before any event handler is reached. (In a live
-flow, condition routes are also checked when a page is entered, so with a balance
-due the customer would have left the start page at once; the sim shows the order
-within one turn.)
+On the start page the condition route fires, because every flow-level route is in
+scope there. On Confirm payment the same route is still true but out of scope, so
+the no-match event falls to the page's own handler, and the flow's no-match handler
+is never reached. Asking for a person still works from that page, because flow
+routes with an intent stay in scope everywhere and are checked first.
 
 <Callout type="tip">To predict a turn, write down three things: the current page, the parameter values, and the matched intent or the event raised. Then walk the phases in order and stop at the first handler with a transition.</Callout>
 

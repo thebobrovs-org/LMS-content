@@ -1,0 +1,12 @@
+{
+  "id": "cx-instruction-vs-flow",
+  "title": "One call, two ways to steer it",
+  "version": "1.0.0",
+  "props": {},
+  "checkpoints": [
+    {
+      "id": "observe-flow-guarantees",
+      "hint": "Step to the third failed attempt: the flow always stops there, while instructions only make the model likely to."
+    }
+  ]
+}
