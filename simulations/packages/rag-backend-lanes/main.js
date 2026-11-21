@@ -1050,7 +1050,7 @@ var FlowKit = (function () {
 var SPEC = {
   title: "Three retrieval backends as lanes, from most managed to most control, across the stages ingest, chunk, embed, index and retrieve. Agent Search: Google runs every stage. RAG Engine: Google runs ingestion; you set chunk size and overlap, pick the embedding model and the vector database, and set top-k and the reranker. Vector Search: Google runs the vector index; you build ingestion, chunking, embeddings, and the query and ranking",
   cellWidth: 96,
-  intro: "One lane per backend, from most managed (top) to most control (bottom). Each step runs one stage in all three lanes and shows who runs it there. Predict first, then press Step.",
+  intro: "One lane per backend, from most managed (top) to most control (bottom). Each step runs one lane end to end and shows who runs each stage. Predict first, then press Step.",
   predict: {
     question: "You must chunk the documents yourself, but want a managed index. Which lane?",
     options: [
@@ -1059,7 +1059,7 @@ var SPEC = {
       { id: "vector", label: "Vector Search / Agent Retrieval" },
     ],
     answer: "vector",
-    revealAt: 4,
+    revealAt: 3,
     why: "Only the bottom lane leaves chunking to you while Google runs the vector index. Agent Search chunks for you, and RAG Engine chunks for you with the size and overlap you set. Agent Retrieval too has you prepare and chunk the documents you load.",
   },
   zones: [
@@ -1093,13 +1093,11 @@ var SPEC = {
     { id: "i3", from: "doc3", to: "i3" }, { id: "c3", from: "i3", to: "c3" }, { id: "e3", from: "c3", to: "e3" }, { id: "x3", from: "e3", to: "x3" }, { id: "r3", from: "x3", to: "r3" },
   ],
   steps: [
-    { label: "Ingest", edges: ["i1", "i2", "i3"], at: "i3", text: "Ingest and parse. Agent Search handles it over your websites and documents. RAG Engine manages ingestion of the files you import into its corpus. With Vector Search you build ingestion yourself.", readout: "Ingest: Google runs it, Google runs it, you build it." },
-    { label: "Chunk", edges: ["c1", "c2", "c3"], at: "c3", text: "Agent Search chunks for you. RAG Engine chunks too, with the chunk size and overlap you set. With Vector Search you chunk the documents yourself, and Agent Retrieval leaves that to you as well.", readout: "Chunk: Google runs it, you set size and overlap, you build it." },
-    { label: "Embed", edges: ["e1", "e2", "e3"], at: "e3", text: "Agent Search embeds for you. In RAG Engine you pick the embedding model. Vector Search takes the embeddings you supply; Agent Retrieval can also generate them with built-in models.", readout: "Embed: Google runs it, you pick the model, your own embeddings." },
-    { label: "Index", edges: ["x1", "x2", "x3"], at: "x3", text: "Agent Search indexes for you. In RAG Engine you pick the vector database: its managed default, Vector Search, Feature Store, or a third-party one such as Pinecone or Weaviate. In the bottom lane the managed vector index is the one stage Google runs.", readout: "Index: Google runs it, you pick the vector DB, a managed vector index." },
-    { label: "Retrieve", edges: ["r1", "r2", "r3"], at: "r3", text: "Agent Search retrieves and answers with citations and links. In RAG Engine you set top-k and the reranker. With Vector Search you build the query and ranking; Agent Retrieval offers hybrid search and reranking, but you still write the query.", readout: "Retrieve: Google runs it, you set top-k and reranker, you build query and ranking." },
+    { label: "Agent Search", edges: ["i1", "c1", "e1", "x1", "r1"], at: "r1", text: "Agent Search handles every stage over your websites and documents: it ingests, parses, chunks, embeds and indexes for you, then retrieves and answers with citations and links.", readout: "Agent Search: Google runs every stage." },
+    { label: "RAG Engine", edges: ["i2", "c2", "e2", "x2", "r2"], at: "r2", text: "RAG Engine manages ingestion of the files you import into its corpus. You set chunk size and overlap, pick the embedding model and the vector database (its managed default, Vector Search, Feature Store, or one such as Pinecone or Weaviate), and set top-k and the reranker.", readout: "RAG Engine: Google runs it, you configure it." },
+    { label: "Vector Search", edges: ["i3", "c3", "e3", "x3", "r3"], at: "r3", text: "With Vector Search you build ingestion, chunk the documents and supply the embeddings; the managed vector index is the one stage Google runs, and you build the query and ranking. Agent Retrieval also has you chunk, can generate embeddings, and offers hybrid search and reranking.", readout: "Vector Search: you build it, except the index." },
   ],
-  checkpoint: { id: "observe-who-runs-each-stage", step: 4 },
+  checkpoint: { id: "observe-who-runs-each-stage", step: 3 },
   legend: "Teal: Google runs it. Orange: Google runs it, you configure it. Gold, dashed: you build and run it. Blue: the step you are on. Start from the top lane; move down only for control you need.",
 };
 

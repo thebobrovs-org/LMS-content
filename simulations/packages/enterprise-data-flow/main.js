@@ -1060,7 +1060,7 @@ var SPEC = {
       { id: "app", label: "Yes, the app can read it" },
     ],
     answer: "no",
-    revealAt: 3,
+    revealAt: 2,
     why: "Results are filtered to the documents this user may read in the source, using the source's access lists (ACLs) and the user's identity from your IdP. An agent must never widen what a user can read.",
   },
   zones: [
@@ -1088,11 +1088,12 @@ var SPEC = {
   ],
   steps: [
     { label: "Query", edges: ["ask"], at: "app", text: "A user asks the Gemini Enterprise app a question. The app knows who is asking: the user signed in through your identity provider (IdP).", readout: "Who may use the app at all: IAM roles plus a licence." },
-    { label: "Fan out", edges: ["toDrive", "toBq", "toJira"], at: "jira", text: "Blended search sends the one query across every connected store: Google Drive documents, a BigQuery table, and the Jira connector's store, ingested with an incremental sync every 3 hours. Each store keeps its own type. The website data store isn't among them: it can't be connected here.", readout: "Site search is a feature of Agent Search, not Gemini Enterprise." },
-    { label: "Filter", edges: ["fromDrive", "fromBq", "fromJira"], at: "filter", text: "Before anything reaches the user, a permission filter keeps only what this user may read. It uses the source's access lists (ACLs, or ACL metadata you add on import) and the user's identity.", readout: "A matching Drive doc this user can't open is dropped here." },
+    { label: "Drive", edges: ["toDrive", "fromDrive"], at: "filter", text: "Blended search sends the one query to every connected store. From Google Drive comes a matching doc this user can't open. The permission filter checks the source's access lists (ACLs) and the user's identity, and drops it.", readout: "A matching Drive doc this user can't open is dropped here." },
+    { label: "BigQuery", edges: ["toBq", "fromBq"], at: "filter", text: "The same query reaches the BigQuery table, a store of structured rows. Its matches pass the same filter, using ACL metadata you add on import.", readout: "Each store keeps its own type; one filter covers them all." },
+    { label: "Jira", edges: ["toJira", "fromJira"], at: "filter", text: "And the Jira connector's store, ingested with an incremental sync every 3 hours. The website data store isn't among them: it can't be connected here.", readout: "Site search is a feature of Agent Search, not Gemini Enterprise." },
     { label: "Results", edges: ["show"], at: "results", text: "Results and answers reach the user, never wider than the user's own access.", readout: "Filtering is only as good as the ACLs: test as a user who should be denied." },
   ],
-  checkpoint: { id: "observe-permission-filter", step: 3 },
+  checkpoint: { id: "observe-permission-filter", step: 2 },
   legend: "Rose: data stores. Amber: the permission filter. Green: what the user sees. Red, dashed: can't be connected. Blue: the step you are on.",
 };
 
